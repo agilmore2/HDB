@@ -1,6 +1,6 @@
 /* command line arguments */
-define site = &1;
-define datatype = &2;
+define site_code = &1;
+define pcode = &2;
 define year = &3;
 
 set colsep '';
@@ -17,15 +17,24 @@ set null '       ---';
 column beginyear new_value beginyear nopri;
 select to_char(&&year - 1) beginyear from dual;
 
-column hm_site_code new_value name;
-column hm_pcode new_value datatype;
 column sdi new_value sdi;
 select hm_site_code, hm_pcode, to_char(site_datatype_id) sdi from
 ref_hm_site_pcode
 where
-hm_site_code like '%&&site%' and
-hm_pcode like '%&&datatype%'
-order by site_datatype_id desc;
+hm_site_code = '&&site_code' and
+hm_pcode = '&&pcode' and
+site_datatype_id IS NOT NULL
+;
+
+column site_name new_value name;
+column datatype_name new_value datatype;
+select a.site_name site_name, b.datatype_name datatype_name
+from hdb_site a, hdb_datatype b, hdb_site_datatype c
+where
+a.site_id = c.site_id and
+b.datatype_id = c.datatype_id and
+c.site_datatype_id = &&sdi
+;
 
 column min new_value min;
 column max new_value max;
@@ -66,7 +75,7 @@ column numformat new_value numformat;
 select case 
 when &max > 999999999 then '99.99EEEE'
 when &max > 999999    then '999999999'
-else                       '999999.00'
+else                       '999990.00'
 end numformat
 from dual;
 
@@ -74,7 +83,7 @@ column sumformat new_value sumformat;
 select case 
 when &sum/12 > 50000000 then '99.99EEEE'
 when &sum/12 > 500000 then   '999999999'
-else '999999.00'
+else '999990.00'
 end sumformat
 from dual;
 
@@ -154,7 +163,7 @@ b.unit_id = c.unit_id;
 
 set termout on;
 
-ttitle center "&name &datatype &unit" skip -
+ttitle center "site: &&name(&&site_code) datatype: &&datatype(&&pcode) in &&unit" skip -
        center "Water Year October &beginyear to September &year";
 
 btitle left 'Ave&octave&novave&decave&janave&febave&marave&aprave&mayave&junave&julave&augave&sepave' skip -
