@@ -32,7 +32,7 @@
 *****************************************************************************/
 
 #define MAIN
-#define VERSION "1.1"
+#define VERSION "1.2"
 
 /* standard includes */
 #include <stdio.h>
@@ -189,14 +189,12 @@ int main(int argc, char *argv[])
       exit(ERROR);
    }
 
-   result = SqlConnectRole(dbName, appUser, dbName, appRole);
+   result = SqlConnectRole(dbName, appUser, dbName, appRole); 
    if (result != OK)
    {
       PrintError("Could not connect to local database...\n");
       exit(ERROR);
    }
-
-   /* No need to set lockmode in Oracle */
 
    /* Get all mappings from the database, including units, object.slot ->
       SDIs, and DB site list. */
@@ -208,12 +206,13 @@ int main(int argc, char *argv[])
       exit(ERROR);
    }
 
-   result = SqlDisconnect(); 
-   if (result != OK)
+   result = SqlDisconnect();  
+
+      if (result != OK)
    {
       PrintError("Error...disconnecting from the database...\n");
       exit(ERROR);
-   }
+      } 
    
    /* Make sure number of db sites does not exceed max number that
       can be handled by the DmiSaveModelData procedure */
@@ -240,28 +239,34 @@ int main(int argc, char *argv[])
       {
 	 PrintError("Could not connect to site database %s\n",
 		    dbsite_array[i].dbsite_alias);
-	 
+
 	 /* Set the flag for this DB indicating that there is no connection. */
-	 dbsite_array[i].connected = FALSE;
+   	 dbsite_array[i].connected = FALSE;
 	 
 	 /* Exit if the connection failure was on the local, default DB. */
-	 
 	 if (i == 0)
-	 {
-	    PrintError("Could not connect to local database.\n");
-        result = SqlDisconnectAll();
-        if (result != OK)
-           PrintError("Error... disconnecting from the Database...\n");
-	    exit(ERROR);
-	 }
+	   {
+	     PrintError("Could not connect to local database.\n");
+	     result = SqlDisconnectAll();
+	     if (result != OK)
+	       PrintError("Error... disconnecting from the Database...\n");
+	     exit(ERROR);
+	   }
       }
-      
+
       /* Otherwise, set flag indicating success */ 
       PrintError("Connected to %s.\n", dbsite_array[i].dbsite_db_name);
       dbsite_array[i].connected = TRUE;      
-
-      /* Don't need to set lockmode in Oracle */
-
+      
+      /* Set nls_date_format for every opened session;
+	 each session remains open throughout the run, so one
+	 setting is enough. */
+      if ((result = SqlSetDateFormatAt ("DD-MON-YYYY HH24:MI:SS")) != OK)
+	{
+	  PrintError ("%s: Problem setting date format. Exiting.\n", FUNC_NAME);
+	  return (ERROR);
+	  } 
+      
    } /* end for loop */
    
    /* Am currently on the default (local) session */
@@ -317,6 +322,7 @@ int main(int argc, char *argv[])
    
    current = previous = list;
    n_slots_for_model_destination = n_slots_for_real_destination = 0;
+
    while (current) 
    {
       /* Initializes some key components of list member */
@@ -459,8 +465,9 @@ int main(int argc, char *argv[])
      printf("Interface for selecting model_run_id(s) skipped...\n");
    }
 
+
    /* Got all the info we need, now save the data to HDB */
-   
+
    current = list;
    while (current)  /* save each object.slot combination separately.
                        Use the current->destination or model_run_id
@@ -468,12 +475,12 @@ int main(int argc, char *argv[])
    {
      if (current->destination == MODEL)
      {
-       result = DmiSaveModelData(current);
-       if (result != OK) /* print an error but continue trying to save
+           result = DmiSaveModelData(current);
+	   if (result != OK) /* print an error but continue trying to save
                             the remaining slots */
-	     PrintError("Error... saving data for:\nObject: %s\nSlot: %s\n",
+       	     PrintError("Error... saving data for:\nObject: %s\nSlot: %s\n",
                     current->object_name,
-                    current->slot_name);
+                    current->slot_name); 
      }
      else /* current->destination == REAL */
      {
@@ -488,6 +495,13 @@ int main(int argc, char *argv[])
      current = current->next;
    } /* end while(current) */
 
+   /* After processing all site_datatype_ids, make one final
+      pass through the model data table: Delete data for this model
+      run that is for site_datatype_ids not represented in this
+      model run output. Note that this is done only for data
+      that is written to model tables, not to real tables. */
+   DmiDeleteObsoleteModelSDIs (list);
+      
 /* Almost done, only thing remaining is to update the sys_date field 
    in the ref_model_run table. Yes, in case the model_run_id
    was newly created, it is already there, but just forcing it here

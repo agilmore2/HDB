@@ -4,7 +4,7 @@
 include ../../Environ
 
 OBJDIR = $(HDB_ENV)/riverwareDMI/obj
-INCLUDES = -I$(HDB_APP_INCLUDE) -I$(TK_INCLUDES) -I/usr/local/X11R5/include
+INCLUDES = -I$(HDB_APP_INCLUDE) -I$(TK_INCLUDES) -I$(TK_HEADER) -I/usr/local/X11R5/include
 LIBS = $(HDB_LIBS) -ldl -lX11 -lm $(TK_LIBS) -lsocket -lnsl
 CFLAGS = -ansi -Wall -g -DANSIPROTO $(INCLUDES)
 
@@ -39,7 +39,11 @@ $(TARGET): $(OBJS)
 	fi
 
 clean: 
-	rm -f $(OBJS)
+	rm -f $(OBJS) ; \
+	rm -f $(TARGET) ; \
+	rm -f $(HDB_APP_BIN)/RW.BHOPS.InputDMI.sh ; \
+	rm -f $(HDB_APP_BIN)/RW.24m.InputDMI.sh ; \
+	rm -f $(HDB_APP_BIN)/riverwareDMI.In.GUI.tk ;
 
 ######################
 # TARGET DEFINITIONS #

@@ -7,7 +7,7 @@
     unsigned int curocn;
     void *ptr1;
     void *ptr2;
-    unsigned long magic;
+    unsigned int magic;
   };
   typedef struct sql_cursor sql_cursor;
   typedef struct sql_cursor SQL_CURSOR;
@@ -69,11 +69,11 @@ static const struct sqlcxp sqlfpn =
 };
 
 
-static unsigned long sqlctx = 37783811;
+static unsigned int sqlctx = 37783811;
 
 
 static struct sqlexd {
-   unsigned int   sqlvsn;
+   unsigned long  sqlvsn;
    unsigned int   arrsiz;
    unsigned int   iters;
    unsigned int   offset;
@@ -85,34 +85,42 @@ static struct sqlexd {
       const char  *stmt;
    sqladts *sqladtp;
    sqltdss *sqltdsp;
-            void  **sqphsv;
-   unsigned int   *sqphsl;
+   unsigned char  **sqphsv;
+   unsigned long  *sqphsl;
             int   *sqphss;
-            void  **sqpind;
+            short **sqpind;
             int   *sqpins;
-   unsigned int   *sqparm;
-   unsigned int   **sqparc;
+   unsigned long  *sqparm;
+   unsigned long  **sqparc;
    unsigned short  *sqpadto;
    unsigned short  *sqptdso;
-            void  *sqhstv[4];
-   unsigned int   sqhstl[4];
-            int   sqhsts[4];
-            void  *sqindv[4];
-            int   sqinds[4];
-   unsigned int   sqharm[4];
-   unsigned int   *sqharc[4];
-   unsigned short  sqadto[4];
-   unsigned short  sqtdso[4];
-} sqlstm = {10,4};
+   unsigned int   sqlcmax;
+   unsigned int   sqlcmin;
+   unsigned int   sqlcincr;
+   unsigned int   sqlctimeout;
+   unsigned int   sqlcnowait;
+            int   sqfoff;
+   unsigned int   sqcmod;
+   unsigned int   sqfmod;
+   unsigned char  *sqhstv[7];
+   unsigned long  sqhstl[7];
+            int   sqhsts[7];
+            short *sqindv[7];
+            int   sqinds[7];
+   unsigned long  sqharm[7];
+   unsigned long  *sqharc[7];
+   unsigned short  sqadto[7];
+   unsigned short  sqtdso[7];
+} sqlstm = {12,7};
 
 /* SQLLIB Prototypes */
-extern void sqlcxt (void **, unsigned long *,
+extern void sqlcxt (void **, unsigned int *,
                     struct sqlexd *, const struct sqlcxp *);
-extern void sqlcx2t(void **, unsigned long *,
+extern void sqlcx2t(void **, unsigned int *,
                     struct sqlexd *, const struct sqlcxp *);
 extern void sqlbuft(void **, char *);
 extern void sqlgs2t(void **, char *);
-extern void sqlorat(void **, unsigned long *, void *);
+extern void sqlorat(void **, unsigned int *, void *);
 
 /* Forms Interface */
 static const int IAPSUCC = 0;
@@ -125,30 +133,20 @@ typedef struct { unsigned short len; unsigned char arr[1]; } varchar;
 
 /* cud (compilation unit data) array */
 static const short sqlcud0[] =
-{10,4130,0,0,0,
-5,0,0,1,0,0,1053,182,0,0,0,0,0,0,128,1,97,0,0,
-24,0,0,2,0,0,1041,205,0,0,1,1,0,0,128,1,97,0,0,1,97,0,0,
-47,0,0,2,0,0,1069,219,0,0,0,0,0,0,128,1,97,0,0,
-66,0,0,2,0,0,1037,234,0,0,2,0,0,0,128,2,97,0,0,2,4,0,0,1,97,0,0,
-93,0,0,3,37,0,1071,299,0,0,0,0,0,0,128,1,97,0,0,
-112,0,0,4,36,0,1071,304,0,0,0,0,0,0,128,1,97,0,0,
-131,0,0,5,38,0,1071,309,0,0,0,0,0,0,128,1,97,0,0,
-150,0,0,6,45,0,1070,369,0,0,1,1,0,0,128,1,4,0,0,1,97,0,0,
-173,0,0,7,44,0,1070,376,0,0,1,1,0,0,128,1,4,0,0,1,97,0,0,
-196,0,0,8,46,0,1070,383,0,0,1,1,0,0,128,1,4,0,0,1,97,0,0,
-219,0,0,9,37,0,1071,438,0,0,0,0,0,0,128,1,97,0,0,
-238,0,0,10,36,0,1071,443,0,0,0,0,0,0,128,1,97,0,0,
-257,0,0,11,38,0,1071,448,0,0,0,0,0,0,128,1,97,0,0,
-276,0,0,2,0,0,1039,476,0,0,0,0,0,0,128,1,97,0,0,
-295,0,0,12,0,0,1041,498,0,0,1,1,0,0,128,1,97,0,0,1,97,0,0,
-318,0,0,13,0,0,1041,503,0,0,1,1,0,0,128,1,97,0,0,1,97,0,0,
-341,0,0,14,0,0,1041,508,0,0,1,1,0,0,128,1,97,0,0,1,97,0,0,
-364,0,0,15,0,0,1041,513,0,0,1,1,0,0,128,1,97,0,0,1,97,0,0,
-387,0,0,12,0,0,1045,572,0,0,3,3,0,0,128,1,97,0,0,1,97,0,0,1,4,0,0,1,97,0,0,
-418,0,0,13,0,0,1045,577,0,0,3,3,0,0,128,1,97,0,0,1,97,0,0,1,4,0,0,1,97,0,0,
-449,0,0,14,0,0,1045,582,0,0,3,3,0,0,128,1,97,0,0,1,97,0,0,1,4,0,0,1,97,0,0,
-480,0,0,15,0,0,1045,587,0,0,3,3,0,0,128,1,97,0,0,1,97,0,0,1,4,0,0,1,97,0,0,
-511,0,0,16,0,0,1053,614,0,0,0,0,0,0,128,1,97,0,0,
+{12,4130,1,0,0,
+5,0,0,1,0,0,1053,190,0,0,0,0,0,0,128,1,5,0,0,
+24,0,0,2,104,0,1030,248,0,0,5,5,0,0,128,3,3,0,0,3,3,0,0,3,5,0,0,3,5,0,0,3,5,0,
+0,1,5,0,0,
+63,0,0,3,0,0,1055,259,0,0,0,0,0,0,128,1,5,0,0,
+82,0,0,4,123,0,1030,268,0,0,6,6,0,0,128,3,3,0,0,3,3,0,0,3,5,0,0,3,5,0,0,3,4,0,
+0,3,5,0,0,1,5,0,0,
+125,0,0,5,0,0,1055,280,0,0,0,0,0,0,128,1,5,0,0,
+144,0,0,6,0,0,1053,294,0,0,0,0,0,0,128,1,5,0,0,
+163,0,0,7,0,0,1048,304,0,0,1,1,0,0,128,1,5,0,0,1,5,0,0,
+186,0,0,8,0,0,1055,309,0,0,0,0,0,0,128,1,5,0,0,
+205,0,0,9,0,0,1053,319,0,0,0,0,0,0,128,1,5,0,0,
+224,0,0,10,0,0,1048,427,0,0,1,1,0,0,128,1,5,0,0,1,5,0,0,
+247,0,0,11,0,0,1055,432,0,0,0,0,0,0,128,1,5,0,0,
 };
 
 
@@ -319,57 +317,64 @@ int DmiSaveModelData(dmi_header_struct * header)
 {
     /* EXEC SQL BEGIN DECLARE SECTION; */ 
 
-       int           done = 0;
-       int           found_in_array;
        SQL_DATE      end_date;
-       SQL_DATE      fetch_date;
-       SQL_DATE      new_date;
-       SQL_DATE      run_control_start_date;
-       double        fetch_value;
-       double        new_value;
+       SQL_DATE      start_date;
+       SQL_DATE      run_control_start_date,
+	             run_control_end_date;
+       SQL_INTERVAL  dataInterval;
+       double        value;
 
-       int           array_locator = 0;
        int           i, cnt;
-       int           result;
-
-       char          model_table_name[DATABASE_NAME_LENGTH];
-       char          select_statement[1000];
-       char          insert_statement[1000];
+       int           compare1, compare2;
        int           switched = FALSE;
+
+       char          deleteRemaining[200],
+              	     model_table_name[DATABASE_NAME_LENGTH];
+
+       int           siteDatatypeId;
+       int           modelRunId;
     /* EXEC SQL END DECLARE SECTION; */ 
 
 
-   int the_result;
+   int result;
 
-    /* Determine table and date column names based on destination
-       and timestep. */
-
+   /* Determine interval */
     if (!strcmp (header->timestep, HOUR))
-    {
-	  sprintf (model_table_name, MODEL_HOUR);
-    }
+      {
+	strcpy(dataInterval, "hour");
+	sprintf (model_table_name, MODEL_HOUR);
+      }
     else if (!strcmp (header->timestep, DAY))
-         {
-	        sprintf (model_table_name, MODEL_DAY);
-         }
-         else if (!strcmp (header->timestep, MONTH))
-              {
-	            sprintf (model_table_name, MODEL_MONTH);
-              }
-              else
-              {
-	            PrintError ("Error...timestep %s unknown...\n.", 
-                            header->timestep);
-	            return (ERROR);
-              }
+      {
+	strcpy(dataInterval, "day");
+	sprintf (model_table_name, MODEL_DAY);
+      }
+    else if (!strcmp (header->timestep, MONTH))
+      {
+	strcpy(dataInterval, "month");
+	sprintf (model_table_name, MODEL_MONTH);
+      }
+    else
+      {
+	PrintError ("Error in %s...timestep %s unknown...\n.", 
+		    FUNC_NAME,header->timestep);
+	return (ERROR);
+      }
     
-    /* Get the start date from run control. No data from before this date 
-       will be saved to the DB.  */
+    /* Get the start and end dates from run control. No data outside these 
+       dates will be saved to the DB.  */
 
     if (riverwareToHdbDate(header->pr_runcontrol_startdate, run_control_start_date,
 	header->timestep) != 0) {
         PrintError("DMI: Unable to convert start date (%s) to HDB format when saving data.\n", 
                     header->pr_runcontrol_startdate);
+        return (ERROR);
+    }
+
+    if (riverwareToHdbDate(header->pr_runcontrol_enddate, run_control_end_date,
+	header->timestep) != 0) {
+        PrintError("DMI: Unable to convert end date (%s) to HDB format when saving data.\n", 
+                    header->pr_runcontrol_enddate);
         return (ERROR);
     }
 
@@ -391,56 +396,57 @@ int DmiSaveModelData(dmi_header_struct * header)
       /* The appropriate member was found */
 
     if (cnt < number_of_db_sites) 
-	{ 
-	  /* Return if not connected to that session -- no way to save
-	     the data */
+      { 
+	/* Return if not connected to that session -- no way to save
+	   the data */
 
-	  if (!dbsite_array[cnt].connected) 
-      {
+	if (!dbsite_array[cnt].connected) 
+	  {
 	    PrintError("Not connected to session for %s. Cannot fetch data...\n",
-	               dbsite_array[cnt].dbsite_alias);
-	      
-	      /* switch the session back to default. */
-
-        if (SwitchSession(dbsite_array[0].dbsite_alias) != OK) 
-		{
-		  PrintError("Error...changing to session 1 for %s\n",
-			     dbsite_array[0].dbsite_alias);
-		  return(ERROR);
-        }
-
+		       dbsite_array[cnt].dbsite_alias);
+	    
+	    /* switch the session back to default. */
+	    
+	    if (SwitchSession(dbsite_array[0].dbsite_alias) != OK) 
+	      {
+		PrintError("Error...changing to session 1 for %s\n",
+			   dbsite_array[0].dbsite_alias);
+		return(ERROR);
+	      }
+	    
 	    return(ERROR);
-      }
-	  else /* attempt to switch to the needed session */
+	  }
+	else /* attempt to switch to the needed session */
 	  {
 	    if (SwitchSession(dbsite_array[cnt].dbsite_alias) != OK) 
-		{
-          PrintError("ERROR occurred changing to session %d for %s\n",
-		             dbsite_array[cnt].session_number,
-			         dbsite_array[cnt].dbsite_alias);
-		  return(ERROR);
-		}
+	      {
+		PrintError("ERROR occurred changing to session %d for %s\n",
+			   dbsite_array[cnt].session_number,
+			   dbsite_array[cnt].dbsite_alias);
+		return(ERROR);
+	      }
 	    else  /* Switch was successful. */
-		  switched = TRUE;
-	  }
-	}
-      /* The name is not in the array. Exit. */
-    else 
-	{
-	  PrintError("Could not find database session ID for %s.\n",
-                 header->data_location);
-	  return(ERROR);
-    }
-  }
+	      {
+		switched = TRUE;
 
-/* ORACLE -- can't set Autocommit Off. Need to do other DB operations 
-   while cursor is open. Does it work?? Commit to set new transaction. */
+	      }
+	  }
+      }
+    
+    /* The name is not in the array. Exit. */
+    else 
+      {
+	PrintError("Could not find database session ID for %s.\n",
+		   header->data_location);
+	return(ERROR);
+      }
+  }
 
     /* EXEC SQL AT :current_dbsite COMMIT; */ 
 
 {
     struct sqlexd sqlstm;
-    sqlstm.sqlvsn = 10;
+    sqlstm.sqlvsn = 12;
     sqlstm.arrsiz = 1;
     sqlstm.sqladtp = &sqladt;
     sqlstm.sqltdsp = &sqltds;
@@ -450,12 +456,12 @@ int DmiSaveModelData(dmi_header_struct * header)
     sqlstm.sqlest = (unsigned char  *)&sqlca;
     sqlstm.sqlety = (unsigned short)256;
     sqlstm.occurs = (unsigned int  )0;
-    sqlstm.sqhstv[0] = (         void  *)current_dbsite;
-    sqlstm.sqhstl[0] = (unsigned int  )10;
+    sqlstm.sqhstv[0] = (unsigned char  *)current_dbsite;
+    sqlstm.sqhstl[0] = (unsigned long )10;
     sqlstm.sqhsts[0] = (         int  )0;
-    sqlstm.sqindv[0] = (         void  *)0;
+    sqlstm.sqindv[0] = (         short *)0;
     sqlstm.sqinds[0] = (         int  )0;
-    sqlstm.sqharm[0] = (unsigned int  )0;
+    sqlstm.sqharm[0] = (unsigned long )0;
     sqlstm.sqadto[0] = (unsigned short )0;
     sqlstm.sqtdso[0] = (unsigned short )0;
     sqlstm.sqphsv = sqlstm.sqhstv;
@@ -480,49 +486,401 @@ int DmiSaveModelData(dmi_header_struct * header)
        return(ERROR);
     }
 
-    /* ORACLE: Can I use order by clause w/ FOR UPDATE??
-	   clause? Or does it still ruin efficiency of circular array. */
+    /* Create statement to delete any DB rows outside of model run dates */
+    sprintf (deleteRemaining, "delete from %s where model_run_id = %d \
+and site_datatype_id = %d and (start_date_time < to_date ('%s') OR \
+start_date_time > to_date ('%s'))", model_table_name, 
+	     header->model_destination, header->hdb_site_datatype_id, 
+	     run_control_start_date, run_control_end_date);
+    
+    for (i = 0; i < header->number_of_timesteps; i++) 
+    { 
+      modelRunId = header->model_destination;
+      siteDatatypeId = header->hdb_site_datatype_id;
+      strcpy (start_date, header->data[i].hdb_date);
+      strcpy (end_date, header->data[i].end_date);
+      value = header->data[i].value;
 
-    sprintf(select_statement, "SELECT to_char (start_date_time, 'dd-mon-yyyy hh24:mi:ss'), value FROM %s WHERE model_run_id = %d AND site_datatype_id = %d AND start_date_time BETWEEN to_date ('%s', 'dd-mon-yyyy hh24:mi:ss') AND to_date ('%s', 'dd-mon-yyyy hh24:mi:ss') ORDER BY start_date_time FOR UPDATE OF value",
-	    model_table_name,
-            model_run_id,
-            header->hdb_site_datatype_id,
-            header->hdb_startdate,
-            header->hdb_enddate);
+      /* If header->data[i].hdb_date is between (inclusive)
+	run_control_start_date and run_control_end_date, process the value;
+	otherwise, print warning message and do not process value */
+      result = SqlDateCompare(header->data[i].hdb_date,
+				  run_control_start_date,
+				  &compare1);
+      if (result != OK) 
+	{
+	  PrintError("Could not compare dates %s and %s.\n",
+		     run_control_start_date,
+		     header->data[i].hdb_date);
+	  return(ERROR);
+	}
+      
+      result = SqlDateCompare(header->data[i].hdb_date,
+				  run_control_end_date,
+				  &compare2);
+      if (result != OK) 
+	{
+	  PrintError("Could not compare dates %s and %s.\n",
+		     run_control_end_date,
+		     header->data[i].hdb_date);
+	  return(ERROR);
+	}
 
-/* PrintError("Statement:\n%s.\n", select_statement); */
+      /* If this item is between start and end dates of model run, 
+	 process it */
+      if ((compare1 >= 0) & (compare2 <= 0)) 
+	{
+	  /* Delete old value if new is NaN; execute the delete
+	     at the current database*/ 
+	  if (header->data[i].is_nan == 'Y')
+	    {
+	      /* EXEC SQL AT :current_dbsite EXECUTE
+		BEGIN
+		delete_m_table (:modelRunId, :siteDatatypeId,
+				:start_date, :end_date, :dataInterval);
+	      END;
+	      END-EXEC; */ 
 
-    /* EXEC SQL AT :current_dbsite DECLARE SelStmt STATEMENT; */ 
+{
+       struct sqlexd sqlstm;
+       sqlstm.sqlvsn = 12;
+       sqlstm.arrsiz = 6;
+       sqlstm.sqladtp = &sqladt;
+       sqlstm.sqltdsp = &sqltds;
+       sqlstm.stmt = "begin delete_m_table ( :modelRunId , :siteDatatypeId ,\
+ :start_date , :end_date , :dataInterval ) ; END ;";
+       sqlstm.iters = (unsigned int  )1;
+       sqlstm.offset = (unsigned int  )24;
+       sqlstm.cud = sqlcud0;
+       sqlstm.sqlest = (unsigned char  *)&sqlca;
+       sqlstm.sqlety = (unsigned short)256;
+       sqlstm.occurs = (unsigned int  )0;
+       sqlstm.sqhstv[0] = (unsigned char  *)&modelRunId;
+       sqlstm.sqhstl[0] = (unsigned long )sizeof(int);
+       sqlstm.sqhsts[0] = (         int  )0;
+       sqlstm.sqindv[0] = (         short *)0;
+       sqlstm.sqinds[0] = (         int  )0;
+       sqlstm.sqharm[0] = (unsigned long )0;
+       sqlstm.sqadto[0] = (unsigned short )0;
+       sqlstm.sqtdso[0] = (unsigned short )0;
+       sqlstm.sqhstv[1] = (unsigned char  *)&siteDatatypeId;
+       sqlstm.sqhstl[1] = (unsigned long )sizeof(int);
+       sqlstm.sqhsts[1] = (         int  )0;
+       sqlstm.sqindv[1] = (         short *)0;
+       sqlstm.sqinds[1] = (         int  )0;
+       sqlstm.sqharm[1] = (unsigned long )0;
+       sqlstm.sqadto[1] = (unsigned short )0;
+       sqlstm.sqtdso[1] = (unsigned short )0;
+       sqlstm.sqhstv[2] = (unsigned char  *)start_date;
+       sqlstm.sqhstl[2] = (unsigned long )21;
+       sqlstm.sqhsts[2] = (         int  )0;
+       sqlstm.sqindv[2] = (         short *)0;
+       sqlstm.sqinds[2] = (         int  )0;
+       sqlstm.sqharm[2] = (unsigned long )0;
+       sqlstm.sqadto[2] = (unsigned short )0;
+       sqlstm.sqtdso[2] = (unsigned short )0;
+       sqlstm.sqhstv[3] = (unsigned char  *)end_date;
+       sqlstm.sqhstl[3] = (unsigned long )21;
+       sqlstm.sqhsts[3] = (         int  )0;
+       sqlstm.sqindv[3] = (         short *)0;
+       sqlstm.sqinds[3] = (         int  )0;
+       sqlstm.sqharm[3] = (unsigned long )0;
+       sqlstm.sqadto[3] = (unsigned short )0;
+       sqlstm.sqtdso[3] = (unsigned short )0;
+       sqlstm.sqhstv[4] = (unsigned char  *)dataInterval;
+       sqlstm.sqhstl[4] = (unsigned long )33;
+       sqlstm.sqhsts[4] = (         int  )0;
+       sqlstm.sqindv[4] = (         short *)0;
+       sqlstm.sqinds[4] = (         int  )0;
+       sqlstm.sqharm[4] = (unsigned long )0;
+       sqlstm.sqadto[4] = (unsigned short )0;
+       sqlstm.sqtdso[4] = (unsigned short )0;
+       sqlstm.sqhstv[5] = (unsigned char  *)current_dbsite;
+       sqlstm.sqhstl[5] = (unsigned long )10;
+       sqlstm.sqhsts[5] = (         int  )0;
+       sqlstm.sqindv[5] = (         short *)0;
+       sqlstm.sqinds[5] = (         int  )0;
+       sqlstm.sqharm[5] = (unsigned long )0;
+       sqlstm.sqadto[5] = (unsigned short )0;
+       sqlstm.sqtdso[5] = (unsigned short )0;
+       sqlstm.sqphsv = sqlstm.sqhstv;
+       sqlstm.sqphsl = sqlstm.sqhstl;
+       sqlstm.sqphss = sqlstm.sqhsts;
+       sqlstm.sqpind = sqlstm.sqindv;
+       sqlstm.sqpins = sqlstm.sqinds;
+       sqlstm.sqparm = sqlstm.sqharm;
+       sqlstm.sqparc = sqlstm.sqharc;
+       sqlstm.sqpadto = sqlstm.sqadto;
+       sqlstm.sqptdso = sqlstm.sqtdso;
+       sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
+}
 
-    /* EXEC SQL PREPARE SelStmt FROM :select_statement; */ 
+
+
+	      if ((result = SqlErrorHandler 
+		   (FUNC_NAME, FALSE,
+		    "Problem in delete_m_table.")) != OK)
+		{
+		  /* EXEC SQL AT :current_dbsite ROLLBACK; */ 
 
 {
     struct sqlexd sqlstm;
-    sqlstm.sqlvsn = 10;
-    sqlstm.arrsiz = 2;
+    sqlstm.sqlvsn = 12;
+    sqlstm.arrsiz = 6;
     sqlstm.sqladtp = &sqladt;
     sqlstm.sqltdsp = &sqltds;
-    sqlstm.stmt = "";
     sqlstm.iters = (unsigned int  )1;
-    sqlstm.offset = (unsigned int  )24;
+    sqlstm.offset = (unsigned int  )63;
     sqlstm.cud = sqlcud0;
     sqlstm.sqlest = (unsigned char  *)&sqlca;
     sqlstm.sqlety = (unsigned short)256;
     sqlstm.occurs = (unsigned int  )0;
-    sqlstm.sqhstv[0] = (         void  *)select_statement;
-    sqlstm.sqhstl[0] = (unsigned int  )1000;
+    sqlstm.sqhstv[0] = (unsigned char  *)current_dbsite;
+    sqlstm.sqhstl[0] = (unsigned long )10;
     sqlstm.sqhsts[0] = (         int  )0;
-    sqlstm.sqindv[0] = (         void  *)0;
+    sqlstm.sqindv[0] = (         short *)0;
     sqlstm.sqinds[0] = (         int  )0;
-    sqlstm.sqharm[0] = (unsigned int  )0;
+    sqlstm.sqharm[0] = (unsigned long )0;
     sqlstm.sqadto[0] = (unsigned short )0;
     sqlstm.sqtdso[0] = (unsigned short )0;
-    sqlstm.sqhstv[1] = (         void  *)current_dbsite;
-    sqlstm.sqhstl[1] = (unsigned int  )10;
+    sqlstm.sqphsv = sqlstm.sqhstv;
+    sqlstm.sqphsl = sqlstm.sqhstl;
+    sqlstm.sqphss = sqlstm.sqhsts;
+    sqlstm.sqpind = sqlstm.sqindv;
+    sqlstm.sqpins = sqlstm.sqinds;
+    sqlstm.sqparm = sqlstm.sqharm;
+    sqlstm.sqparc = sqlstm.sqharc;
+    sqlstm.sqpadto = sqlstm.sqadto;
+    sqlstm.sqptdso = sqlstm.sqtdso;
+    sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
+}
+
+
+		  return (ERROR);
+		}
+	    }
+	  /* update or insert the value */
+	  else 
+	    {
+	      /* PrintError("Updating or inserting value.\n"); */
+
+	      /* EXEC SQL AT :current_dbsite EXECUTE
+		BEGIN
+		modify_m_table_raw (:modelRunId, :siteDatatypeId,
+				   :start_date, :end_date, :value,
+	                           :dataInterval, 'Y'); 
+	      END;
+	      END-EXEC; */ 
+
+{
+       struct sqlexd sqlstm;
+       sqlstm.sqlvsn = 12;
+       sqlstm.arrsiz = 7;
+       sqlstm.sqladtp = &sqladt;
+       sqlstm.sqltdsp = &sqltds;
+       sqlstm.stmt = "begin modify_m_table_raw ( :modelRunId , :siteDatatype\
+Id , :start_date , :end_date , :value , :dataInterval , 'Y' ) ; END ;";
+       sqlstm.iters = (unsigned int  )1;
+       sqlstm.offset = (unsigned int  )82;
+       sqlstm.cud = sqlcud0;
+       sqlstm.sqlest = (unsigned char  *)&sqlca;
+       sqlstm.sqlety = (unsigned short)256;
+       sqlstm.occurs = (unsigned int  )0;
+       sqlstm.sqhstv[0] = (unsigned char  *)&modelRunId;
+       sqlstm.sqhstl[0] = (unsigned long )sizeof(int);
+       sqlstm.sqhsts[0] = (         int  )0;
+       sqlstm.sqindv[0] = (         short *)0;
+       sqlstm.sqinds[0] = (         int  )0;
+       sqlstm.sqharm[0] = (unsigned long )0;
+       sqlstm.sqadto[0] = (unsigned short )0;
+       sqlstm.sqtdso[0] = (unsigned short )0;
+       sqlstm.sqhstv[1] = (unsigned char  *)&siteDatatypeId;
+       sqlstm.sqhstl[1] = (unsigned long )sizeof(int);
+       sqlstm.sqhsts[1] = (         int  )0;
+       sqlstm.sqindv[1] = (         short *)0;
+       sqlstm.sqinds[1] = (         int  )0;
+       sqlstm.sqharm[1] = (unsigned long )0;
+       sqlstm.sqadto[1] = (unsigned short )0;
+       sqlstm.sqtdso[1] = (unsigned short )0;
+       sqlstm.sqhstv[2] = (unsigned char  *)start_date;
+       sqlstm.sqhstl[2] = (unsigned long )21;
+       sqlstm.sqhsts[2] = (         int  )0;
+       sqlstm.sqindv[2] = (         short *)0;
+       sqlstm.sqinds[2] = (         int  )0;
+       sqlstm.sqharm[2] = (unsigned long )0;
+       sqlstm.sqadto[2] = (unsigned short )0;
+       sqlstm.sqtdso[2] = (unsigned short )0;
+       sqlstm.sqhstv[3] = (unsigned char  *)end_date;
+       sqlstm.sqhstl[3] = (unsigned long )21;
+       sqlstm.sqhsts[3] = (         int  )0;
+       sqlstm.sqindv[3] = (         short *)0;
+       sqlstm.sqinds[3] = (         int  )0;
+       sqlstm.sqharm[3] = (unsigned long )0;
+       sqlstm.sqadto[3] = (unsigned short )0;
+       sqlstm.sqtdso[3] = (unsigned short )0;
+       sqlstm.sqhstv[4] = (unsigned char  *)&value;
+       sqlstm.sqhstl[4] = (unsigned long )sizeof(double);
+       sqlstm.sqhsts[4] = (         int  )0;
+       sqlstm.sqindv[4] = (         short *)0;
+       sqlstm.sqinds[4] = (         int  )0;
+       sqlstm.sqharm[4] = (unsigned long )0;
+       sqlstm.sqadto[4] = (unsigned short )0;
+       sqlstm.sqtdso[4] = (unsigned short )0;
+       sqlstm.sqhstv[5] = (unsigned char  *)dataInterval;
+       sqlstm.sqhstl[5] = (unsigned long )33;
+       sqlstm.sqhsts[5] = (         int  )0;
+       sqlstm.sqindv[5] = (         short *)0;
+       sqlstm.sqinds[5] = (         int  )0;
+       sqlstm.sqharm[5] = (unsigned long )0;
+       sqlstm.sqadto[5] = (unsigned short )0;
+       sqlstm.sqtdso[5] = (unsigned short )0;
+       sqlstm.sqhstv[6] = (unsigned char  *)current_dbsite;
+       sqlstm.sqhstl[6] = (unsigned long )10;
+       sqlstm.sqhsts[6] = (         int  )0;
+       sqlstm.sqindv[6] = (         short *)0;
+       sqlstm.sqinds[6] = (         int  )0;
+       sqlstm.sqharm[6] = (unsigned long )0;
+       sqlstm.sqadto[6] = (unsigned short )0;
+       sqlstm.sqtdso[6] = (unsigned short )0;
+       sqlstm.sqphsv = sqlstm.sqhstv;
+       sqlstm.sqphsl = sqlstm.sqhstl;
+       sqlstm.sqphss = sqlstm.sqhsts;
+       sqlstm.sqpind = sqlstm.sqindv;
+       sqlstm.sqpins = sqlstm.sqinds;
+       sqlstm.sqparm = sqlstm.sqharm;
+       sqlstm.sqparc = sqlstm.sqharc;
+       sqlstm.sqpadto = sqlstm.sqadto;
+       sqlstm.sqptdso = sqlstm.sqtdso;
+       sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
+}
+
+
+
+	      if ((result = SqlErrorHandler 
+		   (FUNC_NAME, FALSE,
+		    "Problem in modify_m_table_raw.")) != OK)
+		{
+		  /* EXEC SQL AT :current_dbsite ROLLBACK; */ 
+
+{
+    struct sqlexd sqlstm;
+    sqlstm.sqlvsn = 12;
+    sqlstm.arrsiz = 7;
+    sqlstm.sqladtp = &sqladt;
+    sqlstm.sqltdsp = &sqltds;
+    sqlstm.iters = (unsigned int  )1;
+    sqlstm.offset = (unsigned int  )125;
+    sqlstm.cud = sqlcud0;
+    sqlstm.sqlest = (unsigned char  *)&sqlca;
+    sqlstm.sqlety = (unsigned short)256;
+    sqlstm.occurs = (unsigned int  )0;
+    sqlstm.sqhstv[0] = (unsigned char  *)current_dbsite;
+    sqlstm.sqhstl[0] = (unsigned long )10;
+    sqlstm.sqhsts[0] = (         int  )0;
+    sqlstm.sqindv[0] = (         short *)0;
+    sqlstm.sqinds[0] = (         int  )0;
+    sqlstm.sqharm[0] = (unsigned long )0;
+    sqlstm.sqadto[0] = (unsigned short )0;
+    sqlstm.sqtdso[0] = (unsigned short )0;
+    sqlstm.sqphsv = sqlstm.sqhstv;
+    sqlstm.sqphsl = sqlstm.sqhstl;
+    sqlstm.sqphss = sqlstm.sqhsts;
+    sqlstm.sqpind = sqlstm.sqindv;
+    sqlstm.sqpins = sqlstm.sqinds;
+    sqlstm.sqparm = sqlstm.sqharm;
+    sqlstm.sqparc = sqlstm.sqharc;
+    sqlstm.sqpadto = sqlstm.sqadto;
+    sqlstm.sqptdso = sqlstm.sqtdso;
+    sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
+}
+
+
+		  return (ERROR);
+		}
+	    }
+	}
+
+      else if (compare1 < 0)
+	PrintError ("Data date %s is before run control start date\n\t %s. Value will be ignored.\n", header->data[i].hdb_date, run_control_start_date);
+      else 
+	PrintError ("Data date %s is after run control end date\n\t %s. Value will be ignored.\n", header->data[i].hdb_date, run_control_end_date);
+
+    } /* end looping through values in header */
+
+    /* Commit; stored procedure doesn't */
+    /* EXEC SQL AT :current_dbsite COMMIT; */ 
+
+{
+    struct sqlexd sqlstm;
+    sqlstm.sqlvsn = 12;
+    sqlstm.arrsiz = 7;
+    sqlstm.sqladtp = &sqladt;
+    sqlstm.sqltdsp = &sqltds;
+    sqlstm.iters = (unsigned int  )1;
+    sqlstm.offset = (unsigned int  )144;
+    sqlstm.cud = sqlcud0;
+    sqlstm.sqlest = (unsigned char  *)&sqlca;
+    sqlstm.sqlety = (unsigned short)256;
+    sqlstm.occurs = (unsigned int  )0;
+    sqlstm.sqhstv[0] = (unsigned char  *)current_dbsite;
+    sqlstm.sqhstl[0] = (unsigned long )10;
+    sqlstm.sqhsts[0] = (         int  )0;
+    sqlstm.sqindv[0] = (         short *)0;
+    sqlstm.sqinds[0] = (         int  )0;
+    sqlstm.sqharm[0] = (unsigned long )0;
+    sqlstm.sqadto[0] = (unsigned short )0;
+    sqlstm.sqtdso[0] = (unsigned short )0;
+    sqlstm.sqphsv = sqlstm.sqhstv;
+    sqlstm.sqphsl = sqlstm.sqhstl;
+    sqlstm.sqphss = sqlstm.sqhsts;
+    sqlstm.sqpind = sqlstm.sqindv;
+    sqlstm.sqpins = sqlstm.sqinds;
+    sqlstm.sqparm = sqlstm.sqharm;
+    sqlstm.sqparc = sqlstm.sqharc;
+    sqlstm.sqpadto = sqlstm.sqadto;
+    sqlstm.sqptdso = sqlstm.sqtdso;
+    sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
+}
+
+
+    if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
+       "Problem committing new values.\n")) != OK) {
+       return(ERROR);
+    }
+
+    /* Take additional steps to ensure that data in database
+       is equivalent to data in current model run:
+       - If there is data in HDB for this model_run and SDI, but
+         outside the model run date range, delete it. */
+    /* EXEC SQL AT :current_dbsite EXECUTE IMMEDIATE :deleteRemaining; */ 
+
+{
+    struct sqlexd sqlstm;
+    sqlstm.sqlvsn = 12;
+    sqlstm.arrsiz = 7;
+    sqlstm.sqladtp = &sqladt;
+    sqlstm.sqltdsp = &sqltds;
+    sqlstm.stmt = "";
+    sqlstm.iters = (unsigned int  )1;
+    sqlstm.offset = (unsigned int  )163;
+    sqlstm.cud = sqlcud0;
+    sqlstm.sqlest = (unsigned char  *)&sqlca;
+    sqlstm.sqlety = (unsigned short)256;
+    sqlstm.occurs = (unsigned int  )0;
+    sqlstm.sqhstv[0] = (unsigned char  *)deleteRemaining;
+    sqlstm.sqhstl[0] = (unsigned long )200;
+    sqlstm.sqhsts[0] = (         int  )0;
+    sqlstm.sqindv[0] = (         short *)0;
+    sqlstm.sqinds[0] = (         int  )0;
+    sqlstm.sqharm[0] = (unsigned long )0;
+    sqlstm.sqadto[0] = (unsigned short )0;
+    sqlstm.sqtdso[0] = (unsigned short )0;
+    sqlstm.sqhstv[1] = (unsigned char  *)current_dbsite;
+    sqlstm.sqhstl[1] = (unsigned long )10;
     sqlstm.sqhsts[1] = (         int  )0;
-    sqlstm.sqindv[1] = (         void  *)0;
+    sqlstm.sqindv[1] = (         short *)0;
     sqlstm.sqinds[1] = (         int  )0;
-    sqlstm.sqharm[1] = (unsigned int  )0;
+    sqlstm.sqharm[1] = (unsigned long )0;
     sqlstm.sqadto[1] = (unsigned short )0;
     sqlstm.sqtdso[1] = (unsigned short )0;
     sqlstm.sqphsv = sqlstm.sqhstv;
@@ -538,1306 +896,74 @@ int DmiSaveModelData(dmi_header_struct * header)
 }
 
 
-    result = SqlErrorHandler (FUNC_NAME, TRUE,
-                "Problem preparing statement for select from %s.\n", 
-	             model_table_name);
-    if (result != OK)
-      return(ERROR);
-
-    /* EXEC SQL DECLARE UpdCur CURSOR FOR SelStmt; */ 
-
-    result = SqlErrorHandler (FUNC_NAME, TRUE,
-                "Problem declaring cursor for %s...\n",
-                 select_statement);
-    if (result != OK)
-      return(ERROR);
-
-    /* EXEC SQL OPEN UpdCur; */ 
+    if ((result = SqlErrorHandler 
+	 (FUNC_NAME, TRUE,
+	  "Problem executing: %s.", deleteRemaining)) != OK)
+      {	
+	/* EXEC SQL AT :current_dbsite ROLLBACK; */ 
 
 {
-    struct sqlexd sqlstm;
-    sqlstm.sqlvsn = 10;
-    sqlstm.arrsiz = 2;
-    sqlstm.sqladtp = &sqladt;
-    sqlstm.sqltdsp = &sqltds;
-    sqlstm.stmt = "";
-    sqlstm.iters = (unsigned int  )1;
-    sqlstm.offset = (unsigned int  )47;
-    sqlstm.selerr = (unsigned short)1;
-    sqlstm.cud = sqlcud0;
-    sqlstm.sqlest = (unsigned char  *)&sqlca;
-    sqlstm.sqlety = (unsigned short)256;
-    sqlstm.occurs = (unsigned int  )0;
-    sqlstm.sqhstv[0] = (         void  *)current_dbsite;
-    sqlstm.sqhstl[0] = (unsigned int  )10;
-    sqlstm.sqhsts[0] = (         int  )0;
-    sqlstm.sqindv[0] = (         void  *)0;
-    sqlstm.sqinds[0] = (         int  )0;
-    sqlstm.sqharm[0] = (unsigned int  )0;
-    sqlstm.sqadto[0] = (unsigned short )0;
-    sqlstm.sqtdso[0] = (unsigned short )0;
-    sqlstm.sqphsv = sqlstm.sqhstv;
-    sqlstm.sqphsl = sqlstm.sqhstl;
-    sqlstm.sqphss = sqlstm.sqhsts;
-    sqlstm.sqpind = sqlstm.sqindv;
-    sqlstm.sqpins = sqlstm.sqinds;
-    sqlstm.sqparm = sqlstm.sqharm;
-    sqlstm.sqparc = sqlstm.sqharc;
-    sqlstm.sqpadto = sqlstm.sqadto;
-    sqlstm.sqptdso = sqlstm.sqtdso;
-    sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
+ struct sqlexd sqlstm;
+ sqlstm.sqlvsn = 12;
+ sqlstm.arrsiz = 7;
+ sqlstm.sqladtp = &sqladt;
+ sqlstm.sqltdsp = &sqltds;
+ sqlstm.iters = (unsigned int  )1;
+ sqlstm.offset = (unsigned int  )186;
+ sqlstm.cud = sqlcud0;
+ sqlstm.sqlest = (unsigned char  *)&sqlca;
+ sqlstm.sqlety = (unsigned short)256;
+ sqlstm.occurs = (unsigned int  )0;
+ sqlstm.sqhstv[0] = (unsigned char  *)current_dbsite;
+ sqlstm.sqhstl[0] = (unsigned long )10;
+ sqlstm.sqhsts[0] = (         int  )0;
+ sqlstm.sqindv[0] = (         short *)0;
+ sqlstm.sqinds[0] = (         int  )0;
+ sqlstm.sqharm[0] = (unsigned long )0;
+ sqlstm.sqadto[0] = (unsigned short )0;
+ sqlstm.sqtdso[0] = (unsigned short )0;
+ sqlstm.sqphsv = sqlstm.sqhstv;
+ sqlstm.sqphsl = sqlstm.sqhstl;
+ sqlstm.sqphss = sqlstm.sqhsts;
+ sqlstm.sqpind = sqlstm.sqindv;
+ sqlstm.sqpins = sqlstm.sqinds;
+ sqlstm.sqparm = sqlstm.sqharm;
+ sqlstm.sqparc = sqlstm.sqharc;
+ sqlstm.sqpadto = sqlstm.sqadto;
+ sqlstm.sqptdso = sqlstm.sqtdso;
+ sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
 }
 
 
-    result = SqlErrorHandler (FUNC_NAME, TRUE,
-                "Problem opening cursor for %s...\n",
-                select_statement);
-    if (result != OK)
-      return(ERROR);
+	return (ERROR)	;
+      }
     
-    done = 0;
-    while (!done) 
-    {
-     /* Note: The exit condition for this loop is not found on the FETCH.
-        This is managed as a special case after the FETCH.  */
-
-/* printf("Fetching a value.\n"); */
-
-      /* EXEC SQL FETCH UpdCur INTO :fetch_date, :fetch_value; */ 
-
-{
-      struct sqlexd sqlstm;
-      sqlstm.sqlvsn = 10;
-      sqlstm.arrsiz = 3;
-      sqlstm.sqladtp = &sqladt;
-      sqlstm.sqltdsp = &sqltds;
-      sqlstm.iters = (unsigned int  )1;
-      sqlstm.offset = (unsigned int  )66;
-      sqlstm.cud = sqlcud0;
-      sqlstm.sqlest = (unsigned char  *)&sqlca;
-      sqlstm.sqlety = (unsigned short)256;
-      sqlstm.occurs = (unsigned int  )0;
-      sqlstm.sqhstv[0] = (         void  *)fetch_date;
-      sqlstm.sqhstl[0] = (unsigned int  )21;
-      sqlstm.sqhsts[0] = (         int  )0;
-      sqlstm.sqindv[0] = (         void  *)0;
-      sqlstm.sqinds[0] = (         int  )0;
-      sqlstm.sqharm[0] = (unsigned int  )0;
-      sqlstm.sqadto[0] = (unsigned short )0;
-      sqlstm.sqtdso[0] = (unsigned short )0;
-      sqlstm.sqhstv[1] = (         void  *)&fetch_value;
-      sqlstm.sqhstl[1] = (unsigned int  )sizeof(double);
-      sqlstm.sqhsts[1] = (         int  )0;
-      sqlstm.sqindv[1] = (         void  *)0;
-      sqlstm.sqinds[1] = (         int  )0;
-      sqlstm.sqharm[1] = (unsigned int  )0;
-      sqlstm.sqadto[1] = (unsigned short )0;
-      sqlstm.sqtdso[1] = (unsigned short )0;
-      sqlstm.sqhstv[2] = (         void  *)current_dbsite;
-      sqlstm.sqhstl[2] = (unsigned int  )10;
-      sqlstm.sqhsts[2] = (         int  )0;
-      sqlstm.sqindv[2] = (         void  *)0;
-      sqlstm.sqinds[2] = (         int  )0;
-      sqlstm.sqharm[2] = (unsigned int  )0;
-      sqlstm.sqadto[2] = (unsigned short )0;
-      sqlstm.sqtdso[2] = (unsigned short )0;
-      sqlstm.sqphsv = sqlstm.sqhstv;
-      sqlstm.sqphsl = sqlstm.sqhstl;
-      sqlstm.sqphss = sqlstm.sqhsts;
-      sqlstm.sqpind = sqlstm.sqindv;
-      sqlstm.sqpins = sqlstm.sqinds;
-      sqlstm.sqparm = sqlstm.sqharm;
-      sqlstm.sqparc = sqlstm.sqharc;
-      sqlstm.sqpadto = sqlstm.sqadto;
-      sqlstm.sqptdso = sqlstm.sqtdso;
-      sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-      result = SqlErrorHandler (FUNC_NAME, TRUE,
-                     "Problem fetching from %s.\n",
-                     model_table_name);
-      if (result != OK)
-        return(ERROR);
-
-      if (sqlca.sqlcode > 0)  /* FETCH returned no row */
-      {
-        done = TRUE;
-        continue;
-      }
-
-/* A value was fetched successfully. Find the corresponding time step
-   in the data array. 
-
-   The search looks at every member of the array. But it starts
-   at the position of the last successful match. Since records
-   from the db are (mostly) in order by date, and the array is
-   DEFINATELY in order by date, usually the first comparison
-   succeeds.
-   
-   The variable 'array_locator' is initialized to zero, then each
-   time a match is found, this variable is reset to the following
-   position in the array.
-   
-   The '%', or mod, function makes this a circular array. By 
-   performing a mod(size of array) on the position, the position
-   wraps around to the beginning of the array when i+array_locator
-   exceed the size of the array.  */
-
-    found_in_array = 0;
-    for (i = 0; i < header->number_of_timesteps; i++) 
-    { 
-      /* SqlDateCompare does NOT do a commit. If it did, it would be 
-          necessary to select the rowid and update/delete based on value 
-          of rowid, rather than relying on CURRENT OF cursor.  
-          (Precompiler Guide 6-13) */
-
-      the_result = SqlDateCompare(fetch_date,
-                              header->data[(array_locator + i) % 
-                                header->number_of_timesteps].hdb_date,
-                              &result);
-      if (the_result != OK) 
-      {
-         PrintError("Could not compare dates %s and %s.\n",
-                    fetch_date,
-                    header->data[(array_locator + i) % 
-                       header->number_of_timesteps].hdb_date);
-         return(ERROR);
-      }
-
-            if (result == 0) { /* a match was found for the fetched data */
-
-                /* PrintError("Found a match in %d trie(s).\n", i+1); */
-
-                /* 
-                 * If the value in the array is NaN, delete the record
-                 *   from the database.
-                 */
-                if (header->data[(array_locator + i) 
-				 % header->number_of_timesteps].is_nan == 'Y')
-		  {
-		    if (!strcmp (header->timestep, HOUR))
-		      {
-			/* EXEC SQL AT :current_dbsite DELETE FROM m_hour 
-			  WHERE CURRENT OF UpdCur; */ 
-
-{
-   struct sqlexd sqlstm;
-   sqlstm.sqlvsn = 10;
-   sqlstm.arrsiz = 3;
-   sqlstm.sqladtp = &sqladt;
-   sqlstm.sqltdsp = &sqltds;
-   sqlstm.stmt = "delete  from m_hour  where rowid = :x";
-   sqlstm.iters = (unsigned int  )2;
-   sqlstm.offset = (unsigned int  )93;
-   sqlstm.cud = sqlcud0;
-   sqlstm.sqlest = (unsigned char  *)&sqlca;
-   sqlstm.sqlety = (unsigned short)256;
-   sqlstm.occurs = (unsigned int  )0;
-   sqlstm.sqhstv[0] = (         void  *)current_dbsite;
-   sqlstm.sqhstl[0] = (unsigned int  )10;
-   sqlstm.sqhsts[0] = (         int  )10;
-   sqlstm.sqindv[0] = (         void  *)0;
-   sqlstm.sqinds[0] = (         int  )0;
-   sqlstm.sqharm[0] = (unsigned int  )0;
-   sqlstm.sqadto[0] = (unsigned short )0;
-   sqlstm.sqtdso[0] = (unsigned short )0;
-   sqlstm.sqphsv = sqlstm.sqhstv;
-   sqlstm.sqphsl = sqlstm.sqhstl;
-   sqlstm.sqphss = sqlstm.sqhsts;
-   sqlstm.sqpind = sqlstm.sqindv;
-   sqlstm.sqpins = sqlstm.sqinds;
-   sqlstm.sqparm = sqlstm.sqharm;
-   sqlstm.sqparc = sqlstm.sqharc;
-   sqlstm.sqpadto = sqlstm.sqadto;
-   sqlstm.sqptdso = sqlstm.sqtdso;
-   sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-		      }
-		    else if (!strcmp (header->timestep, DAY))
-		      {
-			/* EXEC SQL AT :current_dbsite DELETE FROM m_day
-			  WHERE CURRENT OF UpdCur; */ 
-
-{
-   struct sqlexd sqlstm;
-   sqlstm.sqlvsn = 10;
-   sqlstm.arrsiz = 3;
-   sqlstm.sqladtp = &sqladt;
-   sqlstm.sqltdsp = &sqltds;
-   sqlstm.stmt = "delete  from m_day  where rowid = :x";
-   sqlstm.iters = (unsigned int  )2;
-   sqlstm.offset = (unsigned int  )112;
-   sqlstm.cud = sqlcud0;
-   sqlstm.sqlest = (unsigned char  *)&sqlca;
-   sqlstm.sqlety = (unsigned short)256;
-   sqlstm.occurs = (unsigned int  )0;
-   sqlstm.sqhstv[0] = (         void  *)current_dbsite;
-   sqlstm.sqhstl[0] = (unsigned int  )10;
-   sqlstm.sqhsts[0] = (         int  )10;
-   sqlstm.sqindv[0] = (         void  *)0;
-   sqlstm.sqinds[0] = (         int  )0;
-   sqlstm.sqharm[0] = (unsigned int  )0;
-   sqlstm.sqadto[0] = (unsigned short )0;
-   sqlstm.sqtdso[0] = (unsigned short )0;
-   sqlstm.sqphsv = sqlstm.sqhstv;
-   sqlstm.sqphsl = sqlstm.sqhstl;
-   sqlstm.sqphss = sqlstm.sqhsts;
-   sqlstm.sqpind = sqlstm.sqindv;
-   sqlstm.sqpins = sqlstm.sqinds;
-   sqlstm.sqparm = sqlstm.sqharm;
-   sqlstm.sqparc = sqlstm.sqharc;
-   sqlstm.sqpadto = sqlstm.sqadto;
-   sqlstm.sqptdso = sqlstm.sqtdso;
-   sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-		      }
-		    else if (!strcmp (header->timestep, MONTH))
-		      {
-			/* EXEC SQL AT :current_dbsite DELETE FROM m_month
-			  WHERE CURRENT OF UpdCur; */ 
-
-{
-   struct sqlexd sqlstm;
-   sqlstm.sqlvsn = 10;
-   sqlstm.arrsiz = 3;
-   sqlstm.sqladtp = &sqladt;
-   sqlstm.sqltdsp = &sqltds;
-   sqlstm.stmt = "delete  from m_month  where rowid = :x";
-   sqlstm.iters = (unsigned int  )2;
-   sqlstm.offset = (unsigned int  )131;
-   sqlstm.cud = sqlcud0;
-   sqlstm.sqlest = (unsigned char  *)&sqlca;
-   sqlstm.sqlety = (unsigned short)256;
-   sqlstm.occurs = (unsigned int  )0;
-   sqlstm.sqhstv[0] = (         void  *)current_dbsite;
-   sqlstm.sqhstl[0] = (unsigned int  )10;
-   sqlstm.sqhsts[0] = (         int  )10;
-   sqlstm.sqindv[0] = (         void  *)0;
-   sqlstm.sqinds[0] = (         int  )0;
-   sqlstm.sqharm[0] = (unsigned int  )0;
-   sqlstm.sqadto[0] = (unsigned short )0;
-   sqlstm.sqtdso[0] = (unsigned short )0;
-   sqlstm.sqphsv = sqlstm.sqhstv;
-   sqlstm.sqphsl = sqlstm.sqhstl;
-   sqlstm.sqphss = sqlstm.sqhsts;
-   sqlstm.sqpind = sqlstm.sqindv;
-   sqlstm.sqpins = sqlstm.sqinds;
-   sqlstm.sqparm = sqlstm.sqharm;
-   sqlstm.sqparc = sqlstm.sqharc;
-   sqlstm.sqpadto = sqlstm.sqadto;
-   sqlstm.sqptdso = sqlstm.sqtdso;
-   sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-		      }
-		    else
-		      {
-			PrintError ("Timestep %s unknown. Exiting.", 
-				    header->timestep);
-			return (ERROR);
-		      }
-
-                    if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
-                       "Problem deleting value.\n")) != OK) {
-                       return(ERROR);
-		     }
-
-		  }
-                else {
-
-                    /* PrintError("Updating value.\n"); */
-
-                    /* 
-                     * The value in the array is NOT NaN, so set the fetched
-                     *   value to that
-                     *   in the data array.
-                     *
-                     * Only update values within the time span of the model run.
-                     *   Any data prior to the run control start date are NOT
-                     *     saved to the database. This prevents people from 
-                     *     overwriting old forecast data with initial condition
-                     *     data. In general, don't want to save results outside
-                     *     the span of the model run dates.
-		     *
-		     * This implementation was chosen to avoid resizing the
-		     * data arrays and having to walk forward in the RiverWare
-		     * data array to match the first date of HDB data.
-                     */
-                    if (SqlDateCompare(
-                        fetch_date,
-                        run_control_start_date,
-                        &result) != OK) {
-                            PrintError("Could not compare dates %s and %s.\n",
-                                        run_control_start_date,
-                                        fetch_date);
-                            return(ERROR);
-                    }
-                        
-                    if (result < 0) {
-                        /* PrintError("Value found before run control date. Not changing.\n"); */
-                        /* Data is before run control start date, do nothing */
-                    }
-                    else {
-                        /*
-                         * Otherwise, the data is after the run control start
-                         *   date, so update the value in the database.
-                         */
-		       new_value = header->data[(array_locator + i) % header->number_of_timesteps].value;
-		       
-		       if (!strcmp (header->timestep, HOUR))
-		       {
-			  /*printf("Updating...");*/
-			  /* EXEC SQL AT :current_dbsite UPDATE m_hour
-			     SET value = :new_value
-			     WHERE CURRENT OF UpdCur; */ 
-
-{
-     struct sqlexd sqlstm;
-     sqlstm.sqlvsn = 10;
-     sqlstm.arrsiz = 3;
-     sqlstm.sqladtp = &sqladt;
-     sqlstm.sqltdsp = &sqltds;
-     sqlstm.stmt = "update m_hour  set value=:b1 where rowid = :x";
-     sqlstm.iters = (unsigned int  )2;
-     sqlstm.offset = (unsigned int  )150;
-     sqlstm.cud = sqlcud0;
-     sqlstm.sqlest = (unsigned char  *)&sqlca;
-     sqlstm.sqlety = (unsigned short)256;
-     sqlstm.occurs = (unsigned int  )0;
-     sqlstm.sqhstv[0] = (         void  *)&new_value;
-     sqlstm.sqhstl[0] = (unsigned int  )sizeof(double);
-     sqlstm.sqhsts[0] = (         int  )sizeof(double);
-     sqlstm.sqindv[0] = (         void  *)0;
-     sqlstm.sqinds[0] = (         int  )0;
-     sqlstm.sqharm[0] = (unsigned int  )0;
-     sqlstm.sqadto[0] = (unsigned short )0;
-     sqlstm.sqtdso[0] = (unsigned short )0;
-     sqlstm.sqhstv[1] = (         void  *)current_dbsite;
-     sqlstm.sqhstl[1] = (unsigned int  )10;
-     sqlstm.sqhsts[1] = (         int  )10;
-     sqlstm.sqindv[1] = (         void  *)0;
-     sqlstm.sqinds[1] = (         int  )0;
-     sqlstm.sqharm[1] = (unsigned int  )0;
-     sqlstm.sqadto[1] = (unsigned short )0;
-     sqlstm.sqtdso[1] = (unsigned short )0;
-     sqlstm.sqphsv = sqlstm.sqhstv;
-     sqlstm.sqphsl = sqlstm.sqhstl;
-     sqlstm.sqphss = sqlstm.sqhsts;
-     sqlstm.sqpind = sqlstm.sqindv;
-     sqlstm.sqpins = sqlstm.sqinds;
-     sqlstm.sqparm = sqlstm.sqharm;
-     sqlstm.sqparc = sqlstm.sqharc;
-     sqlstm.sqpadto = sqlstm.sqadto;
-     sqlstm.sqptdso = sqlstm.sqtdso;
-     sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-		       }
-		       else if (!strcmp (header->timestep, DAY))
-		       {
-			  /*printf("Updating...");*/
-			  /* EXEC SQL AT :current_dbsite UPDATE m_day
-			     SET value = :new_value
-			     WHERE CURRENT OF UpdCur; */ 
-
-{
-     struct sqlexd sqlstm;
-     sqlstm.sqlvsn = 10;
-     sqlstm.arrsiz = 3;
-     sqlstm.sqladtp = &sqladt;
-     sqlstm.sqltdsp = &sqltds;
-     sqlstm.stmt = "update m_day  set value=:b1 where rowid = :x";
-     sqlstm.iters = (unsigned int  )2;
-     sqlstm.offset = (unsigned int  )173;
-     sqlstm.cud = sqlcud0;
-     sqlstm.sqlest = (unsigned char  *)&sqlca;
-     sqlstm.sqlety = (unsigned short)256;
-     sqlstm.occurs = (unsigned int  )0;
-     sqlstm.sqhstv[0] = (         void  *)&new_value;
-     sqlstm.sqhstl[0] = (unsigned int  )sizeof(double);
-     sqlstm.sqhsts[0] = (         int  )sizeof(double);
-     sqlstm.sqindv[0] = (         void  *)0;
-     sqlstm.sqinds[0] = (         int  )0;
-     sqlstm.sqharm[0] = (unsigned int  )0;
-     sqlstm.sqadto[0] = (unsigned short )0;
-     sqlstm.sqtdso[0] = (unsigned short )0;
-     sqlstm.sqhstv[1] = (         void  *)current_dbsite;
-     sqlstm.sqhstl[1] = (unsigned int  )10;
-     sqlstm.sqhsts[1] = (         int  )10;
-     sqlstm.sqindv[1] = (         void  *)0;
-     sqlstm.sqinds[1] = (         int  )0;
-     sqlstm.sqharm[1] = (unsigned int  )0;
-     sqlstm.sqadto[1] = (unsigned short )0;
-     sqlstm.sqtdso[1] = (unsigned short )0;
-     sqlstm.sqphsv = sqlstm.sqhstv;
-     sqlstm.sqphsl = sqlstm.sqhstl;
-     sqlstm.sqphss = sqlstm.sqhsts;
-     sqlstm.sqpind = sqlstm.sqindv;
-     sqlstm.sqpins = sqlstm.sqinds;
-     sqlstm.sqparm = sqlstm.sqharm;
-     sqlstm.sqparc = sqlstm.sqharc;
-     sqlstm.sqpadto = sqlstm.sqadto;
-     sqlstm.sqptdso = sqlstm.sqtdso;
-     sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-		       }
-		       else if (!strcmp (header->timestep, MONTH))
-		       {
-			  /*printf("Updating...");*/
-			  /* EXEC SQL AT :current_dbsite UPDATE m_month
-			     SET value = :new_value
-			     WHERE CURRENT OF UpdCur; */ 
-
-{
-     struct sqlexd sqlstm;
-     sqlstm.sqlvsn = 10;
-     sqlstm.arrsiz = 3;
-     sqlstm.sqladtp = &sqladt;
-     sqlstm.sqltdsp = &sqltds;
-     sqlstm.stmt = "update m_month  set value=:b1 where rowid = :x";
-     sqlstm.iters = (unsigned int  )2;
-     sqlstm.offset = (unsigned int  )196;
-     sqlstm.cud = sqlcud0;
-     sqlstm.sqlest = (unsigned char  *)&sqlca;
-     sqlstm.sqlety = (unsigned short)256;
-     sqlstm.occurs = (unsigned int  )0;
-     sqlstm.sqhstv[0] = (         void  *)&new_value;
-     sqlstm.sqhstl[0] = (unsigned int  )sizeof(double);
-     sqlstm.sqhsts[0] = (         int  )sizeof(double);
-     sqlstm.sqindv[0] = (         void  *)0;
-     sqlstm.sqinds[0] = (         int  )0;
-     sqlstm.sqharm[0] = (unsigned int  )0;
-     sqlstm.sqadto[0] = (unsigned short )0;
-     sqlstm.sqtdso[0] = (unsigned short )0;
-     sqlstm.sqhstv[1] = (         void  *)current_dbsite;
-     sqlstm.sqhstl[1] = (unsigned int  )10;
-     sqlstm.sqhsts[1] = (         int  )10;
-     sqlstm.sqindv[1] = (         void  *)0;
-     sqlstm.sqinds[1] = (         int  )0;
-     sqlstm.sqharm[1] = (unsigned int  )0;
-     sqlstm.sqadto[1] = (unsigned short )0;
-     sqlstm.sqtdso[1] = (unsigned short )0;
-     sqlstm.sqphsv = sqlstm.sqhstv;
-     sqlstm.sqphsl = sqlstm.sqhstl;
-     sqlstm.sqphss = sqlstm.sqhsts;
-     sqlstm.sqpind = sqlstm.sqindv;
-     sqlstm.sqpins = sqlstm.sqinds;
-     sqlstm.sqparm = sqlstm.sqharm;
-     sqlstm.sqparc = sqlstm.sqharc;
-     sqlstm.sqpadto = sqlstm.sqadto;
-     sqlstm.sqptdso = sqlstm.sqtdso;
-     sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-		       }
-		       else
-		       {
-			  PrintError ("Timestep %s unknown. Exiting.", 
-				      header->timestep);
-			  return (ERROR);
-		       }
-			
-                        if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
-				      "Problem updating value in m_day.\n")) 
-			    != OK) 
-			  {
-			    return(ERROR);
-			  }
-		      }
-		}
-                
-                /* 
-                 * Set the processed flag to 'Y'.
-                 */
-                header->data[(array_locator + i) % header->number_of_timesteps].processed_flag = 'Y';
-
-                /* 
-                 * Set the array_locator to one position ahead of them match
-                 *   that was just found in the array.
-                 */
-                array_locator = (array_locator + i + 1) % header->number_of_timesteps;
-
-                /* 
-                 * Indicate that something was found in the array.
-                 *   This is used later to decide if record should be deleted.
-                 */
-                found_in_array = 1;
-                break; /* stop searching the array for a match */
-            } /* end if (result == 0) -- a match was found */
-            else { /* the comparison did not provide a match. Try another */
-                if (result < 0) { 
-                    /* The negative case is an unexpected case b/c of order */
-                    PrintError("DMI: DmiSaveData() found date values out of order.\n");
-                }
-
-                continue;
-            }
-        } /* done searching array for a match to the fetched row. */
-
-        /* 
-         * If the array did not hold a match, delete the row from the database.
-         */
-        if (!found_in_array) {
-	  /* The fetched value is not in data array -- delete it! */
-	  if (!strcmp (header->timestep, HOUR))
-	    {
-	      /* EXEC SQL AT :current_dbsite DELETE FROM m_hour 
-		WHERE CURRENT OF UpdCur; */ 
-
-{
-       struct sqlexd sqlstm;
-       sqlstm.sqlvsn = 10;
-       sqlstm.arrsiz = 3;
-       sqlstm.sqladtp = &sqladt;
-       sqlstm.sqltdsp = &sqltds;
-       sqlstm.stmt = "delete  from m_hour  where rowid = :x";
-       sqlstm.iters = (unsigned int  )2;
-       sqlstm.offset = (unsigned int  )219;
-       sqlstm.cud = sqlcud0;
-       sqlstm.sqlest = (unsigned char  *)&sqlca;
-       sqlstm.sqlety = (unsigned short)256;
-       sqlstm.occurs = (unsigned int  )0;
-       sqlstm.sqhstv[0] = (         void  *)current_dbsite;
-       sqlstm.sqhstl[0] = (unsigned int  )10;
-       sqlstm.sqhsts[0] = (         int  )10;
-       sqlstm.sqindv[0] = (         void  *)0;
-       sqlstm.sqinds[0] = (         int  )0;
-       sqlstm.sqharm[0] = (unsigned int  )0;
-       sqlstm.sqadto[0] = (unsigned short )0;
-       sqlstm.sqtdso[0] = (unsigned short )0;
-       sqlstm.sqphsv = sqlstm.sqhstv;
-       sqlstm.sqphsl = sqlstm.sqhstl;
-       sqlstm.sqphss = sqlstm.sqhsts;
-       sqlstm.sqpind = sqlstm.sqindv;
-       sqlstm.sqpins = sqlstm.sqinds;
-       sqlstm.sqparm = sqlstm.sqharm;
-       sqlstm.sqparc = sqlstm.sqharc;
-       sqlstm.sqpadto = sqlstm.sqadto;
-       sqlstm.sqptdso = sqlstm.sqtdso;
-       sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-	    }
-	  else if (!strcmp (header->timestep, DAY))
-	    {
-	      /* EXEC SQL AT :current_dbsite DELETE FROM m_day
-		WHERE CURRENT OF UpdCur; */ 
-
-{
-       struct sqlexd sqlstm;
-       sqlstm.sqlvsn = 10;
-       sqlstm.arrsiz = 3;
-       sqlstm.sqladtp = &sqladt;
-       sqlstm.sqltdsp = &sqltds;
-       sqlstm.stmt = "delete  from m_day  where rowid = :x";
-       sqlstm.iters = (unsigned int  )2;
-       sqlstm.offset = (unsigned int  )238;
-       sqlstm.cud = sqlcud0;
-       sqlstm.sqlest = (unsigned char  *)&sqlca;
-       sqlstm.sqlety = (unsigned short)256;
-       sqlstm.occurs = (unsigned int  )0;
-       sqlstm.sqhstv[0] = (         void  *)current_dbsite;
-       sqlstm.sqhstl[0] = (unsigned int  )10;
-       sqlstm.sqhsts[0] = (         int  )10;
-       sqlstm.sqindv[0] = (         void  *)0;
-       sqlstm.sqinds[0] = (         int  )0;
-       sqlstm.sqharm[0] = (unsigned int  )0;
-       sqlstm.sqadto[0] = (unsigned short )0;
-       sqlstm.sqtdso[0] = (unsigned short )0;
-       sqlstm.sqphsv = sqlstm.sqhstv;
-       sqlstm.sqphsl = sqlstm.sqhstl;
-       sqlstm.sqphss = sqlstm.sqhsts;
-       sqlstm.sqpind = sqlstm.sqindv;
-       sqlstm.sqpins = sqlstm.sqinds;
-       sqlstm.sqparm = sqlstm.sqharm;
-       sqlstm.sqparc = sqlstm.sqharc;
-       sqlstm.sqpadto = sqlstm.sqadto;
-       sqlstm.sqptdso = sqlstm.sqtdso;
-       sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-	    }
-	  else if (!strcmp (header->timestep, MONTH))
-	    {
-	      /* EXEC SQL AT :current_dbsite DELETE FROM m_month
-		WHERE CURRENT OF UpdCur; */ 
-
-{
-       struct sqlexd sqlstm;
-       sqlstm.sqlvsn = 10;
-       sqlstm.arrsiz = 3;
-       sqlstm.sqladtp = &sqladt;
-       sqlstm.sqltdsp = &sqltds;
-       sqlstm.stmt = "delete  from m_month  where rowid = :x";
-       sqlstm.iters = (unsigned int  )2;
-       sqlstm.offset = (unsigned int  )257;
-       sqlstm.cud = sqlcud0;
-       sqlstm.sqlest = (unsigned char  *)&sqlca;
-       sqlstm.sqlety = (unsigned short)256;
-       sqlstm.occurs = (unsigned int  )0;
-       sqlstm.sqhstv[0] = (         void  *)current_dbsite;
-       sqlstm.sqhstl[0] = (unsigned int  )10;
-       sqlstm.sqhsts[0] = (         int  )10;
-       sqlstm.sqindv[0] = (         void  *)0;
-       sqlstm.sqinds[0] = (         int  )0;
-       sqlstm.sqharm[0] = (unsigned int  )0;
-       sqlstm.sqadto[0] = (unsigned short )0;
-       sqlstm.sqtdso[0] = (unsigned short )0;
-       sqlstm.sqphsv = sqlstm.sqhstv;
-       sqlstm.sqphsl = sqlstm.sqhstl;
-       sqlstm.sqphss = sqlstm.sqhsts;
-       sqlstm.sqpind = sqlstm.sqindv;
-       sqlstm.sqpins = sqlstm.sqinds;
-       sqlstm.sqparm = sqlstm.sqharm;
-       sqlstm.sqparc = sqlstm.sqharc;
-       sqlstm.sqpadto = sqlstm.sqadto;
-       sqlstm.sqptdso = sqlstm.sqtdso;
-       sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-	    }
-	  else
-	    {
-	      PrintError ("Timestep %s unknown. Exiting.", 
-			  header->timestep);
-	      return (ERROR);
-	    }
-	  
-	  if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
-	       "Problem deleting value from m_day.\n")) != OK) {
-               return(ERROR);
-            }
-
-                /* 
-                 * Post a warning that the row is being deleted.
-                 */
-            PrintError("DMI: Removing value from model table because it was not found in the datafile.\nSite Datatype Id: %d\nDate: %s\n",
-                        header->hdb_site_datatype_id,
-                        fetch_date);
-        }
-
-    } /* end while(!done) -- done fetching rows from the database */
-
-    /* 
-     * Close the cursor.
-     */
-    /* EXEC SQL CLOSE UpdCur; */ 
-
-{
-    struct sqlexd sqlstm;
-    sqlstm.sqlvsn = 10;
-    sqlstm.arrsiz = 3;
-    sqlstm.sqladtp = &sqladt;
-    sqlstm.sqltdsp = &sqltds;
-    sqlstm.iters = (unsigned int  )1;
-    sqlstm.offset = (unsigned int  )276;
-    sqlstm.cud = sqlcud0;
-    sqlstm.sqlest = (unsigned char  *)&sqlca;
-    sqlstm.sqlety = (unsigned short)256;
-    sqlstm.occurs = (unsigned int  )0;
-    sqlstm.sqhstv[0] = (         void  *)current_dbsite;
-    sqlstm.sqhstl[0] = (unsigned int  )10;
-    sqlstm.sqhsts[0] = (         int  )0;
-    sqlstm.sqindv[0] = (         void  *)0;
-    sqlstm.sqinds[0] = (         int  )0;
-    sqlstm.sqharm[0] = (unsigned int  )0;
-    sqlstm.sqadto[0] = (unsigned short )0;
-    sqlstm.sqtdso[0] = (unsigned short )0;
-    sqlstm.sqphsv = sqlstm.sqhstv;
-    sqlstm.sqphsl = sqlstm.sqhstl;
-    sqlstm.sqphss = sqlstm.sqhsts;
-    sqlstm.sqpind = sqlstm.sqindv;
-    sqlstm.sqpins = sqlstm.sqinds;
-    sqlstm.sqparm = sqlstm.sqharm;
-    sqlstm.sqparc = sqlstm.sqharc;
-    sqlstm.sqpadto = sqlstm.sqadto;
-    sqlstm.sqptdso = sqlstm.sqtdso;
-    sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-    if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
-       "Problem closing cursor after select from m_day.\n")) != OK) {
-       return(ERROR);
-    }
-
-/* PrintError("Done fetching values.\n"); */
-                     
-    /*
-     * Now go back and see what values were not originally present in the db 
-     *   for update. All values with processed_flag == 'N' must be inserted
-     */
-    sprintf(insert_statement, "INSERT INTO %s (model_run_id, site_datatype_id, start_date_time, end_date_time, value) VALUES (%d, %d, to_date (:d, 'dd-mon-yyyy hh24:mi:ss'), to_date (:e, 'dd-mon-yyyy hh24:mi:ss'), :v)",
-	                       model_table_name,
-	                       model_run_id,
-                               header->hdb_site_datatype_id);
-
-    /* Declare and prepare insert statement depending on which
-       database is current */
-    if (!strcmp (current_dbsite, dbsite_array[0].dbsite_alias))
-    {
-       /* EXEC SQL AT :current_dbsite DECLARE InsStmt STATEMENT; */ 
-
-       /* EXEC SQL PREPARE InsStmt FROM :insert_statement; */ 
-
-{
-       struct sqlexd sqlstm;
-       sqlstm.sqlvsn = 10;
-       sqlstm.arrsiz = 3;
-       sqlstm.sqladtp = &sqladt;
-       sqlstm.sqltdsp = &sqltds;
-       sqlstm.stmt = "";
-       sqlstm.iters = (unsigned int  )1;
-       sqlstm.offset = (unsigned int  )295;
-       sqlstm.cud = sqlcud0;
-       sqlstm.sqlest = (unsigned char  *)&sqlca;
-       sqlstm.sqlety = (unsigned short)256;
-       sqlstm.occurs = (unsigned int  )0;
-       sqlstm.sqhstv[0] = (         void  *)insert_statement;
-       sqlstm.sqhstl[0] = (unsigned int  )1000;
-       sqlstm.sqhsts[0] = (         int  )0;
-       sqlstm.sqindv[0] = (         void  *)0;
-       sqlstm.sqinds[0] = (         int  )0;
-       sqlstm.sqharm[0] = (unsigned int  )0;
-       sqlstm.sqadto[0] = (unsigned short )0;
-       sqlstm.sqtdso[0] = (unsigned short )0;
-       sqlstm.sqhstv[1] = (         void  *)current_dbsite;
-       sqlstm.sqhstl[1] = (unsigned int  )10;
-       sqlstm.sqhsts[1] = (         int  )0;
-       sqlstm.sqindv[1] = (         void  *)0;
-       sqlstm.sqinds[1] = (         int  )0;
-       sqlstm.sqharm[1] = (unsigned int  )0;
-       sqlstm.sqadto[1] = (unsigned short )0;
-       sqlstm.sqtdso[1] = (unsigned short )0;
-       sqlstm.sqphsv = sqlstm.sqhstv;
-       sqlstm.sqphsl = sqlstm.sqhstl;
-       sqlstm.sqphss = sqlstm.sqhsts;
-       sqlstm.sqpind = sqlstm.sqindv;
-       sqlstm.sqpins = sqlstm.sqinds;
-       sqlstm.sqparm = sqlstm.sqharm;
-       sqlstm.sqparc = sqlstm.sqharc;
-       sqlstm.sqpadto = sqlstm.sqadto;
-       sqlstm.sqptdso = sqlstm.sqtdso;
-       sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-    }
-    else if (!strcmp (current_dbsite, dbsite_array[1].dbsite_alias))
-    {
-       /* EXEC SQL AT :current_dbsite DECLARE InsStmt1 STATEMENT; */ 
-
-       /* EXEC SQL PREPARE InsStmt1 FROM :insert_statement; */ 
-
-{
-       struct sqlexd sqlstm;
-       sqlstm.sqlvsn = 10;
-       sqlstm.arrsiz = 3;
-       sqlstm.sqladtp = &sqladt;
-       sqlstm.sqltdsp = &sqltds;
-       sqlstm.stmt = "";
-       sqlstm.iters = (unsigned int  )1;
-       sqlstm.offset = (unsigned int  )318;
-       sqlstm.cud = sqlcud0;
-       sqlstm.sqlest = (unsigned char  *)&sqlca;
-       sqlstm.sqlety = (unsigned short)256;
-       sqlstm.occurs = (unsigned int  )0;
-       sqlstm.sqhstv[0] = (         void  *)insert_statement;
-       sqlstm.sqhstl[0] = (unsigned int  )1000;
-       sqlstm.sqhsts[0] = (         int  )0;
-       sqlstm.sqindv[0] = (         void  *)0;
-       sqlstm.sqinds[0] = (         int  )0;
-       sqlstm.sqharm[0] = (unsigned int  )0;
-       sqlstm.sqadto[0] = (unsigned short )0;
-       sqlstm.sqtdso[0] = (unsigned short )0;
-       sqlstm.sqhstv[1] = (         void  *)current_dbsite;
-       sqlstm.sqhstl[1] = (unsigned int  )10;
-       sqlstm.sqhsts[1] = (         int  )0;
-       sqlstm.sqindv[1] = (         void  *)0;
-       sqlstm.sqinds[1] = (         int  )0;
-       sqlstm.sqharm[1] = (unsigned int  )0;
-       sqlstm.sqadto[1] = (unsigned short )0;
-       sqlstm.sqtdso[1] = (unsigned short )0;
-       sqlstm.sqphsv = sqlstm.sqhstv;
-       sqlstm.sqphsl = sqlstm.sqhstl;
-       sqlstm.sqphss = sqlstm.sqhsts;
-       sqlstm.sqpind = sqlstm.sqindv;
-       sqlstm.sqpins = sqlstm.sqinds;
-       sqlstm.sqparm = sqlstm.sqharm;
-       sqlstm.sqparc = sqlstm.sqharc;
-       sqlstm.sqpadto = sqlstm.sqadto;
-       sqlstm.sqptdso = sqlstm.sqtdso;
-       sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-    }
-    else if (!strcmp (current_dbsite, dbsite_array[2].dbsite_alias))
-    {
-       /* EXEC SQL AT :current_dbsite DECLARE InsStmt2 STATEMENT; */ 
-
-       /* EXEC SQL PREPARE InsStmt2 FROM :insert_statement; */ 
-
-{
-       struct sqlexd sqlstm;
-       sqlstm.sqlvsn = 10;
-       sqlstm.arrsiz = 3;
-       sqlstm.sqladtp = &sqladt;
-       sqlstm.sqltdsp = &sqltds;
-       sqlstm.stmt = "";
-       sqlstm.iters = (unsigned int  )1;
-       sqlstm.offset = (unsigned int  )341;
-       sqlstm.cud = sqlcud0;
-       sqlstm.sqlest = (unsigned char  *)&sqlca;
-       sqlstm.sqlety = (unsigned short)256;
-       sqlstm.occurs = (unsigned int  )0;
-       sqlstm.sqhstv[0] = (         void  *)insert_statement;
-       sqlstm.sqhstl[0] = (unsigned int  )1000;
-       sqlstm.sqhsts[0] = (         int  )0;
-       sqlstm.sqindv[0] = (         void  *)0;
-       sqlstm.sqinds[0] = (         int  )0;
-       sqlstm.sqharm[0] = (unsigned int  )0;
-       sqlstm.sqadto[0] = (unsigned short )0;
-       sqlstm.sqtdso[0] = (unsigned short )0;
-       sqlstm.sqhstv[1] = (         void  *)current_dbsite;
-       sqlstm.sqhstl[1] = (unsigned int  )10;
-       sqlstm.sqhsts[1] = (         int  )0;
-       sqlstm.sqindv[1] = (         void  *)0;
-       sqlstm.sqinds[1] = (         int  )0;
-       sqlstm.sqharm[1] = (unsigned int  )0;
-       sqlstm.sqadto[1] = (unsigned short )0;
-       sqlstm.sqtdso[1] = (unsigned short )0;
-       sqlstm.sqphsv = sqlstm.sqhstv;
-       sqlstm.sqphsl = sqlstm.sqhstl;
-       sqlstm.sqphss = sqlstm.sqhsts;
-       sqlstm.sqpind = sqlstm.sqindv;
-       sqlstm.sqpins = sqlstm.sqinds;
-       sqlstm.sqparm = sqlstm.sqharm;
-       sqlstm.sqparc = sqlstm.sqharc;
-       sqlstm.sqpadto = sqlstm.sqadto;
-       sqlstm.sqptdso = sqlstm.sqtdso;
-       sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-    }
-    else if (!strcmp (current_dbsite, dbsite_array[3].dbsite_alias))
-    {
-       /* EXEC SQL AT :current_dbsite DECLARE InsStmt3 STATEMENT; */ 
-
-       /* EXEC SQL PREPARE InsStmt3 FROM :insert_statement; */ 
-
-{
-       struct sqlexd sqlstm;
-       sqlstm.sqlvsn = 10;
-       sqlstm.arrsiz = 3;
-       sqlstm.sqladtp = &sqladt;
-       sqlstm.sqltdsp = &sqltds;
-       sqlstm.stmt = "";
-       sqlstm.iters = (unsigned int  )1;
-       sqlstm.offset = (unsigned int  )364;
-       sqlstm.cud = sqlcud0;
-       sqlstm.sqlest = (unsigned char  *)&sqlca;
-       sqlstm.sqlety = (unsigned short)256;
-       sqlstm.occurs = (unsigned int  )0;
-       sqlstm.sqhstv[0] = (         void  *)insert_statement;
-       sqlstm.sqhstl[0] = (unsigned int  )1000;
-       sqlstm.sqhsts[0] = (         int  )0;
-       sqlstm.sqindv[0] = (         void  *)0;
-       sqlstm.sqinds[0] = (         int  )0;
-       sqlstm.sqharm[0] = (unsigned int  )0;
-       sqlstm.sqadto[0] = (unsigned short )0;
-       sqlstm.sqtdso[0] = (unsigned short )0;
-       sqlstm.sqhstv[1] = (         void  *)current_dbsite;
-       sqlstm.sqhstl[1] = (unsigned int  )10;
-       sqlstm.sqhsts[1] = (         int  )0;
-       sqlstm.sqindv[1] = (         void  *)0;
-       sqlstm.sqinds[1] = (         int  )0;
-       sqlstm.sqharm[1] = (unsigned int  )0;
-       sqlstm.sqadto[1] = (unsigned short )0;
-       sqlstm.sqtdso[1] = (unsigned short )0;
-       sqlstm.sqphsv = sqlstm.sqhstv;
-       sqlstm.sqphsl = sqlstm.sqhstl;
-       sqlstm.sqphss = sqlstm.sqhsts;
-       sqlstm.sqpind = sqlstm.sqindv;
-       sqlstm.sqpins = sqlstm.sqinds;
-       sqlstm.sqparm = sqlstm.sqharm;
-       sqlstm.sqparc = sqlstm.sqharc;
-       sqlstm.sqpadto = sqlstm.sqadto;
-       sqlstm.sqptdso = sqlstm.sqtdso;
-       sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-    }
-    else
-    {
-       PrintError ("current_dbsite does not match any sites in dbsite_array.\n Exiting.");
-       return (ERROR);
-    }
- 
-    /* Check prepare for Oracle errors */
-    if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
-       "Problem preparing statement for insert into %s.\n", 
-       model_table_name)) != OK) {
-       return(ERROR);
-    }
-
-    /*
-     * Look at every member of the array and handle any not marked as processed
-     */
-    for (i = 0; i < header->number_of_timesteps; i++) {
-        if (header->data[i].processed_flag == 'N') {
-            new_value = header->data[i].value;
-            strcpy(new_date, header->data[i].hdb_date);
-            strcpy(end_date, header->data[i].end_date);
-
-            if (header->data[i].is_nan == 'Y') {
-                /* Do nothing -- don't insert the record */
-                /* PrintError("Did not insert a NaN value.\n"); */
-            }
-            else {
-
-                /*
-                 * Only insert values within the time span of the model run.
-                 *   Any data prior to the run control start date are NOT
-                 *     saved to the database. This prevents people from
-                 *     overwriting old forecast data with initial condition
-                 *     data. In general, don't want to save results outside
-                 *     the span of the model run dates.
-                 */
-
-                if (SqlDateCompare(
-                    new_date,
-                    run_control_start_date,
-                    &result) != OK) {
-                        PrintError("Could not compare dates %s and %s.\n",
-                                    run_control_start_date,
-                                    new_date);
-                        return(ERROR);
-                }
-                   
-                if (result < 0) {
-                    /* value before run control start date */
-                    /* Do Nothing */
-                    /* PrintError("Value found before run control date. Not changing.\n"); */
-                }
-                else {
-                    /* Data is after run control start date -- insert it */
-                    /* PrintError("Inserting a value.\n"); */
-		   if (!strcmp (current_dbsite, dbsite_array[0].dbsite_alias))
-		   {
-		      /* EXEC SQL AT :current_dbsite EXECUTE InsStmt
-			 USING :new_date, :end_date, :new_value; */ 
-
-{
-        struct sqlexd sqlstm;
-        sqlstm.sqlvsn = 10;
-        sqlstm.arrsiz = 4;
-        sqlstm.sqladtp = &sqladt;
-        sqlstm.sqltdsp = &sqltds;
-        sqlstm.stmt = "";
-        sqlstm.iters = (unsigned int  )1;
-        sqlstm.offset = (unsigned int  )387;
-        sqlstm.cud = sqlcud0;
-        sqlstm.sqlest = (unsigned char  *)&sqlca;
-        sqlstm.sqlety = (unsigned short)256;
-        sqlstm.occurs = (unsigned int  )0;
-        sqlstm.sqhstv[0] = (         void  *)new_date;
-        sqlstm.sqhstl[0] = (unsigned int  )21;
-        sqlstm.sqhsts[0] = (         int  )0;
-        sqlstm.sqindv[0] = (         void  *)0;
-        sqlstm.sqinds[0] = (         int  )0;
-        sqlstm.sqharm[0] = (unsigned int  )0;
-        sqlstm.sqadto[0] = (unsigned short )0;
-        sqlstm.sqtdso[0] = (unsigned short )0;
-        sqlstm.sqhstv[1] = (         void  *)end_date;
-        sqlstm.sqhstl[1] = (unsigned int  )21;
-        sqlstm.sqhsts[1] = (         int  )0;
-        sqlstm.sqindv[1] = (         void  *)0;
-        sqlstm.sqinds[1] = (         int  )0;
-        sqlstm.sqharm[1] = (unsigned int  )0;
-        sqlstm.sqadto[1] = (unsigned short )0;
-        sqlstm.sqtdso[1] = (unsigned short )0;
-        sqlstm.sqhstv[2] = (         void  *)&new_value;
-        sqlstm.sqhstl[2] = (unsigned int  )sizeof(double);
-        sqlstm.sqhsts[2] = (         int  )0;
-        sqlstm.sqindv[2] = (         void  *)0;
-        sqlstm.sqinds[2] = (         int  )0;
-        sqlstm.sqharm[2] = (unsigned int  )0;
-        sqlstm.sqadto[2] = (unsigned short )0;
-        sqlstm.sqtdso[2] = (unsigned short )0;
-        sqlstm.sqhstv[3] = (         void  *)current_dbsite;
-        sqlstm.sqhstl[3] = (unsigned int  )10;
-        sqlstm.sqhsts[3] = (         int  )0;
-        sqlstm.sqindv[3] = (         void  *)0;
-        sqlstm.sqinds[3] = (         int  )0;
-        sqlstm.sqharm[3] = (unsigned int  )0;
-        sqlstm.sqadto[3] = (unsigned short )0;
-        sqlstm.sqtdso[3] = (unsigned short )0;
-        sqlstm.sqphsv = sqlstm.sqhstv;
-        sqlstm.sqphsl = sqlstm.sqhstl;
-        sqlstm.sqphss = sqlstm.sqhsts;
-        sqlstm.sqpind = sqlstm.sqindv;
-        sqlstm.sqpins = sqlstm.sqinds;
-        sqlstm.sqparm = sqlstm.sqharm;
-        sqlstm.sqparc = sqlstm.sqharc;
-        sqlstm.sqpadto = sqlstm.sqadto;
-        sqlstm.sqptdso = sqlstm.sqtdso;
-        sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-		   }
-		   else if (!strcmp (current_dbsite, dbsite_array[1].dbsite_alias))
-		   {
-		      /* EXEC SQL AT :current_dbsite EXECUTE InsStmt1
-			 USING :new_date, :end_date, :new_value; */ 
-
-{
-        struct sqlexd sqlstm;
-        sqlstm.sqlvsn = 10;
-        sqlstm.arrsiz = 4;
-        sqlstm.sqladtp = &sqladt;
-        sqlstm.sqltdsp = &sqltds;
-        sqlstm.stmt = "";
-        sqlstm.iters = (unsigned int  )1;
-        sqlstm.offset = (unsigned int  )418;
-        sqlstm.cud = sqlcud0;
-        sqlstm.sqlest = (unsigned char  *)&sqlca;
-        sqlstm.sqlety = (unsigned short)256;
-        sqlstm.occurs = (unsigned int  )0;
-        sqlstm.sqhstv[0] = (         void  *)new_date;
-        sqlstm.sqhstl[0] = (unsigned int  )21;
-        sqlstm.sqhsts[0] = (         int  )0;
-        sqlstm.sqindv[0] = (         void  *)0;
-        sqlstm.sqinds[0] = (         int  )0;
-        sqlstm.sqharm[0] = (unsigned int  )0;
-        sqlstm.sqadto[0] = (unsigned short )0;
-        sqlstm.sqtdso[0] = (unsigned short )0;
-        sqlstm.sqhstv[1] = (         void  *)end_date;
-        sqlstm.sqhstl[1] = (unsigned int  )21;
-        sqlstm.sqhsts[1] = (         int  )0;
-        sqlstm.sqindv[1] = (         void  *)0;
-        sqlstm.sqinds[1] = (         int  )0;
-        sqlstm.sqharm[1] = (unsigned int  )0;
-        sqlstm.sqadto[1] = (unsigned short )0;
-        sqlstm.sqtdso[1] = (unsigned short )0;
-        sqlstm.sqhstv[2] = (         void  *)&new_value;
-        sqlstm.sqhstl[2] = (unsigned int  )sizeof(double);
-        sqlstm.sqhsts[2] = (         int  )0;
-        sqlstm.sqindv[2] = (         void  *)0;
-        sqlstm.sqinds[2] = (         int  )0;
-        sqlstm.sqharm[2] = (unsigned int  )0;
-        sqlstm.sqadto[2] = (unsigned short )0;
-        sqlstm.sqtdso[2] = (unsigned short )0;
-        sqlstm.sqhstv[3] = (         void  *)current_dbsite;
-        sqlstm.sqhstl[3] = (unsigned int  )10;
-        sqlstm.sqhsts[3] = (         int  )0;
-        sqlstm.sqindv[3] = (         void  *)0;
-        sqlstm.sqinds[3] = (         int  )0;
-        sqlstm.sqharm[3] = (unsigned int  )0;
-        sqlstm.sqadto[3] = (unsigned short )0;
-        sqlstm.sqtdso[3] = (unsigned short )0;
-        sqlstm.sqphsv = sqlstm.sqhstv;
-        sqlstm.sqphsl = sqlstm.sqhstl;
-        sqlstm.sqphss = sqlstm.sqhsts;
-        sqlstm.sqpind = sqlstm.sqindv;
-        sqlstm.sqpins = sqlstm.sqinds;
-        sqlstm.sqparm = sqlstm.sqharm;
-        sqlstm.sqparc = sqlstm.sqharc;
-        sqlstm.sqpadto = sqlstm.sqadto;
-        sqlstm.sqptdso = sqlstm.sqtdso;
-        sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-		   }
-		   else if (!strcmp (current_dbsite, dbsite_array[2].dbsite_alias))
-		   {
-		      /* EXEC SQL AT :current_dbsite EXECUTE InsStmt2
-			 USING :new_date, :end_date, :new_value; */ 
-
-{
-        struct sqlexd sqlstm;
-        sqlstm.sqlvsn = 10;
-        sqlstm.arrsiz = 4;
-        sqlstm.sqladtp = &sqladt;
-        sqlstm.sqltdsp = &sqltds;
-        sqlstm.stmt = "";
-        sqlstm.iters = (unsigned int  )1;
-        sqlstm.offset = (unsigned int  )449;
-        sqlstm.cud = sqlcud0;
-        sqlstm.sqlest = (unsigned char  *)&sqlca;
-        sqlstm.sqlety = (unsigned short)256;
-        sqlstm.occurs = (unsigned int  )0;
-        sqlstm.sqhstv[0] = (         void  *)new_date;
-        sqlstm.sqhstl[0] = (unsigned int  )21;
-        sqlstm.sqhsts[0] = (         int  )0;
-        sqlstm.sqindv[0] = (         void  *)0;
-        sqlstm.sqinds[0] = (         int  )0;
-        sqlstm.sqharm[0] = (unsigned int  )0;
-        sqlstm.sqadto[0] = (unsigned short )0;
-        sqlstm.sqtdso[0] = (unsigned short )0;
-        sqlstm.sqhstv[1] = (         void  *)end_date;
-        sqlstm.sqhstl[1] = (unsigned int  )21;
-        sqlstm.sqhsts[1] = (         int  )0;
-        sqlstm.sqindv[1] = (         void  *)0;
-        sqlstm.sqinds[1] = (         int  )0;
-        sqlstm.sqharm[1] = (unsigned int  )0;
-        sqlstm.sqadto[1] = (unsigned short )0;
-        sqlstm.sqtdso[1] = (unsigned short )0;
-        sqlstm.sqhstv[2] = (         void  *)&new_value;
-        sqlstm.sqhstl[2] = (unsigned int  )sizeof(double);
-        sqlstm.sqhsts[2] = (         int  )0;
-        sqlstm.sqindv[2] = (         void  *)0;
-        sqlstm.sqinds[2] = (         int  )0;
-        sqlstm.sqharm[2] = (unsigned int  )0;
-        sqlstm.sqadto[2] = (unsigned short )0;
-        sqlstm.sqtdso[2] = (unsigned short )0;
-        sqlstm.sqhstv[3] = (         void  *)current_dbsite;
-        sqlstm.sqhstl[3] = (unsigned int  )10;
-        sqlstm.sqhsts[3] = (         int  )0;
-        sqlstm.sqindv[3] = (         void  *)0;
-        sqlstm.sqinds[3] = (         int  )0;
-        sqlstm.sqharm[3] = (unsigned int  )0;
-        sqlstm.sqadto[3] = (unsigned short )0;
-        sqlstm.sqtdso[3] = (unsigned short )0;
-        sqlstm.sqphsv = sqlstm.sqhstv;
-        sqlstm.sqphsl = sqlstm.sqhstl;
-        sqlstm.sqphss = sqlstm.sqhsts;
-        sqlstm.sqpind = sqlstm.sqindv;
-        sqlstm.sqpins = sqlstm.sqinds;
-        sqlstm.sqparm = sqlstm.sqharm;
-        sqlstm.sqparc = sqlstm.sqharc;
-        sqlstm.sqpadto = sqlstm.sqadto;
-        sqlstm.sqptdso = sqlstm.sqtdso;
-        sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-		   }
-		   else if (!strcmp (current_dbsite, dbsite_array[3].dbsite_alias))
-		   {
-		      /* EXEC SQL AT :current_dbsite EXECUTE InsStmt3
-			 USING :new_date, :end_date, :new_value; */ 
-
-{
-        struct sqlexd sqlstm;
-        sqlstm.sqlvsn = 10;
-        sqlstm.arrsiz = 4;
-        sqlstm.sqladtp = &sqladt;
-        sqlstm.sqltdsp = &sqltds;
-        sqlstm.stmt = "";
-        sqlstm.iters = (unsigned int  )1;
-        sqlstm.offset = (unsigned int  )480;
-        sqlstm.cud = sqlcud0;
-        sqlstm.sqlest = (unsigned char  *)&sqlca;
-        sqlstm.sqlety = (unsigned short)256;
-        sqlstm.occurs = (unsigned int  )0;
-        sqlstm.sqhstv[0] = (         void  *)new_date;
-        sqlstm.sqhstl[0] = (unsigned int  )21;
-        sqlstm.sqhsts[0] = (         int  )0;
-        sqlstm.sqindv[0] = (         void  *)0;
-        sqlstm.sqinds[0] = (         int  )0;
-        sqlstm.sqharm[0] = (unsigned int  )0;
-        sqlstm.sqadto[0] = (unsigned short )0;
-        sqlstm.sqtdso[0] = (unsigned short )0;
-        sqlstm.sqhstv[1] = (         void  *)end_date;
-        sqlstm.sqhstl[1] = (unsigned int  )21;
-        sqlstm.sqhsts[1] = (         int  )0;
-        sqlstm.sqindv[1] = (         void  *)0;
-        sqlstm.sqinds[1] = (         int  )0;
-        sqlstm.sqharm[1] = (unsigned int  )0;
-        sqlstm.sqadto[1] = (unsigned short )0;
-        sqlstm.sqtdso[1] = (unsigned short )0;
-        sqlstm.sqhstv[2] = (         void  *)&new_value;
-        sqlstm.sqhstl[2] = (unsigned int  )sizeof(double);
-        sqlstm.sqhsts[2] = (         int  )0;
-        sqlstm.sqindv[2] = (         void  *)0;
-        sqlstm.sqinds[2] = (         int  )0;
-        sqlstm.sqharm[2] = (unsigned int  )0;
-        sqlstm.sqadto[2] = (unsigned short )0;
-        sqlstm.sqtdso[2] = (unsigned short )0;
-        sqlstm.sqhstv[3] = (         void  *)current_dbsite;
-        sqlstm.sqhstl[3] = (unsigned int  )10;
-        sqlstm.sqhsts[3] = (         int  )0;
-        sqlstm.sqindv[3] = (         void  *)0;
-        sqlstm.sqinds[3] = (         int  )0;
-        sqlstm.sqharm[3] = (unsigned int  )0;
-        sqlstm.sqadto[3] = (unsigned short )0;
-        sqlstm.sqtdso[3] = (unsigned short )0;
-        sqlstm.sqphsv = sqlstm.sqhstv;
-        sqlstm.sqphsl = sqlstm.sqhstl;
-        sqlstm.sqphss = sqlstm.sqhsts;
-        sqlstm.sqpind = sqlstm.sqindv;
-        sqlstm.sqpins = sqlstm.sqinds;
-        sqlstm.sqparm = sqlstm.sqharm;
-        sqlstm.sqparc = sqlstm.sqharc;
-        sqlstm.sqpadto = sqlstm.sqadto;
-        sqlstm.sqptdso = sqlstm.sqtdso;
-        sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-		   }
-		   else
-		   {
-		      PrintError ("current_dbsite does not match any sites in dbsite_array.\n Exiting.");
-		      return (ERROR);
-		   }
-		   /* Check results of insert for Oracle error */
-		   if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
-		       "Problem executing insert into %s.\n", model_table_name
-                        )) != OK) {
-		      return(ERROR);
-		   }
-                }
-            }
-
-            header->data[i].processed_flag = 'Y';
-        } /* end if (value not processed) */
-        else {
-	   /* the value was already processed */
-	   /* Do Nothing */
-	   /* PrintError("Found Value Already Processed.\n"); */
-        }
-    }
-
-    /* ORACLE -- can't set autocommit on, but commit anyway. */
+    /* Post a warning that one or more rows were deleted with the 
+       deleteRemaining statement. */
+    if (sqlca.sqlcode == 0)
+      PrintError("DMI: Removed values from database because they were outside the current run dates for this model run.\n");
+    
+    /* Commit; stored procedure doesn't */
     /* EXEC SQL AT :current_dbsite COMMIT; */ 
 
 {
     struct sqlexd sqlstm;
-    sqlstm.sqlvsn = 10;
-    sqlstm.arrsiz = 4;
+    sqlstm.sqlvsn = 12;
+    sqlstm.arrsiz = 7;
     sqlstm.sqladtp = &sqladt;
     sqlstm.sqltdsp = &sqltds;
     sqlstm.iters = (unsigned int  )1;
-    sqlstm.offset = (unsigned int  )511;
+    sqlstm.offset = (unsigned int  )205;
     sqlstm.cud = sqlcud0;
     sqlstm.sqlest = (unsigned char  *)&sqlca;
     sqlstm.sqlety = (unsigned short)256;
     sqlstm.occurs = (unsigned int  )0;
-    sqlstm.sqhstv[0] = (         void  *)current_dbsite;
-    sqlstm.sqhstl[0] = (unsigned int  )10;
+    sqlstm.sqhstv[0] = (unsigned char  *)current_dbsite;
+    sqlstm.sqhstl[0] = (unsigned long )10;
     sqlstm.sqhsts[0] = (         int  )0;
-    sqlstm.sqindv[0] = (         void  *)0;
+    sqlstm.sqindv[0] = (         short *)0;
     sqlstm.sqinds[0] = (         int  )0;
-    sqlstm.sqharm[0] = (unsigned int  )0;
+    sqlstm.sqharm[0] = (unsigned long )0;
     sqlstm.sqadto[0] = (unsigned short )0;
     sqlstm.sqtdso[0] = (unsigned short )0;
     sqlstm.sqphsv = sqlstm.sqhstv;
@@ -1854,7 +980,7 @@ int DmiSaveModelData(dmi_header_struct * header)
 
 
     if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
-       "Problem committing.\n")) != OK) {
+       "Problem committing delete of rows outside model run dates.\n")) != OK) {
        return(ERROR);
     }
 
@@ -1869,5 +995,186 @@ int DmiSaveModelData(dmi_header_struct * header)
 	}
     }
 
-    return(OK);
-  }
+  return(OK);
+}
+
+
+
+#define FUNC_NAME "DmiDeleteObsoleteModelSDIs"
+
+#define CHARS_PER_SDI 7
+#define NUM_SDIS 10000
+#define CHARS_PER_HEADER 100
+int DmiDeleteObsoleteModelSDIs(dmi_header_struct * list)
+{
+    /* EXEC SQL BEGIN DECLARE SECTION; */ 
+
+    char          *deleteStatement,
+	          tempDeleteStatement[CHARS_PER_HEADER],
+                  model_table_name[DATABASE_NAME_LENGTH];
+    /* EXEC SQL END DECLARE SECTION; */ 
+
+
+    char tempStatement[CHARS_PER_SDI + 1];
+    dmi_header_struct *current = list;
+
+    int result,
+      count;
+
+   /* Proceed only if first element is written to model tables.
+      DMIs currently (3/04) do not allow for some slots to be
+      written to r_ tables and others to m_ tables. So, it's safe
+      to exit if the first element goes to a real table. */
+   if (current->destination == REAL)
+     return (OK);
+
+   /* Get model table */
+   if (!strcmp (list->timestep, HOUR))
+     sprintf (model_table_name, MODEL_HOUR);
+   else if (!strcmp (list->timestep, DAY))
+     sprintf (model_table_name, MODEL_DAY);
+   else if (!strcmp (list->timestep, MONTH))
+     sprintf (model_table_name, MODEL_MONTH);
+   else
+     {
+       PrintError ("Error in %s...timestep %s unknown...\n.", 
+		   FUNC_NAME,list->timestep);
+       return (ERROR);
+     }
+
+   /* Malloc enough space for about 10000 site datatype IDs in the
+      string */
+   deleteStatement = malloc (CHARS_PER_HEADER + (NUM_SDIS * CHARS_PER_SDI));
+   if (!deleteStatement)
+     {
+       PrintError ("DMI: Error allocating space for deleteStatement.\n\t");
+       return (ERROR);
+     }
+
+   count = 0;
+
+   /* Output model_run_id must be the same for all SDIs, so use
+      the first one in the delete statement */
+   sprintf (tempDeleteStatement, "delete from %s where model_run_id = %d and site_datatype_id not in (%d", model_table_name, current->model_destination,
+	    current->hdb_site_datatype_id);
+   strcpy (deleteStatement, tempDeleteStatement);
+   
+   /* Walk through list to build up list of SDIs for delete statement */
+   current = current->next;
+   count++;
+
+   while (current)
+     {
+       /* increase size of string if necessary */
+       if (!(count % NUM_SDIS))
+	 {
+	   deleteStatement =  realloc (deleteStatement,
+				       CHARS_PER_HEADER +  
+				       ((count / NUM_SDIS + 1) * 
+					(NUM_SDIS * CHARS_PER_SDI)));
+	   
+	   if (!deleteStatement)
+	     {
+	       PrintError ("DMI: Error allocating space for deleteStatement.\n\t");
+	       return (ERROR);
+	     }
+	 }
+
+       sprintf (tempStatement, ", %d", current->hdb_site_datatype_id);
+       strcat (deleteStatement, tempStatement);
+       current = current->next;
+       count++;
+     }
+   
+   strcat (deleteStatement, ")");
+
+   /* EXEC SQL AT :current_dbsite EXECUTE IMMEDIATE :deleteStatement; */ 
+
+{
+   struct sqlexd sqlstm;
+   sqlstm.sqlvsn = 12;
+   sqlstm.arrsiz = 7;
+   sqlstm.sqladtp = &sqladt;
+   sqlstm.sqltdsp = &sqltds;
+   sqlstm.stmt = "";
+   sqlstm.iters = (unsigned int  )1;
+   sqlstm.offset = (unsigned int  )224;
+   sqlstm.cud = sqlcud0;
+   sqlstm.sqlest = (unsigned char  *)&sqlca;
+   sqlstm.sqlety = (unsigned short)256;
+   sqlstm.occurs = (unsigned int  )0;
+   sqlstm.sqhstv[0] = (unsigned char  *)deleteStatement;
+   sqlstm.sqhstl[0] = (unsigned long )0;
+   sqlstm.sqhsts[0] = (         int  )0;
+   sqlstm.sqindv[0] = (         short *)0;
+   sqlstm.sqinds[0] = (         int  )0;
+   sqlstm.sqharm[0] = (unsigned long )0;
+   sqlstm.sqadto[0] = (unsigned short )0;
+   sqlstm.sqtdso[0] = (unsigned short )0;
+   sqlstm.sqhstv[1] = (unsigned char  *)current_dbsite;
+   sqlstm.sqhstl[1] = (unsigned long )10;
+   sqlstm.sqhsts[1] = (         int  )0;
+   sqlstm.sqindv[1] = (         short *)0;
+   sqlstm.sqinds[1] = (         int  )0;
+   sqlstm.sqharm[1] = (unsigned long )0;
+   sqlstm.sqadto[1] = (unsigned short )0;
+   sqlstm.sqtdso[1] = (unsigned short )0;
+   sqlstm.sqphsv = sqlstm.sqhstv;
+   sqlstm.sqphsl = sqlstm.sqhstl;
+   sqlstm.sqphss = sqlstm.sqhsts;
+   sqlstm.sqpind = sqlstm.sqindv;
+   sqlstm.sqpins = sqlstm.sqinds;
+   sqlstm.sqparm = sqlstm.sqharm;
+   sqlstm.sqparc = sqlstm.sqharc;
+   sqlstm.sqpadto = sqlstm.sqadto;
+   sqlstm.sqptdso = sqlstm.sqtdso;
+   sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
+}
+
+
+
+   if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
+				  "Error deleting obsolete site_datatype_ids from model run: \n\t %s\n", deleteStatement)) != OK)
+     {
+       /* EXEC SQL AT :current_dbsite ROLLBACK; */ 
+
+{
+       struct sqlexd sqlstm;
+       sqlstm.sqlvsn = 12;
+       sqlstm.arrsiz = 7;
+       sqlstm.sqladtp = &sqladt;
+       sqlstm.sqltdsp = &sqltds;
+       sqlstm.iters = (unsigned int  )1;
+       sqlstm.offset = (unsigned int  )247;
+       sqlstm.cud = sqlcud0;
+       sqlstm.sqlest = (unsigned char  *)&sqlca;
+       sqlstm.sqlety = (unsigned short)256;
+       sqlstm.occurs = (unsigned int  )0;
+       sqlstm.sqhstv[0] = (unsigned char  *)current_dbsite;
+       sqlstm.sqhstl[0] = (unsigned long )10;
+       sqlstm.sqhsts[0] = (         int  )0;
+       sqlstm.sqindv[0] = (         short *)0;
+       sqlstm.sqinds[0] = (         int  )0;
+       sqlstm.sqharm[0] = (unsigned long )0;
+       sqlstm.sqadto[0] = (unsigned short )0;
+       sqlstm.sqtdso[0] = (unsigned short )0;
+       sqlstm.sqphsv = sqlstm.sqhstv;
+       sqlstm.sqphsl = sqlstm.sqhstl;
+       sqlstm.sqphss = sqlstm.sqhsts;
+       sqlstm.sqpind = sqlstm.sqindv;
+       sqlstm.sqpins = sqlstm.sqinds;
+       sqlstm.sqparm = sqlstm.sqharm;
+       sqlstm.sqparc = sqlstm.sqharc;
+       sqlstm.sqpadto = sqlstm.sqadto;
+       sqlstm.sqptdso = sqlstm.sqtdso;
+       sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
+}
+
+
+       return(ERROR);
+     }
+
+   if (sqlca.sqlcode == 0)
+     PrintError ("Successfully deleted model data from the database for any \n\t site_datatype_ids that are no longer part of this model run.\n");
+
+}

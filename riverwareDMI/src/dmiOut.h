@@ -17,6 +17,12 @@ int DmiSaveModelData(
 #endif
 );
 
+int DmiDeleteObsoleteModelSDIs(
+#ifdef ANSIPROTO
+  dmi_header_struct *
+#endif
+);
+
 int DmiSaveRealData(
 #ifdef ANSIPROTO
   dmi_header_struct *
