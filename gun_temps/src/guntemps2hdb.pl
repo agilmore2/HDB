@@ -59,6 +59,15 @@ $update_data_statement = "update r_day SET (value) = ( ?) where (site_datatype_i
 
 $check_data_statement = "select value from r_day where date_day = ? and site_datatype_id = ? ";
 
+$find_data_statement = "select a.value from r_day a where
+a.site_datatype_id = ? and
+a.date_day = (select max(date_day) from r_day a where
+a.site_datatype_id = 616 and
+a.date_day < ? )
+";
+
+#input file is opened 4 different times.
+# get date on input file
 open (INFILE, "$ARGV[0]") || mydie "Error: couldn't open input file $ARGV[0]";
 # skip past opening junk
 for ($i = 0; $i < 6; $i++)
@@ -93,7 +102,7 @@ READ: while ($line = <INFILE>)
 #chop out the pieces of the line that are interesting, date, precip,
 # and 3 temperatures, max, min, and average
   $monthdaystr = substr $line, 22, 5;
-  $value_hash{"total wy precip"} = substr $line, 45, 5;
+  $value_hash{"total wy precip"} = substr $line, 44, 6;
   $value_hash{"max temp"}        = substr $line, 61, 6;
   $value_hash{"min temp"}        = substr $line, 67, 6;
   $value_hash{"ave temp"}        = substr $line, 73, 6;
@@ -118,6 +127,9 @@ READ: while ($line = <INFILE>)
 # fix the fact that the data is reported for the next day!
   @value_date = Add_Delta_Days(@value_date, -1);
 
+  if ($value_hash{"total wy precip"} == -99.9 ) {
+    $value_hash{"total wy precip"} = undef;
+  }
   if ($value_hash{"max temp"} == -99.9 ) {
     $value_hash{"max temp"} = undef;
   }
@@ -156,6 +168,25 @@ sub check_value
     return $myval;
   }
 
+sub last_value
+{
+    my($prev_date) = $_[0];
+    my($site_datatype_id)=$_[1];
+    my($myval);
+
+    my($sth);
+    $sth = $dbh->prepare($find_data_statement) || mydie $sth->errstr;
+
+    $sth->bind_param(1,$site_datatype_id);
+    $sth->bind_param(2,$prev_date);
+    $sth->execute || mydie $sth->errstr;
+    $sth->bind_col(1,\$myval);
+    $sth->fetch;
+#    DBI::dump_results($sth)|| mydie $DBI::errstr;;
+    $sth->finish();
+#    print $myval;
+    return $myval;
+}
 
 sub insert_values
   {
@@ -185,10 +216,16 @@ sub insert_values
 				       $site_datatype_hash{"total wy precip"});
 	#assume data is coming in order of date, earlier first.
 	#if prev data is not there, set day's to undef, won't insert
-	if (!defined($prev_cum_precip)) {
-	  $day_precip = undef;
-	}
-	else {
+	if (!defined($cum_precip)) {
+	} elsif (!defined($prev_cum_precip)) {
+	  $prev_cum_precip = last_value($prevdatestr,
+				 $site_datatype_hash{"total wy precip"});
+	  if (!defined($prev_cum_precip)) {
+	    $day_precip = undef; #still can not find it.
+	  } else {
+	    $day_precip = sprintf("%.1f",$cum_precip - $prev_cum_precip);
+	  }
+	} else {
 	  $day_precip = sprintf("%.1f",$cum_precip - $prev_cum_precip);
 	  $day_precip = 0 if $day_precip < 0 ;
 	}
