@@ -629,7 +629,6 @@ Example: $progname -u app_user -p <hdbpassword> -n 2 -i 09260000 -a
                      If none specified, will load all gages set up in HDB.
   -t               : Test retrieval, but do not insert data into DB
   -f <filename>    : Filename instead of live web
-  -n <1..31>       : Days ending now for retrieval (default 1, max 31)
   -a               : Run aggDisagg after loading instantaneous data
   -w               : Web address (URL developed to get CODWR data)
   -d               : Debugging output
