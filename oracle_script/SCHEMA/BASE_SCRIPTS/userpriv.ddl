@@ -66,6 +66,7 @@ grant select on DBA.ref_site_coef_day to public;
 grant select on DBA.ref_site_coef_month to public;
 grant select on DBA.ref_site_coeflu to public;
 grant select on DBA.ref_source_priority to public;
+grant select on DBA.ref_source_priority_archive to public;
 grant select on DBA.ref_str to public;
 grant select on DBA.r_base to public;
 grant select on DBA.r_base_archive to public;
