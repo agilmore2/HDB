@@ -276,4 +276,3 @@ int SqlRetrieveSourceValues (VALUE_RECORD *sourceValueList,
 }
 
 
-/***********************************************************************/
