@@ -63,11 +63,13 @@ int main(int argc, char **argv)
       tot_relaf[j] = atot_rel[j]*1.9835;
       
       oth_relaf[j] = tot_relaf[j] - pow_relaf[j];
+/* NASTY HACK to handle Morrow Point releases calculated by Hydromet */
+/* Floating Point comparison, hope it works! */
+      if (apow_rel[j] == 998877)   pow_relaf[j] = oth_relaf[j] = 998877;
    }
 
    date[0] = '\0';
 
-   /* cut off century here for use with hydromet */
    strcat(&date[0],argv[3]);
 
    hydro[0] = '\0';

@@ -90,7 +90,7 @@ int SqlGetSCADAData(char *appUser, char *appPass, char *date)
          site_id = site[i];
          datatype_id = datatype[j];
          
-         EXEC SQL SELECT A.VALUE into val:value_null_indicator
+	 EXEC SQL SELECT A.VALUE into val:value_null_indicator
             FROM R_DAY A, HDB_SITE_DATATYPE B
             WHERE B.SITE_ID = :site_id
             AND B.DATATYPE_ID = :datatype_id
@@ -99,10 +99,17 @@ int SqlGetSCADAData(char *appUser, char *appPass, char *date)
 
 	 if (sqlca.sqlcode == 1403)
          {
-	   printf ("ERROR, NO DATA FOR SITE %d, DATATYPE %d!\n",site_id,datatype_id);
-	   exit(1);
+            if (site_id == 914 && (datatype_id == 39 || datatype_id == 42))
+            {
+               val = 998877;
+            } else
+	    {
+	       printf ("ERROR, NO DATA FOR SITE %d, DATATYPE %d!\n",site_id,datatype_id);
+	       exit(1);
+	    }
 	 }
-         else if (sqlca.sqlcode == 0)
+         
+	if (sqlca.sqlcode == 0 || (site_id == 914 && (datatype_id == 39 || datatype_id == 42)))
          {
             switch (j) {
                 case 0:
