@@ -474,7 +474,7 @@ sub insert_values
       } elsif ($value =~ m/[^0-9\.]/) { # check for other text, complain
 	print "data corrupted: $cur_sdi, date $value_date: $value\n";
 	next;
-      } elsif (defined($old_val) && $old_val == $value) {
+      } elsif (defined($old_val) and $old_val == $value) {
 	next; # source and database are same, do nothing
       } elsif (!defined($old_val) or $old_val != $value) {
 	# update or insert, source and database differ (or database value does not exist)
