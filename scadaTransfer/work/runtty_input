@@ -1,8 +1,6 @@
 #!/bin/bash
 umask 002
 echo '       runtty_input started'
-#keep hydromet files around as well
-#rm hydromet_*
 # run program to handle serial line communication and output file creation
 # Loop the running of tty_input to handle weekends
 
