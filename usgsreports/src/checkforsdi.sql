@@ -9,8 +9,8 @@ column sdi new_value sdi;
 select count (distinct site_datatype_id) sdi from
 ref_hm_site_pcode
 where
-hm_site_code = '&&site' and
-hm_pcode like '&&datatype' and
+hm_site_code = UPPER('&&site') and
+hm_pcode = UPPER('&&datatype') and
 site_datatype_id IS NOT NULL
 ;
 

@@ -24,8 +24,8 @@ column sdi new_value sdi;
 select hm_site_code, hm_pcode, to_char(site_datatype_id) sdi from
 ref_hm_site_pcode
 where
-hm_site_code = '&&site_code' and
-hm_pcode = '&&pcode' and
+hm_site_code = UPPER('&&site_code') and
+hm_pcode = UPPER('&&pcode') and
 site_datatype_id IS NOT NULL
 ;
 
