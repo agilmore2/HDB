@@ -63,7 +63,7 @@ if test $answer != y; then
 fi
 
 echo Running v_grant.sql
-sqlplus sys/$sys_psswd < v_grant.sql > v_grant.out
+sqlplus '$dba_name/$psswd as sysdba' < v_grant.sql > v_grant.out
 
 echo "**********************"
 echo "Check output in v_grant.out; ok to continue? (y or n)"
