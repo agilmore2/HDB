@@ -7,7 +7,7 @@ echo '       runtty_input started'
 # First, define this function
 prompt_user () {
     read -p "$loopprompt" endloop
-    until [ $endloop = "n" -o $endloop = "y" ] 
+    until [ "$endloop" = "n" -o "$endloop" = "y" ] 
     do
         read -p "$loopprompt" endloop
     done
@@ -18,7 +18,7 @@ loopprompt='Are you finished with the SCADA Terminal (y,n)?'
 prompt_user
 
 #then loop until they say they are done with the terminal
-until [ $endloop = 'y' ]
+until [ "$endloop" = 'y' ]
 do 
     echo 'To abort getting input from the SCADA terminal, hit ctrl-C'
     ./tty_input
@@ -34,7 +34,7 @@ cat current_dates
 
 loopprompt="Is this set of dates correct? (y,n)? "
 prompt_user
-until [ $endloop = 'y' ]
+until [ "$endloop" = 'y' ]
 do 
     #currently only allow either or, and only one time through this loop,
     # so we remove the file to start
@@ -44,7 +44,7 @@ do
     echo '(2) Specific (04AUG18, 04AUG22)'
     read date_type
 
-    if [ $date_type -eq 1 ]
+    if [ "$date_type" -eq 1 ]
     then
         read -p 'Enter Beginning Date: ' beg_date
         read -p 'Enter Ending Date: ' end_date
@@ -54,9 +54,9 @@ do
         done
         cat current_dates
         prompt_user
-    elif [ $date_type -eq 2 ]
+    elif [ "$date_type" -eq 2 ]
     then
-        until [ $endloop = 'y' ]
+        until [ "$endloop" = 'y' ]
         do 
             read -p 'Enter Date: ' date
             echo $date >>current_dates
