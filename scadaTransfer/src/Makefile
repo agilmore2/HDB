@@ -24,7 +24,7 @@ $(OBJDIR)/insertScada.o: \
 					insertScada.pc \
 					$(HDB_APP_LIB)/libhdb.a \
 					$(HDB_APP_LIB)/libutils.a
-	proc user=app_user/$(HDB_LOCAL) iname=insertScada.pc include=$(HDB_APP_INCLUDE) sqlcheck=semantics
+	proc user=$(DBA)/$(DBA_PASSWD) iname=insertScada.pc include=$(HDB_APP_INCLUDE) sqlcheck=semantics
 	$(CC) $(CFLAGS) -c insertScada.c -o $@
 
 
