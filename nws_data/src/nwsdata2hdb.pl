@@ -1,35 +1,31 @@
 #!/usr/local/bin/perl -w
 
+#insert HDB library
+
+use lib "$ENV{HDB_ENV}/perlLib/lib";
+use lib "$ENV{HDB_ENV}/perlLib/lib/i386-linux";
+use Hdb;
+
 use Date::Calc qw(:all);
 use DBI;
 #use DBD::Oracle;
 
-my ($dbh, @cur_sdi, @value_date, @data_date);
+use strict;
 
-my($psswd_dbh);
-
-sub mydie {
-  $dbh->disconnect;
-  die @_;
-}
-
-sub passdie {
-    $psswd_dbh->disconnect;
-    die @_;
-}
+my ($hdb, @cur_sdi, @value_date, @data_date);
     
 #sites and datatypes desired. Not all site_ids and site_datatype_ids
 # have been created, yet.
 
 # site names (shef codes) and site id's for Cimmaron (Cimmaron near silver 
 # jack res or some such) and Ouray Hwy
-%siteid_hash = ("SJAC2", 23, "OMSC2", 57); 
+my %siteid_hash = ("SJAC2", 23, "OMSC2", 57); 
 
 #we don't get total wy precip or ave temp from nws, so this list is shorter
-%datatype_hash = ("max temp", 9, "min temp", 11,
+my %datatype_hash = ("max temp", 9, "min temp", 11,
 		  "precip total", 5);
 
-%site_datatype_hash = ("max temp", undef, "min temp", undef,
+my %site_datatype_hash = ("max temp", undef, "min temp", undef,
 		       "precip total", undef );
 
 #check to see command line usage.
@@ -43,33 +39,37 @@ if (scalar(@ARGV) <3)
 
   }
 
+#HDB database interface
+# global because used in several sub routines
+$hdb = Hdb->new;
+
+my $dbname;
+if (!defined($dbname = $ENV{HDB_LOCAL})) {
+  die "Environment variable HDB_LOCAL not set...\n";
+}
 #create connection to database
-connect_to_db($ARGV[1], $ARGV[2]);
+$hdb->connect_to_db($dbname, $ARGV[1], $ARGV[2]);
+$hdb->set_approle();
+
+#retrieve application ids for later updates and inserts
+get_app_ids();
 
 # various SQL statement strings, with placeholders for variables.
 
-$get_site_datatype_statement = "select site_datatype_id from hdb_site_datatype where site_id = ? and datatype_id = ? ";
-
-#the 8 stands for NWS, and the Z means no validation
-$insert_data_statement = "insert into r_day values(?,?,?,8,'Z') ";
-
-$update_data_statement = "update r_day SET (value) = ( ?) where (site_datatype_id = ? and date_day = ?) ";
-
-$check_data_statement = "select value from r_day where date_day = ? and site_datatype_id = ? ";
-
-open (INFILE, "$ARGV[0]") || mydie "Error: couldn't open input file $ARGV[0]";
+open (INFILE, "$ARGV[0]") || die "Error: couldn't open input file $ARGV[0]";
 
 # No junk before data in this file format!
 
 # get date of data is interesting, because file contains no standalone date.
 # just have to use date of file creation. 
 
-@fileinfo = stat INFILE;
+my @fileinfo = stat INFILE;
 
-$filemdate = localtime($fileinfo[9]);
+my $filemdate = localtime($fileinfo[9]);
 print "File created locally at $filemdate\n";
 
-$cur_site_name = "none";
+my $cur_site_name = "none";
+my ($line, @fields, $new_site_name, $site_id, $site_datatype_id);
 
 READ: while ($line = <INFILE>)
 {
@@ -92,8 +92,8 @@ READ: while ($line = <INFILE>)
 
   #get the data year and month
 
-  $year = $fields[8];
-  $month = $fields[9];
+  my $year = $fields[8];
+  my $month = $fields[9];
   $year =~ s/\s//g;
   $month =~ s/\s//g;
 
@@ -110,7 +110,8 @@ READ: while ($line = <INFILE>)
   }
 
 #with one line per month, just loop through the days in this month
-  $daysinmonth = Days_in_Month($year,$month);
+  my $daysinmonth = Days_in_Month($year,$month);
+  my $day;
 
   for ($day = 1; $day < $daysinmonth; $day++) {
     @value_date = ($year,$month,$day);
@@ -122,7 +123,7 @@ READ: while ($line = <INFILE>)
     # previous day.
     @value_date = Add_Delta_Days(@value_date, -1);
 
-    $value = $fields[$day+9];
+    my $value = $fields[$day+9];
 
     if ($value == -9999 ) {
       $value = undef;
@@ -138,29 +139,93 @@ READ: while ($line = <INFILE>)
   }
 }
 
-$dbh->disconnect();
+$hdb->dbh->disconnect();
 
 #End main program, subroutines below
 
 sub check_value
   {
+    my $check_data_statement = "select value from r_base where start_date_time = ? and site_datatype_id = ? and interval = 'day'";
+
     my($check_date)=$_[0];
     my($site_datatype_id)=$_[1];
     my($sth);
     my($myval);
 
-    $sth = $dbh->prepare($check_data_statement) || mydie $sth->errstr;
+    $sth = $hdb->dbh->prepare($check_data_statement) || die $sth->errstr;
     $sth->bind_param(1,$check_date);
     $sth->bind_param(2,$site_datatype_id);
-    $sth->execute || mydie $sth->errstr;
+    $sth->execute || die $sth->errstr;
     $sth->bind_col(1,\$myval);
     $sth->fetch;
-#    DBI::dump_results($sth)|| mydie $DBI::errstr;;
+#    DBI::dump_results($sth)|| die $DBI::errstr;;
     $sth->finish();
 #    print $myval;
     return $myval;
   }
 
+my $agen_id;
+my $collect_id;
+my $load_app_id;
+my $method_id;
+my $unk_computation_id;
+my $diff_computation_id;
+
+
+sub get_app_ids
+{
+# Get ids to describe where data came from
+  my $agen_name = 'NWS';
+  my $collect_name = '(see agency)';
+  my $load_app_name = 'nwstemps2hdb.pl';
+  my $method_name = 'unknown';
+  my $computation_name = 'unknown';
+
+  my $max_len = 11;
+
+  my $sth;
+
+  $sth = $hdb->dbh->prepare(q{
+     BEGIN
+           lookup_application(?,?,?,?,?,  /* agen, collect, load_app, method, computation names*/
+                                     ?,?,?,?,?); /* agen, collect, load_app, method, computation ids */
+     END;
+   });
+
+  $sth->bind_param(1,$agen_name);
+  $sth->bind_param(2,$collect_name);
+  $sth->bind_param(3,$load_app_name);
+  $sth->bind_param(4,$method_name);
+  $sth->bind_param(5,$computation_name);
+  $sth->bind_param_inout(6, \$agen_id, $max_len);
+  $sth->bind_param_inout(7, \$collect_id, $max_len);
+  $sth->bind_param_inout(8, \$load_app_id, $max_len);
+  $sth->bind_param_inout(9, \$method_id, $max_len);
+  $sth->bind_param_inout(10, \$unk_computation_id, $max_len);
+
+  eval {
+    $sth->execute;
+  };
+
+
+  if ($@) { # something screwed up
+    print $hdb->dbh->errstr, " $@\n";
+    die "Errors occurred during selection of ids for application.\n";
+  }
+
+  $sth = $hdb->dbh->prepare("select computation_id from hdb_computed_datatype where computation_name = 'difference'");
+  eval {
+    $sth->execute;
+    $sth->bind_col(1,\$diff_computation_id);
+    $sth->fetch;
+    $sth->finish;
+  };
+
+  if ($@) { # something screwed up
+    print $hdb->dbh->errstr, " $@\n";
+    die "Errors occurred during selection of ids for application.\n";
+  }
+}
 
 sub insert_values
   {
@@ -168,119 +233,72 @@ sub insert_values
     my($sdi) = $_[3];    
     my($value) = $_[4];
 
-    my($insth, $upsth);
+    my($modsth, $sth);
 #    print @_;
 
-    $datestr = sprintf("%02d-%.3s-%4d",$value_date[2],
+    my $modify_data_statement = "
+    BEGIN
+        modify_r_base_raw(?,'day',?,null,?, /* sdi, interval, start_date_time, end_date_time (null), value */
+                          null,'Z',              /* overwrite, validation */
+                          $agen_id,$collect_id,$load_app_id,$method_id,$unk_computation_id,
+                          'Y');                 /*do update? */
+    END;";
+
+    my $datestr = sprintf("%02d-%.3s-%4d",$value_date[2],
 			   Month_to_Text($value_date[1]), $value_date[0]); 
 
     eval {
 #only use these once per prepare/finish, could do better
-      $insth = $dbh->prepare($insert_data_statement) || mydie $insth->errstr;
-      $upsth = $dbh->prepare($update_data_statement) || mydie $upsth->errstr;
+      $modsth = $hdb->dbh->prepare($modify_data_statement) || die $modsth->errstr;
       
 # insert data;
-      undef $old_val;
+      my  $old_val = undef;
       $old_val = check_value($datestr, $sdi);
       if (!defined $value) {
 	#delete data if data is -99.9, otherwise do nothing.
-	if ($old_val && $old_val == -99.9) {
-	  print "deleting bad data for $sdi, date $datestr, value undefined, old_val = $old_val\n";
-	  $dbh->do("delete from r_day where site_datatype_id = $sdi and date_day = '$datestr'")|| mydie DBI::errstr;
+      }
+      elsif (defined($old_val) and $old_val == $value) {
+      }
+      elsif (!defined($old_val) or $old_val != $value) {
+	if (!defined($old_val)) {
+	  print "modifying for $sdi, date $datestr, value $value, old_val = undef\n";
+	} else {
+	  print "modifying for $sdi, date $datestr, value $value, old_val = $old_val\n";
 	}
+	$modsth->bind_param(1,$sdi);
+	$modsth->bind_param(2,$datestr);
+	$modsth->bind_param(3,$value);
+	$modsth->execute|| die $modsth->errstr;
       }
-      elsif (!defined($old_val)) {
-	print "inserting for $sdi, date $datestr, value $value, old_val = undefined\n";
-	    
-	$insth->bind_param(1,$sdi);
-	$insth->bind_param(2,$datestr);
-	$insth->bind_param(3,$value);
-	$insth->execute|| mydie $insth->errstr;
-      }
-      elsif ($old_val == $value) {
-      }
-      elsif ($old_val != $value) {
-	print "updating for $sdi, date $datestr, value $value, old_val = $old_val\n";
-	#update instead of insert
-	$upsth->bind_param(1,$value);
-	$upsth->bind_param(2,$sdi);
-	$upsth->bind_param(3,$datestr);
-	$upsth->execute|| mydie $upsth->errstr;
-      }
-      
-      $upsth->finish;
-      $insth->finish;
+      $modsth->finish;
     };
     if ($@) {
-      $dbh->rollback;
+      $hdb->dbh->rollback;
       print "$DBI::errstr, $@\n";
-      mydie "Errors occurred during insert/update/deletion of data. Rolled back any database manipulation.";
+      die "Errors occurred during insert/update/deletion of data. Rolled back any database manipulation.";
     }
     else {
-      $dbh->commit;
+      $hdb->dbh->commit;
     }
 }
 
 
 sub get_SDI
   {
-    $cur_site= $_[0];
-    $sth = $dbh->prepare($get_site_datatype_statement) || mydie $sth->errstr;
+    my $cur_site= $_[0];
+    my ($sth,$datatype);
+    my $get_site_datatype_statement = "select site_datatype_id from hdb_site_datatype where site_id = ? and datatype_id = ? ";
+
+    $sth = $hdb->dbh->prepare($get_site_datatype_statement) || die $sth->errstr;
     $sth->bind_param(1,$cur_site);
 
     foreach $datatype (keys %datatype_hash) 
       {
 	$sth->bind_param(2,$datatype_hash{$datatype});
-	$sth->execute|| mydie $sth->errstr;
+	$sth->execute|| die $sth->errstr;
 	$sth->bind_col(1,\$site_datatype_hash{$datatype});
 #should check here if there are any rows. if not, no SDI exists for this combo.
 	$sth->fetch;
       }
-    
     $sth->finish;
-  }
-
-# HDB does something interesting with the app_user 
-# app_user has the permission to insert into the database, but only
-# if the app_role is enabled, which is not by default
-# the applications get around this by connecting to the database as 
-# psswd_user (from the environment) and getting the password to 
-# turn on this role, and then connecting as app_user and 
-# enabling this role.
-# This code does that, while also taking the name of the database
-# from the environment, and the app_user name and password from the
-# command line
-sub connect_to_db
-  {
-    my $user=$_[0];
-    my $pass=$_[1];
-    my $approlepass;
-
-    if (!defined($psswduser = $ENV{PSSWD_USER})) {
-      die "Environment variable PSSWD_USER not set...\n";
-    }
-    if (!defined($dbname = $ENV{HDB_LOCAL})) {
-      die "Environment variable HDB_LOCAL not set...\n";
-    }
-    if (!defined($approle = $ENV{APP_ROLE})) {
-      die "Environment variable APP_ROLE not set...\n";
-    }
-
-# create connections, exceptions on error, no autocommit
-
-    $psswd_dbh = DBI->connect("dbi:Oracle:$dbname", $psswduser, $dbname,
-			{ RaiseError => 1, AutoCommit => 0 })|| mydie $DBI::errstr;
-    $psswd_statement = "select psswd from role_psswd where UPPER(ROLE) = UPPER('$approle')";
-
-    $psswdsth = $psswd_dbh->prepare($psswd_statement) || passdie $psswdsth->errstr;
-    $psswdsth->execute || passdie $psswdsth->errstr;
-    $psswdsth->bind_col(1,\$approlepass);
-    $psswdsth->fetch;
-    $psswdsth->finish;
-    $psswd_dbh->disconnect;
-
-    $dbh = DBI->connect("dbi:Oracle:$dbname", $user, $pass,
-			{ RaiseError => 1, AutoCommit => 0 })|| mydie $DBI::errstr;
-
-    $dbh->do("set role $approle identified by $approlepass")|| mydie $DBI::errstr;
   }
