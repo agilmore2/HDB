@@ -172,7 +172,7 @@ if ($response->is_success) {
 # print error messages for all sites that no data was returned for
 foreach $usgs_no (keys %$usgs_sites) {
   if (!defined($usgs_sites->{$usgs_no}->{found_data})) {
-    print "No realtime data found for site USGS ID: $usgs_no site_id: $usgs_sites->{$usgs_no}->{site_id}\n";
+    print STDERR "No realtime data found for site USGS ID: $usgs_no site_id: $usgs_sites->{$usgs_no}->{site_id}\n";
   }
 }
 
