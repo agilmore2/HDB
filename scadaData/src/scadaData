@@ -12,14 +12,19 @@ echo "              Printing Hydromet data"
 echo "       Transferring data to Hydromet"
 # annoying stuff to deal with letter case 
 # because VMS does wierd things to conserve the case both in NFS and scp
-# hydromet_##SEP.dat becomes HYDROMET_##$SEP.$DAT on vms
+# hydromet_##SEP##.dat becomes HYDROMET_##$SEP##.$DAT on vms
 # so we handle it ahead of time.
 # In vms a $ in the name indicates a case shift
 file_lowercase=`echo $file | tr A-Z a-z`
 
 chmod -f ug+rw,o+r $file
 scp -p $file hydromet@zippy:scada_files/$file_lowercase 2>/dev/null
+f [ $stat -ne 0 ]
+then
+    exit $stat
+fi
 
+\rm -f $file
 
 #old stuff
 #do we need to do this?
