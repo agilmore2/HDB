@@ -1,6 +1,42 @@
-rm hydromet_*
+echo 'runtty_input started'
+#keep hydromet files around as well
+#rm hydromet_*
+# run program to handle serial line communication and output file creation
 tty_input
-set `cat ./dum`
+#echo ' '
+echo ' '
+echo '        Initiating program to load data into Oracle HDB'
+echo ' ' 
+#set $1 to first field in this file
+set `cat ./crsp_file`
+# application scadaTransfer is run using the applications role
+# it has two arguments the name of the log file and the password
+# this application can be run independant of this script
+# if the log file needs to be edited, edit the file (correct the 
+# data - then run the following executable (scadaTransfer)
+echo 'Placing Data into HDB2'
+scadaTransfer $1 app_user uchdb2
+# now run the derivation app to place the data into r_day
+derivation app_user uchdb2 & 
+# This application takes a bit of time, so we put it in the background
+# we do all the other processing, then wait(1) for the derivation app
+# then we can run scadadata, and create the hydromet input file from HDB2
+echo ' '
+echo '       Transferring data to Flagstaff'
+echo ' '
+ftp_orca
+#rm hydromet_*
+mail_wapa
+echo ' ' 
+# Now we wait
+echo "Waiting for derivation application to finish"
+wait
+echo 'Derivation application done, creating and transferring hydromet input file'
+# now run the application to generate the hydromet input file
+scadaData app_user uchdb2 `cat current_date`
+echo ' '
+#now set $1 to first field in this file
+set `cat ./hydro_file`
 echo ' '
 echo "              Printing Hydromet data"
 echo ' '
@@ -13,16 +49,17 @@ echo ' '
 # because NFS on slcalp does wierd things to conserve the case
 # hydromet_##SEP.dat becomes HYDROMET_##$SEP.$DAT on vms
 # so we handle it ahead of time the vms $ in the name indicates a case shift
-u=`cat dum | tr A-Z a-z`
-U=`cat dum | tr a-z A-Z`
+u=`cat LChydro_file`
 
-chmod ugo+rwx `cat dum`
-scp -p `cat dum` hydromet@zippy:scada_files/$u
+chmod ugo+rwx $1
+scp -p $1 hydromet@zippy:scada_files/$u
 
-ssh zippy -l hydromet "set sec [.scada_files]$U /prot=(s:rwed,o:rwed,g:rwed,w:re)"
+#do we need to do this?
+#ssh zippy -l hydromet "set sec [.scada_files]$u /prot=(s:rwed,o:rwed,g:rwed,w:re)"
 
 #
 # these commands below are the previous version, and are less efficient.
+#
 # now, we take advantage of the nfsmount on zimmy, and
 # copy the file to the alpha directory as mounted on zimmy
 #scp `cat dum` zimmy:/alpdata/archives/xferscada/$u
@@ -34,40 +71,6 @@ ssh zippy -l hydromet "set sec [.scada_files]$U /prot=(s:rwed,o:rwed,g:rwed,w:re
 # then, delete the copied file
 #ssh zimmy "rm /alpdata/archives/xferscada/$u"
 #done!
-
-
-# commented out transfer to RFC 12/11 by t ryan
-# echo "transferring data to River Forecast Center"
-# ftp rfc < rfc.script
-echo ' '
-#echo '       Transferring data to Flagstaff'
-echo ' '
-ftp_orca
-#rm hydromet_*
-set `cat ./dum1`
-echo ' '
-mail_wapa
-# application scadaTransfer is run using the applications role
-# it has two arguments the name of the log file and the password
-# this application can be run independant of this script
-# if the log file needs to be edited, edit the file (correct the 
-# data - then run the following executable (scadaTransfer)
-sleep 3
-#echo ' '
-#echo '  Initiating program to load data into Ingres HDB'
-#echo ' '
-#/net/ucsun1/export/home/uchdba/HDB_applications/bin/scadaTransfer $1 hdb_app
-echo ' '
-#echo '        Initiating program to load data into Oracle HDB'
-echo ' ' 
-#sleep 1
-#This program should now be in the HDB applications dir.
-scadaTransfer $1 app_user uchdb
-echo ' ' 
-# now put data into HDB2 as well
-echo 'Placing Data into HDB2'
-. /wrg/hdb/HDB_RELEASE.040101/.bashrc_hdb_app
-scadaTransfer $1 app_user uchdb2
 echo ' '
 echo ' '
 echo '              runtty_input script now complete'
