@@ -537,7 +537,7 @@ int readInputControlFile(char *controlFile, dmi_header_struct **list,
 	 {
 	    for(i=0; i<counter; i++)
 	    {
-	       /* printf("%s\n", modelRunMap[i]);*/
+	       /*printf("%s\n", modelRunMap[i]);*/
 	       if(!strcmp(modelRunMap[i].code, char_hist_source))
 	       {
 		  break;
@@ -550,12 +550,13 @@ int readInputControlFile(char *controlFile, dmi_header_struct **list,
 	       counter++;
 	    }
 	    else hist_source = 0 - i;
+            *TkInterfaceNeeded = TRUE;
 	 }
 	 else hist_source = (atoi (char_hist_source));
       else
 	 /*  Do not print a warning, as this is not required -- just set
 	     default. */
-	 hist_source = 0; 
+	 hist_source = REAL_DATA_TABLE; 
 
       /*
        * Line was successfully read, so can create new member of header list

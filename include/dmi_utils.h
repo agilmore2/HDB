@@ -15,7 +15,7 @@
 
 /* Defaults */
 #define NUM_HIST_TIMESTEPS 1
-#define REAL_DATA_TABLE -1 
+#define REAL_DATA_TABLE -1001 
 
 #define USER_FLAG "-U"
 #define SYSTEM_FLAG "-S"

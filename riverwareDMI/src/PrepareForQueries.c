@@ -99,8 +99,8 @@ int PrepareForQueries(dmi_header_struct * current,
 			modelTableName,
 			current->hist_source,
 			current->hdb_site_datatype_id,
-			current->hdb_model_data_startdate,
-			current->hdb_enddate);
+			current->hdb_startdate,
+			current->hdb_hist_data_enddate);
     }
   
   result = sprintf (modelStatement, "SELECT to_char (start_date_time, 'dd-mon-yyyy hh24:mi:ss'), value FROM %s WHERE model_run_id = %d AND site_datatype_id = %d AND start_date_time BETWEEN to_date ('%s', 'dd-mon-yyyy hh24:mi:ss') AND to_date ('%s', 'dd-mon-yyyy hh24:mi:ss') ORDER by start_date_time",

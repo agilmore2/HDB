@@ -12,7 +12,7 @@ set setzero 0
 set startover 0
 set modelRunIdArray {}
 
-set bitmap(exclam)	/usr/local/X11/include/X11/bitmaps/Excl
+set bitmap(exclam)	/usr/X/include/X11/bitmaps/Excl
 
 ##############################################################################
 # Name : toperror

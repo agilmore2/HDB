@@ -27,7 +27,7 @@ set readmodel_modelId {}
 set readmodel_name {}
 set codesfound 0
 
-set bitmap(exclam)	/usr/local/X11/include/X11/bitmaps/Excl
+set bitmap(exclam)	/usr/X/include/X11/bitmaps/Excl
 
 ##############################################################################
 # Name : toperror

@@ -711,13 +711,9 @@ int mapList(dmi_header_struct **list)
       }
       printf("ModelSource: %s, %s, %d\n",tmp->object_name,tmp->slot_name, tmp->model_source);
       
-      if (tmp->hist_source < 0)
+      if (tmp->hist_source <= 0 && tmp->hist_source != REAL_DATA_TABLE)
       {
 	 tmp->hist_source = modelRunMap[0-tmp->hist_source].modelRunId;
-      }
-      if (tmp->hist_source == 0)
-      {
-	 tmp->hist_source = REAL_DATA_TABLE;
       } 
       printf("HistSource: %s, %s, %d\n",tmp->object_name,tmp->slot_name, tmp->hist_source);
       
