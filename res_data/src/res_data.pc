@@ -27,7 +27,8 @@ main ( int argc, char** argv )
   ID	        site_id;
   short         value_null_indicator;
   float         value1,value2,value3,value4;
-  char 		site_name[65],dater_base[12],dater1[12],dater2[12],dater3[12],dater4[12];
+  VARCHAR	site_name[65];
+  char          dater_base[12],dater1[12],dater2[12],dater3[12],dater4[12];
   
   EXEC SQL END DECLARE SECTION;
   
@@ -92,7 +93,7 @@ main ( int argc, char** argv )
     }
   else
     {
-      printf("\n                            %s\n",site_name);
+      printf("\n%2$*1$s%4$.*3$s\n",(80-site_name.len)/2-1," ",site_name.len,site_name.arr);
       printf("\n         Date        Elevation      Content       Inflow      Release\n");
       printf("                       (feet)        (AF)          (cfs)        (cfs)\n\n");
       
