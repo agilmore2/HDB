@@ -238,6 +238,8 @@ sub insert_values
       foreach $datatype ( keys %site_datatype_hash )
 	{
 	  undef $old_val;
+# skip butte max temps, because they are broken. UG. ME HACK.
+          next if $site_datatype_hash{$datatype} == 884;
 	  $old_val = check_value($datestr, $site_datatype_hash{$datatype});
 	  if (!defined $value_hash{$datatype}) {
 	    #delete data if data is -99.9, otherwise do nothing.
