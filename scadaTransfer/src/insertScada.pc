@@ -23,10 +23,14 @@
 #include "defines.h"
 #include "scadaTransfer.h"
 #include "typedefs.h"
+#include "Lookup.h"
 
 
 EXEC SQL INCLUDE sqlca;
 
+extern ID agen_id,collection_system_id,loading_application_id,method_id,computation_id;
+
+static lookup=1;
 
 #define FUNC_NAME "insertScada"
 
@@ -42,16 +46,26 @@ int insertScada (SQL_DATE *formattedDates,int site_datatype_id, float *vals_arra
 {
  EXEC SQL BEGIN DECLARE SECTION;
  SQL_DATE      date_time;
- VALUE         vals[NUM_HOURS];
+ SQL_DATE      end_date_time;
+ VALUE         vals;
  ID            sdi,s_id;
  char          val_Flag[2];
+ VALUE         oldvalue;
 
  EXEC SQL END DECLARE SECTION;
 
  int         i,
              result;
+ short       NULL_INDICATOR = -1;
  char        tableName[25];
 
+ if(lookup)
+ {
+   SqlLookupIds("Bureau of Reclamation","SCADA","scadaTransfer","unknown","unknown");
+   /*agen_name,collection_system_name,
+     loading_application_name,method_name,computation_name);*/
+   lookup = 0;
+ }
 
  strncpy(val_Flag,validationFlag,1);
  val_Flag[1]='\0';
@@ -61,51 +75,51 @@ int insertScada (SQL_DATE *formattedDates,int site_datatype_id, float *vals_arra
 
  for (i=0; i < NUM_HOURS; i++)
    { 
-     vals[i]=vals_array[i];
+     vals=vals_array[i];
      strcpy (date_time, formattedDates[i]);
 
      /* the update is very tricky because the dates must match
 	we pull the date out and convert to a char with the to_char function, using
         upper case as date_time has a capitalized three character month.  The
-	comparison is case sensitive */
-     EXEC SQL UPDATE r_hour
-       SET value = :vals[i],source_id = :s_id,validation = :val_Flag
-	 where site_datatype_id = :sdi
-	   and date_hour = :date_time;
-     
-     /* see if a record was updated; if not (sqlca.sqlcode > 0), then insert the record */
-     if (sqlca.sqlcode > 0)
-       {
-	 EXEC SQL INSERT INTO r_hour(site_datatype_id,date_hour,value,source_id,validation)
-	   VALUES
-	     (:sdi, :date_time, :vals[i], :s_id, :val_Flag);
+	comparison is case sensitive 
+modify_r_base_raw  ( SITE_DATATYPE_ID NUMBER,
+			      INTERVAL VARCHAR2,
+			      START_DATE_TIME DATE,
+			      END_DATE_TIME DATE,
+			      VALUE FLOAT,
+			      OVERWRITE_FLAG VARCHAR2,
+			      VALIDATION CHAR,
+                              AGEN_ID NUMBER,
+                              COLLECTION_SYSTEM_ID NUMBER,
+                              LOADING_APPLICATION_ID NUMBER,
+                              METHOD_ID NUMBER,
+                              COMPUTATION_ID NUMBER,
+			      DO_UPDATE_Y_OR_N VARCHAR2 ) 
 
-	 if ((result = SqlErrorHandler 
-	      (FUNC_NAME, FALSE,
-	       "Problem inserting value %10.2f for SDI: %d DATE: %s into %s.\n\tExiting.",vals[i], sdi, date_time, tableName)) != OK)
-	   {
-	     EXEC SQL ROLLBACK;
-	     return (ERROR);
-	     
-	   }
-       }
-     /* Print informative message if update happened */
-     else if (sqlca.sqlcode == 0)
-       {
-	 printf("Warning - Data for this record (%19s) was updated not inserted\n",date_time);
-       }
+*/
+     EXEC SQL SELECT value into :oldvalue from r_base where
+       	   site_datatype_id = :sdi
+	   and start_date_time = :date_time
+           and interval = 'hour'
+	   and value <> :vals;
      
-     /* Make sure there is not an error on the update */
-       else
-	 {
-	   if ((result = SqlErrorHandler 
-		(FUNC_NAME, FALSE,
-		 "Problem updating value for SDI: %d DATE: %s into %s.\n\tExiting.", sdi, date_time, tableName)) != OK)
-	     {
-	       EXEC SQL ROLLBACK;
-	       return (ERROR);
-	     }
-	 }
+     /* see if a record was available; if so (sqlca.sqlcode <= 0), then complain */
+     if (sqlca.sqlcode <= 0)
+       {
+	 printf("Warning - Data for this record (%19s) will be updated not inserted\n",date_time);
+
+       }
+
+/* placing the null_indicator after the end_date_time will always pass a null in that position */
+     EXEC SQL EXECUTE
+       begin
+       uchdba.modify_r_base_raw(:sdi,'hour',:date_time,:end_date_time:NULL_INDICATOR, :vals ,:agen_id,
+				null,:val_Flag,:collection_system_id,
+				:loading_application_id,:method_id,
+				:computation_id,'Y');
+       end;
+       END-EXEC;
+	
    }
  EXEC SQL COMMIT;
  return (OK);
@@ -115,20 +129,20 @@ int insertScada (SQL_DATE *formattedDates,int site_datatype_id, float *vals_arra
 /*********************************************************************/
 #define FUNC_NAME "SqlSetDateFormat"
 
-int SqlSetDateFormat ()
-{
+/* int SqlSetDateFormat (char *) */
+/* { */
 
-  int result;
+/*   EXEC SQL ALTER SESSION SET NLS_DATE_FORMAT = 'DD-MON-YYYY HH24:MI:SS'; */
 
-  EXEC SQL ALTER SESSION SET NLS_DATE_FORMAT = 'DD-MON-YYYY HH24:MI:SS';
+/* int result; */
 
-  if ((result = SqlErrorHandler 
-       (FUNC_NAME, TRUE,
-	"Problem setting date format")) != OK)
-    {
-      EXEC SQL ROLLBACK;
-      return (ERROR);
-    }
+/*   if ((result = SqlErrorHandler  */
+/*        (FUNC_NAME, TRUE, */
+/* 	"Problem setting date format")) != OK) */
+/*     { */
+/*       EXEC SQL ROLLBACK; */
+/*       return (ERROR); */
+/*     } */
 
-  return (OK);
-}
+/*   return (OK); */
+/* } */
