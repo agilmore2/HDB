@@ -305,7 +305,8 @@ sub build_url
 		  "DOLTUNCO", "DISCHRG",
 		  "DOVCANCO", "DISCHRG1",
 		  "MVIDIVCO", "DISCHRG3",
-		  "UCANALCO", "DISCHRG2");
+		  "UCANALCO", "DISCHRG2",
+		  "RIFRGRCO", "DISCHRG");
 
   die "Site id $_[0] not recognized, no datacode known!\n" 
       unless (defined ($datacode{$_[0]}));
