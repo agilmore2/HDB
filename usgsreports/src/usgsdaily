@@ -1,0 +1,49 @@
+#!/bin/sh
+# usgsdaily.sh file checks number of arguments, then
+# executes sql script
+myprog=`basename $0`
+mydir=`dirname $0`
+mysqlcmd="sqlplus -S $APP_USER/$HDB_LOCAL@$HDB_LOCAL"
+
+usage() {
+    echo "$myprog: produce water supply format report"
+    echo "Usage: $myprog site_code [pcode year] "
+    echo "Example: $myprog glda (produces list of pcodes and data)"
+    echo "         $myprog glda fb 2003 (produces report)"
+    exit 2
+}
+
+if [ $# -gt 3 -o $# -eq 0 -o $# -eq 2 ]
+then 
+    usage
+elif [ $# -eq 3 ]
+then 
+    $mysqlcmd @$mydir/checkforsdi.sql $1 $2 
+
+    checkval=$?
+
+    if [ $checkval -eq 0 ]
+    then
+	echo "Unable to find site datatype id for $1 $2"
+	$mysqlcmd @$mydir/reportsdi.sql $1
+	if [ $? -eq 0 ]
+	then
+	    echo "Unable to find site $1."
+	    exit 1
+	fi
+	exit
+    fi
+elif [ $# -eq 1 ] # should be only case left
+then
+    $mysqlcmd @$mydir/reportsdi.sql $1
+    if [ $? -eq 0 ]
+    then
+	echo "Unable to find site $1."
+	exit 1
+    fi
+    exit
+fi
+
+$mysqlcmd @$mydir/usgsdaily.sql $@
+
+exit
