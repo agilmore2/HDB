@@ -48,4 +48,13 @@ where
 fir.site_datatype_id = sec.site_datatype_id
 order by r_day desc
 ;
-quit;
+
+set termout off;
+column sdi new_value sdi;
+select count (distinct site_datatype_id) sdi from
+ref_hm_site_pcode
+where
+hm_site_code = UPPER('&&site') and
+site_datatype_id IS NOT NULL
+;
+exit &sdi;
