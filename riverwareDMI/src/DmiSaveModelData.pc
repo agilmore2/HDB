@@ -201,12 +201,12 @@ int DmiSaveModelData(dmi_header_struct * header)
     sprintf (deleteRemaining, "delete from %s where model_run_id = %d \
 and site_datatype_id = %d and (start_date_time < to_date ('%s') OR \
 start_date_time > to_date ('%s'))", model_table_name, 
-	     header->model_destination, header->hdb_site_datatype_id, 
+	     model_run_id, header->hdb_site_datatype_id, 
 	     run_control_start_date, run_control_end_date);
     
     for (i = 0; i < header->number_of_timesteps; i++) 
     { 
-      modelRunId = header->model_destination;
+      modelRunId = model_run_id;
       siteDatatypeId = header->hdb_site_datatype_id;
       strcpy (start_date, header->data[i].hdb_date);
       strcpy (end_date, header->data[i].end_date);
@@ -391,7 +391,7 @@ int DmiDeleteObsoleteModelSDIs(dmi_header_struct * list)
 
    /* Output model_run_id must be the same for all SDIs, so use
       the first one in the delete statement */
-   sprintf (tempDeleteStatement, "delete from %s where model_run_id = %d and site_datatype_id not in (%d", model_table_name, current->model_destination,
+   sprintf (tempDeleteStatement, "delete from %s where model_run_id = %d and site_datatype_id not in (%d", model_table_name, model_run_id,
 	    current->hdb_site_datatype_id);
    strcpy (deleteStatement, tempDeleteStatement);
    
