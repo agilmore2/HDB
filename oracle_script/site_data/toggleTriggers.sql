@@ -7,12 +7,16 @@ set verify off
 
 spool trigger_script.sql
 select distinct 'ALTER TRIGGER '||trigger_name||upper(' &1')||';'
-from user_triggers where table_name like 'HDB_%' or table_name like 'REF_%'
+from user_triggers where 
+(table_name like 'HDB_%' or table_name like 'REF_%') and 
+status = decode(upper('&1'),'DISABLE','ENABLED','DISABLED')
 /
  
+commit;
 spool off;
 
 set echo on
 set feedback on
 @trigger_script
+commit;
 quit
