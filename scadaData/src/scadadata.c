@@ -27,7 +27,7 @@
 #define SIZE 40
 #define NUMSITES 6
 #define NUMDATATYPES 3
-#define HYDRO "new_hydromet_\0"
+#define HYDRO "hydromet_\0"
 int SqlGetSCADAData(char*,char*,char*);
 
 double elev[NUMSITES], apow_rel[NUMSITES], atot_rel[NUMSITES];
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
    char   *orgin = HYDRO;
    char   date[30];
    char   hydro[30];
-   char   uchydro[30];
+   char   lchydro[30];
    char   mon[3];
    char   day[3];
    char    yr[3];
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 
    if (argc != 4) 
    {
-     printf("Usage: <programname> app_user apppasswd MM/DD/YYYY\n");
+     printf("Usage: <programname> app_user app_passwd YYMONDD\n");
      exit(1);
    }
 
@@ -65,108 +65,10 @@ int main(int argc, char **argv)
       oth_relaf[j] = tot_relaf[j] - pow_relaf[j];
    }
 
-   strncpy(&mon[0], &argv[3][0], 2);
-   mon[2]='\0';
-   /*
-     printf("%s\n",&mon[0]);
-   */
-   strncpy(&day[0], &argv[3][3], 2);
-   day[2]= '\0';
-   /*
-     printf("%s\n",&day[0]);
-   */ 
-   strncpy(&yr[0], &argv[3][8], 2);
-   yr[2]= '\0';
-   /*
-     printf("%s\n",&yr[0]);
-   */   
-
    date[0] = '\0';
 
-   if (strcmp(&mon[0], "11") == 0)
-   {
-      strcat(&date[0],&yr[0]);
-      strcat(&date[0],"NOV");  
-      strcat(&date[0],&day[0]);
-   }
-
-
-   if (strcmp(&mon[0], "12") == 0)
-   {
-      strcat(&date[0],&yr[0]);
-      strcat(&date[0],"DEC");  
-      strcat(&date[0],&day[0]);
-   }
-
-   if (strcmp(&mon[0], "01") == 0)
-   {
-      strcat(&date[0],&yr[0]);
-      strcat(&date[0],"JAN");  
-      strcat(&date[0],&day[0]);
-   }
-
-   if (strcmp(&mon[0], "02") == 0)
-   {
-      strcat(&date[0],&yr[0]);
-      strcat(&date[0],"FEB");  
-      strcat(&date[0],&day[0]);
-   }
-
-   if (strcmp(&mon[0], "03") == 0)
-   {
-      strcat(&date[0],&yr[0]);
-      strcat(&date[0],"MAR");  
-      strcat(&date[0],&day[0]);
-   }
-
-   if (strcmp(&mon[0], "04") == 0)
-   {
-      strcat(&date[0],&yr[0]);
-      strcat(&date[0],"APR");  
-      strcat(&date[0],&day[0]);
-   }
-
-   if (strcmp(&mon[0], "05") == 0)
-   {
-      strcat(&date[0],&yr[0]);
-      strcat(&date[0],"MAY");  
-      strcat(&date[0],&day[0]);
-   }
-
-   if (strcmp(&mon[0], "06") == 0)
-   {
-      strcat(&date[0],&yr[0]);
-      strcat(&date[0],"JUN");  
-      strcat(&date[0],&day[0]);
-   }
-
-   if (strcmp(&mon[0], "07") == 0)
-   {
-      strcat(&date[0],&yr[0]);
-      strcat(&date[0],"JUL");  
-      strcat(&date[0],&day[0]);
-   }
-
-   if (strcmp(&mon[0], "08") == 0)
-   {
-      strcat(&date[0],&yr[0]);
-      strcat(&date[0],"AUG");  
-      strcat(&date[0],&day[0]);
-   }
-
-   if (strcmp(&mon[0], "09") == 0)
-   {
-      strcat(&date[0],&yr[0]);
-      strcat(&date[0],"SEP");  
-      strcat(&date[0],&day[0]);
-   }
-
-   if (strcmp(&mon[0], "10") == 0)
-   {
-      strcat(&date[0],&yr[0]);
-      strcat(&date[0],"OCT");  
-      strcat(&date[0],&day[0]);
-   }
+   /* cut off century here for use with hydromet */
+   strcat(&date[0],argv[3]);
 
    hydro[0] = '\0';
 
@@ -176,29 +78,28 @@ int main(int argc, char **argv)
 
    for (j=0;j<strlen(hydro);j++)
    {
-      hydro[j] = tolower(hydro[j]);
-      uchydro[j] = toupper(hydro[j]);
+      lchydro[j] = tolower(hydro[j]);
    }
         
-   uchydro[j] = '\0';
+   lchydro[j] = '\0';
    
    printf("%s\n", &hydro[0]);
 
-   if ((out = fopen("./dum","w+")) == NULL)
+   if ((out = fopen("./hydro_file","w+")) == NULL)
    {
-      fprintf(stderr, "can't open output for dum\n");
+      fprintf(stderr, "can't open output for hydro_file\n");
       exit(1);
    }
    fprintf(out, "%s\n", &hydro[0]);
 
    fclose(out);
 
-   if ((out = fopen("./UCdum","w+")) == NULL)
+   if ((out = fopen("./LChydro_file","w+")) == NULL)
    {
-      fprintf(stderr, "can't open output for UCdum\n");
+      fprintf(stderr, "can't open output for LChydro_file\n");
       exit(1);
    }
-   fprintf(out, "%s\n", &uchydro[0]);
+   fprintf(out, "%s\n", &lchydro[0]);
 
    fclose(out);
 
