@@ -69,7 +69,7 @@ void teacup(gdImagePtr im,gdPoint base,int size,double maxfull,
    /*debugging*/
    printf("%lf %lf %d %d   %d %d   %d %d\n",maxfull,currentfull,percentfull,size,corner[2].x,corner[2].y,corner[3].x,corner[3].y);
 
-   gdImageFilledRectangle(im,base.x-2,base.y+1,base.x+98,base.y+35,background);  /*clear background for text    */
+/*   gdImageFilledRectangle(im,base.x-2,base.y+1,base.x+98,base.y+35,background); */ /*clear background for text    */
 
         
    gdImageString(im,gdFontSmall,base.x,base.y+3,(unsigned char *)label,foregroundtext);
