@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/local/bin/perl -wd
 
 use Date::Calc qw(:all);
 use DBI;
@@ -29,6 +29,8 @@ sub passdie {
 %site_datatype_hash = ("ELEVATION", undef, "RELEASE", undef, "STORAGE", undef,
 		       "COMPUTED INFLOW", undef);
 
+%value_hash = ("ELEVATION", undef, "RELEASE", undef, "STORAGE", undef,
+	       "COMPUTED INFLOW", undef);
 
 #check to see command line usage.
 if (scalar(@ARGV) <3)
@@ -66,10 +68,13 @@ $datestr = substr $line, 0, 9;
 (@data_date = Decode_Date_EU($datestr)) ||
   die "There was an error parsing the date in the datafile!.\n";
 
-print "@data_date\n";
-
 # fix the fact that the data is reported for the next day!
-  @value_date = Add_Delta_Days(@data_date, -1);
+@value_date = Add_Delta_Days(@data_date, -1);
+
+# reuse string to hold Oracle ready date string
+  $datestr = sprintf("%02d-%.3s-%4d",$value_date[2],
+			   Month_to_Text($value_date[1]), $value_date[0]);
+print "$datestr\n";
 
 #skip past header
 for ($i = 0; $i < 179-51; $i++)
@@ -78,8 +83,8 @@ for ($i = 0; $i < 179-51; $i++)
 READ: while ($line = <INFILE>)
 {
   chomp($line);
-  #end data if line is really short, or contains 78 dashes ('-')
-#  last READ if (length($line) < 5 || $line =~ m/-{78}/) ;
+  #end data if have already read data for Caballo
+  last READ if defined($cur_site_name) && $cur_site_name eq "CABALLO RESERVOIR";
 
   #check to see if the site changed
   $cur_site_name = substr $line, 0, index $line, '<';
@@ -92,54 +97,43 @@ READ: while ($line = <INFILE>)
   $line = <INFILE>;
   #read one datapoint
   $line = <INFILE>;
-  $elevation = substr $line, 0, index $line, '<';
+  $value_hash{"ELEVATION"} = substr $line, 0, index $line, '<';
 
   #read one line of html junk
   $line = <INFILE>;
   #read one datapoint
   $line = <INFILE>;
-  $release = substr $line, 0, index $line, '<';
+  $value_hash{"RELEASE"} = substr $line, 0, index $line, '<';
 
   #read one line of html junk
   $line = <INFILE>;
   #read one datapoint
   $line = <INFILE>;
-  $storage = substr $line, 0, index $line, '<';
+  $value_hash{"STORAGE"} = substr $line, 0, index $line, '<';
 
   #read one line of html junk
   $line = <INFILE>;
   #read one datapoint
   $line = <INFILE>;
-  $inflow = substr $line, 0, index $line, '<';
+  $value_hash{"COMPUTED INFLOW"} = substr $line, 0, index $line, '<';
 
-  $elevation =~ s/\s//g;
-  $elevation =~ s/\,//g;
-  $release =~ s/\s//g ;
-  $release =~ s/\,//g;
-  $storage =~ s/\s//g;
-  $storage =~ s/\,//g;
-  $inflow =~ s/\s//g;
-  $inflow =~ s/\,//g;
+  $value_hash{"ELEVATION"} =~ s/\s//g;
+  $value_hash{"ELEVATION"} =~ s/\,//g;
+  $value_hash{"RELEASE"} =~ s/\s//g ;
+  $value_hash{"RELEASE"} =~ s/\,//g;
+  $value_hash{"STORAGE"} =~ s/\s//g;
+  $value_hash{"STORAGE"} =~ s/\,//g;
+  $value_hash{"COMPUTED INFLOW"} =~ s/\s//g;
+  $value_hash{"COMPUTED INFLOW"} =~ s/\,//g;
 
-#  if ($elevation =~ /\D/ ) {
-#    $elevation = undef;
-#  }
-#  if ($release == /\D/ ) {
-#    $release = undef;
-#  }
-#  if ($storage == /\D/ ) {
-#    $storage = undef;
-#  }
-#  if ($inflow == /\D/ ) {
-#    $inflow = undef;
-#  }
-
-  if ($inflow) {
-    $inflow /= 1.98347;
+  if ($value_hash{"COMPUTED INFLOW"}) {
+    $value_hash{"COMPUTED INFLOW"} = sprintf("%.2f",$value_hash{"COMPUTED INFLOW"}/1.98347);
   }
 
+#values are in a global hash, so just need to pass in date, and could omit that
+
   if ($site_id) {
-    insert_values(@value_date, $elevation, $release, $storage, $inflow);
+    insert_values($datestr);
   }
   for ($i = 0; $i < 8; $i++)
   { $line = <INFILE>; }
@@ -171,24 +165,18 @@ sub check_value
 
 sub insert_values
   {
-    my(@value_date) = @_[0,1,2];
-    my(@cur_values) = @_[3,4,5,6];
+    $datestr = $_[0];
 
     my($insth, $upsth);
 #    print @_;
-
-    $datestr = sprintf("%02d-%.3s-%4d",$value_date[2],
-			   Month_to_Text($value_date[1]), $value_date[0]); 
 
     eval {
       $insth = $dbh->prepare($insert_data_statement) || mydie $insth->errstr;
       $upsth = $dbh->prepare($update_data_statement) || mydie $upsth->errstr;
 
-      $i = -1;
 # insert data;
       foreach $datatype (keys %datatype_hash)
 	{
-	  $i++;
 	  undef $old_val;
 	  $old_val = check_value($datestr, $site_datatype_hash{$datatype});
 #	  if (!defined $cur_values[$i]) {
@@ -200,20 +188,20 @@ sub insert_values
 #	  }
 #	  els
 	  if (!defined($old_val)) {
-	    print "inserting for $site_datatype_hash{$datatype}, date $datestr, value $cur_values[$i], old_val = undefined\n";
+	    print "inserting for $site_datatype_hash{$datatype}, date $datestr, value $value_hash{$datatype}, old_val = undefined\n";
 
 	    $insth->bind_param(1,$site_datatype_hash{$datatype});
 	    $insth->bind_param(2,$datestr);
-	    $insth->bind_param(3,$cur_values[$i]);
+	    $insth->bind_param(3,$value_hash{$datatype});
 	    $insth->execute|| mydie $insth->errstr;
 	  }
-	  elsif ($old_val == $cur_values[$i]) {
+	  elsif ($old_val == $value_hash{$datatype}) {
 	    next;
 	  }
-	  elsif ($old_val != $cur_values[$i]) {
-	    print "updating for $site_datatype_hash{$datatype}, date $datestr, value $cur_values[$i], old_val = $old_val\n";
+	  elsif ($old_val != $value_hash{$datatype}) {
+	    print "updating for $site_datatype_hash{$datatype}, date $datestr, value $value_hash{$datatype}, old_val = $old_val\n";
 	    #update instead of insert
-	    $upsth->bind_param(1,$cur_values[$i]);
+	    $upsth->bind_param(1,$value_hash{$datatype});
 	    $upsth->bind_param(2,$site_datatype_hash{$datatype});
 	    $upsth->bind_param(3,$datestr);
 	    $upsth->execute|| mydie $upsth->errstr;
