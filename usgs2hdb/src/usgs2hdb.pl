@@ -3,7 +3,8 @@
 #insert HDB library
 
 use lib "$ENV{HDB_ENV}/perlLib/lib";
-use lib "$ENV{HDB_ENV}/perlLib/lib/i386-linux";
+# Don't need
+#use lib "$ENV{HDB_ENV}/perlLib/lib/i386-linux";
 
 use LWP::UserAgent;
 use Date::Calc qw(Delta_DHMS);
@@ -202,6 +203,7 @@ if (defined($readfile))
 # the insert is passed a slice of @data
 
 my $i = 0;
+STATION:
 until (!defined($data[0])) {
   # remove leading comments and comments between sites
   while (substr ($data[0], 0, 1) eq '#') {
@@ -220,6 +222,10 @@ until (!defined($data[0])) {
   # count number of rows that are not comments after header
   while ($i <= $#data and substr ($data[$i], 0, 1) ne '#') {
     $i++;
+  }
+
+  if ($i eq 0) { # USGS has started putting completely empty headers in for stations not in realtime system?
+    next STATION;
   }
 
   #make a slice of the input data for this site
@@ -278,8 +284,8 @@ my $computation_id;
 sub get_app_ids
 {
 # Get ids to describe where data came from
-  my $agen_name = 'USGS';
-  my $collect_name = 'GOES to USGS';
+  my $agen_name = 'United States Geological Survey';
+  my $collect_name = '(see agency)';
   my $load_app_name = 'usgs2hdb.pl';
   my $method_name = 'unknown';
   my $computation_name = 'unknown';
@@ -436,7 +442,7 @@ sub insert_values
   my $column = 3;
 
   my $i = 0;
-  my $first_date = undef;
+  my ($first_date, $end_date_time) = undef;
   my ($value, $value_date, $updated_date);
   my ($line, @row);
   my $old_val;
@@ -445,7 +451,7 @@ sub insert_values
 
   my $modify_data_statement = "
     BEGIN
-        modify_r_base_raw(?,'instant',?,null,?, /* sdi, interval, start_date_time, end_date_time (null), value */
+        modify_r_base_raw(?,'instant',?,?,?, /* sdi, interval, start_date_time, end_date_time (in/out, not used), value */
                           null,'Z',              /* overwrite, validation */
                           $agen_id,$collect_id,$load_app_id,$method_id,$computation_id,
                           'Y');                 /*do update? */
@@ -493,8 +499,11 @@ sub insert_values
         }
 	$modsth->bind_param(1,$cur_sdi);
 	$modsth->bind_param(2,$value_date);
-	$modsth->bind_param(3,$value);
+	$modsth->bind_param_inout(3,\$end_date_time,50);
+	$modsth->bind_param(4,$value);
 	$modsth->execute;
+	
+	$end_date_time = undef;
 	if (!defined($first_date)) { # mark that data has changed
 	  $first_date = $value_date;
 	}
