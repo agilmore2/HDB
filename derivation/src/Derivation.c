@@ -9,7 +9,7 @@
 * Neil Wilson
 * September, 2001
 *****************************************************************************/
-#define VERSION "1.0"
+#define VERSION "1.1"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -174,7 +174,7 @@ int main (int argc, char **argv)
 
    /* Since processing is finished, delete the previously tagged overwrite
       values from r_base_update */
-   if ((result = SqlDeleteOverwrite()) != OK)
+   if ((result = SqlDeleteOverwrite(sdilist)) != OK)
    {
       SqlDropTable();
       SqlDisconnect();

@@ -255,7 +255,7 @@ DATA_RECORD*
 
 int SqlCopyOverwrite(int*, char*);
 
-int SqlDeleteOverwrite();
+int SqlDeleteOverwrite(char*);
 
 int SqlMethodTwo(
 #ifdef ANSIPROTO

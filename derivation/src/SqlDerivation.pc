@@ -15,7 +15,7 @@
 *          SqlCopyBase() and DeriveList() to copy and derive the
 *          data up through the interval tables.
 *
-* Input:   None
+* Input:   char* sdilist - may be null, comma separated list of sdis to process
 *
 * Output:  int* - Pointer to number of r_base_update records processed
 *
@@ -1188,7 +1188,9 @@ int SqlCopyBase(UPDATE_RECORD* updateList, int updateCount,
 
                   if ((result = SqlFilePrintErrorHandler(LOGFILE, FUNC_NAME,
                                 FALSE,
-                                "Problem inserting data record into %s\n", 
+                                "Problem inserting data record (sdi: %d, start_date_time: %s) into %s\n", 
+                                 sqlDataRecord.siteDatatypeId,
+                                 sqlDataRecord.startDateTime,
                                  intervalTable)) != OK)
                   {
                      EXEC SQL ROLLBACK;

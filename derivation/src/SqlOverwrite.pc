@@ -12,7 +12,7 @@
 * Purpose: Contains logic for copying new and changed overwrite data from
 *          r_base.
 *
-* Input:   None
+* Input:   char* sdilist - may be null, comma separated list of sdis to process
 *
 * Output:  None
 *
@@ -25,7 +25,7 @@
 * Purpose: Deletes overwrite records from r_base_update that are
 *          marked as "ready for delete".
 *
-* Input:   None
+* Input:   char* sdilist - may be null, comma separated list of sdis to process
 *
 * Output:  None
 *
@@ -783,19 +783,32 @@ int SqlCopyOverwrite(int* baseUpdateTotal, char * sdilist)
 /****************************************************************************/
 #define FUNC_NAME "SqlDeleteOverwrite"
 
-int SqlDeleteOverwrite()
+int SqlDeleteOverwrite(char* sdilist)
 {
    /* This function deletes the overwrite values from r_base_update that
       have been marked as "ready for delete" by the SqpCopyOverwrite
       function. This is run at the end of the derivation application to
       clean out overwrite values that have now been completely processed */
 
-   int result;
+   EXEC SQL BEGIN DECLARE SECTION;
+      char sdiDeleteStatement[1200];
+   EXEC SQL END DECLARE SECTION;
 
+   int result;
    /* Delete the "ready for delete" overwrite values */
 
-   EXEC SQL DELETE FROM r_base_update
-      WHERE ready_for_delete = 'Y';
+   if (sdilist)
+   {
+      sprintf(sdiDeleteStatement, "DELETE FROM r_base_update "
+        "WHERE ready_for_delete = 'Y' "
+        "AND site_datatype_id IN ( %s )", sdilist);
+   } else
+   {
+      sprintf(sdiDeleteStatement, "DELETE FROM r_base_update "
+        "WHERE ready_for_delete = 'Y' ");
+   }
+   EXEC SQL PREPARE del FROM :sdiDeleteStatement;
+   EXEC SQL EXECUTE del;
 
    /* TRUE used in second argument to SqlFilePrintErrorHandler because it
       is OK if no rows were processed above - means no overwrite values
