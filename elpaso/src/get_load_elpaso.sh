@@ -1,6 +1,6 @@
 #!/bin/bash
 #delete the files
-\rm Dailyflo.htm
+\rm -f Dailyflo.htm
 touch marker.delete
 #activate the get_snotel script which get the data from portland
 $HDB_ENV/elpaso/src/get_elpaso.sh
