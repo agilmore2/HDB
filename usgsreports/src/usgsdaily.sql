@@ -183,7 +183,7 @@ ttitle center "site: &&name(&&site_code) datatype: &&datatype(&&pcode) in &&unit
 
 btitle left 'Ave&octave&novave&decave&janave&febave&marave&aprave&mayave&junave&julave&augave&sepave' skip -
 btitle left 'Sum&octsum&novsum&decsum&jansum&febsum&marsum&aprsum&maysum&junsum&julsum&augsum&sepsum' skip -
-btitle left 'Water Year &year Sum &sum Average &ave Max &max Min &min';
+btitle left 'Water Year &year   Sum  &sum Average  &ave       Max&max       Min&min';
 
 /*setup columns for report justify needed because columns are not numbers any more*/
 column day heading "Day" format 99;
