@@ -71,8 +71,8 @@ from dual;
 
 column sumformat new_value sumformat;
 select case 
-when &sum/12 > 99999999 then '99.99EEEE'
-when &sum/12 > 999999 then   '999999999'
+when &sum/12 > 50000000 then '99.99EEEE'
+when &sum/12 > 500000 then   '999999999'
 else '999999.00'
 end sumformat
 from dual;
