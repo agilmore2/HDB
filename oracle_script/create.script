@@ -116,4 +116,4 @@ echo
 sh ./STANDARD_DATA/standard.sh $dba_name $passwd
 
 echo Load of standard date complete.
-echo Don't forget to check output in the .log and .out files in STANDARD_DATA
+echo Don\'t forget to check output in the .log and .out files in STANDARD_DATA
