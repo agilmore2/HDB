@@ -423,7 +423,7 @@ int SqlConvertUnit(SQL_INTERVAL destInterval,
       {
          intervalType = BY_MONTH;
       } 
-      else if (!strncmp(destInterval, "yr", 2))
+      else if (!strncmp(destInterval, "ye", 2))
       {
          intervalType = BY_YEAR;
       } 
