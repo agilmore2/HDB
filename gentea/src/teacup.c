@@ -7,7 +7,8 @@ int foreground,background,foregroundtext;
 
 char buf[100];
 
-void teacup(gdImagePtr im,gdPoint base,int size,double maxfull,double currentfull,char *label)
+void teacup(gdImagePtr im,gdPoint base,int size,double maxfull,
+            double currentfull,char *label,char *datadate)
 {
 
    gdPoint corner[4];
@@ -85,8 +86,13 @@ void teacup(gdImagePtr im,gdPoint base,int size,double maxfull,double currentful
    /*            sprintf(buf,"MISSING"); */
    /*         else */
 
-   sprintf(buf,"%d%% Full",percentfull);
+   if(datadate) {
+      sprintf(buf,"%d%% Full as of %s",percentfull,datadate);
+      gdImageString(im,gdFontSmall,base.x,base.y+23,(unsigned char *)buf,foregroundtext);
+   } else {
+      sprintf(buf,"%d%% Full",percentfull);
    gdImageString(im,gdFontSmall,base.x,base.y+23,(unsigned char *)buf,foregroundtext);
+   }
 
 }
 
