@@ -1,6 +1,6 @@
 -- install the triggers to load a row to r_base_update that
 -- notifies derivation application of data to process
--- 10/02/01
+-- 10/02/01  
 --
 create or replace trigger r_base_before_insert_update
 before insert or update 
