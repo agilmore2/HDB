@@ -48,7 +48,7 @@ connect_to_db($ARGV[1], $ARGV[2]);
 
 $get_site_datatype_statement = "select site_datatype_id from hdb_site_datatype where site_id = ? and datatype_id = ? ";
 
-$insert_data_statement = "insert into r_day values(?,?,?,5,'Z') ";
+$insert_data_statement = "insert into r_day values(?,?,?, 14,'Z') ";
 
 $update_data_statement = "update r_day SET (value) = ( ?) where (site_datatype_id = ? and date_day = ?) ";
 
