@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
       exit(ERROR);
    }
 
-   result = SqlConnectRole(dbName, appUser, dbName, appRole); 
+   result = SqlConnectRole(dbName, appUser, dbName, appRole);
    if (result != OK)
    {
       PrintError("Could not connect to local database...\n");
@@ -206,9 +206,8 @@ int main(int argc, char *argv[])
       exit(ERROR);
    }
 
-   result = SqlDisconnect();  
-
-      if (result != OK)
+   result = SqlDisconnect(); 
+   if (result != OK)
    {
       PrintError("Error...disconnecting from the database...\n");
       exit(ERROR);
@@ -241,7 +240,7 @@ int main(int argc, char *argv[])
 		    dbsite_array[i].dbsite_alias);
 
 	 /* Set the flag for this DB indicating that there is no connection. */
-   	 dbsite_array[i].connected = FALSE;
+     	 dbsite_array[i].connected = FALSE;
 	 
 	 /* Exit if the connection failure was on the local, default DB. */
 	 if (i == 0)
@@ -257,7 +256,7 @@ int main(int argc, char *argv[])
       /* Otherwise, set flag indicating success */ 
       PrintError("Connected to %s.\n", dbsite_array[i].dbsite_db_name);
       dbsite_array[i].connected = TRUE;      
-      
+
       /* Set nls_date_format for every opened session;
 	 each session remains open throughout the run, so one
 	 setting is enough. */
@@ -267,7 +266,7 @@ int main(int argc, char *argv[])
 	  return (ERROR);
 	  } 
       
-   } /* end for loop */
+	  }  /* end for loop */
    
    /* Am currently on the default (local) session */
 
