@@ -1,0 +1,36 @@
+# Environ
+# $Id$
+
+# This file defines constants which are used in HDB application makefiles.
+# It must be placed in the HDB application root directory and must be 
+# included ("include") in every application or library makefile which uses
+# these constants.
+
+# Environment variable HDB_ENV defines the root directory of an
+# HDB application development environment.  It should be set in 
+# your .cshrc_hdb_app file.
+
+# directory which holds all HDB application binaries
+HDB_APP_BIN = $(HDB_ENV)/bin
+
+# directory which holds all HDB specific library files
+HDB_APP_LIB = $(HDB_ENV)/lib
+
+# directory which holds all HDB global include files
+HDB_APP_INCLUDE = $(HDB_ENV)/include
+
+# directory which holds TCL/TK include files
+TK_INCLUDES = /usr/local/tcl-tk
+
+# TCL/TK library files
+TK_LIBS = -L/usr/local/tcl-tk/lib -ltk8.0 -ltcl8.0 -lm
+
+# Oracle library files
+ORACLE_LIB = -L$(ORACLE_HOME)/lib -lagent8 -lclient8 -lclntsh -lcommon8 -lcore8 -ldbicx8 -lgeneric8 -lmm -lobk -lpsa8 -lserver8 -lslax8 -lslpm -lsql8 -lsqlplus -lsvrmgrl -lvsn8
+
+# all libraries required by HDB applications
+HDB_LIBS = -L$(HDB_APP_LIB) -ldmi -lhdb -lutils $(ORACLE_LIB) -lhdb
+
+# Compiler
+CC = gcc
+
