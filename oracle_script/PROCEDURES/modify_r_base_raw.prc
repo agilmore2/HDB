@@ -101,4 +101,5 @@ show errors;
 /
 create public synonym modify_r_base_raw for modify_r_base_raw;
 grant execute on modify_r_base_raw to app_role;
+grant execute on modify_r_base_raw to savoir_faire;
 
