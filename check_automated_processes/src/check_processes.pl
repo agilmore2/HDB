@@ -7,7 +7,7 @@ use English;
 open INFILE, 'automatedapps';
 
 my ($app,$errfile,$expectfile,$cmdname,$ps,$line,@dirent,$HDB_ENV);
-my $DEBUG = 1;
+my $DEBUG = 0;
 my $status = 0;
 my $subject = "Subject: Failure Detected in Automated uchdb2 Process\n";
 my ($output, $result);
