@@ -269,7 +269,7 @@ until (!defined($data[0])) {
 # print error messages for all sites that no data was returned for
 foreach my $usgs_no (keys %$usgs_sites) {
   if (!defined($usgs_sites->{$usgs_no}->{found_data})) {
-    print STDERR "No realtime data found for site USGS ID: $usgs_no site_id: $usgs_sites->{$usgs_no}->{site_id}\n";
+    print STDERR "No realtime data found for site: $usgs_sites->{$usgs_no}->{site_name}   USGS ID: $usgs_no\n";
   }
 }
 
@@ -379,7 +379,7 @@ sub get_usgs_sites
     $id_limit_clause = "a.usgs_id in ( $site_num_list ) and";
   }
 
-  my $get_usgs_no_statement = "select a.usgs_id, a.site_id, b.site_datatype_id
+  my $get_usgs_no_statement = "select a.usgs_id, a.site_id, b.site_datatype_id, a.site_name
 from hdb_site a, hdb_site_datatype b, hdb_datatype c, ref_hm_site_datatype d
 where a.site_id = b.site_id and
 b.datatype_id = c.datatype_id and
