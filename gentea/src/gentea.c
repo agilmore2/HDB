@@ -33,7 +33,7 @@ int main(int argc,char **argv)
 {
    gdImagePtr im;	
    FILE *ofs,*ifs,*cfs;	
-   int retval,row,col,size,red,white,blue,green,sofar,i,j;
+   int retval,row,col,size,red,white,blue,nblue,green,sofar,i,j;
    time_t t;
    char datelabel[50],drawitem[30],description[100],line[100],units[30];
    char label[25];
@@ -70,11 +70,12 @@ int main(int argc,char **argv)
    im = gdImageCreateFromPng(ifs);
    white = gdImageColorAllocate(im, 255, 255, 255);	
    blue = gdImageColorAllocate(im, 100,100, 255);		
+   nblue = gdImageColorAllocate(im, 0,0, 140);		
    red = gdImageColorAllocate(im,255,0,0);
    green = gdImageColorAllocate(im,0,220,0);
    foreground=blue;
    background=white;
-   foregroundtext=green;
+   foregroundtext=nblue;
 
    /* connect to the database */
    char *dbName;
