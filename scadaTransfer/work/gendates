@@ -45,7 +45,7 @@ done
 # reads from this file, and prints out one date per line
 # in the format DDMonYY which we then tr into all uppercase, DDMONYY
 
-/usr/local/bin/date -f junk$$ +%y%h%d |tr -s '[:lower:]' '[:upper:]'
+/usr/local/bin/date -f junk$$ +%y%h%d |tr '[:lower:]' '[:upper:]'
 
 # delete the junk file. $$ is variable for current processes PID, which
 #makes the file have a unique name.
