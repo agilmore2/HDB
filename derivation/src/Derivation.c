@@ -117,11 +117,11 @@ int main (int argc, char **argv)
       database */
    if ((result = SqlCreateTable()) != OK)
    {
-      FilePrintError(LOGFILE, "Derivation application is either already running
-                  on the %s database or crashed and did not properly drop 
-                  the r_interval_update table.  If the program crashed, the
-                  r_interval_update table under the app_user's schema must be
-                  dropped before the derivation application will rerun.\n",
+      FilePrintError(LOGFILE, "Derivation application is either already running\n"
+		     "the %s database or crashed and did not properly drop\n"
+		     "the r_interval_update table.  If the program crashed, the\n"
+		     "r_interval_update table under the app_user's schema must be\n"
+		     "dropped before the derivation application will rerun.\n",
                   argv[2]);
       SqlDisconnect();
       exit (ERROR);            
