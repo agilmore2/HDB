@@ -149,7 +149,7 @@ int GetObjAndSlotName(char * line, char* obj_name, char* slot_name)
 
    /* Now see if there's another period. */
    leftmostPeriod = rightmostPeriod-1;
-   while ( (*leftmostPeriod != '.') && (leftmostPeriod >= obj_slot_name_start) )
+   while ( (*leftmostPeriod != '.') && (leftmostPeriod > obj_slot_name_start) )
       leftmostPeriod--;
 
    /* if there is only one period, can set object and slot name now */
