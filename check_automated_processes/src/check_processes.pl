@@ -6,6 +6,11 @@ use strict;
 open INFILE, 'automatedapps';
 
 my ($app,$errfile,$expectfile,$cmdname,$ps,$line,@dirent,$HDB_ENV);
+
+my $status = 0;
+my $subject = "Subject: Failure Detected in Automated uchdb2 Process\n";
+my $output;
+
 while (<INFILE>)
 {
   chomp;
@@ -13,11 +18,12 @@ while (<INFILE>)
 
   $HDB_ENV = $ENV{'HDB_ENV'};
 
-
   $errfile =~ s /\$HDB_ENV/$HDB_ENV/e;
 
   if (! (@dirent = stat($errfile))) {
-    print "File not found, '$errfile'\n";
+    $output .= "\nFile not found, '$errfile'\n";
+    $status = 1;
+
     next;
   }
   #  print "@dirent\n";
@@ -26,14 +32,16 @@ while (<INFILE>)
     $expectfile = $errfile . ".expected";
     if (stat($expectfile)) {
       if (`diff $errfile $expectfile`) {
-        print "Application $app had an error! $errfile is not as expected\n";
+        $status = 1;
+        $output .= "\nApplication $app had an error! $errfile is not as expected\n";
         open ERRFILE, $errfile;
-        print <ERRFILE>;
+        $output .= <ERRFILE>;
       }
     } else {
-      print "Application $app had an error! $errfile is not empty\n";
+      $status = 1;
+      $output .= "\nApplication $app had an error! $errfile is not empty\n";
       open ERRFILE, $errfile;
-      print <ERRFILE>;
+      $output .= <ERRFILE>;
     }
   }
 }
@@ -48,7 +56,16 @@ while (<INFILE>)
   ($app,$cmdname) = split '=';
   $ps = `ps -fuuchdba|grep $cmdname|grep -v grep`;
   if (!$ps) {
-    print"Realtime application $app down!!!\n";
+    $output .= "\nRealtime application down: $app.\n";
+    $status = 1;
   }
 }
 
+if ($status) {
+  open MAIL, "|mail $ENV{HDB_XFER_EMAIL}";
+  print MAIL $subject, $output;
+
+  close MAIL;
+}
+
+exit $status;
