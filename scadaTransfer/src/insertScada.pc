@@ -50,13 +50,12 @@ int insertScada (SQL_DATE *formattedDates,int site_datatype_id, float *vals_arra
  VALUE         vals;
  ID            sdi,s_id;
  char          val_Flag[2];
- VALUE         oldvalue;
 
  EXEC SQL END DECLARE SECTION;
 
  int         i,
              result;
- short       NULL_INDICATOR = -1;
+ short       NULL_INDICATOR;
  char        tableName[25];
 
  if(lookup)
@@ -76,20 +75,18 @@ int insertScada (SQL_DATE *formattedDates,int site_datatype_id, float *vals_arra
  for (i=0; i < NUM_HOURS; i++)
    { 
      vals=vals_array[i];
-     strcpy (date_time, formattedDates[i]);
+     strcpy(date_time,formattedDates[i]);
+     NULL_INDICATOR=-1;
 
-     /* the update is very tricky because the dates must match
-	we pull the date out and convert to a char with the to_char function, using
-        upper case as date_time has a capitalized three character month.  The
-	comparison is case sensitive 
-modify_r_base_raw  ( SITE_DATATYPE_ID NUMBER,
+     /* 
+	modify_r_base_raw  ( SITE_DATATYPE_ID NUMBER,
 			      INTERVAL VARCHAR2,
 			      START_DATE_TIME DATE,
 			      END_DATE_TIME DATE,
 			      VALUE FLOAT,
+                              AGEN_ID NUMBER,
 			      OVERWRITE_FLAG VARCHAR2,
 			      VALIDATION CHAR,
-                              AGEN_ID NUMBER,
                               COLLECTION_SYSTEM_ID NUMBER,
                               LOADING_APPLICATION_ID NUMBER,
                               METHOD_ID NUMBER,
@@ -97,20 +94,9 @@ modify_r_base_raw  ( SITE_DATATYPE_ID NUMBER,
 			      DO_UPDATE_Y_OR_N VARCHAR2 ) 
 
 */
-     EXEC SQL SELECT value into :oldvalue from r_base where
-       	   site_datatype_id = :sdi
-	   and start_date_time = :date_time
-           and interval = 'hour'
-	   and value <> :vals;
-     
-     /* see if a record was available; if so (sqlca.sqlcode <= 0), then complain */
-     if (sqlca.sqlcode <= 0)
-       {
-	 printf("Warning - Data for this record (%19s) will be updated not inserted\n",date_time);
 
-       }
-
-/* placing the null_indicator after the end_date_time will always pass a null in that position */
+/* placing the null_indicator after the end_date_time will pass a null in that position
+   it will get overwritten with something else every invocation, so we set it to -1 every time*/
      EXEC SQL EXECUTE
        begin
        uchdba.modify_r_base_raw(:sdi,'hour',:date_time,:end_date_time:NULL_INDICATOR, :vals ,:agen_id,
@@ -119,8 +105,9 @@ modify_r_base_raw  ( SITE_DATATYPE_ID NUMBER,
 				:computation_id,'Y');
        end;
        END-EXEC;
-	
+
    }
+
  EXEC SQL COMMIT;
  return (OK);
  
