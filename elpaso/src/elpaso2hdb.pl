@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -wd
+#!/usr/local/bin/perl -w
 
 use Date::Calc qw(:all);
 use DBI;
