@@ -434,7 +434,8 @@ int snotelSiteExists (char *buffer)
   
   for(i=0; i < numSnotelSites; i++)
     {
-      if(!strcmp(buffer,snotelSites[i].siteName))
+      if(!strcmp(buffer,snotelSites[i].siteName) &&
+	 strlen(buffer) == strlen (snotelSites[i].siteName))
 	{
 	  return(1);
 	}
