@@ -18,8 +18,8 @@ column sdi new_value sdi;
 select hm_site_code, hm_pcode, to_char(site_datatype_id) sdi from
 ref_hm_site_pcode
 where
-hm_site_code = '&&site_code' and
-hm_pcode = '&&pcode' and
+hm_site_code = UPPER('&&site_code') and
+hm_pcode = UPPER('&&pcode') and
 site_datatype_id IS NOT NULL
 ;
 
@@ -49,15 +49,23 @@ b.unit_id = c.unit_id;
 column beginyear new_value beginyear;
 column year new_value year;
 column size new_value size;
-select to_number(to_char(min(a.date_month+92),'YYYY')) beginyear, 
-       to_number(to_char(max(a.date_month+92),'YYYY')) year,
-       to_number(to_char(max(a.date_month+92),'YYYY'))-
-       to_number(to_char(min(a.date_month+92),'YYYY'))+ 12 as "size"
+select to_number(nvl(to_char(min(a.date_month+92),'YYYY'),'9999')) beginyear, 
+       to_number(nvl(to_char(max(a.date_month+92),'YYYY'),'9999')) year,
+       to_number(nvl(to_char(max(a.date_month+92),'YYYY'),'9999'))-
+       to_number(nvl(to_char(min(a.date_month+92),'YYYY'),'9999'))+ 12 as "size"
 from r_month a
 where a.site_datatype_id = &&sdi
 ;
 
 set pagesize &size;
+
+/* if no data exists for this sdi, change year display. I know this sucks!*/
+column checkyear new_value checkyear;
+column checkbeginyear new_value checkbeginyear;
+select 
+case when &year=9999 then 'NODATA' else to_char(&year) end checkyear, 
+case when &year=9999 then 'NODATA' else to_char(&beginyear) end checkbeginyear
+from dual;
 
 /* setup fake columns for reporting values */
 column min new_value min;
@@ -186,7 +194,7 @@ and to_char(a.date_month,'MM') = 12;
 /* now start the report*/
 /* top title, datatype names can be really long!*/
 ttitle center "site: &&name(&&site_code) datatype: &&datatype(&&pcode) in &&unit" skip -
-       center "Historical Record &beginyear to &year";
+       center "Historical Record &checkbeginyear to &checkyear";
 
 /*bottom title, this is where the monthly average and sum statistics and the
   statistics for the record are reported*/
