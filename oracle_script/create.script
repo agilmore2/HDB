@@ -1,7 +1,7 @@
 echo Starting the creation script.
 # ------------------------------------------------------------------------------
-# This shell script creates an installation of HDB. It initially prompts for the sys
-# password, DBA name, and DBA password. It then copies information from the
+# This shell script creates an installation of HDB. It initially prompts for the 
+# DBA name, and DBA password. It then copies information from the
 # BASE_SCRIPTS directory into the parent directory. BASE_SCRIPTS directories contain
 # scripts that have site independent information in them. The site independent
 # information is then replaced by the site specific information that was prompted by
@@ -24,8 +24,6 @@ fi
 
 # Prompting for information
 
-echo Enter sys password:
-read sys_passwd
 echo Enter DBA user name:
 read dba_name
 echo Enter DBA user password:
@@ -39,7 +37,9 @@ cp ./PERMISSIONS/BASE_SCRIPTS/* ./PERMISSIONS/
 # Replacing site independent information with site specific information
 # as provided by the user above.
 
-sed 's/SYSPSSWD/'$sys_passwd'/g' ./PERMISSIONS/permissions.sh > temp
+sed 's/DBA/'$dba_name'/g' ./PERMISSIONS/permissions.sh > temp
+mv temp ./PERMISSIONS/permissions.sh
+sed 's/PASSWD/'$passwd'/g' ./PERMISSIONS/permissions.sh > temp
 mv temp ./PERMISSIONS/permissions.sh
 sed 's/DBA/'$dba_name'/g' ./SCHEMA/drop_user.ddl > temp
 mv temp ./SCHEMA/drop_user.ddl 
@@ -66,7 +66,7 @@ chmod +x ./PERMISSIONS/permissions.sh
 
 # Inputting .ddl files into sqlplus
 
-sqlplus sys/$sys_passwd    < ./SCHEMA/user.ddl        > out1
+sqlplus '$dba_name/$passwd as sysdba'    < ./SCHEMA/user.ddl        > out1
 grep ERROR out1
 sqlplus $dba_name/$passwd  < ./SCHEMA/tbl.ddl         > out2
 grep ERROR out2
