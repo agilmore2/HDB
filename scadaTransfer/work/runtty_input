@@ -6,17 +6,15 @@ echo '       runtty_input started'
 
 # First, define this function
 prompt_user () {
-
-    #ask if they need to use the SCADA terminal at all
     read -p "$loopprompt" endloop
-    if [ -z $endloop ] 
-    then
-        endloop='n'
-    fi
+    until [ $endloop = "n" -o $endloop = "y" ] 
+    do
+        read -p "$loopprompt" endloop
+    done
 }
 
 # Call it once, to see if we need to go to the SCADA at all
-loopprompt='Are you finished with the SCADA Terminal (y,n) [n] ?'
+loopprompt='Are you finished with the SCADA Terminal (y,n)?'
 prompt_user
 
 #then loop until they say they are done with the terminal
@@ -34,7 +32,7 @@ touch current_dates
 echo 'Dates currently selected for HDB loading are:'
 cat current_dates
 
-loopprompt="Is this set of dates correct? (y,n) [n] ?"
+loopprompt="Is this set of dates correct? (y,n)? "
 prompt_user
 until [ $endloop = 'y' ]
 do 
@@ -63,17 +61,23 @@ do
             read -p 'Enter Date: ' date
             echo $date >>current_dates
             cat current_dates
+            echo "To empty the date set, hit ctrl-C and start runtty_input over."
             prompt_user
         done
     fi
 done
-
 
 #echo ' '
 echo '        Initiating program to load data into Oracle HDB'
 #set $1 to first field in this file
 for date in `cat current_dates`
 do
+    if [ -z "$date" ]
+    then
+        echo "Date is empty, error in date file"
+        exit 1;
+    fi
+
 # application scadaTransfer is run using the applications role
 # it has two arguments the name of the log file and the password
 # this application can be run independant of this script
