@@ -134,11 +134,14 @@ int GetObjAndSlotName(char * line, char* obj_name, char* slot_name)
    
    
    /*
-    * Walk back to the rightmost period; if that is the only period, it
+    * Walk back to the rightmost period, but exclude any periods in the
+      last character of the name; if rightmost period is the only period, it
       separates the obj name from the slot name. If there is another,
       must determine if middle portion belongs with object name or slot name
-    */
-   rightmostPeriod = obj_slot_name_end;
+   */
+
+   /* Starting at obj_slot_name_end-2 excludes period in last char of name */
+   rightmostPeriod = obj_slot_name_end-2;
    while ( (*rightmostPeriod != '.') && (rightmostPeriod >= obj_slot_name_start) )
       rightmostPeriod--;
    if (rightmostPeriod == obj_slot_name_start) { /* if there was no period, rightmostPeriod = obj_slot_name_start */
