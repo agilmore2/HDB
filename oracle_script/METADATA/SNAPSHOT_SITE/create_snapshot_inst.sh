@@ -208,7 +208,7 @@ fi
 
 
 echo Running V_DBA_ROLES.sql 
-sqlplus $dba_name/$psswd < ../V_DBA_ROLES.sql > V_DBA_ROLES.out
+sqlplus '$dba_name/$psswd as sysdba' < ../V_DBA_ROLES.sql > V_DBA_ROLES.out
 
 echo "**********************"
 echo "Check output in V_DBA_ROLES.out; ok to continue? (y or n)"
