@@ -14,6 +14,10 @@ use Hdb;
 
 use strict;
 
+#Version Information
+my $verstring = '$Revision$';
+$verstring =~ s/^\$Revision: //;
+$verstring =~ s/\$//;
 
 #check to see command line usage.
 my $progname = basename($0);
@@ -90,17 +94,6 @@ if ($numdays >31 ) {
   usage();
 }
 
-
-if (defined($runagg)) {
-  my $aggdisagg_loc = `which aggDisagg 2>/dev/null`;
-  chomp $aggdisagg_loc;
-  if (! -x $aggdisagg_loc ) {
-    print STDERR "Cannot find aggDisagg in your path, will not aggregate.
-To fix this, include the HDB bin directory in your path.\n";
-    undef $runagg;
-  }
-}
-
 #HDB database interface
 # global because used in several sub routines
 my $hdb = Hdb->new;
@@ -116,6 +109,8 @@ $hdb->set_approle();
 #Set date format to ISO, USGS data also in this format
 $hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI'")
   or die "Unable to set NLS_DATE_FORMAT to ISO standard\n";
+
+get_app_ids();
 
 my ($usgs_sites);
 
@@ -245,37 +240,15 @@ until (!defined($data[0])) {
     ($first_date, $updated_date) = insert_values(\@cur_values, $cur_sdi);
     if (!defined($first_date)) {
       print "No data updated for $usgs_no\n";
+    } else {
+      print "Data updated from $first_date to $updated_date for $usgs_no\n";
     }
   }
 
   # now call aggDisagg (an HDB application) to move data up to
   # r_hour table, uses dates returned from insert from previous function
   # 
-  if (defined($runagg) and (defined($first_date) or !defined($insertflag))) {
-    if (!defined($insertflag)) { # no insert, need dates
-      $first_date = $firstrow[2];
-      $updated_date = (split /\t/, $data[$i-1])[2];
-    }
-
-    # find number of hours and properly formatted date and time
-    my ($num_hours, $agg_date, $aggtime) = agg_hours($first_date,
-						     $updated_date,
-						     $cur_sdi);
-
-    my ($houragg_id, $dayagg_id) = find_agg_id()
-    or die "No aggregation id for moving flows from r_instant or r_hour exist, one must be created.\n";
-
-    my $cmd = qq{aggDisagg $hdbuser $hdbpass $houragg_id 1 n n n r d $num_hours '$agg_date $aggtime' $cur_site >logs/aggDisagg_usgshour$usgs_no.out 2>logs/aggDisagg_usgshour$usgs_no.err};
-    print "$cmd\n" if defined($debug);
-    system $cmd unless defined($debug);
-
-    my $num_days =  sprintf("%d", $num_hours/24);
-    $num_days++;
-
-    $cmd = qq{aggDisagg $hdbuser $hdbpass $dayagg_id 1 n n n r d $num_days '$agg_date' $cur_site >logs/aggDisagg_usgsday$usgs_no.out 2>logs/aggDisagg_usgsday$usgs_no.err};
-    print "$cmd\n" if defined($debug);
-    system $cmd unless defined($debug);
-  }
+  # FIXME: Check to see if specification exists for hourly and daily derivations
 
   @data = @data[$i..$#data];
   $i=0;
@@ -289,6 +262,55 @@ foreach my $usgs_no (keys %$usgs_sites) {
 }
 
 #End main program, subroutines below
+
+my $agen_id;
+my $collect_id;
+my $load_app_id;
+my $method_id;
+my $computation_id;
+
+sub get_app_ids
+{
+# Get ids to describe where data came from
+  my $agen_name = 'USGS';
+  my $collect_name = 'GOES to USGS';
+  my $load_app_name = 'usgs2hdb.pl';
+  my $method_name = 'unknown';
+  my $computation_name = 'unknown';
+
+  my $max_len = 11;
+
+  my $sth;
+
+  $sth = $hdb->dbh->prepare(q{
+     BEGIN
+           lookup_application(?,?,?,?,?,  /* agen, collect, load_app, method, computation names*/
+                                     ?,?,?,?,?); /* agen, collect, load_app, method, computation ids */
+     END;
+   });
+
+  $sth->bind_param(1,$agen_name);
+  $sth->bind_param(2,$collect_name);
+  $sth->bind_param(3,$load_app_name);
+  $sth->bind_param(4,$method_name);
+  $sth->bind_param(5,$computation_name);
+  $sth->bind_param_inout(6, \$agen_id, $max_len);
+  $sth->bind_param_inout(7, \$collect_id, $max_len);
+  $sth->bind_param_inout(8, \$load_app_id, $max_len);
+  $sth->bind_param_inout(9, \$method_id, $max_len);
+  $sth->bind_param_inout(10, \$computation_id, $max_len);
+
+  eval {
+    $sth->execute;
+  };
+
+
+  if ($@) { # something screwed up
+    print $hdb->dbh->errstr, " $@\n";
+    die "Errors occurred during selection of ids for application.\n";
+  }
+
+}
 
 sub build_url
 {
@@ -336,56 +358,6 @@ sub build_web_request
   return ($ua, $request);
 }
 
-
-sub find_agg_id
-{
-  my $sth;
-  my $hourvalue=undef;
-  my $dayvalue =undef;
-
-# for this program to successfully call the hdb program aggDisagg
-# an agg disagg operation
-# must be defined in the database with the parameters
-# as referenced in this select statement
-
-  my $find_hour_agg_id_statement = "select agg_disagg_id from ref_agg_disagg
-where source_datatype_id = 18 and
-source_observation_prd = 'instant' and
-dest_datatype_unit_ind = 'D' and
-dest_datatype_or_unit_id = 19 and
-dest_observation_prd = 'hour' and
-agg_disagg_operator = 'ave'";
-
-  my $find_day_agg_id_statement = "select agg_disagg_id from ref_agg_disagg
-where source_datatype_id = 19 and
-source_observation_prd = 'hour' and
-dest_datatype_unit_ind = 'D' and
-dest_datatype_or_unit_id = 19 and
-dest_observation_prd = 'day' and
-agg_disagg_operator = 'ave'";
-
-  eval {
-    $sth = $hdb->dbh->prepare($find_hour_agg_id_statement);
-    $sth->execute;
-    $sth->bind_col(1,\$hourvalue);
-    $sth->fetch;
-    $sth->finish();
-
-    $sth = $hdb->dbh->prepare($find_day_agg_id_statement);
-    $sth->execute;
-    $sth->bind_col(1,\$dayvalue);
-    $sth->fetch;
-    $sth->finish();
-  };
-
-  if ($@) { # something screwed up
-    print "$hdb->dbh->errstr, $@\n";
-    die "Errors occurred during selection of aggDisagg id for aggregation.\n";
-  }
-
-  return $hourvalue, $dayvalue;
-}
-
 sub get_usgs_sites
 {
   my $site_num_list;
@@ -414,7 +386,7 @@ order by usgs_id";
   };
 
   if ($@) { # something screwed up
-    print "$hdb->dbh->errstr, $@\n";
+    print $hdb->dbh->errstr, " $@\n";
     die "Errors occurred during automatic selection of USGS gage ids.\n";
   }
 
@@ -425,10 +397,10 @@ sub check_value
 {
   my($check_date)=$_[0];
   my($site_datatype_id)=$_[1];
-  my($sth, $value, $source);
+  my($sth, $value);
 
-  my $check_data_statement = "select value, source_id from r_instant
-where date_time = ? and site_datatype_id = ? ";
+  my $check_data_statement = "select value from r_base
+where start_date_time = ? and site_datatype_id = ? and interval = 'instant'";
 
   eval {
     $sth = $hdb->dbh->prepare($check_data_statement);
@@ -437,95 +409,16 @@ where date_time = ? and site_datatype_id = ? ";
 
     $sth->execute;
     $sth->bind_col(1,\$value);
-    $sth->bind_col(2,\$source);
     $sth->fetch;
     $sth->finish();
   };
 
   if ($@) { # something screwed up
-    print "$hdb->dbh->errstr, $@\n";
+    print $hdb->dbh->errstr, " $@\n";
     die "Errors occurred during selection of data already in database.\n";
   }
-  return ($value, $source);
+  return ($value);
 }
-
-#Find what the maximum hourly date is for this sdi, and update hm 
-#table if necessary
-#hmHourly should have updated the ref_hm_site_datatype table if it put
-# new data
-# we want to run aggDisagg to get all new data into r_hour,
-# even if source is hydromet
-sub get_update_max_date
-{
-  my($cur_sdi)=$_[0];
-  my($usgs_max_date)=$_[1];
-  my($sth, $max_date);
-
-  my $check_date_statement = "select max_hourly_date
-from ref_hm_site_datatype
-where site_datatype_id = ?
-and max_hourly_date >= ? ";
-
-  eval {
-    $sth = $hdb->dbh->prepare($check_date_statement);
-    $sth->bind_param(1,$cur_sdi);
-    $sth->bind_param(2,$usgs_max_date);
-
-    $sth->execute;
-    $sth->bind_col(1,\$max_date);
-
-    if (!$sth->fetch) { #no value returned, USGS data newer
-      $sth->finish();
-      $max_date = $usgs_max_date;
-      $hdb->dbh->do("update ref_hm_site_datatype
-set (max_hourly_date) = ('$max_date') where (site_datatype_id = $cur_sdi) ");
-
-      $hdb->dbh->commit;
-
-      print "Updated ref_hm_site_datatype: max_hourly_date $max_date, site_datatype_id $cur_sdi" if defined ($debug);
-    } else { # hydromet data newer
-      print "No new data inserted, usgs_date $usgs_max_date, max_hourly_date $max_date, site_datatype_id $cur_sdi" if defined ($debug);
-    }
-
-    $sth->finish();
-  };
-
-  if ($@) { # something screwed up
-    print "$hdb->dbh->errstr, $@\n";
-    die "Errors occurred during update of ref_hm_site_datatype.\n";
-  }
-
-  return $max_date;
-}
-
-
-# find number of hours to run aggDisagg given two timestamps
-# format of timestamps is 'YYYY-MM-DD HH:MI'
-# also return date and times formatted for the begin timestamp for aggDisagg
-sub agg_hours
-{
-  my $start_ts = $_[0];
-  my $end_ts = $_[1];
-  my $cur_sdi = $_[2];
-
-  my ($startdate,$starttime) = split / /, $start_ts;
-  my ($startyear,$startmonth,$startday) = split /-/, $startdate;
-  my ($starthour,$startminute) = split /:/, $starttime;
-
-  my ($enddate,$endtime) = split / /, $end_ts;
-  my ($endyear,$endmonth,$endday) = split /-/, $enddate;
-  my ($endhour,$endminute) = split /:/, $endtime;
-
-  my ($Dd,$Dh,$Dm,$Ds) =
-  Delta_DHMS($startyear,$startmonth,$startday,
-	     $starthour,$startminute,0,
-	     $endyear,$endmonth,$endday,
-	     $endhour,$endminute,0) or die "Date Calculation failed.\n";
-
-  #return number of hours, and properly formatted date and time
-  return $Dd*24 + $Dh + 1, "$startmonth/$startday/$startyear", $starttime;
-}
-
 
 sub insert_values
 {
@@ -540,20 +433,22 @@ sub insert_values
   my $first_date = undef;
   my ($value, $value_date, $updated_date);
   my ($line, @row);
-  my ($old_val, $old_source);
+  my $old_val;
 
 # SQL statements
-  my $insert_data_statement = "insert into r_instant values(?,?,?,11,'Z')";
 
-  my $update_data_statement = "update r_instant
-SET (value) = ( ?), source_id = 11
-where (site_datatype_id = ? and date_time = ?) ";
+  my $modify_data_statement = "
+    BEGIN
+        modify_r_base_raw(?,'instant',?,null,?, /* sdi, interval, start_date_time, end_date_time (null), value */
+                          null,'Z',              /* overwrite, validation */
+                          $agen_id,$collect_id,$load_app_id,$method_id,$computation_id,
+                          'Y');                 /*do update? */
+    END;";
 
   eval
   {
-    my ($insth,$upsth);
-    $insth = $hdb->dbh->prepare($insert_data_statement);
-    $upsth = $hdb->dbh->prepare($update_data_statement);
+    my ($modsth);
+    $modsth = $hdb->dbh->prepare($modify_data_statement);
 
     # insert or update or do nothing for each datapoint;
     foreach $line (@data)
@@ -567,9 +462,9 @@ where (site_datatype_id = ? and date_time = ?) ";
 
       # find the previous value, if any for this point
       undef $old_val;
-      ($old_val, $old_source) = check_value($value_date, $cur_sdi);
+      $old_val = check_value($value_date, $cur_sdi);
 # check if value from source is known
-      if (!defined $value or $value eq '') {
+      if (!defined ($value) or $value eq '') {
 	print "data missing: $cur_sdi, date $value_date\n" if defined($debug);
 	next;
       } elsif ($value =~ m/Ice/) { # check for Ice
@@ -579,45 +474,36 @@ where (site_datatype_id = ? and date_time = ?) ";
       } elsif ($value =~ m/[^0-9\.]/) { # check for other text, complain
 	print "data corrupted: $cur_sdi, date $value_date: $value\n";
 	next;
-      } elsif (!defined $old_val) { # insert, source value is good
-	print "inserting for $cur_sdi, date $value_date, value $value, old_val = undefined\n" if defined($debug);
-
-	$insth->bind_param(1,$cur_sdi);
-	$insth->bind_param(2,$value_date);
-	$insth->bind_param(3,$value);
-	$insth->execute;
-	if (!defined($first_date)) { # mark that data has been changed
-	  $first_date = $value_date;
-	}
-	$updated_date = $value_date;
-      } elsif ($old_val == $value and $old_source == 11) {
+      } elsif (defined($old_val) && $old_val == $value) {
 	next; # source and database are same, do nothing
-      } elsif ($old_val != $value or $old_source != 11 ) {
-	# update, source and database differ (or source id is different!)
-	print "updating for $cur_sdi, date $value_date, value $value, old_val = $old_val old_source = $old_source\n"  if defined($debug);
-	#update instead of insert
-	$upsth->bind_param(1,$value);
-	$upsth->bind_param(2,$cur_sdi);
-	$upsth->bind_param(3,$value_date);
-	$upsth->execute;
+      } elsif (!defined($old_val) or $old_val != $value) {
+	# update or insert, source and database differ (or database value does not exist)
+        if (defined($debug)) {
+          if (!defined($old_val)) {
+            print "modifying for $cur_sdi, date $value_date, value $value, old_val = undef\n";
+          } else {
+            print "modifying for $cur_sdi, date $value_date, value $value, old_val = $old_val\n";
+          }
+        }
+	$modsth->bind_param(1,$cur_sdi);
+	$modsth->bind_param(2,$value_date);
+	$modsth->bind_param(3,$value);
+	$modsth->execute;
 	if (!defined($first_date)) { # mark that data has changed
 	  $first_date = $value_date;
 	}
 	$updated_date = $value_date;
       }
     }
-    $upsth->finish;
-    $insth->finish;
+    $modsth->finish;
+
   }; # semicolon here because of use of eval
 
   if ($@) { # something screwed up in insert/update
-    print "$hdb->dbh->errstr, $@\n";
+    print $hdb->dbh->errstr, " $@\n";
     die "Errors occurred during insert/update/deletion of data. Rolled back any database manipulation.\n";
   } elsif ($first_date) {	# commit the data
     $hdb->dbh->commit or die $hdb->dbh->errstr;
-
-    # update hm driver table, and check for newer hydromet data
-    $updated_date = get_update_max_date($cur_sdi, $updated_date);
   }
   return $first_date, $updated_date;
 }
@@ -649,10 +535,6 @@ ENDHELP
 
 sub version
 {
-  my $verstring = '$Revision$';
-  $verstring =~ s/^\$Revision: //;
-  $verstring =~ s/\$//;
-
   print "$progname version $verstring\n";
   exit 1;
 }
