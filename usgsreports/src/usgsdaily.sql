@@ -64,8 +64,9 @@ and a.date_day between '01-oct-&beginyear' and last_day('01-sep-&year');
 
 column numformat new_value numformat;
 select case 
-when &max    > 999999 then '999999999'
-else '999999.00'
+when &max > 999999999 then '99.99EEEE'
+when &max > 999999    then '999999999'
+else                       '999999.00'
 end numformat
 from dual;
 
