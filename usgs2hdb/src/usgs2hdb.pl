@@ -131,13 +131,16 @@ The data is expected in the following format:
 # as a list of data available for each site, and which data is included in the
 # file
 # Then
+# Sigh, they added another line to make things more complicated 9/2003
 #
 agency_cd	site_no	datetime	02_00060
+5s      15s     16s     14s
 USGS	09261000	2003-04-29 00:00	7,250
 USGS	09261000	2003-04-29 00:15	7,220
 ...
 # next site header
 agency_cd	site_no	datetime	02_00060
+5s      15s     16s     14s
 USGS	09261000	2003-04-29 00:00	7,250
 USGS	09261000	2003-04-29 00:15	7,220
 ...
@@ -211,6 +214,9 @@ until (!defined($data[0])) {
     print "@header\n";
     die "Data is not USGS website tab delimited format!\n";
   }
+  # shift away extra header line
+  shift @data;
+
   # count number of rows that are not comments after header
   while ($i <= $#data and substr ($data[$i], 0, 1) ne '#') {
     $i++;
