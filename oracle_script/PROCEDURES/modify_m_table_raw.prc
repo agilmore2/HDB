@@ -3,15 +3,16 @@ PROMPT CREATE OR REPLACE PROCEDURE modify_m_table_raw;
 CREATE OR REPLACE PROCEDURE modify_m_table_raw  ( 
                               MODEL_RUN_ID_IN NUMBER,
                               SITE_DATATYPE_ID_IN NUMBER,
-                              INTERVAL_IN VARCHAR2,
                               START_DATE_TIME_IN DATE,
-                              END_DATE_TIME DATE,
+                              END_DATE_TIME IN OUT DATE,
                               VALUE FLOAT,
+                              INTERVAL_IN VARCHAR2,
                               DO_UPDATE_Y_OR_N VARCHAR2 )
 IS
     ROWCOUNT NUMBER;
     END_DATE_TIME_NEW DATE;
 BEGIN
+
     /*  First check for any null field that were passed  */
     IF MODEL_RUN_ID_IN IS NULL THEN DENY_ACTION ( 'INVALID <NULL> MODEL_RUN_ID' );
         ELSIF SITE_DATATYPE_ID_IN IS NULL THEN DENY_ACTION ( 'INVALID <NULL> SITE_DATATYPE_ID' );
@@ -33,6 +34,7 @@ BEGIN
             DENY_ACTION ( INTERVAL_IN || ' IS AN INVALID INTERVAL WITH A NULL END DATE TIME.' );
         END IF;
 
+        END_DATE_TIME := END_DATE_TIME_NEW;
     END IF;
 
     /*  go see if a record already exists ; if not do an insert otherwise do an update as long as upper(do_update_y_or_n) = 'Y'  
@@ -80,12 +82,12 @@ BEGIN
 
     IF rowcount = 0 THEN
         /* insert the data into the database  */
-        INSERT_M_TABLE ( INTERVAL_IN,
-                        MODEL_RUN_ID_IN, 
+        INSERT_M_TABLE (MODEL_RUN_ID_IN, 
                         SITE_DATATYPE_ID_IN,
                         START_DATE_TIME_IN,
                         END_DATE_TIME_NEW,
-                        VALUE );
+                        VALUE,
+                        INTERVAL_IN);
   /*  update the data into the database, if desired */
         ELSIF rowcount > 1 THEN
               DENY_ACTION ( 'RECORD with with MRI: ' || to_char(MODEL_RUN_ID_IN) || 
@@ -93,11 +95,12 @@ BEGIN
               ' INTERVAL: ' || INTERVAL_IN || ' START_DATE_TIME: ' || to_char ( START_DATE_TIME_IN,
               'dd-MON-yyyy HH24:MI:SS' ) || ' HAS MULTIPLE ENTRIES. DANGER! DANGER! DANGER!.' );
         ELSIF UPPER ( NVL ( DO_UPDATE_Y_OR_N,           
-                            'Y' ) ) = 'Y' THEN UPDATE_M_TABLE_RAW ( INTERVAL_IN,
+                            'Y' ) ) = 'Y' THEN UPDATE_M_TABLE_RAW ( 
                                                                     MODEL_RUN_ID_IN, 
                                                                     SITE_DATATYPE_ID_IN,
                                                                     START_DATE_TIME_IN,
-                                                                    VALUE );
+                                                                    VALUE,
+	                                                            INTERVAL_IN);
     END IF;
 
 END;

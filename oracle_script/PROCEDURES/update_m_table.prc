@@ -1,11 +1,11 @@
 PROMPT CREATE OR REPLACE PROCEDURE update_m_table;
 
 CREATE OR REPLACE PROCEDURE update_m_table (
-        INTERVAL_IN VARCHAR2,
         MODEL_RUN_ID_IN NUMBER,
         SITE_DATATYPE_ID_IN NUMBER,
         START_DATE_TIME_IN DATE,
-        VALUE_IN FLOAT)
+        VALUE_IN FLOAT,
+        INTERVAL_IN VARCHAR2)
    IS
        
    rowcount_new NUMBER;
@@ -61,11 +61,12 @@ CREATE OR REPLACE PROCEDURE update_m_table (
 
 /* These are duplicated for speed, see comments in insert_m_table and modify_m_table */
    UPDATE_M_TABLE_RAW (
-        INTERVAL_IN,
         MODEL_RUN_ID_IN,
         SITE_DATATYPE_ID_IN,
         START_DATE_TIME_IN,
-        VALUE_IN);
+        VALUE_IN,
+        INTERVAL_IN
+);
    END;
 /
 
