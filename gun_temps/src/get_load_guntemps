@@ -12,7 +12,7 @@ if ($sa[1] != marker.delete)then
     echo  
     source /wrg/hdb/HDB_applications/.cshrc_hdb_app
     rehash
-    /wrg/hdb/HDB_applications/bin/guntemps2hdb.pl gunnison.txt app_user uchdb
+    /wrg/hdb/HDB_applications/bin/guntemps2hdb.pl gunnison.txt app_user uchdb2
 else 
     echo 'FTP transfer failed!'
     exit 1
