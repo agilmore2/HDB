@@ -226,7 +226,7 @@ my $computation_id;
 sub get_app_ids
 {
 # Get ids to describe where data came from
-  my $agen_name = 'CODWR';
+  my $agen_name = 'Colorado Division of Water Resources';
   my $collect_name = '(see agency)';
   my $load_app_name = 'codwr2hdb.pl';
   my $method_name = 'unknown';
@@ -412,7 +412,8 @@ sub insert_values
 
   my $i = 0;
   my $first_date = undef;
-  my ($value, $value_date, $updated_date, $end_date_time);
+  my $end_date_time = undef;
+  my ($value, $value_date, $updated_date);
   my ($line);
   my ($old_val, $old_source);
 
@@ -430,7 +431,6 @@ sub insert_values
   {
     my ($modsth);
     $modsth = $hdb->dbh->prepare($modify_data_statement);
-
 
     # insert or update or do nothing for each datapoint;
     foreach $line (@data) {
@@ -468,9 +468,13 @@ sub insert_values
 	#modify
 	$modsth->bind_param(1,$cur_sdi);
 	$modsth->bind_param(2,$value_date);
-	$modsth->bind_param_inout(3,$end_date_time);
+	$modsth->bind_param_inout(3,\$end_date_time,50);
 	$modsth->bind_param(4,$value);
 	$modsth->execute;
+
+	# throw away resulting end_date_time, we do not need it
+	$end_date_time = undef;
+
 	if (!defined($first_date)) { # mark that data has changed
 	  $first_date = $value_date;
 	}
