@@ -1,0 +1,30 @@
+#!/bin/sh
+myprog=`basename $0`
+
+#this next command checks for symlinks
+#vunerable to spaces in directory names
+mydir=`ls -l $0 | sed -e 's/^.* //'`
+mydir=`dirname $mydir`
+
+mysqlcmd="sqlplus -S $APP_USER/$HDB_LOCAL@$HDB_LOCAL"
+
+usage() {
+    echo "$myprog: produce daily quick report"
+    echo "Usage: $myprog site_code"
+    echo "Example: $myprog glda (produces report)"
+    exit 2
+}
+
+if [ $# -ne 1 ]
+then 
+    usage
+fi
+
+$mysqlcmd @$mydir/reportsdi.sql $1 >/dev/null 2>1
+if [ $? -eq 0 ]
+then
+    echo "Unable to find site $1."
+    exit 1
+fi
+
+$mysqlcmd @$mydir/daily.sql $@
