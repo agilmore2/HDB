@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE update_r_base_raw ( SITE_DATATYPE_ID_IN NUMBER,
 			  COMPUTATION_ID_IN NUMBER )
 IS
 manual_edit CHAR := 'N';
-old_manual_edit CHAR := 'N';
+old_manual_edit CHAR;
 old_priority number := 0;
 new_priority NUMBER := 0;
 old_value FLOAT := 0;
@@ -42,7 +42,7 @@ BEGIN
 
     IF manual_edit = 'N' then
     begin
-	select priority_rank 
+	select nvl(priority_rank,0) 
           into new_priority
 	  from ref_source_priority
 	 where site_datatype_id = SITE_DATATYPE_ID_IN
@@ -67,7 +67,7 @@ BEGIN
     end;
 
     begin /* Find if the old loading_application was manual */
-    select nvl(manual_edit_app,'N')
+    select manual_edit_app
       into old_manual_edit
       from hdb_loading_application
       where loading_application_id = old_loading_application_id;
@@ -76,16 +76,19 @@ BEGIN
     end if;
 
 /* DO THE UPDATE IF:*/
-    IF (manual_edit = 'Y' OR old_manual_edit = 'N')         -- this is a manual edit, or the old data was not a manual edit
-	and (new_priority < old_priority                    -- and the new priority is higher (closer to 0) than the old
-             or (new_priority = old_priority                -- or agencies have same priority
-                AND (abs(old_value - value_in) > epsilon    -- and value is different (difference larger than epsilon!
-                    OR overwrite_flag_in != old_overwrite_flag  -- or one of the foreign keys (except agen_id) is different
-                    OR validation_in != old_validation
-                    or collection_system_id_in != old_collection_system_id
-                    OR loading_application_id_in != old_loading_application_id
-                    or method_id_in != old_method_id
-                    or computation_id_in != old_computation_id)
+    IF (manual_edit = 'Y') 
+        OR (old_manual_edit is null          -- this is a manual edit, or the old data was not a manual edit
+	    and (overwrite_flag_in = 'O' or old_overwrite_flag is null) -- it is now an overwrite, or the old was not
+	    and (new_priority < old_priority                   -- and the new priority is higher (closer to 0) than the old
+                 or (new_priority = old_priority                -- or agencies have same priority
+                     AND (abs(old_value - value_in) > epsilon    -- and value is different (difference larger than epsilon!
+                          OR overwrite_flag_in != old_overwrite_flag  -- or one of the foreign keys (except agen_id) is different
+                          OR validation_in != old_validation
+                          or collection_system_id_in != old_collection_system_id
+                          OR loading_application_id_in != old_loading_application_id
+                          or method_id_in != old_method_id
+                          or computation_id_in != old_computation_id)
+                    )
                 )
             )
     then
