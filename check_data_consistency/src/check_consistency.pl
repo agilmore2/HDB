@@ -40,7 +40,7 @@ while (<INFILE>)
 }
 
 if ($status) {
-  open MAIL, "|mail -t $ENV{HDB_XFER_EMAIL},rclayton\@uc.usbr.gov";
+  open MAIL, "|mail -t $ENV{HDB_NOTIFY_EMAIL}";
   print MAIL $subject, $output;
 
   close MAIL;
