@@ -7,10 +7,10 @@ use English;
 open INFILE, 'automatedapps';
 
 my ($app,$errfile,$expectfile,$cmdname,$ps,$line,@dirent,$HDB_ENV);
-my $DEBUG = 0;
+my $DEBUG = 1;
 my $status = 0;
 my $subject = "Subject: Failure Detected in Automated uchdb2 Process\n";
-my $output;
+my ($output, $result);
 
 while (<INFILE>)
 {
@@ -32,18 +32,11 @@ while (<INFILE>)
   if ($dirent[7] != 0) {
     $expectfile = $errfile . ".expected";
     if (stat($expectfile)) {
-      if (`diff $errfile $expectfile`) {
+      $result = `diff -u $expectfile $errfile`;
+      if ($?) {
         $status = 1;
         $output .= "\nApplication $app had an error! $errfile is not as expected\n";
-      #Make this file get sucked in completely, don't break on newlines
-      my $oldsep = $INPUT_RECORD_SEPARATOR;
-      $INPUT_RECORD_SEPARATOR = undef;
-
-      open ERRFILE, $errfile;
-      $output .= <ERRFILE>;
-
-      #reset the record separator
-      $INPUT_RECORD_SEPARATOR = $oldsep;
+        $output .= $result;
       }
     } else {
       $status = 1;
