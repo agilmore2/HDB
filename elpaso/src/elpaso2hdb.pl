@@ -1,7 +1,9 @@
 #!/usr/local/bin/perl -w
 
 use lib "$ENV{HDB_ENV}/perlLib/lib";
-use lib "$ENV{HDB_ENV}/perlLib/lib/i386-linux";
+# Don't need?
+#use lib "$ENV{HDB_ENV}/perlLib/lib/i386-linux";
+
 use Hdb;
 
 use Date::Calc qw(:all);
@@ -170,7 +172,7 @@ my $computation_id;
 sub get_app_ids
 {
 # Get ids to describe where data came from
-  my $agen_abbrev = 'USBR';
+  my $agen_name = 'Bureau of Reclamation';
   my $collect_name = '(see agency)';
   my $load_app_name = 'elpaso2hdb.pl';
   my $method_name = 'unknown';
@@ -187,7 +189,7 @@ sub get_app_ids
      END;
    });
 
-  $sth->bind_param(1,$agen_abbrev);
+  $sth->bind_param(1,$agen_name);
   $sth->bind_param(2,$collect_name);
   $sth->bind_param(3,$load_app_name);
   $sth->bind_param(4,$method_name);
@@ -218,11 +220,13 @@ sub insert_values
     $datestr = $_[0];
 
     my($modsth);
+    my($end_date_time);
+
 #    print @_;
 
     my $modify_data_statement = "
     BEGIN
-        modify_r_base_raw(?,'day',?,null,?, /* sdi, interval, start_date_time, end_date_time (null), value */
+        modify_r_base_raw(?,'day',?,?,?, /* sdi, interval, start_date_time, end_date_time (in/out, not used), value */
                           null,'Z',              /* overwrite, validation */
                           $agen_id,$collect_id,$load_app_id,$method_id,$computation_id,
                           'Y');                 /*do update? */
@@ -251,8 +255,11 @@ sub insert_values
 	  }
 	  $modsth->bind_param(1,$site_datatype_hash{$datatype});
 	  $modsth->bind_param(2,$datestr);
-	  $modsth->bind_param(3,$value_hash{$datatype});
+	  $modsth->bind_param_inout(3,\$end_date_time,50);
+	  $modsth->bind_param(4,$value_hash{$datatype});
 	  $modsth->execute|| die modsth->errstr;
+	  
+	  $end_date_time = undef;
 	}
 
       $modsth->finish;
