@@ -66,7 +66,8 @@ open (INFILE, "$ARGV[0]") || mydie "Error: couldn't open input file $ARGV[0]";
 
 @fileinfo = stat INFILE;
 
-print "$fileinfo[10]\n";
+$filemdate = localtime($fileinfo[9]);
+print "File created locally at $filemdate\n";
 
 $cur_site_name = "none";
 
