@@ -86,10 +86,10 @@
 #
 # Transfer SQL generated data file to NWS CBRFC 
 #
-13 8,10 * * * csh -c "source /wrg/home/uchdba/.cshrc; cd $HDB_ENV/nws_report/src; ./xferftp_nwsdata.sh" >> $HDB_ENV/nws_report/src/xferftp_nwsdata.out 2> $HDB_ENV/nws_report/src/xferftp_nwsdata.err
+13 8,10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/nws_report/src; ./xferftp_nwsdata.sh >> $HDB_ENV/nws_report/src/xferftp_nwsdata.out 2> $HDB_ENV/nws_report/src/xferftp_nwsdata.err
 #
 # Tea cup diagrams (used to be in Amy Thatcher's crontab)
-#
+# 
 # Wasatch Front
 00 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea wasatch_input.png /wrg/exec/pub/AOP/wasatch_teacup.png wasatch.cfg > wasatch_teacup.out 2> wasatch_teacup.err
 # Gunnison Basin
