@@ -127,7 +127,7 @@ READ: while ($line = <INFILE>)
   $value_hash{"COMPUTED INFLOW"} =~ s/\,//g;
 
   if ($value_hash{"COMPUTED INFLOW"}) {
-    $value_hash{"COMPUTED INFLOW"} = sprintf("%.2f",$value_hash{"COMPUTED INFLOW"}/1.98347);
+    $value_hash{"COMPUTED INFLOW"} = sprintf("%.0f",$value_hash{"COMPUTED INFLOW"}/1.98347);
   }
 
 #values are in a global hash, so just need to pass in date, and could omit that
