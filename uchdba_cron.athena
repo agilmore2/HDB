@@ -1,0 +1,92 @@
+#
+############################
+#HDB2 automated applications
+############################
+#
+# Read snotel data from NRCS website
+#
+10 07 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/basins/work;. get_load_snotel.sh >> $HDB_ENV/basins/work/get_load_snotel.log 2> $HDB_ENV/basins/work/get_load_snotel.err
+# Read historical snotel data for past 40 days
+20 07 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/basins/work/snotel_hist; ./run_hist_snotel.pl 40 >> $HDB_ENV/basins/work/snotel_hist/run_40day_snotel.log 2> $HDB_ENV/basins/work/snotel_hist/run_40day_snotel.err
+#
+# Read data from NRCS ftp site for Gunnison MMS
+#
+55 07 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gun_temps/src;./get_load_guntemps >> $HDB_ENV/gun_temps/src/get_load_guntemps.log 2> $HDB_ENV/gun_temps/src/get_load_guntemps.err
+#
+# Read data from NWS ftp site for Gunnison MMS
+#
+24 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/nws_data/src;./get_load_nwsdata >> $HDB_ENV/nws_data/src/get_load_nwsdata.log 2> $HDB_ENV/nws_data/src/get_load_nwsdata.err
+#
+# Read data from El Paso's daily report
+#
+45 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/elpaso/src; . ./get_load_elpaso.sh >> $HDB_ENV/elpaso/src/get_load_elpaso.log 2> $HDB_ENV/elpaso/src/get_load_elpaso.err
+#
+# Read data from USGS website
+#
+00 07,09,11,13,15 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/usgs2hdb/src; ./usgs2hdb.pl -u app_user -p <PASSWORD> -n 2 -a > $HDB_ENV/usgs2hdb/src/usgs2hdb.log 2> $HDB_ENV/usgs2hdb/src/usgs2hdb.err
+#
+# Read data from CO DOMSAT website
+#
+17 06,11 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/codwr2hdb/src; ./codwr2hdb.pl -u app_user -p <PASSWORD> -a > $HDB_ENV/codwr2hdb/src/codwr2hdb.log 2> $HDB_ENV/codwr2hdb/src/codwr2hdb.err
+#
+# Run Archive Loader for current water year
+#
+35 06,07,08,11,16 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/dataloader/work/archives; ./hmArchiveJava.sh >> $HDB_ENV/dataloader/work/archives/dataloader.log 2>$HDB_ENV/dataloader/work/archives/dataloader.err
+#
+# Run Archive Loader for previous water year, need to run it
+# every day in October, November, December
+#
+21 5,9 * 10,11,12 * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/dataloader/work/archives; ./hmArchiveJava_prev.sh >> $HDB_ENV/dataloader/work/archives/dataloader_prev.log 2>$HDB_ENV/dataloader/work/archives/dataloader_prev.err
+#
+# Run derivation application every hour
+#
+05 * * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/derivation/src; derivation app_user uchdb2 >$HDB_ENV/log/derivation.err 2>&1
+#
+# Email about automated processes
+#
+57 10 * * *  . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/check_automated_processes/work; ../src/check_processes.pl
+#
+# Email about data consistency
+#
+00 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/check_data_consistency/work; ../src/check_consistency.pl 40
+#
+#*********************************************************************
+# OUTPUT PROCESSES FROM HDB
+#*********************************************************************
+#
+#
+# Need to move other data output functions to uchdba
+# res_data, snowmap
+#
+# Transfer hourly data files from VMS drive (/zipdata) to ftp site for 
+# Stonefly Technologies
+# at 4 minutes past every hour!
+04 * * * * csh -c "source /wrg/home/uchdba/.cshrc; cd /wrg/hdb/HDB2_applications/xferftp/src; ./xferftp_stonefly.sh" >> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_stonefly.out 2> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_stonefly.err
+#
+# Transfer NIIP diversion data to ftp site for Keller Blisner
+#
+06 10 * * * csh -c "source /wrg/home/uchdba/.cshrc; cd /wrg/hdb/HDB2_applications/xferftp/src; ./xferftp_kellerblisner.sh" >> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_kellerblisner.out 2> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_kellerblisner.err
+#
+# Transfer data about Lake Powell to ftp site for general consumption
+#
+05 10 * * 1 csh -c "source /wrg/home/uchdba/.cshrc; cd /wrg/hdb/HDB2_applications/xferftp/src; ./xferftp_lakepowelldata.sh" >> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_lakepowelldata.out 2> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_lakepowelldata.err
+#
+# Transfer two files for Corps of Engineers in Sacramento about 
+# Starvation and Jordanelle (and a BUNCH more sites)
+#
+55 6 * * * csh -c "source /wrg/home/uchdba/.cshrc; cd /wrg/hdb/HDB2_applications/xferftp/src; ./xferftp_starvjordan.sh" >> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_starvjordan.out 2> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_starvjordan.err
+#
+# Tea cup diagrams (used to be in Amy Thatcher's crontab)
+#
+# Wasatch Front
+00 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/teacup/work; gentea wasatch_input.png /wrg/exec/pub/AOP/wasatch_teacup.png wasatch.cfg > wasatch_teacup.out 2> wasatch_teacup.err
+# Gunnison Basin
+00 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/teacup/work; gentea gunnison_input.png /wrg/exec/pub/AOP/gunnison_teacup.png gunnison.cfg > gunnison_teacup.out 2> gunnison_teacup.err
+# CRSP Reservoirs
+01 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/teacup/work; gentea crsp_input.png /wrg/exec/pub/AOP/crsp_teacup.png crsp.cfg > crsp_teacup.out 2> crsp_teacup.err
+# San Juan
+01 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/teacup/work; gentea sanjuan_input.png /wrg/exec/pub/AOP/sanjuan_teacup.png sanjuan.cfg > sanjuan_teacup.out 2> sanjuan_teacup.err
+# Green River
+02 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/teacup/work; gentea green_input.png /wrg/exec/pub/AOP/green_teacup.png green.cfg > green_teacup.out 2> green_teacup.err
+# Pecos/Rio Grande
+02 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/teacup/work; gentea pecosrio_input.png /wrg/exec/pub/AOP/pecosrio_teacup.png pecosrio.cfg > pecosrio_teacup.out 2> pecosrio_teacup.err
