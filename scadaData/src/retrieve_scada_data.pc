@@ -29,13 +29,14 @@ int SqlGetSCADAData(char *appUser, char *appPass, char *date)
   
    EXEC SQL BEGIN DECLARE SECTION;
 
-   SQL_DATE     day;
+   char      day[11];
    ID	        site_id, datatype_id;
    short        value_null_indicator;
    double       val;
   
    EXEC SQL END DECLARE SECTION;
 
+   char  newDateFormat[] = "RRMONDD\0";
    char   *dbName;
    int    result, i, j;
    int    site[NUMSITES];
@@ -61,11 +62,14 @@ int SqlGetSCADAData(char *appUser, char *appPass, char *date)
   
   fprintf(stdout, "Connected to ORACLE.\n");
 
-  if ((result = SqlFormatDate (date, day)) == ERROR)
-   {
-      printf("Error, invalid date format: %s\n", date);
-      exit (ERROR);
-   }
+  if ((result = SqlSetDateFormat (newDateFormat)) != OK)
+    {
+      PrintError ("Problem setting default date format.\n\tExiting.");
+      SqlDisconnect();
+      exit(1);
+    }
+
+   strcpy(day,date);
 
   /* Fill out array for retrieving data */
   datatype[0] = 49;
@@ -91,7 +95,7 @@ int SqlGetSCADAData(char *appUser, char *appPass, char *date)
             WHERE B.SITE_ID = :site_id
             AND B.DATATYPE_ID = :datatype_id
 	    AND A.SITE_DATATYPE_ID = B.SITE_DATATYPE_ID
-	      AND START_DATE_TIME = to_date(:day, 'dd-mon-yyyy hh24:mi:ss');
+	      AND START_DATE_TIME = :date;
 
 	 if (sqlca.sqlcode == 1403)
          {
