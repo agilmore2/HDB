@@ -1,6 +1,6 @@
 #  The version for use with C and INGRES follows:
 
-include ../../../Environ
+include ../../Environ
 include make_include
 
 ######################### Directives ###############################
