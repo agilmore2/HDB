@@ -262,14 +262,14 @@ until (!defined($data[0])) {
     my ($houragg_id, $dayagg_id) = find_agg_id()
     or die "No aggregation id for moving flows from r_instant or r_hour exist, one must be created.\n";
 
-    my $cmd = qq{aggDisagg $hdbuser $hdbpass $houragg_id 1 n n n r d $num_hours '$agg_date $aggtime' $cur_site >>aggDisagg_usgshour$usgs_no.out 2>aggDisagg_usgshour$usgs_no.err};
+    my $cmd = qq{aggDisagg $hdbuser $hdbpass $houragg_id 1 n n n r d $num_hours '$agg_date $aggtime' $cur_site >aggDisagg_usgshour$usgs_no.out 2>aggDisagg_usgshour$usgs_no.err};
     print "$cmd\n" if defined($debug);
     system $cmd unless defined($debug);
 
     my $num_days =  sprintf("%d", $num_hours/24);
     $num_days++;
 
-    $cmd = qq{aggDisagg $hdbuser $hdbpass $dayagg_id 1 n n n r d $num_days '$agg_date' $cur_site >>aggDisagg_usgsday$usgs_no.out 2>aggDisagg_usgsday$usgs_no.err};
+    $cmd = qq{aggDisagg $hdbuser $hdbpass $dayagg_id 1 n n n r d $num_days '$agg_date' $cur_site >aggDisagg_usgsday$usgs_no.out 2>aggDisagg_usgsday$usgs_no.err};
     print "$cmd\n" if defined($debug);
     system $cmd unless defined($debug);
   }
