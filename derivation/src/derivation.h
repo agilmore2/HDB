@@ -3,7 +3,7 @@
 
 #include "derivationTypedefs.h"
 
-int SqlDerivationControl(int*);
+int SqlDerivationControl(int*, char*);
 
 int SqlCopyBase(
 #ifdef ANSIPROTO
@@ -281,5 +281,11 @@ UPDATE_RECORD**
 );
 
 int SqlRemoveOldUpdates();
+
+int SqlVerifySDIList(
+#ifdef ANSIPROTO
+char *
+#endif
+);
 
 #endif

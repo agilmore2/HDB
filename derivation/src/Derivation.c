@@ -34,6 +34,7 @@ int main (int argc, char **argv)
    char* dbName;
    char* derivationLogPath;
    char* hdbEnv;
+   char* sdilist = NULL;
    char logName[300];
    double elapsedTime;
    SQL_DATE endTime;
@@ -45,9 +46,9 @@ int main (int argc, char **argv)
       exit (OK);
    }
 
-   if (argc != 3)
+   if (argc < 3 || argc > 4)
    {
-      PrintError("Usage: derivation <-v> | <user name> <password>\n");
+      PrintError("Usage: derivation <-v> | <user name> <password> [sdilist]\n");
       exit (ERROR);
    }
 
@@ -112,6 +113,17 @@ int main (int argc, char **argv)
 
    }
 
+   /* Handle the sdi list if it exists */
+   if (argc == 4)
+   {
+      if ((result = SqlVerifySDIList(argv[3])) == ERROR)
+      {
+         SqlDisconnect();
+         exit (ERROR);
+      }
+      sdilist = argv[3];
+   }
+
    /* Create the r_interval_update table which acts as "traffic cop" to
       ensure that only one copy of the derivation application is running on a
       database */
@@ -153,7 +165,7 @@ int main (int argc, char **argv)
 
    /* Call to SqlDerivationControl to identify and perform non overwrite 
       derivations */
-   if ((result = SqlDerivationControl(&baseUpdateTotal)) != OK)
+   if ((result = SqlDerivationControl(&baseUpdateTotal, sdilist)) != OK)
    {
       SqlDropTable();
       SqlDisconnect();

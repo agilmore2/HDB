@@ -167,10 +167,12 @@ EXEC SQL INCLUDE sqlca;
 
 #define FUNC_NAME "SqlDerivationControl"
 
-int SqlDerivationControl(int* baseUpdateTotal)
+int SqlDerivationControl(int* baseUpdateTotal, char * sdilist)
 {
    EXEC SQL BEGIN DECLARE SECTION;
       char sqlSelectStatement[1500];
+      char sdiCountStatement[1500];
+      char sdiSourceStatement[1500];
       char sqlMarkDeleteStatement[600];
       IND_DESTINATION sqlIndDestination;
       IND_SOURCE sqlIndSource;
@@ -226,11 +228,26 @@ int SqlDerivationControl(int* baseUpdateTotal)
       return (ERROR);
    }
 
+   /* Handle possible limitation on sdis to process
+      by creating an SQL where clause to limit the sdis returned*/
+   if (sdilist)
+   {
+      sprintf(sdiCountStatement, "SELECT COUNT(*) "
+      "FROM ref_derivation_source WHERE site_datatype_id IN ( %s )", sdilist);
+   } else
+   {
+      sprintf(sdiCountStatement, "SELECT COUNT(*) FROM ref_derivation_source");
+   }
+   
    /* Load all of the ref_derivation_source entries */
    /* Find how many entries in ref_derivation_source */
-   EXEC SQL
-      SELECT COUNT(*) INTO :sqlSourceCount
-      FROM ref_derivation_source;
+   /* Use SelectCount because this may be a dynamic query */
+   if ((result = SqlSelectCount(sdiCountStatement, &sqlSourceCount)) != OK)
+      {
+         FilePrintError(LOGFILE,
+                   "Problem querying row count in ref_derivation_source\n");
+         return (ERROR);
+      }
 
    if ((result = SqlFilePrintErrorHandler(LOGFILE, FUNC_NAME, FALSE, 
                  "Problem querying row count in ref_derivation_source\n"))
@@ -256,17 +273,28 @@ int SqlDerivationControl(int* baseUpdateTotal)
       sourceSpecList = NULL;
    }
 
+   /* Handle possible limitation on sdis to process
+      by creating an SQL where clause to limit the sdis returned */
+   if (sdilist)
+   {
+      sprintf(sdiSourceStatement, "SELECT site_datatype_id, interval, first_destination_interval, min_value_expected, min_value_cutoff, max_value_expected, max_value_cutoff, time_offset_minutes FROM ref_derivation_source WHERE site_datatype_id IN ( %s )", sdilist);
+   } else
+   {
+      sprintf(sdiSourceStatement, "SELECT site_datatype_id, interval, first_destination_interval, min_value_expected, min_value_cutoff, max_value_expected, max_value_cutoff, time_offset_minutes FROM ref_derivation_source");
+   }
+
+   /* prepare the source selection statement */
+   EXEC SQL PREPARE source_sel FROM :sdiSourceStatement;
+   
+   if ((result = SqlFilePrintErrorHandler(LOGFILE, FUNC_NAME, FALSE,
+      "Problem preparing source_cursor\n")) != OK)
+   {
+         return (ERROR);
+   }
+
    /* Declare source_cursor for selecting ref_derivation_source data */
-   EXEC SQL DECLARE source_cursor CURSOR FOR
-      SELECT site_datatype_id,
-             interval,
-             first_destination_interval,
-             min_value_expected,
-             min_value_cutoff,
-             max_value_expected,
-             max_value_cutoff,
-             time_offset_minutes
-      FROM ref_derivation_source;
+   EXEC SQL DECLARE source_cursor CURSOR FOR source_sel;
+   
    if ((result = SqlFilePrintErrorHandler(LOGFILE, FUNC_NAME, FALSE,
       "Problem declaring source_cursor\n")) != OK)
    {

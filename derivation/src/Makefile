@@ -18,6 +18,7 @@ OBJS = \
 	$(OBJDIR)/SqlMethods.o \
 	$(OBJDIR)/Methods.o \
 	$(OBJDIR)/SqlOverwrite.o \
+	$(OBJDIR)/SqlSDIList.o \
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(LIBS)
@@ -98,3 +99,13 @@ $(OBJDIR)/SqlOverwrite.o: \
 	$(HDB_APP_INCLUDE)/typedefs.h
 	proc code=ansi_c char_map=string iname=SqlOverwrite.pc include=$(HDB_APP_INCLUDE)
 	$(CC) $(CFLAGS) -c SqlOverwrite.c -o $@
+
+$(OBJDIR)/SqlSDIList.o: \
+	SqlSDIList.pc \
+	derivation.h \
+	derivationTypedefs.h \
+	$(HDB_APP_INCLUDE)/defines.h \
+	$(HDB_APP_LIB)/libutils.a \
+	$(HDB_APP_INCLUDE)/typedefs.h
+	proc code=ansi_c char_map=string iname=SqlSDIList.pc include=$(HDB_APP_INCLUDE)
+	$(CC) $(CFLAGS) -c SqlSDIList.c -o $@
