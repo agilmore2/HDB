@@ -79,17 +79,17 @@
 # Tea cup diagrams (used to be in Amy Thatcher's crontab)
 #
 # Wasatch Front
-00 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/teacup/work; gentea wasatch_input.png /wrg/exec/pub/AOP/wasatch_teacup.png wasatch.cfg > wasatch_teacup.out 2> wasatch_teacup.err
+00 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea wasatch_input.png /wrg/exec/pub/AOP/wasatch_teacup.png wasatch.cfg > wasatch_teacup.out 2> wasatch_teacup.err
 # Gunnison Basin
-00 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/teacup/work; gentea gunnison_input.png /wrg/exec/pub/AOP/gunnison_teacup.png gunnison.cfg > gunnison_teacup.out 2> gunnison_teacup.err
+00 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea gunnison_input.png /wrg/exec/pub/AOP/gunnison_teacup.png gunnison.cfg > gunnison_teacup.out 2> gunnison_teacup.err
 # CRSP Reservoirs
-01 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/teacup/work; gentea crsp_input.png /wrg/exec/pub/AOP/crsp_teacup.png crsp.cfg > crsp_teacup.out 2> crsp_teacup.err
+01 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea crsp_input.png /wrg/exec/pub/AOP/crsp_teacup.png crsp.cfg > crsp_teacup.out 2> crsp_teacup.err
 # San Juan
-01 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/teacup/work; gentea sanjuan_input.png /wrg/exec/pub/AOP/sanjuan_teacup.png sanjuan.cfg > sanjuan_teacup.out 2> sanjuan_teacup.err
+01 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea sanjuan_input.png /wrg/exec/pub/AOP/sanjuan_teacup.png sanjuan.cfg > sanjuan_teacup.out 2> sanjuan_teacup.err
 # Green River
-02 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/teacup/work; gentea green_input.png /wrg/exec/pub/AOP/green_teacup.png green.cfg > green_teacup.out 2> green_teacup.err
+02 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea green_input.png /wrg/exec/pub/AOP/green_teacup.png green.cfg > green_teacup.out 2> green_teacup.err
 # Pecos/Rio Grande
-02 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/teacup/work; gentea pecosrio_input.png /wrg/exec/pub/AOP/pecosrio_teacup.png pecosrio.cfg > pecosrio_teacup.out 2> pecosrio_teacup.err
+02 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea pecosrio_input.png /wrg/exec/pub/AOP/pecosrio_teacup.png pecosrio.cfg > pecosrio_teacup.out 2> pecosrio_teacup.err
 #
 # Site information scripts for output to website (used to be in Rick Clayton's crontab)
 #
