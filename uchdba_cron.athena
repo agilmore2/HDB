@@ -27,7 +27,7 @@
 #
 # Read data from CO DOMSAT website
 #
-17 06,11 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/codwr2hdb/src; ./codwr2hdb.pl -u app_user -p <PASSWORD> -a > $HDB_ENV/codwr2hdb/src/codwr2hdb.log 2> $HDB_ENV/codwr2hdb/src/codwr2hdb.err
+27 06,10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/codwr2hdb/src; ./codwr2hdb.pl -u app_user -p <PASSWORD> -a > $HDB_ENV/codwr2hdb/src/codwr2hdb.log 2> $HDB_ENV/codwr2hdb/src/codwr2hdb.err
 #
 # Run Archive Loader for current water year
 #
@@ -56,7 +56,7 @@
 #
 #
 # Need to move other data output functions to uchdba
-# res_data, snowmap
+# snowmap, others?
 #
 # Transfer hourly data files from VMS drive (/zipdata) to ftp site for 
 # Stonefly Technologies
@@ -90,3 +90,12 @@
 02 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/teacup/work; gentea green_input.png /wrg/exec/pub/AOP/green_teacup.png green.cfg > green_teacup.out 2> green_teacup.err
 # Pecos/Rio Grande
 02 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/teacup/work; gentea pecosrio_input.png /wrg/exec/pub/AOP/pecosrio_teacup.png pecosrio.cfg > pecosrio_teacup.out 2> pecosrio_teacup.err
+#
+# Site information scripts for output to website (used to be in Rick Clayton's crontab)
+#
+# Reservoirs (and NIIP)
+10 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/res_data/work; ./process_res_data
+# Western Colorado Area Office data
+16 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/wcao_data/work; ./process_wcao_data
+# Sites (Glen Canyon single datatype for narrow browsers)
+21 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/site_data/work; ./process_site_data
