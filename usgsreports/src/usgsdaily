@@ -3,6 +3,12 @@
 # executes sql script
 myprog=`basename $0`
 mydir=`dirname $0`
+
+#this next command checks for symlinks
+#vunerable to spaces in directory names
+mydir=`ls -l $0 | sed -e 's/^.* //'`
+mydir=`dirname $mydir`
+
 mysqlcmd="sqlplus -S $APP_USER/$HDB_LOCAL@$HDB_LOCAL"
 
 usage() {
