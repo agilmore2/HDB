@@ -21,10 +21,10 @@ sub passdie {
 #sites and datatypes desired. Not all site_ids and site_datatype_ids
 # have been created, yet.
 
-%siteid_hash = ('PARK_CONE___________', 28, "IDARADO_____________", 133, 
-		"BUTTE_______________", 22, "SCHOFIELD_PASS______", 32,
-		"PORPHYRY_CREEK______", 30, "SLUMGULLION_________", 33,
-		"BRUMLEY_____________", 1064, "NORTH_LOST_TRAIL____", 72);
+%siteid_hash = ('PARK CONE           ', 28, "IDARADO             ", 133, 
+		"BUTTE               ", 22, "SCHOFIELD PASS      ", 32,
+		"PORPHYRY CREEK      ", 30, "SLUMGULLION         ", 33,
+		"BRUMLEY             ", 1064, "NORTH LOST TRAIL    ", 72);
 
 %datatype_hash = ("max temp", 9, "ave temp", 8, "min temp", 11,
 		  "precip total", 5, "total wy precip", 72);
