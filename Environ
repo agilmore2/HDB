@@ -25,8 +25,13 @@ TK_INCLUDES = /usr/local/tcl-tk
 # TCL/TK library files
 TK_LIBS = -L/usr/local/tcl-tk/lib -ltk8.3 -ltcl8.3 -lm
 
+# directory which holds TCL/TK header files
+TK_HEADER = /usr/local/include
+
 # Oracle library files
-ORACLE_LIB = -L$(ORACLE_HOME)/lib -lagent9 -lclient9 -lclntsh -lcommon9 -lcore9 -lgeneric9 -lmm -lpsa9 -lserver9 -lslax9 -lsql9 -lsqlplus -lwtc9 -lvsn9
+# Other installations may need to use lib, not lib32, and add references:
+# -lserver9 -lpsa9 -lsqlplus
+ORACLE_LIB = -L$(ORACLE_HOME)/lib32 -lagent9 -lclient9 -lclntsh -lcommon9 -lcore9 -lgeneric9 -lmm -lslax9 -lsql9 -lwtc9 -lvsn9
 
 # all libraries required by HDB applications
 HDB_LIBS = -L$(HDB_APP_LIB) -ldmi -lhdb -lutils $(ORACLE_LIB) -lhdb
