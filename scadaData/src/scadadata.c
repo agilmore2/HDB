@@ -30,7 +30,7 @@
 #define HYDRO "hydromet_\0"
 int SqlGetSCADAData(char*,char*,char*);
 
-double elev[NUMSITES], apow_rel[NUMSITES], atot_rel[NUMSITES];
+double elev[NUMSITES], apow_rel[NUMSITES], aspill[NUMSITES], abypass[NUMSITES];
 
 int main(int argc, char **argv)
 {
@@ -44,7 +44,8 @@ int main(int argc, char **argv)
 
    int    j;
 
-   double  pow_relaf[NUMSITES],tot_relaf[NUMSITES],oth_relaf[NUMSITES];
+   double  pow_relaf[NUMSITES],spillaf[NUMSITES],bypassaf[NUMSITES],
+     oth_relaf[NUMSITES];
 
    FILE   *out;
 
@@ -60,12 +61,13 @@ int main(int argc, char **argv)
    for (j=0; j<NUMSITES; j++)
    {
       pow_relaf[j] = apow_rel[j]*1.9835;
-      tot_relaf[j] = atot_rel[j]*1.9835;
+      spillaf[j] = aspill[j]*1.9835;
+      bypassaf[j] = abypass[j]*1.9835;
       
-      oth_relaf[j] = tot_relaf[j] - pow_relaf[j];
+      oth_relaf[j] = spillaf[j] + bypassaf[j];
 /* NASTY HACK to handle Morrow Point releases calculated by Hydromet */
-/* Floating Point comparison, hope it works! */
-      if (apow_rel[j] == 998877)   pow_relaf[j] = oth_relaf[j] = 998877;
+/* Floating Point comparison?, hope it works! */
+      if (apow_rel[j] == 998877)   pow_relaf[j] = 998877;
    }
 
    date[0] = '\0';
