@@ -5,16 +5,29 @@ include make_include
 
 ######################### Directives ###############################
 
+TARGETS = $(HDB_APP_BIN)/usgsdaily\
+	$(HDB_APP_BIN)/usgsmonthly
+
 BINS = $(SRCDIR)/usgsdaily\
 	$(SRCDIR)/usgsmonthly
 
-SCRIPTS = $(SRCDIR)/usgsdaily.sql $(SRCDIR)/usgsmonthly.sql\
-	$(SRCDIR)/checkforsdi.sql $(SRCDIR)/reportsdi.sql
+DAILYSCRIPT = $(SRCDIR)/usgsdaily.sql 
+MONTHLYSCRIPT = $(SRCDIR)/usgsmonthly.sql
+GENERALSCRIPTS = $(SRCDIR)/checkforsdi.sql $(SRCDIR)/reportsdi.sql
 
-main: $(BINS) $(SCRIPTS)
+main: $(TARGETS)
+
+$(HDB_APP_BIN)/usgsdaily: $(SRCDIR)/usgsdaily\
+		$(DAILYSCRIPT) $(GENERALSCRIPTS)
 	cd $(HDB_APP_BIN) ; \
 	rm -f usgsdaily ; \
-	rm -f usgsmonthly ; \
 	ln -s $(APPDIR)/src/usgsdaily ; \
+	cd $(APPDIR)
+
+
+$(HDB_APP_BIN)/usgsmonthly: $(SRCDIR)/usgsmonthly\
+		$(MONTHLYSCRIPT) $(GENERALSCRIPTS)
+	cd $(HDB_APP_BIN) ; \
+	rm -f usgsmonthly ; \
 	ln -s $(APPDIR)/src/usgsmonthly ; \
 	cd $(APPDIR)
