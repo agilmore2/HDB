@@ -14,16 +14,16 @@ set termout off
 -- this names the data file
 spool nwsdata.dat
 
-/* Daily Query. Format is quote-delimited text, and comma separated values in the form:
- * "SITE NAME","datatype name","YYYY-MM-DD",round(value,2), ie
- * "FLAMING GORGE","release","2004-08-30",999.67
+/* Daily Query. Format is quote-delimited text, and pipe ("|") separated values in the form:
+ * "SITE NAME"|"datatype name"|"YYYY-MM-DD"|round(value,2), ie
+ * "FLAMING GORGE"|"release"|"2004-08-30"|999.67
  */
 
 -- this just puts this text in the file
 prompt # Daily data
 
-select  '"'||b.site_common_name||'"'||','||'"'||c.datatype_common_name||'"'||','
-||'"'||to_char(d.start_date_time,'YYYY-MM-DD')||'"'||','||round(d.value,2) data
+select  '"'||b.site_common_name||'"'||'|'||'"'||c.datatype_common_name||'"'||'|'
+||'"'||to_char(d.start_date_time,'YYYY-MM-DD')||'"'||'|'||round(d.value,2) data
 from hdb_site_datatype a, hdb_site b, hdb_datatype c, r_day d
 where
 -- Join section
@@ -56,8 +56,8 @@ order by b.site_id, c.datatype_id, d.start_date_time
  
 prompt # Monthly end of period storage data
 
-select  '"'||b.site_common_name||'"'||','||'"'||c.datatype_common_name||'"'||','
-||'"'||to_char(d.end_date_time-1,'YYYY-MM-DD')||'"'||','||round(d.value,2) data
+select  '"'||b.site_common_name||'"'||'|'||'"'||c.datatype_common_name||'"'||'|'
+||'"'||to_char(d.end_date_time-1,'YYYY-MM-DD')||'"'||'|'||round(d.value,2) data
 from hdb_site_datatype a, hdb_site b, hdb_datatype c, r_month d
 where 
 -- join section
