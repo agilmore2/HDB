@@ -9,7 +9,6 @@
 * SNOTEL       - array of snotel site info
 * int          - number of elements in array
 * char *       - date
-* ID           - source ID for this run of basins
 *
 * OUTPUT
 * warnings and error messages
@@ -36,35 +35,34 @@
 
 #define FUNC_NAME "updateSnotel"
 
-int UpdateSnotel (SNOTEL *snotelArray, int numSites, SQL_DATE date,
-		  ID sourceId)
+int UpdateSnotel (SNOTEL *snotelArray, int numSites, SQL_DATE date)
 
 {
   int result,
       totalNumValues;
 
-  if ((result = SqlUpdateCurSnow (snotelArray, numSites, date, sourceId,
+  if ((result = SqlUpdateCurSnow (snotelArray, numSites, date,
 				  &totalNumValues)) != OK)
     {
       exit (ERROR);
     }
   fprintf (stdout, "NUM cur snow SqlUpdates: %d\n", totalNumValues);
   
-  if ((result = SqlUpdateCurPrecip (snotelArray, numSites, date, sourceId,
+  if ((result = SqlUpdateCurPrecip (snotelArray, numSites, date,
 				    &totalNumValues)) != OK)
     {
       exit (ERROR);
     }
   fprintf (stdout, "NUM cur precip updates: %d\n", totalNumValues);  
   
-  if ((result = SqlUpdatePctSnow (snotelArray, numSites, date, sourceId,
+  if ((result = SqlUpdatePctSnow (snotelArray, numSites, date,
 				  &totalNumValues)) != OK)
     {
       exit (ERROR);
     }
   fprintf (stdout, "NUM avg snow updates: %d\n", totalNumValues);
   
-  if ((result = SqlUpdatePctPrecip (snotelArray, numSites, date, sourceId,
+  if ((result = SqlUpdatePctPrecip (snotelArray, numSites, date,
 				    &totalNumValues)) != OK)
     {
       exit (ERROR);

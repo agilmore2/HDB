@@ -58,8 +58,7 @@ int UpdateSnotel (
 #ifdef ANSIPROTO
 SNOTEL *,
 int,
-SQL_DATE,
-ID
+SQL_DATE
 #endif
 );
 
@@ -67,8 +66,7 @@ int UpdateBasins (
 #ifdef ANSIPROTO
 BASIN *,
 int,
-SQL_DATE,
-ID
+SQL_DATE
 #endif
 );
 
@@ -77,7 +75,6 @@ int SqlUpdateCurSnow (
 SNOTEL *,
 int,
 SQL_DATE,
-ID,
 int *		  
 #endif
 );
@@ -87,7 +84,6 @@ int SqlUpdateCurPrecip (
 SNOTEL *,
 int,
 SQL_DATE,
-ID,
 int *		  
 #endif
 );
@@ -97,7 +93,6 @@ int SqlUpdatePctSnow (
 SNOTEL *,
 int,
 SQL_DATE,
-ID,
 int *		  
 #endif
 );
@@ -107,7 +102,6 @@ int SqlUpdatePctPrecip (
 SNOTEL *,
 int,
 SQL_DATE,
-ID,
 int *		  
 #endif
 );
@@ -117,7 +111,6 @@ int SqlUpdateBasPctSnow (
 BASIN *,
 int,
 SQL_DATE,
-ID,
 int *		  
 #endif
 );
@@ -127,7 +120,6 @@ int SqlUpdateBasPctPrecip (
 BASIN *,
 int,
 SQL_DATE,
-ID,
 int *		  
 #endif
 );

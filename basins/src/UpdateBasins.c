@@ -9,7 +9,6 @@
 * BASIN        - array of basin site info
 * int          - number of elements in array
 * char *       - date
-* ID           - source ID for this run of basins
 *
 * OUTPUT
 * warnings and error messages
@@ -36,20 +35,20 @@
 
 #define FUNC_NAME "UpdateBasins"
 
-int UpdateBasins (BASIN *basinArray, int numSites, SQL_DATE date, ID sourceId)
+int UpdateBasins (BASIN *basinArray, int numSites, SQL_DATE date)
 
 {
   int result,
       totalNumValues;
   
-  if ((result = SqlUpdateBasPctSnow (basinArray, numSites, date, sourceId,
+  if ((result = SqlUpdateBasPctSnow (basinArray, numSites, date,
 				     &totalNumValues)) != OK)
     {
       exit (ERROR);
     }
   fprintf (stdout, "NUM basin pct snow updates: %d\n", totalNumValues);
   
-  if ((result = SqlUpdateBasPctPrecip (basinArray, numSites, date, sourceId,
+  if ((result = SqlUpdateBasPctPrecip (basinArray, numSites, date,
 				       &totalNumValues)) != OK)
     {
       exit (ERROR);

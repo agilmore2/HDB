@@ -48,7 +48,7 @@ $(OBJDIR)/SqlUpdateSnotel.o: \
 	$(HDB_APP_INCLUDE)/dbutils.h \
 	$(HDB_APP_INCLUDE)/utils.h \
 	$(HDB_APP_LIB)/libhdb.a
-	proc code=ansi_c iname=SqlUpdateSnotel.pc include=$(HDB_APP_INCLUDE)
+	proc code=ansi_c char_map=string sqlcheck=semantics userid=$(DBA)/$(DBA_PASSWD) iname=SqlUpdateSnotel.pc include=$(HDB_APP_INCLUDE)
 	$(CC) $(CFLAGS) -c SqlUpdateSnotel.c -o $@
 
 $(OBJDIR)/Basins.o: \
@@ -85,7 +85,7 @@ $(OBJDIR)/SqlUpdateBasins.o: \
 	$(HDB_APP_INCLUDE)/dbutils.h \
 	$(HDB_APP_INCLUDE)/utils.h \
 	$(HDB_APP_LIB)/libhdb.a
-	proc code=ansi_c iname=SqlUpdateBasins.pc include=$(HDB_APP_INCLUDE)
+	proc code=ansi_c char_map=string sqlcheck=semantics userid=$(DBA)/$(DBA_PASSWD) iname=SqlUpdateBasins.pc include=$(HDB_APP_INCLUDE)
 	$(CC) $(CFLAGS) -c SqlUpdateBasins.c -o $@
 
 $(OBJDIR)/UpdateBasins.o: \
@@ -97,6 +97,5 @@ $(OBJDIR)/UpdateBasins.o: \
 	$(HDB_APP_INCLUDE)/utils.h \
 	$(HDB_APP_INCLUDE)/typedefs.h
 	$(CC) $(CFLAGS) -c UpdateBasins.c -o $@
-
 
 

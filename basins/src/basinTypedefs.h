@@ -50,7 +50,7 @@
 
 /* HDB2 Foreign key lookup names needed for inserts to r_base */
 #define LOADING_APPLICATION_NAME "Basins"
-#define AGEN_NAME "National Resources Conservation Service"
+#define AGEN_NAME "Natural Resources Conservation Service"
 #define COMPUTATION_NAME "N/A"
 #define COLLECTION_SYSTEM_NAME "Snotel"
 

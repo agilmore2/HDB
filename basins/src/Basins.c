@@ -30,7 +30,7 @@
  * ---------------------------------------------------------------------*/
 
 /* (4/7/03, rc) #define VERSION "1.1" */
-#define VERSION "HDB2 1.3"
+#define VERSION "HDB2 1.4"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,8 +83,7 @@ int main(int argc, char **argv)
   char *dbName;
   SQL_DATE oracleDate,
            tempDate;
-  ID sourceId,
-     basinTypeId,
+  ID basinTypeId,
      climateTypeId,
      snotelTypeId;
   
@@ -126,10 +125,11 @@ int main(int argc, char **argv)
   
   fprintf(stdout, "Connected to ORACLE.\n");
 
-  /* Get the source ID for this app; source will be same for every piece of
-     data loaded. */
-  if ((result = SqlGetAppSourceId (argv[0], &sourceId)) == ERROR)
-    exit (ERROR);
+  if ((result = SqlSetDateFormat ("DD-MON-YYYY HH24:MI:SS")) != OK)
+    {
+      PrintError ("Problem setting date format. Exiting.\n");
+      return (ERROR);
+    }
 
   /* Get the objecttype_ids for Snotel sites and basins */
   if ((result = SqlGetObjecttypeId (BAS, &basinTypeId)) == ERROR)
@@ -359,14 +359,13 @@ int main(int argc, char **argv)
     }
  
   /* Here, process snotel and basin arrays */
-  if ((result = UpdateSnotel (snotelSites, numSnotelSites, oracleDate, sourceId)) == ERROR)
+  if ((result = UpdateSnotel (snotelSites, numSnotelSites, oracleDate)) == ERROR)
     {
       fprintf (stdout, "Error updating snotel site values.\n");
       exit (ERROR);
     } 
   
-  if ((result = UpdateBasins (basinData, numBasinData, oracleDate,
-			      sourceId))
+  if ((result = UpdateBasins (basinData, numBasinData, oracleDate))
       == ERROR) 
     {
       fprintf (stdout, "Error updating basin values.\n");

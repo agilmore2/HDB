@@ -51,186 +51,131 @@ EXEC SQL INCLUDE sqlca;
 #define FUNC_NAME "SqlUpdateCurSnow"
 
 int SqlUpdateCurSnow (SNOTEL *snotelArray, int numSites, SQL_DATE date,
-		      ID sourceId, int *totalNumValues)
+		      int *totalNumValues)
 {
-	 EXEC SQL BEGIN DECLARE SECTION;
-	   ID            siteDatatypeId,
-	                 sqlSourceId = sourceId;
-	   float         curSnow;
-	   char          validationFlag[2],
-					 method_name[64];
-	   SQL_DATE      sqlDate,
-					 start_date_time,
-					 end_date_time;
-	   int 			 loading_application_id,
-					 agen_id,
-					 collection_system_id,
-					 method_id,
-					 computation_id;
-	 EXEC SQL END DECLARE SECTION;
-	
-	 int         rowCount,
-	             result;
-	 ID          siteId;
-	
-	/* Create the date variables. They are the same for all updates or inserts. */
-	 sprintf(sqlDate, date);
-	 EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
- 	 EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
-
-	 (*totalNumValues) = 0;
-	
-	 /* Fetch the foreign keys required for performing any inserts to r_base.  */
-	 if ( (result = SqlFetchRbasekeys(&loading_application_id, &agen_id, 
-			 &collection_system_id, &computation_id) ) == ERROR)
-	 {
+  EXEC SQL BEGIN DECLARE SECTION;
+  ID            siteDatatypeId;
+  float         curSnow;
+  char          tempValidationFlag[2],
+    method_name[64];
+  varchar       validationFlag[2];
+  SQL_DATE      sqlDate,
+    start_date_time,
+    end_date_time;
+  int 			 loading_application_id,
+    agen_id,
+    collection_system_id,
+    method_id,
+    computation_id;
+  EXEC SQL END DECLARE SECTION;
+  
+  int         rowCount,
+    result;
+  ID          siteId;
+  
+  /* Create the date variables. They are the same for all updates or inserts. */
+  sprintf(sqlDate, date);
+  EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
+  EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
+  
+  (*totalNumValues) = 0;
+  
+  /* Fetch the foreign keys required for performing any inserts to r_base.  */
+  if ( (result = SqlFetchRbasekeys(&loading_application_id, &agen_id, 
+				   &collection_system_id, &computation_id) ) == ERROR)
+    {
+      return (ERROR);
+    }
+  /* Get the method id for the method for Current Snow . */
+  strcpy(method_name,CUR_SNOW_METHOD_NAME);
+  if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
+    {
+      return (ERROR);
+    }
+  
+  
+  /* loop through the snotelArray, updating all of the values for 
+   * each site in snotelArray */
+  for (rowCount = 0; rowCount < numSites; rowCount++)
+    {
+      siteId = snotelArray[rowCount].siteId;
+      /* proceed only if siteId is valid */
+      if (siteId)
+	{
+	  if ((result = SqlGetSiteDataTypeIdWithName (siteId, CUR_SNOW, &siteDatatypeId)) 
+	      != CREATE_SDI)
+	    {
+	      if (result != OK) return (ERROR);
+	      
+	      if ((result = SqlGetValidationFlag (siteDatatypeId, 
+						  tempValidationFlag)) == ERROR)
 		return (ERROR);
-	 }
-	 /* Get the method id for the method for Current Snow . */
-	 strcpy(method_name,CUR_SNOW_METHOD_NAME);
-	 if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
-	 {
-		return (ERROR);
-	 }
-
-	
-	 /* loop through the snotelArray, updating all of the values for 
-	  * each site in snotelArray */
-	 for (rowCount = 0; rowCount < numSites; rowCount++)
-	 {
-	     siteId = snotelArray[rowCount].siteId;
-	     /* proceed only if siteId is valid */
-	     if (siteId)
-	     {
-			 if ((result = SqlGetSiteDataTypeIdWithName (siteId, CUR_SNOW, &siteDatatypeId)) 
-			     != CREATE_SDI)
-			 {
-			     if (result != OK) return (ERROR);
-			 
-			     if ((result = SqlGetValidationFlag (siteDatatypeId, 
-								 validationFlag)) == ERROR)
-			       return (ERROR);
-			 
-			     /* Now update value for this site_datatype, date; if none exists,
-				  * insert a new value */
-			     curSnow = snotelArray[rowCount].currentSnow;
-			     
-				if (curSnow != BAD_DATA)
-				{
-					/* (rc, 4/2003. Modified to update r_base instead.)
-					*  EXEC SQL UPDATE r_day
-					*  SET value = :curSnow,
-					*  source_id = :sqlSourceId,
-					*  validation = :validationFlag
-					*  WHERE site_datatype_id = :siteDatatypeId
-					*  AND date_day = to_date (:sqlDate, 'dd-mon-yyyy hh24:mi:ss');
-					*/
-		
-					EXEC SQL UPDATE r_base
-							SET value = :curSnow,
-							validation = :validationFlag
-							WHERE site_datatype_id = :siteDatatypeId
-							AND interval = 'day'
-							AND start_date_time = to_date (:start_date_time, 'dd-mon-yyyy hh24:mi:ss');
-				 
-					 /* No rows processed; insert value */
-					 if (sqlca.sqlcode > 0)
-					 {
-				
-						/* 
-					    * EXEC SQL INSERT INTO r_day 
-					    *   VALUES (:siteDatatypeId,
-				        *               to_date (:sqlDate, 'dd-mon-yyyy hh24:mi:ss'), 
-				        *               :curSnow, :sqlSourceId, :validationFlag);
-						*/
-				
-						EXEC SQL INSERT INTO r_base
-							(site_datatype_id,
-							interval, 
-							start_date_time, 
-							end_date_time,
-							value,
-							agen_id,
-							validation,
-							collection_system_id,
-							loading_application_id,
-							method_id,
-							computation_id)
-						VALUES
-							(:siteDatatypeId,
-							'day',
-							to_date (:start_date_time, 'dd-mon-yyyy hh24:mi:ss'),
-							to_date (:end_date_time, 'dd-mon-yyyy hh24:mi:ss'),
-							:curSnow,
-							:agen_id,
-							:validationFlag,
-							:collection_system_id,
-							:loading_application_id,
-							:method_id,
-							:computation_id);
-
-						/* Check to make sure no errors on insert*/
-				     	if ((result = SqlErrorHandler 
-					  		(FUNC_NAME, FALSE,
-					   		"Problem inserting %s row for snotel site: %d.",
-					  	 	CUR_SNOW, siteId)) != OK)
-	
-						{
-					 		EXEC SQL ROLLBACK;
-					 		return (ERROR);
-				    	}
-				
-					}
-					else
-					{
-						/* Check to make sure no errors on update */
-				     	if ((result = SqlErrorHandler 
-					  		(FUNC_NAME, FALSE,
-					   		"Problem updating %s row for snotel site: %d.",
-					  	 	CUR_SNOW, siteId)) != OK)
-	
-						{
-					 		EXEC SQL ROLLBACK;
-					 		return (ERROR);
-				    	}
-			   		}
-	
-					/* Commit the sql, increment counter. */
-	
-				 	EXEC SQL COMMIT;
-				 	(*totalNumValues)++;
-	
-				} /* if (curSnow != BAD_DATA) */
-
-			} /* if ((result = SqlGetSiteDataTypeIdWithName (siteId, ...) */
-			else
-			{
-	 			/* If site_datatype is not known, continue */
-				PrintError ("***SDI unknown; continuing to process known site_datatypes.\n");
-			}
-
-		} /* if (siteId) */
-
-	} /* for (rowCount = 0; rowCount < numSites; rowCount++) */
-	return (OK);
+	      
+	      /* Write validationFlag to varchar host variable */
+	      strcpy (validationFlag.arr, tempValidationFlag); 
+	      validationFlag.len = strlen (validationFlag.arr);
+	      validationFlag.arr[validationFlag.len] = '\0';
+	      
+	      /* Now update value for this site_datatype, date; if none exists,
+	       * insert a new value */
+	      curSnow = snotelArray[rowCount].currentSnow;
+	      
+	      if (curSnow != BAD_DATA)
+		{
+		  EXEC SQL EXECUTE
+		    BEGIN
+		    modify_r_base_raw (:siteDatatypeId, 'day',
+				       :start_date_time, :end_date_time,
+				       :curSnow, :agen_id, NULL, :validationFlag,
+				       :collection_system_id, 
+				       :loading_application_id, :method_id, 
+				       :computation_id,
+				       'Y');
+		  END;
+		  END-EXEC;
+		  
+		  if ((result = SqlErrorHandler 
+		       (FUNC_NAME, FALSE,
+			"Problem calling modify_r_base_raw for siteId: %d, curSnow.",
+			siteId)) != OK)
+		    {
+		      EXEC SQL ROLLBACK;
+		      return (ERROR);
+		    }
+		  
+		  EXEC SQL COMMIT;
+		  (*totalNumValues)++;
+		  
+		} /* if (curSnow != BAD_DATA) */
+	      
+	    } /* if ((result = SqlGetSiteDataTypeIdWithName (siteId, ...) */
+	  else
+	    {
+	      /* If site_datatype is not known, continue */
+	      PrintError ("***SDI unknown; continuing to process known site_datatypes.\n");
+	    }
+	  
+	} /* if (siteId) */
+      
+    } /* for (rowCount = 0; rowCount < numSites; rowCount++) */
+  return (OK);
 }
 
 /****************************************************************************
  * SqlUpdateCurPrecip
- * Notes: sourceId is no longer used (produces compiler warning).
  ****************************************************************************/
 #define FUNC_NAME "SqlUpdateCurPrecip"
 
 int SqlUpdateCurPrecip (SNOTEL *snotelArray, int numSites, SQL_DATE date,
-		      	ID sourceId, int *totalNumValues)
+		      	int *totalNumValues)
 
 {
  EXEC SQL BEGIN DECLARE SECTION;
-   ID            siteDatatypeId,
-                 sqlSourceId = sourceId;
+   ID            siteDatatypeId;
    float         curPrecip;
-   char          validationFlag[2],
+   char          tempValidationFlag[2],
 				 method_name[64];
+   varchar       validationFlag[2];
    SQL_DATE      sqlDate, start_date_time, end_date_time;
 	int 			 loading_application_id,
 					 agen_id,
@@ -243,34 +188,34 @@ int SqlUpdateCurPrecip (SNOTEL *snotelArray, int numSites, SQL_DATE date,
              result;
  ID          altId;
 
-	/* Create the date variables. They are the same for all updates or inserts. */
-	 sprintf(sqlDate, date);
-	 EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
- 	 EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
- 	(*totalNumValues) = 0;
-
-
-	 /* Fetch the foreign keys required for performing any inserts to r_base.  */
-	 if ( (result = SqlFetchRbasekeys(&loading_application_id, &agen_id, 
-			 &collection_system_id, &computation_id) ) == ERROR)
-	 {
-		return (ERROR);
-	 }
-
-	 /* Get the method id for the method for Current Precip. */
-	 strcpy(method_name,CUR_PCP_METHOD_NAME);
-	 if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
-	 {
-		return (ERROR);
-	 }
-
+ /* Create the date variables. They are the same for all updates or inserts. */
+ sprintf(sqlDate, date);
+ EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
+ EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
+ (*totalNumValues) = 0;
+ 
+ 
+ /* Fetch the foreign keys required for performing any inserts to r_base.  */
+ if ( (result = SqlFetchRbasekeys(&loading_application_id, &agen_id, 
+				  &collection_system_id, &computation_id) ) == ERROR)
+   {
+     return (ERROR);
+   }
+ 
+ /* Get the method id for the method for Current Precip. */
+ strcpy(method_name,CUR_PCP_METHOD_NAME);
+ if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
+   {
+     return (ERROR);
+   }
+ 
  /* loop through the snotelArray, updating all of the values for 
     each site in snotelArray. Note that this is precip data, so the alternate 
     (climate site) ID is used. */
  for (rowCount = 0; rowCount < numSites; rowCount++)
    {
      altId = snotelArray[rowCount].altId;
-
+     
      /* proceed only if altId is valid */
      if (altId)
        {
@@ -280,96 +225,49 @@ int SqlUpdateCurPrecip (SNOTEL *snotelArray, int numSites, SQL_DATE date,
 	   {
 	     if (result != OK)
 	       return (ERROR);
-	 
+	     
 	     if ((result = SqlGetValidationFlag (siteDatatypeId, 
-						 validationFlag)) == ERROR)
+						 tempValidationFlag)) == ERROR)
 	       return (ERROR);
-	 
+	     
+	     strcpy (validationFlag.arr, tempValidationFlag); 
+	     validationFlag.len = strlen (validationFlag.arr);
+	     validationFlag.arr[validationFlag.len] = '\0';
+	     
 	     /* Now update value for this site_datatype, date; if none exists,
 		insert a new value */
 	     curPrecip = snotelArray[rowCount].currentPrecip;
 	     
 	     if (curPrecip != BAD_DATA)
 	       {
-			 
-			 /* EXEC SQL UPDATE r_instant
-			  *  SET value = :curPrecip,
-			  *  source_id = :sqlSourceId,
-			  *  validation = :validationFlag
-			  *  WHERE site_datatype_id = :siteDatatypeId
-			  *   AND date_time = to_date (:sqlDate, 'dd-mon-yyyy hh24:mi:ss');
-			  */
-
-			EXEC SQL UPDATE r_base
-			  SET value = :curPrecip,
-			  validation = :validationFlag
-			  WHERE site_datatype_id = :siteDatatypeId
-			  AND interval = 'day'
-			  AND start_date_time = to_date (:start_date_time, 'dd-mon-yyyy hh24:mi:ss');
 		 
-		 /* No rows processed; insert value */
-		 if (sqlca.sqlcode > 0)
-		   {
-			 /*
-		      * EXEC SQL INSERT INTO r_instant
-		      *  VALUES (:siteDatatypeId, 
-              *             to_date (:sqlDate, 'dd-mon-yyyy hh24:mi:ss'), 
-              *             :curPrecip, :sqlSourceId, :validationFlag);
-			  */
-
-				EXEC SQL INSERT INTO r_base
-					(site_datatype_id,
-					interval, 
-					start_date_time, 
-					end_date_time,
-					value,
-					agen_id,
-					validation,
-					collection_system_id,
-					loading_application_id,
-					method_id,
-					computation_id)
-				VALUES
-					(:siteDatatypeId,
-					'day',
-					to_date (:start_date_time, 'dd-mon-yyyy hh24:mi:ss'),
-					to_date (:end_date_time, 'dd-mon-yyyy hh24:mi:ss'),
-					:curPrecip,
-					:agen_id,
-					:validationFlag,
-					:collection_system_id,
-					:loading_application_id,
-					:method_id,
-					:computation_id);
-
-		     
-			     if ((result = SqlErrorHandler (FUNC_NAME, FALSE,
-				   "Problem inserting %s row for climate site: %d.",
-				   CUR_PCP, altId)) != OK)
-			        {
-				 		EXEC SQL ROLLBACK;
-				 		return (ERROR);
-		       		}
-		   }
+		 EXEC SQL EXECUTE
+		   BEGIN
+		   modify_r_base_raw (:siteDatatypeId, 'day',
+				      :start_date_time, :end_date_time,
+				      :curPrecip, :agen_id, NULL, 
+				      :validationFlag,
+				      :collection_system_id, 
+				      :loading_application_id, :method_id, 
+				      :computation_id,
+				      'Y');
+		 END;
+		 END-EXEC;
 		 
-		 /* Check to make sure no errors on update */
-		 else
+		 if ((result = SqlErrorHandler 
+		      (FUNC_NAME, FALSE,
+		       "Problem calling modify_r_base_raw for siteId: %d, curPrecip.",
+		       altId)) != OK)
 		   {
-		     if ((result = SqlErrorHandler 
-			  (FUNC_NAME, FALSE,
-			   "Problem updating %s row for climate site: %d.",
-			   CUR_PCP, altId)) != OK)
-		       {
-			 EXEC SQL ROLLBACK;
-			 return (ERROR);
-		       }
+		     EXEC SQL ROLLBACK;
+		     return (ERROR);
 		   }
 		 
 		 EXEC SQL COMMIT;
 		 (*totalNumValues)++;
 	       }
 	   }
-
+	 
 	 /* If site_datatype is not known, continue */
 	 else
 	   {
@@ -384,14 +282,14 @@ int SqlUpdateCurPrecip (SNOTEL *snotelArray, int numSites, SQL_DATE date,
 #define FUNC_NAME "SqlUpdatePctSnow"
 
 int SqlUpdatePctSnow (SNOTEL *snotelArray, int numSites, SQL_DATE date, 
-		      ID sourceId, int *totalNumValues)
-
+		      int *totalNumValues)
+     
 {
- EXEC SQL BEGIN DECLARE SECTION;
-   ID            siteDatatypeId,
-                 sqlSourceId = sourceId;
-   float         pctSnow;
-   char          validationFlag[2], method_name[64];
+  EXEC SQL BEGIN DECLARE SECTION;
+  ID            siteDatatypeId;
+  float         pctSnow;
+   char          tempValidationFlag[2], method_name[64];
+   varchar       validationFlag[2];
    SQL_DATE      sqlDate,
 				 start_date_time, end_date_time;
 	int 			 loading_application_id,
@@ -406,293 +304,83 @@ int SqlUpdatePctSnow (SNOTEL *snotelArray, int numSites, SQL_DATE date,
              result;
  ID          siteId;
 
-	/* Create the date variables. They are the same for all updates or inserts. */
-	 sprintf(sqlDate, date);
-	 EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
- 	 EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
+ /* Create the date variables. They are the same for all updates or inserts. */
+ sprintf(sqlDate, date);
+ EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
+ EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
  (*totalNumValues) = 0;
-
-
-	 /* Fetch the foreign keys required for performing any inserts to r_base.  */
-	 if ( (result = SqlFetchRbasekeys(&loading_application_id, &agen_id, 
-			 &collection_system_id, &computation_id) ) == ERROR)
-	 {
-		return (ERROR);
-	 }
-
-	 /* Get the method id for the method for Percent Snow. */
-	 strcpy(method_name,PCT_SNOW_METHOD_NAME);
-	 if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
-	 {
-		return (ERROR);
-	 }
-
+ 
+ 
+ /* Fetch the foreign keys required for performing any inserts to r_base.  */
+ if ( (result = SqlFetchRbasekeys(&loading_application_id, &agen_id, 
+				  &collection_system_id, &computation_id) ) == ERROR)
+   {
+     return (ERROR);
+   }
+ 
+ /* Get the method id for the method for Percent Snow. */
+ strcpy(method_name,PCT_SNOW_METHOD_NAME);
+ if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
+   {
+     return (ERROR);
+   }
+ 
  /* loop through the snotelArray, updating all of the values for 
     each site in snotelArray */
  for (rowCount = 0; rowCount < numSites; rowCount++)
    {
      siteId = snotelArray[rowCount].siteId;
-
+     
      /* proceed only if siteId is valid */
      if (siteId)
        {
-		 if ((result = SqlGetSiteDataTypeIdWithName (siteId, PCT_SNOW, 
-							     &siteDatatypeId)) 
-		     != CREATE_SDI)
-		   {
-		     if (result != OK)
-		       return (ERROR);
-		 
-		     if ((result = SqlGetValidationFlag (siteDatatypeId, 
-							 validationFlag)) == ERROR)
-		       return (ERROR);
-		 
-		     /* Now update value for this site_datatype, date; if none exists,
-			insert a new value */
-		     pctSnow = snotelArray[rowCount].percentSnow;
-		     
-		     if (pctSnow != BAD_DATA)
-		       {
-				/*
-				 * EXEC SQL UPDATE r_instant
-				 *  SET value = :pctSnow,
-				 *  source_id = :sqlSourceId,
-				 *  validation = :validationFlag
-				 *  WHERE site_datatype_id = :siteDatatypeId
-				 *    AND date_time = to_date (:sqlDate, 'dd-mon-yyyy hh24:mi:ss');
-				 */
-			 
-				EXEC SQL UPDATE r_base
-						SET value = :pctSnow,
-						validation = :validationFlag
-						WHERE site_datatype_id = :siteDatatypeId
-						AND interval = 'day'
-						AND start_date_time = to_date (:start_date_time, 'dd-mon-yyyy hh24:mi:ss');
-
-			 /* No rows processed; insert value */
-			 if (sqlca.sqlcode > 0)
-			   {
-			     /*
-				  * EXEC SQL INSERT INTO r_instant 
-			      *  VALUES (:siteDatatypeId, 
-				  *	   to_date (:sqlDate, 'dd-mon-yyyy hh24:mi:ss'),
-	              *             :pctSnow, :sqlSourceId, :validationFlag);
-				  */
-
-					EXEC SQL INSERT INTO r_base
-						(site_datatype_id,
-						interval, 
-						start_date_time, 
-						end_date_time,
-						value,
-						agen_id,
-						validation,
-						collection_system_id,
-						loading_application_id,
-						method_id,
-						computation_id)
-					VALUES
-						(:siteDatatypeId,
-						'day',
-						to_date (:start_date_time, 'dd-mon-yyyy hh24:mi:ss'),
-						to_date (:end_date_time, 'dd-mon-yyyy hh24:mi:ss'),
-						:pctSnow,
-						:agen_id,
-						:validationFlag,
-						:collection_system_id,
-						:loading_application_id,
-						:method_id,
-						:computation_id);
-			     
-			     if ((result = SqlErrorHandler 
-				  (FUNC_NAME, FALSE,
-				   "Problem inserting %s row for snotel site: %d.",
-				   PCT_SNOW, siteId)) != OK)
-			       {
-				 EXEC SQL ROLLBACK;
-				 return (ERROR);
-			       }
-			   }
-			 
-			 /* Check to make sure no errors on update */
-			 else
-			   {
-			     if ((result = SqlErrorHandler 
-				  (FUNC_NAME, FALSE,
-				   "Problem updating %s row for snotel site: %d.",
-				   PCT_SNOW, siteId)) != OK)
-			       {
-				 EXEC SQL ROLLBACK;
-				 return (ERROR);
-			       }
-			   }
-			 
-			 EXEC SQL COMMIT;
-			 (*totalNumValues)++;
-		       }
-		   }
-	
-		 /* If site_datatype is not known, continue */
-		 else
-		   {
-		     PrintError ("***Continuing to process known site_datatypes.\n");
-		   }
-       }
-   }
- return (OK);
-}
-
-/****************************************************************************/
-#define FUNC_NAME "SqlUpdatePctPrecip"
-
-int SqlUpdatePctPrecip (SNOTEL *snotelArray, int numSites, SQL_DATE date, 
-		      	ID sourceId, int *totalNumValues)
-
-{
- EXEC SQL BEGIN DECLARE SECTION;
-   ID            siteDatatypeId,
-                 sqlSourceId = sourceId;
-   float         pctPrecip;
-   char          validationFlag[2], method_name[64];
-   SQL_DATE      sqlDate, start_date_time, end_date_time;
-	   int 			 loading_application_id,
-					 agen_id,
-					 collection_system_id,
-					 method_id,
-					 computation_id;
- EXEC SQL END DECLARE SECTION;
-
- int         rowCount,
-             result;
- ID          altId;
-
-	/* Create the date variables. They are the same for all updates or inserts. */
-	 sprintf(sqlDate, date);
-	 EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
- 	 EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
- (*totalNumValues) = 0;
-
-
- /* Fetch the foreign keys required for performing any inserts to r_base.  */
- if ( (result = SqlFetchRbasekeys(&loading_application_id, &agen_id, 
-		 &collection_system_id, &computation_id) ) == ERROR)
- {
-	return (ERROR);
- }
-
-
-	 /* Get the method id for the method for Percent Precip. */
-	 strcpy(method_name,PCT_PCP_METHOD_NAME);
-	 if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
-	 {
-		return (ERROR);
-	 }
- /* loop through the snotelArray, updating all of the values for 
-    each site in snotelArray. Note that this is precip data, so the alternate 
-    (climate site) ID is used. */
- for (rowCount = 0; rowCount < numSites; rowCount++)
-   {
-     altId = snotelArray[rowCount].altId;
-
-     /* proceed only if altId is valid */
-     if (altId)
-       {
-	 if ((result = SqlGetSiteDataTypeIdWithName (altId, PCT_PCP, 
+	 if ((result = SqlGetSiteDataTypeIdWithName (siteId, PCT_SNOW, 
 						     &siteDatatypeId)) 
 	     != CREATE_SDI)
 	   {
 	     if (result != OK)
 	       return (ERROR);
-	 
+	     
 	     if ((result = SqlGetValidationFlag (siteDatatypeId, 
-						 validationFlag)) == ERROR)
+						 tempValidationFlag)) == ERROR)
 	       return (ERROR);
-	 
+	     
+	     strcpy (validationFlag.arr, tempValidationFlag); 
+	     validationFlag.len = strlen (validationFlag.arr);
+	     validationFlag.arr[validationFlag.len] = '\0';
+	     
 	     /* Now update value for this site_datatype, date; if none exists,
 		insert a new value */
-	     pctPrecip = snotelArray[rowCount].percentPrecip;
+	     pctSnow = snotelArray[rowCount].percentSnow;
 	     
-	     if (pctPrecip != BAD_DATA)
+	     if (pctSnow != BAD_DATA)
 	       {
-
-	
-		 /* EXEC SQL UPDATE r_instant
-		  * SET value = :pctPrecip,
-		  * source_id = :sqlSourceId,
-		  * validation = :validationFlag
-		  * WHERE site_datatype_id = :siteDatatypeId
-		  *   AND date_time = to_date (:sqlDate, 'dd-mon-yyyy hh24:mi:ss');
-		  */
-
-			EXEC SQL UPDATE r_base
-					SET value = :pctPrecip,
-					validation = :validationFlag
-					WHERE site_datatype_id = :siteDatatypeId
-					AND interval = 'day'
-					AND start_date_time = to_date (:sqlDate, 'dd-mon-yyyy hh24:mi:ss');
+		 EXEC SQL EXECUTE
+		   BEGIN
+		   modify_r_base_raw (:siteDatatypeId, 'day',
+				      :start_date_time, :end_date_time, 
+				      :pctSnow, :agen_id, NULL, :validationFlag,
+				      :collection_system_id, 
+				      :loading_application_id, :method_id, 
+				      :computation_id,
+				      'Y');
+		 END;
+		 END-EXEC;
 		 
-		 /* No rows processed; insert value */
-		 if (sqlca.sqlcode > 0)
+		 if ((result = SqlErrorHandler 
+		      (FUNC_NAME, FALSE,
+		       "Problem calling modify_r_base_raw for siteId: %d, pctSnow.",
+		       siteId)) != OK)
 		   {
-		     /* EXEC SQL INSERT INTO r_instant
-		      * VALUES (:siteDatatypeId, 
-              *             to_date (:sqlDate, 'dd-mon-yyyy hh24:mi:ss'),
-              *             :pctPrecip, :sqlSourceId, :validationFlag);
-			  */
-
-				EXEC SQL INSERT INTO r_base
-					(site_datatype_id,
-					interval, 
-					start_date_time, 
-					end_date_time,
-					value,
-					agen_id,
-					validation,
-					collection_system_id,
-					loading_application_id,
-					method_id,
-					computation_id)
-				VALUES
-					(:siteDatatypeId,
-					'day',
-					to_date (:start_date_time, 'dd-mon-yyyy hh24:mi:ss'), 
-					to_date (:end_date_time, 'dd-mon-yyyy hh24:mi:ss'),
-					:pctPrecip,
-					:agen_id,
-					:validationFlag,
-					:collection_system_id,
-					:loading_application_id,
-					:method_id,
-					:computation_id);
-		     
-		     if ((result = SqlErrorHandler 
-			  (FUNC_NAME, FALSE,
-			   "Problem inserting %s row for climate site: %d.",
-			   PCT_PCP, altId)) != OK)
-		       {
-			 EXEC SQL ROLLBACK;
-			 return (ERROR);
-		       }
-		   }
-		 
-		 /* Check to make sure no errors on update */
-		 else
-		   {
-		     if ((result = SqlErrorHandler 
-			  (FUNC_NAME, FALSE,
-			   "Problem updating %s row for climate site: %d.",
-			   PCT_PCP, altId)) != OK)
-		       {
-			 EXEC SQL ROLLBACK;
-			 return (ERROR);
-		       }
+		     EXEC SQL ROLLBACK;
+		     return (ERROR);
 		   }
 		 
 		 EXEC SQL COMMIT;
 		 (*totalNumValues)++;
 	       }
 	   }
-
+	 
 	 /* If site_datatype is not known, continue */
 	 else
 	   {
@@ -703,27 +391,116 @@ int SqlUpdatePctPrecip (SNOTEL *snotelArray, int numSites, SQL_DATE date,
  return (OK);
 }
 
-	/* debugging statements...
-	printf("\nReturn values from FetchRbasekeys:\n");
-	printf("loading_application_id = %d\n",loading_application_id);
-	printf("agen_id = %d\n",agen_id);
-	printf("collection_system_id = %d\n",collection_system_id);
-	printf("method_id = %d\n",method_id);
-	printf("computation_id = %d\n",computation_id);
-	*/
-/* for debugging...
-printf("insert values to r_base are:\n siteDatatypeId = %d,\n", siteDatatypeId);
-printf("interval = %s,\n", "day");
-printf("start_date_time = %s,\n", start_date_time);
-printf("end_date_time = %s,\n", end_date_time);
-printf("value = %5.2f,\n", curSnow);
-printf("agen_id = %d,\n", agen_id);
-printf("validation = %s,\n", validationFlag);
-printf("collection_system_id = %d,\n", collection_system_id);
-printf("loading_application_id = %d,\n", loading_application_id);
-printf("method_id = %d,\n", method_id);
-printf("computation_id = %d\n", computation_id);
-printf("select statement is:\n");
-printf("INSERT INTO r_base (site_datatype_id, interval, start_date_time, end_date_time, value, agen_id, validation, collection_system_id, loading_application_id, method_id, computation_id)\n");
-printf(" VALUES (%d,'day', to_date('%s', 'dd-mon-yyyy hh24:mi:ss'), to_date ('%s', 'dd-mon-yyyy hh24:mi:ss'), %f, %d, '%s', %d, %d, %d, %d)\n",siteDatatypeId,start_date_time,end_date_time,curSnow,agen_id,validationFlag,collection_system_id,loading_application_id,method_id,computation_id);
-*/
+/****************************************************************************/
+#define FUNC_NAME "SqlUpdatePctPrecip"
+
+int SqlUpdatePctPrecip (SNOTEL *snotelArray, int numSites, SQL_DATE date, 
+		      	int *totalNumValues)
+     
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+  ID            siteDatatypeId;
+  float         pctPrecip;
+  char          tempValidationFlag[2], method_name[64];
+  varchar       validationFlag[2];
+  SQL_DATE      sqlDate, start_date_time, end_date_time;
+  int 			 loading_application_id,
+    agen_id,
+    collection_system_id,
+    method_id,
+    computation_id;
+  EXEC SQL END DECLARE SECTION;
+  
+  int         rowCount,
+    result;
+  ID          altId;
+  
+  /* Create the date variables. They are the same for all updates or inserts. */
+  sprintf(sqlDate, date);
+  EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
+  EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
+  (*totalNumValues) = 0;
+  
+  
+  /* Fetch the foreign keys required for performing any inserts to r_base.  */
+  if ( (result = SqlFetchRbasekeys(&loading_application_id, &agen_id, 
+				   &collection_system_id, &computation_id) ) == ERROR)
+    {
+      return (ERROR);
+    }
+  
+  
+  /* Get the method id for the method for Percent Precip. */
+  strcpy(method_name,PCT_PCP_METHOD_NAME);
+  if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
+    {
+      return (ERROR);
+    }
+  /* loop through the snotelArray, updating all of the values for 
+     each site in snotelArray. Note that this is precip data, so the alternate 
+     (climate site) ID is used. */
+  for (rowCount = 0; rowCount < numSites; rowCount++)
+    {
+      altId = snotelArray[rowCount].altId;
+      
+      /* proceed only if altId is valid */
+      if (altId)
+	{
+	  if ((result = SqlGetSiteDataTypeIdWithName (altId, PCT_PCP, 
+						      &siteDatatypeId)) 
+	      != CREATE_SDI)
+	    {
+	      if (result != OK)
+		return (ERROR);
+	      
+	      if ((result = SqlGetValidationFlag (siteDatatypeId, 
+						  tempValidationFlag)) == ERROR)
+		return (ERROR);
+	      
+	      strcpy (validationFlag.arr, tempValidationFlag); 
+	      validationFlag.len = strlen (validationFlag.arr);
+	      validationFlag.arr[validationFlag.len] = '\0';
+	      
+	      /* Now update value for this site_datatype, date; if none exists,
+		 insert a new value */
+	      pctPrecip = snotelArray[rowCount].percentPrecip;
+	      
+	      if (pctPrecip != BAD_DATA)
+		{
+		  EXEC SQL EXECUTE
+		    BEGIN
+		    modify_r_base_raw (:siteDatatypeId, 'day',
+				       :start_date_time, :end_date_time,
+				       :pctPrecip, :agen_id, NULL, :validationFlag,
+				       :collection_system_id, 
+				       :loading_application_id, :method_id, 
+				       :computation_id,
+				       'Y');
+		  END;
+		  END-EXEC;
+		  
+		  if ((result = SqlErrorHandler 
+		       (FUNC_NAME, FALSE,
+			"Problem calling modify_r_base_raw for siteId: %d, pctPrecip.",
+			altId)) != OK)
+		    {
+		      EXEC SQL ROLLBACK;
+		      return (ERROR);
+		    }
+		  
+		  
+		  
+		  EXEC SQL COMMIT;
+		  (*totalNumValues)++;
+		}
+	    }
+	  
+	  /* If site_datatype is not known, continue */
+	  else
+	    {
+	      PrintError ("***Continuing to process known site_datatypes.\n");
+	    }
+	}
+    }
+  return (OK);
+}
