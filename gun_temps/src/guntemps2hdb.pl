@@ -178,8 +178,8 @@ sub last_value
     $sth = $dbh->prepare($find_data_statement) || mydie $sth->errstr;
 
     $sth->bind_param(1,$site_datatype_id);
-    $sth->bind_param(2,$prev_date);
-    $sth->bind_param(3,$site_datatype_id);
+    $sth->bind_param(2,$site_datatype_id);
+    $sth->bind_param(3,$prev_date);
     $sth->execute || mydie $sth->errstr;
     $sth->bind_col(1,\$myval);
     $sth->fetch;
