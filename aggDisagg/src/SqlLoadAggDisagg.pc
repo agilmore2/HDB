@@ -1,0 +1,167 @@
+/*****************************************************************************
+* DESCRIPTION
+*
+* This file contains the function which loads driver data from HDB, 
+* and the function which inserts a data-derivation record into
+* the ref_data_derivation table.
+*
+***************************************
+*
+* SqlLoadAggDisagg
+*
+* Purpose: load in the row of driver data from HDB table ref_agg_disagg.
+* 
+* Input
+* 	RUN_CONTROL* - pointer to structure holding run control info; 
+*                      to be loaded
+*	int *        - ID of driver row to be selected from database
+*		       function
+*
+* Output
+*
+* Return
+* 	int - OK or ERROR
+*
+*
+* Author
+*
+* Carol Marra
+* February, 1996
+****************************************************************************/
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include "aggDisagg.h"
+#include "aggDisaggDefines.h"
+#include "utils.h"
+#include "dbutils.h"
+#include "defines.h"
+#include "typedefs.h"
+#include "aggDisaggTypedefs.h"
+
+EXEC SQL INCLUDE sqlca;
+
+#define FUNC_NAME "SqlLoadAggDisagg"
+
+int SqlLoadAggDisagg (RUN_CONTROL *runControl, int aggDisaggId)
+
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    int sqlAggDisaggId = aggDisaggId;
+    ID datatypeSource;
+    char obsSource[DB_OBS_LENGTH];
+    char dtUnitInd[2];
+    ID datatypeOrUnitDest;
+    char obsDest[DB_OBS_LENGTH];
+    char opOrFcn[2];
+    ID method,
+       methodClass;
+    VARCHAR functionName[FUNC_LENGTH];
+    IND methodInd,
+        methodClassInd,
+        functionInd;
+  EXEC SQL END DECLARE SECTION;
+
+  int result;
+  
+  /* Select driver row from database. */
+  EXEC SQL SELECT 
+    a.source_datatype_id, a.source_observation_interval, a.dest_datatype_unit_ind,
+    a.dest_datatype_or_unit_id, a.dest_observation_interval, a.method_or_function,
+    a.method_id, b.method_class_id, a.agg_disagg_function_name
+    INTO :datatypeSource, :obsSource, :dtUnitInd, :datatypeOrUnitDest, 
+      :obsDest, :opOrFcn, :method:methodInd, :methodClass:methodClassInd, 
+      :functionName:functionInd
+    FROM ref_agg_disagg a, hdb_method b
+    WHERE a.agg_disagg_id = :sqlAggDisaggId
+      AND a.method_id = b.method_id;
+
+  if ((result = SqlErrorHandler (FUNC_NAME, FALSE, "Problem selecting driver data from ref_agg_disagg\n\tfor agg_disagg_id = %d.\n\tExiting.", 
+				 sqlAggDisaggId)) != OK)
+    {
+      EXEC SQL ROLLBACK;
+      return (ERROR);
+    }
+
+  /* Set values on runControl */
+  runControl->datatypeSource = datatypeSource;
+  strcpy (runControl->interval, obsDest);
+
+  if (!strncmp (obsSource, HDB_INSTANT, 3))
+    runControl->obsSource = BY_INSTANT;
+  else if (!strncmp (obsSource, HDB_HOUR, 3))
+    runControl->obsSource = BY_HOUR;
+  else if (!strncmp (obsSource, HDB_DAY, 3))
+    runControl->obsSource = BY_DAY;
+  else if (!strncmp (obsSource, HDB_MONTH, 3))
+    runControl->obsSource = BY_MONTH;
+  else if (!strncmp (obsSource, HDB_YEAR, 3))
+    runControl->obsSource = BY_YEAR;
+  else if (!strncmp (obsSource, HDB_WY, 2))
+    runControl->obsSource = BY_WY;
+  else
+    {
+      PrintError ("Value for source_observation_prd in ref_agg_disagg, '%s', is not recognized\n\tor is not a valid HDB table interval.\n\tExiting.", obsSource);
+      return (ERROR);
+    }
+
+  if (!strncmp (dtUnitInd, "D", 1))
+    {
+      runControl->datatypeDest = datatypeOrUnitDest;
+      runControl->unitDest = NA;
+    }
+  else if (!strncmp (dtUnitInd, "U", 1))
+    {
+      runControl->datatypeDest = NA;
+      runControl->unitDest = datatypeOrUnitDest;
+    }
+  else
+    {
+      PrintError ("Value for dest_datatype_unit_ind in ref_agg_disagg, '%s', is not recognized.\n\tExiting.", dtUnitInd);
+      return (ERROR);
+    }
+
+  /* Set destination observation interval. Note that instantaneous is 
+     never valid. */
+  if (!strncmp (obsDest, HDB_INSTANT, 3))
+    runControl->obsDest = BY_INSTANT;
+  else if (!strncmp (obsDest, HDB_HOUR, 3))
+    runControl->obsDest = BY_HOUR;
+  else if (!strncmp (obsDest, HDB_DAY, 3))
+    runControl->obsDest = BY_DAY;
+  else if (!strncmp (obsDest, HDB_MONTH, 3))
+    runControl->obsDest = BY_MONTH;
+  else if (!strncmp (obsDest, HDB_YEAR, 3))
+    runControl->obsDest = BY_YEAR;
+  else if (!strncmp (obsDest, HDB_WY, 2))
+    runControl->obsDest = BY_WY;
+  else
+    {
+      PrintError ("Value for dest_observation_prd in ref_agg_disagg, '%s', is not recognized.\n\tExiting.", obsDest);
+      return (ERROR);
+    }
+  
+  strcpy (runControl->opOrFcn, opOrFcn);
+  if (!strcmp (opOrFcn, "M"))
+    {
+      runControl->methodId =  method;
+      runControl->methodClassId = methodClass; 
+      runControl->functionName[0] = '\0';
+    }
+  else if (!strcmp (opOrFcn, "F"))
+    {
+      runControl->methodId = NA;
+      runControl->methodClassId = NA;
+      strncpy (runControl->functionName, functionName.arr, functionName.len);
+      runControl->functionName[functionName.len] = '\0';
+    }
+  else
+    {
+      runControl->methodId = NA;
+      runControl->methodClassId = NA;
+      runControl->functionName[0] = '\0';
+    }
+  
+
+  return (OK);
+}

@@ -1,0 +1,75 @@
+/*****************************************************************************
+* DESCRIPTION
+* This file contains code to check and see if a given model_run_is is valid. 
+*
+* AUTHOR - EDITORS
+* Julien Chastang 
+* January 1998 
+*****************************************************************************/
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include <defines.h>
+#include <typedefs.h>
+#include <utils.h>
+#include <dbutils.h>
+
+EXEC SQL INCLUDE sqlca;
+
+#define FUNC_NAME "SqlChkModelRunID" 
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlChkModelRunID
+
+<P> <STRONG>Function signature:</STRONG> int SqlChkModelRunID (int)
+
+<P> <STRONG>Function description:</STRONG> Verifies that the given model_run_id is valid.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> int model_run_id: The model_run_id to be found in HDB.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlChkModelRunID(int ModelRunId)
+{
+    EXEC SQL BEGIN DECLARE SECTION; 
+        int the_count = 0;
+        int id = ModelRunId;
+    EXEC SQL END DECLARE SECTION;
+
+    int result;
+
+    EXEC SQL AT :current_dbsite SELECT count(*) 
+                                INTO :the_count
+                                FROM ref_model_run
+                                WHERE model_run_id = :id;
+
+    result = SqlErrorHandler(FUNC_NAME, TRUE,
+	               "Error... selecting the model_run_id: %d in %s...\n",
+	               ModelRunId,FUNC_NAME);
+    if (result != OK)
+      return (ERROR);
+
+    if (the_count < 1)
+    {
+      PrintError("Could not find model_run_id %d in ref_model_run...\n",
+                 ModelRunId);
+      return(ERROR);
+    }
+      
+    if (the_count > 1)
+    {
+      PrintError("More than one occurence of model_run_id %d found in ref_model_run...\n",
+                 ModelRunId);
+      return(ERROR);
+    }
+      
+    return(OK);
+}

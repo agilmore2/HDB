@@ -1,0 +1,77 @@
+This is the initial official release of code for the Meta DataApplication. 
+This application allows privileged users to maintain HDB meta data through a 
+user-friendly, Oracle Forms interface. On master/snapshot installations, the 
+application propogates changed HDB_ meta data to the snapshot site with the 
+press of a button. The application runs on Windows NT only.
+
+This release contains SQL scripts (to be run on the database server) which 
+manipulate the HDB schema to support  the application. (This includes the 
+addition of users, privileges, database links, tables, and procedures, among 
+other things.) The scripts to be run vary depending on the type of Meta Data 
+installation (master, snapshot, or island) which needs to be created.
+
+The release also includes a zip file containing all of the Oracle Forms 
+executable files, compiled and ready to be installed on any Oracle-ready NT 
+machine. 
+
+Procedures for creating a Meta Data installation, setting up the NT machine 
+for Oracle and installing the Forms code, and using the application, can be 
+found on the HDB User's Page.
+
+Note that installations already running the Meta Data Application (namely UC) 
+need to install a newer version of Oracle Forms on their NT machine: Forms 6i.
+
+UC and LC, whose database schemas are set up for the beta version of the Meta 
+Data Application, must run the provided SQL scripts to bring their installations
+in sync with this newer version. UC must run 
+<RELEASE>/oracle_script/METADATA/release.script.uc, and LC must run 
+/<RELEASE>/oracle_script/METADATA/release.script.lc. The syntax for running 
+these scripts is:
+
+sqlplus <dbaname>/<psswd> < <scriptName>
+
+While this first version of the application is essentially fully functional, 
+there are underlying enhancements yet to be made. Future versions will support 
+master sites with more than one snapshot site, and, if the need is there, 
+automatic (rather than user-initiated) refresh of snapshot data.
+
+
+
+The remainder of this file documents the scripts in this directory. See the 
+README files in MASTER_SITE and SNAPSHOT_SITE for documentation on the scripts
+in those directories.
+
+V_DBA_ROLES.sql: Creates the view v_dba_roles (a list of all password-required
+roles). Used by every type of Meta Data installation.
+
+V_DT_UT.sql: Creates the view HDB_DATATYPE_UNIT (a combined list of all
+datatypes and units, used by the form for ref_agg_disagg). Used by every type
+of Meta Data Installation.
+
+V_SITEDT.sql: Creates the view v_hdb_site_datatype_name (a list of
+site_datatype_ids paired with a text description for the SDI -- the site name
+and datatype name concatenated). Used by every type of Meta Data Installation.
+
+cg_ref_codes.ddl: Creates the table cg_ref_codes (a required remnant from this application being generated originally by Designer). Used by every type of Meta Data Installation.
+
+get_pk_val_wrap.sql: Creates the function get_pk_val_wrap, which calls either
+populate_pk_hdb.get_pk_val (always points to master installation), or
+populate_pk_ref.get_pk_val (always points to local installation). This depends
+on if the table in question is a ref_ or hdb_ table. Used by every type of
+Meta Data Installation.
+
+grant_meta_data_user_wrap.sql: Calls grant_meta_data_user (always on the
+master site), passing in the indicated table name. Used by Master and Snapshot
+installations.
+
+pop_pk.spb: Creates the package body for populate_pk. Used by every type of
+Meta Data Installation.
+
+pop_pk.sps: Creates the package spec for populate_pk. Used by every type of
+Meta Data Installation.
+
+refresh_hdb_snap_wrap: Creates the procedure refresh_hdb_snap_wrap, which
+calls run_refresh_hdb_snap (always on the snapshot). Used by Master and
+Snapshot installations.
+
+

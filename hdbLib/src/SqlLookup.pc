@@ -1,0 +1,196 @@
+/*****************************************************************************
+* DESCRIPTION
+* This file contains 1 function
+*
+*********************************
+* SqlElevValue.sc
+* Purpose: Given a reservoir elevation, give back either an area or a storage for a given
+*          reservoir for that elevation
+*
+* Notes:   This application is will work only for reservoirs, and will return only 
+*          values for area or storage.  It also will only work for the current tables
+*          (not historical).  If the input elevation is above or below the highest
+*          or lowest in the table and error is returned
+* 
+* Input
+* 	int     site_id for the reservoir
+*       char    parameter (must be either the string "cont" or "areares")
+*       float   reservoir elevation
+*	float   &yvalue -- address for value computed by the fuction
+* Return
+* 	int	OK or ERROR: indicates if sourcetypeId was found
+*
+* AUTHOR - EDITORS
+* Tom Ryan
+*****************************************************************************/
+
+EXEC SQL INCLUDE SQLCA;
+
+#include <stdio.h>
+#include <string.h>
+#include <defines.h>
+#include <typedefs.h>
+#include <dbutils.h>
+#include <utils.h>
+
+#define FUNC_NAME    "SqlElevValue"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlElevValue
+
+<P> <STRONG>Function signature:</STRONG> int SqlElevValue (ID, char*, float, float *)
+
+<P> <STRONG>Function description:</STRONG> Given a reservoir elevation, returns either an area or storage value.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> ID site_id:      Reservoir site_id.
+<BR><DD> char *param:     Param name, "cont" or "areares" (CONT or AREARES).
+<BR><DD> float elevation: Elevation to use as lookup value.
+<BR><DD> float *yvalue:   Looked-up content or area.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG>
+
+</HTML>
+*/
+
+int SqlElevValue (ID site_id, char* param, float elevation, float *yvalue)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+  ID Site_id = site_id;
+  float xarray[MAXLUROWS],yarray[MAXLUROWS];
+  EXEC SQL END DECLARE SECTION;
+  
+  int result, i, nrows;
+  
+  /* start cursor processing */
+  EXEC SQL WHENEVER NOT FOUND GOTO closecur;
+
+  /*   declare the cursors named AA and BB */
+
+  if (!strcmp(param,CONT))
+  {
+     EXEC SQL AT :current_dbsite DECLARE AA CURSOR FOR 
+	SELECT WSE, CONT
+	  FROM REF_RES_WSELU
+	    WHERE site_id = :Site_id
+	      AND CONT IS NOT NULL
+		ORDER BY WSE;
+    if ((result = SqlErrorHandler
+         (FUNC_NAME, FALSE,
+          "Error declaring cursor AA.\n\t%s.\n\tExiting.")) == ERROR)
+    {
+       EXEC SQL ROLLBACK;
+       return (ERROR);
+    }
+
+      EXEC SQL OPEN AA;
+      if ((result = SqlErrorHandler
+         (FUNC_NAME, FALSE,
+          "Error opening cursor AA.\n\t%s.\n\tExiting.")) == ERROR)
+    {
+       EXEC SQL ROLLBACK;
+       return (ERROR);
+    }
+      
+      /* infinite loop approach 
+	 notice that the stopping condition is missing from the for loop
+	 not really because it will exit because of WHENEVER NOT FOUND statement */
+      
+      for(i=0;;i++)
+	{
+	  EXEC SQL FETCH AA
+	    INTO :xarray[i],:yarray[i];
+	  if ((result = SqlErrorHandler 
+	       (FUNC_NAME, FALSE, 
+		"Error retrieving elevation and storage/area values - exiting")) == ERROR)
+	    {		
+	      EXEC SQL AT :current_dbsite ROLLBACK;
+	      return (ERROR);
+	    }
+	}
+    }
+  else if(!strcmp(param,AREARES))
+    {
+      EXEC SQL AT :current_dbsite DECLARE BB CURSOR FOR 
+	SELECT WSE, AREARES
+	  FROM REF_RES_WSELU
+	    WHERE site_id = :Site_id
+	      AND AREARES IS NOT NULL
+		ORDER BY WSE;
+    if ((result = SqlErrorHandler
+         (FUNC_NAME, FALSE,
+          "Error declaring cursor BB.\n\t%s.\n\tExiting.")) == ERROR)
+    {
+       EXEC SQL ROLLBACK;
+       return (ERROR);
+    }
+
+    EXEC SQL OPEN BB;
+    if ((result = SqlErrorHandler
+         (FUNC_NAME, FALSE,
+          "Error opening cursor BB.\n\t%s.\n\tExiting.")) == ERROR)
+    {
+       EXEC SQL ROLLBACK;
+       return (ERROR);
+    }
+
+      
+      /* infinite loop approach
+	 notice that the stopping condition is missing from the for loop
+	 not really because it will exit because of WHENEVER NOT FOUND statement */
+      
+      for(i=0;;i++)
+	{
+	  EXEC SQL FETCH BB
+	    INTO :xarray[i],:yarray[i];
+	  if ((result = SqlErrorHandler 
+	       (FUNC_NAME, FALSE, 
+		"Error retrieving elevation and storage/area values - exiting")) == ERROR)
+	    {		
+	      EXEC SQL AT :current_dbsite ROLLBACK;
+	      return (ERROR);
+	    }
+	}
+    }
+  else
+    {		
+      *yvalue = -998877.0;
+      PrintError("Either cont or areares must be passed to the function %s - exiting",FUNC_NAME);
+      return (ERROR);
+    }
+  
+ closecur:
+ nrows = i;
+  if (i == 0)
+    {
+      printf("\nNo loopup data was found for site_id %4d - exiting",Site_id);
+      return (ERROR);
+    }
+  
+  if (!strcmp(param,CONT))
+    {
+      EXEC SQL CLOSE AA;
+    }
+  else if(!strcmp(param,AREARES))
+    {
+      EXEC SQL CLOSE BB;
+    }
+  
+  EXEC SQL AT :current_dbsite COMMIT;
+  
+  /* note that when passing yvalue to TableLookup there is not an * before yvalue
+     this is because yvalue is already an address) */
+
+  if((result = TableLookup(xarray,yarray,elevation,yvalue,nrows))  != OK)
+    {
+    printf("\nStatus is Error");
+    return (ERROR);
+  }
+  else
+
+    return (OK);
+
+}
+/**********************************************************************/

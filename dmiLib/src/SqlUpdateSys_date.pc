@@ -1,0 +1,61 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <malloc.h>
+
+/* HDB includes */
+#include <defines.h>
+#include <dbutils.h>
+#include <utils.h>
+
+/* application-specific include */
+#include "dmi_utils.h"
+
+EXEC SQL INCLUDE sqlca;
+
+#define FUNC_NAME "SqlUpdateSys_date"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlUpdateSys_date
+
+<P> <STRONG>Function signature:</STRONG> int SqlUpdateSys_date(int
+model_run_id)
+
+<P> <STRONG>Function description:</STRONG> Updates the sys_date field in
+the ref_model_run_table for model_run_id <model_run_id> to update to the
+currect system date/time. This routine UPDATES the sys_date; i.e., it
+assumes that the row in the database already exists;
+
+<P><DL> <STRONG>Function arguments:</STRONG><P>
+<BR><DD> int model_run_id: model_run_id for which to update the
+sys_date
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+int SqlUpdateSys_date(model_run_id)
+{
+  int result;
+
+  EXEC SQL BEGIN DECLARE SECTION;
+    int the_model_run_id = model_run_id;
+  EXEC SQL END DECLARE SECTION;
+
+  EXEC SQL AT :current_dbsite 
+    UPDATE REF_MODEL_RUN
+    SET SYS_DATE = SYSDATE
+    WHERE MODEL_RUN_ID = :the_model_run_id;
+
+  result = SqlErrorHandler(FUNC_NAME, FALSE,
+             "Problem updating SYS_DATE in %s...\n",FUNC_NAME);
+  if (result != OK)
+    return (ERROR);
+
+  return(OK);
+}
+
+

@@ -1,0 +1,8 @@
+userid = standard/standard
+file = standardData.dmp
+grants = N
+indexes = N
+rows = Y
+constraints = N
+owner = standard
+log = standardDataExp.log

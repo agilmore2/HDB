@@ -1,0 +1,65 @@
+#define FUNC_NAME    "SqlGetSiteDataTypeIdWithName"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetSiteDataTypeIdWithName
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetSiteDataTypeIdWithName (ID, char *, ID *)
+
+<P> <STRONG>Function description:</STRONG> Given a site_id and a datatype_name, retrieves the site_datatype_id.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> ID siteId:          The HDB site_id.
+<BR><DD> char *datatypeName: The HDB datatype_name.
+<BR><DD> ID *siteDatatypeId: The retrieved site_datatype_id.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+#include <dbutils.h>
+
+EXEC SQL INCLUDE sqlca;
+
+int SqlGetSiteDataTypeIdWithName (ID siteId, char *datatypeName, ID *siteDatatypeId)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    ID sqlSiteId = siteId,
+       *sqlSitedatatypeId = siteDatatypeId;
+    char *sqlDatatypeName = datatypeName;
+  EXEC SQL END DECLARE SECTION;
+
+  int result; 
+if (siteId == 217)
+{
+	printf("Got there...\n");
+}
+
+  EXEC SQL AT :current_dbsite SELECT site_datatype_id
+    INTO :sqlSitedatatypeId
+    FROM hdb_site_datatype a, hdb_datatype b
+    WHERE a.site_id = :sqlSiteId
+      AND b.datatype_name = :sqlDatatypeName
+      AND a.datatype_id = b.datatype_id;
+
+  if (sqlca.sqlcode > 0)
+    {
+      PrintError ("No site_datatype_id exists for site: %d datatype %s.\n\tYou must create one before loading this data.\n", siteId, datatypeName);
+      EXEC SQL AT :current_dbsite ROLLBACK;
+      return (CREATE_SDI);
+    }
+
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE,
+	"Error retrieving site_datatype_id for site: %d datatype %s.\n\tExiting.", 
+	siteId, datatypeName)) == ERROR)
+    {		
+      EXEC SQL AT :current_dbsite ROLLBACK;
+      return (ERROR);
+    }
+  
+  EXEC SQL AT :current_dbsite COMMIT;
+  
+  return (OK);
+}

@@ -1,0 +1,18 @@
+undefine tbl_owner
+define tbl_owner = &1
+set echo off
+
+CREATE OR REPLACE FUNCTION &&tbl_owner..cfs2acft(cfs in NUMBER)
+return NUMBER
+IS
+
+BEGIN
+
+   return (cfs * (86400/43560));
+
+   
+END;
+/
+create public synonym cfs2acft for &&tbl_owner..cfs2acft;
+grant execute on &&tbl_owner..cfs2acft to public;
+

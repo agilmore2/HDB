@@ -1,0 +1,395 @@
+/*****************************************************************************
+* DESCRIPTION
+* This file contains functions which load objectSlot -> SDI mappings, 
+* RiverWare -> HDB unit mappings, and database site/session information.
+*
+*/
+
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <malloc.h>
+#include <math.h>
+#include "dbutils.h"
+#include "dmi_utils.h"
+#include "utils.h"
+#include "defines.h"
+#include "typedefs.h"
+
+EXEC SQL INCLUDE sqlca;
+EXEC SQL INCLUDE sqlda;
+
+#define FUNC_NAME       "DmiLoadMappings"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> DmiLoadMappings
+
+<P> <STRONG>Function signature:</STRONG> int DmiLoadMappings ()
+
+<P> <STRONG>Function description:</STRONG> Calls 3 functions to load: database names, Riverware/HDB object-slot/SDI mappings, Riverware/HDB unit mappings.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int DmiLoadMappings (int modelId)
+{
+  int result;
+
+  /* Load DB Site info */
+  if ((result = SqlLoadDbSiteInfo ()) != OK)
+    {
+      PrintError ("Problem loading list of DB sites to connect to.\n\tExiting.");
+      return (ERROR);
+    }
+
+  /* Load Object/Slot -> SDI mappings */
+  if ((result = SqlLoadObjectSlotSDIMappings (modelId)) != OK)
+    {
+      PrintError ("Problem loading object/slot -> SDI mappings.\n\tExiting.");
+      return (ERROR);
+    }
+
+  /* Load RiverWare -> HDB unit mappings */
+  if ((result = SqlLoadRiverWareHdbUnitMappings ()) != OK)
+    {
+      PrintError ("Problem loading RiverWare -> HDB unit mappings.\n\tExiting.");
+      return (ERROR);
+    }
+
+  return (OK);
+}
+
+/*************************************************************************/
+
+#define FUNC_NAME "SqlLoadDbSiteInfo"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlLoadDbSiteInfo
+
+<P> <STRONG>Function signature:</STRONG> int SqlLoadDbSiteInfo ()
+
+<P> <STRONG>Function description:</STRONG> Loads global array of database names, codes, and associated session numbers from ref_db_list.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlLoadDbSiteInfo ()
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+   int sessionNo;
+   varchar dbsite_db_name[DATABASE_NAME_LENGTH];
+   varchar dbsite_db_code[DATABASE_ALIAS_LENGTH];
+   int rowCount;
+  EXEC SQL END DECLARE SECTION;
+
+  int index = 0;
+
+  EXEC SQL AT :current_dbsite SELECT count(*) 
+    INTO :rowCount
+      FROM ref_db_list;
+  
+  if (SqlErrorHandler (FUNC_NAME, FALSE, 
+		       "Problem selecting count of DB sites.") != OK) 
+    {
+      return(ERROR);
+    }
+  
+  /* allocate the db site array */
+  if ((dbsite_array = (dbsite_member*) malloc (sizeof (dbsite_member) * 
+					       rowCount)) == NULL)
+    {
+      PrintError ("%s: Error malloc'ing dbsite_array.\n\tExiting.",
+		  FUNC_NAME);
+      return (ERROR);
+    }
+
+  /* Initialize global variable */
+  number_of_db_sites = rowCount;
+
+  EXEC SQL WHENEVER NOT FOUND GOTO close_c1;
+
+  EXEC SQL AT :current_dbsite DECLARE c1 CURSOR FOR 
+    SELECT session_no, db_site_db_name, db_site_code
+    FROM ref_db_list
+    ORDER BY session_no;
+
+  if (SqlErrorHandler (FUNC_NAME, FALSE, 
+		       "Problem declaring c1 for select of db sites.") != OK) 
+    {
+      return(ERROR);
+    }
+
+  EXEC SQL OPEN c1;
+  if (SqlErrorHandler (FUNC_NAME, FALSE, 
+		       "Problem opening c1 for select of db sites.") != OK) 
+    {
+      return(ERROR);
+    }
+
+  while (1)
+    {
+      EXEC SQL FETCH c1 INTO :sessionNo, :dbsite_db_name, :dbsite_db_code;
+      if (SqlErrorHandler (FUNC_NAME, FALSE, 
+			   "Problem fetching db sites.") 
+	  != OK) 
+	{
+	  return(ERROR);
+	}
+
+      /* Write selected values to dbsite_array. */
+      dbsite_array[index].session_number = sessionNo;
+      strncpy (dbsite_array[index].dbsite_db_name, dbsite_db_name.arr,
+	       dbsite_db_name.len);
+      dbsite_array[index].dbsite_db_name[dbsite_db_name.len] = '\0';
+      strncpy (dbsite_array[index].dbsite_alias, dbsite_db_code.arr, 
+	       dbsite_db_code.len);
+      dbsite_array[index].dbsite_alias[dbsite_db_code.len] = '\0';
+      dbsite_array[index].connected = 0;
+      dbsite_array[index].maxid = 0;
+
+      index++;
+    }
+
+ close_c1:
+  EXEC SQL CLOSE c1;
+  EXEC SQL AT :current_dbsite COMMIT;
+
+  return (OK);
+}
+      
+/*************************************************************************/
+
+#define FUNC_NAME "SqlLoadObjectSlotSDIMappings"
+
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlLoadObjectSlotSDIMappings
+
+<P> <STRONG>Function signature:</STRONG> int SqlLoadObjectSlotSDIMappings (int)
+
+<P> <STRONG>Function description:</STRONG> Loads global array of mappings from Riverware object/slots onto HDB site_datatype_ids.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> int modelId: model_id to be used in looking up mappings
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+int SqlLoadObjectSlotSDIMappings (int modelId)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+   varchar objectName[OBJECT_NAME_LEN];
+   varchar slotName[SLOT_NAME_LEN];
+   int SDI;
+   varchar dbCode[DATABASE_ALIAS_LENGTH];
+   int rowCount;
+  EXEC SQL END DECLARE SECTION;
+
+  int index = 0;
+
+  EXEC SQL WHENEVER NOT FOUND CONTINUE;
+
+  EXEC SQL AT :current_dbsite SELECT count(*) 
+    INTO :rowCount
+      FROM ref_dmi_data_map
+      WHERE model_id = :modelId;
+  
+  if (SqlErrorHandler (FUNC_NAME, FALSE, 
+		       "Problem selecting count of object/slots for model_id = %d.", modelId) != OK) 
+    {
+      return(ERROR);
+    }
+  
+  /* allocate the object/slot array, plus 1 for null member */
+  if ((object_slot_lookup_array = (object_slot_lookup_member*) 
+       malloc (sizeof (object_slot_lookup_member) * (rowCount + 1))) == NULL)
+    {
+      PrintError ("%s: Error malloc'ing object_slot_lookup_array.\n\tExiting.",
+		  FUNC_NAME);
+      return (ERROR);
+    }
+
+  EXEC SQL WHENEVER NOT FOUND GOTO close_c2;
+
+  EXEC SQL AT :current_dbsite DECLARE c2 CURSOR FOR 
+    SELECT a.object_name, a.data_name,
+           a.site_datatype_id, b.db_site_code
+    FROM ref_dmi_data_map a, hdb_site b, hdb_site_datatype c
+    WHERE a.site_datatype_id = c.site_datatype_id
+      AND b.site_id = c.site_id
+      AND a.model_id = :modelId
+    ORDER BY a.object_name, a.data_name;
+
+  if (SqlErrorHandler (FUNC_NAME, FALSE, 
+		       "Problem declaring c2 for select of object/slots.") != OK) 
+    {
+      return(ERROR);
+    }
+
+  EXEC SQL OPEN c2;
+  if (SqlErrorHandler (FUNC_NAME, FALSE, 
+		       "Problem opening c2 for select of object/slots.") != OK) 
+    {
+      return(ERROR);
+    }
+
+  while (1)
+    {
+      EXEC SQL FETCH c2 INTO :objectName, :slotName, :SDI, :dbCode;
+      if (SqlErrorHandler (FUNC_NAME, FALSE, 
+			   "Problem fetching object/slots.") 
+	  != OK) 
+	{
+	  return(ERROR);
+	}
+      
+      /* Write selected values to object_slot_lookup_array .*/
+      strncpy (object_slot_lookup_array[index].object_name, objectName.arr,
+	       objectName.len);
+      object_slot_lookup_array[index].object_name[objectName.len] = '\0';
+      strncpy (object_slot_lookup_array[index].slot_name, slotName.arr,
+	       slotName.len);
+      object_slot_lookup_array[index].slot_name[slotName.len] = '\0';
+      object_slot_lookup_array[index].site_datatype_id = SDI;
+      strncpy (object_slot_lookup_array[index].data_location, dbCode.arr,
+	       dbCode.len);
+      object_slot_lookup_array[index].data_location[dbCode.len] = '\0';
+
+      index++;
+    }
+
+ close_c2:
+  EXEC SQL CLOSE c2;
+  EXEC SQL AT :current_dbsite COMMIT;
+
+  /* Initialize "null" last member. */
+  object_slot_lookup_array[index].object_name[0] = '\0';
+  object_slot_lookup_array[index].slot_name[0] = '\0'; 
+  object_slot_lookup_array[index].site_datatype_id = 0;
+  object_slot_lookup_array[index].data_location[0] = '\0';
+
+  return (OK);
+}
+      
+
+/*************************************************************************/
+
+#define FUNC_NAME "SqlLoadRiverWareHdbUnitMappings"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlLoadRiverWareHdbUnitMappings
+
+<P> <STRONG>Function signature:</STRONG> int SqlLoadRiverWareHdbUnitMappings ()
+
+<P> <STRONG>Function description:</STRONG> Loads global array of mappings from Riverware units onto HDB units.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlLoadRiverWareHdbUnitMappings ()
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+   varchar riverwareUnitName[UNIT_NAME_LEN];
+   int hdbUnitId;
+   int scale;
+   int rowCount;
+  EXEC SQL END DECLARE SECTION;
+
+  int index = 0;
+
+  EXEC SQL WHENEVER NOT FOUND CONTINUE;
+
+  EXEC SQL AT :current_dbsite SELECT count(*) 
+    INTO :rowCount
+      FROM hdb_dmi_unit_map;
+  
+  if (SqlErrorHandler (FUNC_NAME, FALSE, 
+		       "Problem selecting count of unit mappings.") != OK) 
+    {
+      return(ERROR);
+    }
+  
+  /* allocate the unit map array, plus 1 for null member */
+  if ((unit_lookup_array = (unit_lookup_member*) 
+       malloc (sizeof (unit_lookup_member) * (rowCount + 1))) == NULL)
+    {
+      PrintError ("%s: Error malloc'ing unit_lookup_array.\n\tExiting.",
+		  FUNC_NAME);
+      return (ERROR);
+    }
+
+  EXEC SQL WHENEVER NOT FOUND GOTO close_c3;
+
+  EXEC SQL AT :current_dbsite DECLARE c3 CURSOR FOR 
+    SELECT pr_unit_name, unit_id, scale
+    FROM hdb_dmi_unit_map
+    ORDER BY pr_unit_name;
+
+  if (SqlErrorHandler (FUNC_NAME, FALSE, 
+		       "Problem declaring c3 for select of unit mapping.") != OK) 
+    {
+      return(ERROR);
+    }
+
+  EXEC SQL OPEN c3;
+  if (SqlErrorHandler (FUNC_NAME, FALSE, 
+		       "Problem opening c3 for select of unit mapping.") != OK) 
+    {
+      return(ERROR);
+    }
+
+  while (1)
+    {
+      EXEC SQL FETCH c3 INTO :riverwareUnitName, :hdbUnitId, :scale;
+      if (SqlErrorHandler (FUNC_NAME, FALSE, 
+			   "Problem fetching unit mapping.") 
+	  != OK) 
+	{
+	  return(ERROR);
+	}
+
+      /* Write selected values to unit_lookup_array */
+      strncpy (unit_lookup_array[index].riverware_unit_name, riverwareUnitName.arr,
+	       riverwareUnitName.len);
+      unit_lookup_array[index].riverware_unit_name[riverwareUnitName.len] = '\0';
+      unit_lookup_array[index].hdb_unit_id = hdbUnitId;
+      unit_lookup_array[index].scale = scale;
+
+      index++;
+    }
+
+ close_c3:
+  EXEC SQL CLOSE c3;
+  EXEC SQL AT :current_dbsite COMMIT;
+
+  /* Initialize "null" last member. */
+  unit_lookup_array[index].riverware_unit_name[0] = '\0';
+  unit_lookup_array[index].hdb_unit_id = 0;
+  unit_lookup_array[index].scale = 0;
+
+  return (OK);
+}
+      
+
+

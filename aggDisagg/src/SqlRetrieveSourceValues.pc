@@ -1,0 +1,279 @@
+/*****************************************************************************
+* DESCRIPTION
+*
+* This file contains the function which loads specified source data from HDB
+* into the sourceValueList.
+*
+***************************************
+*
+* RetrieveSourceValues
+*
+* Purpose: Do preliminary work. Construct appropriate select statements
+*          for range and non-range data. Find out how many values will
+*          be retrieved by value-select query and allocate sourceValueList
+*          accordingly. Call value-select query.
+*
+* Input
+* 	RUN_CONTROL   - pointer to structure holding run control info; 
+*       ID            - siteDatatypeId for which to retrieve data
+*	SQL_DATE      - low date
+*	SQL_DATE      - high date
+*       VALUE_LIST ** - sourceValueList
+*       int *         - numSourceValues
+*
+* Output
+*
+* Return
+* 	int - OK or ERROR
+*
+***************************************
+* SqlRetrieveSourceValues
+*
+* Purpose: load in source data for specified siteDatatypeId/date range.
+*          Both range and non-range values are processed by this function.
+*          Note that exact date/time stamps of range values are supplied
+*          by dateHigh and dateLow, and hence don't need to be selected
+*          and stored in the sourceValueList.
+*
+* Input
+*       VALUE_LIST * - sourcValueList
+*       char *       - select statement
+*       int *        - numSourceValues
+*
+* Output
+*
+* Return
+* 	int - OK or ERROR
+*
+***************************************
+*
+* Author
+*
+* Carol Marra
+* March, 1996
+****************************************************************************/
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include "aggDisagg.h"
+#include "aggDisaggDefines.h"
+#include "utils.h"
+#include "dbutils.h"
+#include "defines.h"
+#include "typedefs.h"
+#include "aggDisaggTypedefs.h"
+
+EXEC SQL INCLUDE sqlca;
+
+#define FUNC_NAME "RetrieveSourceValues"
+
+int RetrieveSourceValues (RUN_CONTROL runControl, ID siteDatatypeId,
+			  SQL_DATE dateLow, SQL_DATE dateHigh, 
+			  VALUE_RECORD **sourceValueList,
+			  int *numSourceValues)
+
+{
+  int result,
+      valueCount;
+  char dateColName[32],
+       selectValues[300],
+       selectCount[100],
+       whereStatement[300],
+       selectStatement[600],
+       countStatement[400];
+
+  
+  /* Set date column based on source interval. */
+  if ((result = GetDateColumn (runControl.obsSource, FALSE, 
+			       runControl.sourceIsRange, dateColName)) != OK)
+    {
+      PrintError ("Error in %s....\n", FUNC_NAME);
+      return (ERROR);
+    }
+
+  /* Construct statements for selecting count of values, and values
+     themselves. */
+  sprintf (selectCount, "SELECT count (site_datatype_id) FROM %s",
+	   runControl.tableSource);
+  
+  /* For model data: if range, there are no changes for hdb2, because 
+     range dates and date columns are the same. If non-range, query
+     is based on start_date_time, but this functionally is the same as
+     the old date_hour, etc, so again, no change. Use date_low and
+     date_high as before. */
+  if (!runControl.sourceIsReal)
+  {
+     if (runControl.sourceIsRange)
+     {	
+	sprintf (selectValues, "SELECT to_char (start_%s, 'dd-mon-yyyy hh24:mi:ss'), to_char (end_%s, 'dd-mon-yyyy hh24:mi:ss'), value FROM %s",
+		 dateColName, dateColName, runControl.tableSource);
+	sprintf (whereStatement, "WHERE start_%s = to_date ('%s', 'dd-mon-yyyy hh24:mi:ss') and end_%s = to_date ('%s', 'dd-mon-yyyy hh24:mi:ss') AND site_datatype_id = %d AND model_run_id = %d", dateColName, dateLow, dateColName, dateHigh, siteDatatypeId, runControl.model_run_id_src);
+     }
+     else
+     {
+	sprintf (selectValues, "SELECT to_char (start_%s, 'dd-mon-yyyy hh24:mi:ss'), NULL, value FROM %s",
+		 dateColName, runControl.tableSource);
+	sprintf (whereStatement, "WHERE start_%s BETWEEN to_date ('%s', 'dd-mon-yyyy hh24:mi:ss') AND to_date ('%s', 'dd-mon-yyyy hh24:mi:ss') AND site_datatype_id = %d AND model_run_id = %d", dateColName, dateLow, dateHigh, siteDatatypeId,
+		 runControl.model_run_id_src);
+     }
+  }
+  
+  /* For real data, if range, there are no changes for hdb2, because 
+     range dates and date columns are the same. If non-range, must 
+     check to see if dimensionChangeInBaseArea or not... If not, query is 
+     based on start_date_time in interval table. This functionally is the 
+     same as the old date_hour, etc, so again, no change. Use date_low and
+     date_high as before. If it is a dimension change, query is handled 
+     totally differently.  */
+  else
+  {
+     if (runControl.sourceIsRange)
+     {
+	sprintf (selectValues, "SELECT to_char (start_%s, 'dd-mon-yyyy hh24:mi:ss'), to_char (end_%s, 'dd-mon-yyyy hh24:mi:ss'), value FROM %s",
+		 dateColName, dateColName, runControl.tableSource);
+	sprintf (whereStatement, "WHERE start_%s = to_date ('%s', 'dd-mon-yyyy hh24:mi:ss') and end_%s = to_date ('%s', 'dd-mon-yyyy hh24:mi:ss') AND site_datatype_id = %d", dateColName, dateLow, dateColName, dateHigh, siteDatatypeId);
+     }
+     else if (!runControl.dimensionChangeInBaseArea)
+     {
+	sprintf (selectValues, "SELECT to_char (start_%s, 'dd-mon-yyyy hh24:mi:ss'), NULL, value FROM %s",
+		 dateColName, runControl.tableSource);
+	sprintf (whereStatement, "WHERE start_%s BETWEEN to_date ('%s', 'dd-mon-yyyy hh24:mi:ss') AND to_date ('%s', 'dd-mon-yyyy hh24:mi:ss') AND site_datatype_id = %d", dateColName, dateLow, dateHigh, siteDatatypeId);
+     }
+     else
+     {
+	/* this is query for base area; this is the only place
+	where end date is retrieved for non-range data. It should
+	be used on the corresponding value inserted into r_base */
+	sprintf (selectValues, "SELECT to_char (start_%s, 'dd-mon-yyyy hh24:mi:ss'), to_char (end_%s, 'dd-mon-yyyy hh24:mi:ss'), value FROM %s",
+		 dateColName, dateColName, runControl.tableSource);
+	sprintf (whereStatement, "WHERE start_%s BETWEEN to_date ('%s', 'dd-mon-yyyy hh24:mi:ss') AND to_date ('%s', 'dd-mon-yyyy hh24:mi:ss') AND site_datatype_id = %d", dateColName, dateLow, dateHigh, siteDatatypeId);
+     }
+  }
+
+  sprintf(selectStatement,"%s %s",selectValues,whereStatement);
+  sprintf(countStatement,"%s %s",selectCount,whereStatement);
+  
+  /* Get count of values in sourceValueList; note that it can't 
+     be known ahead of time, as an instantaneous source could supply
+     any number of values. */
+  if ((result = SqlSelectCount (countStatement, &valueCount)) != OK)
+  {
+     PrintError ("Problem determining number of source values\nfor SDI: %d, dates %s and %s...\n", siteDatatypeId, dateLow, dateHigh);
+     return (ERROR);
+  }
+  
+  /* Allocate sourceValueList. If there are already source values in the list, 
+     use realloc, because this block of memory will need to be 
+     *extended* to handle more values for statistics data. If valueCount
+     is 0 for empty sourceValueLists, init the list to NULL. */
+  if (!(*numSourceValues))
+    {
+      if (valueCount)
+	{
+	  if ((*sourceValueList = (VALUE_RECORD *) malloc 
+	       (sizeof(VALUE_RECORD) * valueCount))
+	      == NULL)
+	    {
+	      PrintError ("Problem allocating sourceValueList\n\tfor SDI: %s, dates %s and %s...\n", siteDatatypeId, dateLow, dateHigh);
+	      return (ERROR);
+	    }
+	}
+      else
+	*sourceValueList = NULL;
+    }
+      
+  else
+    {
+      if ((*sourceValueList = (VALUE_RECORD *) 
+	   realloc (*sourceValueList, 
+		    sizeof(VALUE_RECORD) * (valueCount + *numSourceValues)))
+	  == NULL)
+	{
+	  PrintError ("Problem (re)allocating sourceValueList\n\tfor SDI: %s, dates %s and %s...\n", siteDatatypeId, dateLow, dateHigh);
+	  return (ERROR);
+	}
+    }
+  
+  /* Now select actual values */
+  if (valueCount)
+    if ((result = SqlRetrieveSourceValues (*sourceValueList, selectStatement,
+					   numSourceValues, valueCount)) != OK)
+      {
+	return (ERROR);
+      }
+
+  return (OK);
+}
+
+
+/***************************************************************************/
+
+#define FUNC_NAME "SqlRetrieveSourceValues"
+
+int SqlRetrieveSourceValues (VALUE_RECORD *sourceValueList,
+			     char *selectStatement, int *numSourceValues,
+			     int valueCount)
+
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    VALUE_RECORD *sqlValueRecord;
+    char *sqlSelectStatement = selectStatement;
+    IND dateInd;
+  EXEC SQL END DECLARE SECTION;
+
+  int count,
+      result;
+
+  EXEC SQL PREPARE sel FROM :sqlSelectStatement;
+  if ((result = SqlErrorHandler (FUNC_NAME, FALSE, "Problem preparing select statement: %s...\n", selectStatement)) != OK)
+
+    {
+      return (ERROR);
+    }
+
+  EXEC SQL WHENEVER NOT FOUND GOTO close_c1;
+
+  EXEC SQL DECLARE c1 CURSOR FOR sel;
+  if ((result = SqlErrorHandler (FUNC_NAME, FALSE, "Problem describing cursor for: %s...\n", selectStatement)) != OK)
+    {
+      return (ERROR);
+    }
+  
+  EXEC SQL OPEN c1;
+  if ((result = SqlErrorHandler (FUNC_NAME, FALSE, "Problem opening cursor for\n: %s...\n", selectStatement)) != OK)
+    {
+      return (ERROR);
+    }
+
+  /* Select all source data */
+  for (count = 0; ; count++)
+    {
+      sqlValueRecord = &sourceValueList[count + *numSourceValues];
+
+      EXEC SQL FETCH c1 INTO :sqlValueRecord->dateStart, 
+                             :sqlValueRecord->dateEnd:dateInd,
+                             :sqlValueRecord->value;
+      if ((result = SqlErrorHandler (FUNC_NAME, FALSE, "Problem executing: %s...\n", selectStatement)) != OK)
+	{
+	  EXEC SQL ROLLBACK;
+	  return (ERROR);
+	}
+    }
+
+  close_c1:
+    EXEC SQL CLOSE c1;
+    EXEC SQL COMMIT;
+
+  if (valueCount != count)
+    {
+      PrintError ("Number of values selected, %d,\n\tdoes not match number anticipated, %d...\n", count, *numSourceValues);
+      return (ERROR);
+    }
+
+  *numSourceValues += count;
+
+  return (OK);
+}
+
+
+/***********************************************************************/

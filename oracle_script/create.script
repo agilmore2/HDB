@@ -1,0 +1,114 @@
+echo Starting the creation script.
+# ------------------------------------------------------------------------------
+# This shell script creates an installation of HDB. It initially prompts for the sys
+# password, DBA name, and DBA password. It then copies information from the
+# BASE_SCRIPTS directory into the parent directory. BASE_SCRIPTS directories contain
+# scripts that have site independent information in them. The site independent
+# information is then replaced by the site specific information that was prompted by
+# the shell script. The replacement is done with sed. The scripts are then input to
+# sqlplus. 
+# ------------------------------------------------------------------------------
+echo Have you set ORACLE_SID and HDB_LOCAL in your environment? 
+read answer 
+
+if test $answer != y
+    then exit
+fi
+
+echo Have you set parameters properly in timeSeries.ddl
+read answer
+
+if test $answer != y
+    then exit
+fi
+
+# Prompting for information
+
+echo Enter sys password:
+read sys_passwd
+echo Enter DBA user name:
+read dba_name
+echo Enter DBA user password:
+read passwd
+
+# Copying site-independent information to parent directory.
+
+cp ./SCHEMA/BASE_SCRIPTS/* ./SCHEMA/
+cp ./PERMISSIONS/BASE_SCRIPTS/* ./PERMISSIONS/
+
+# Replacing site independent information with site specific information
+# as provided by the user above.
+
+sed 's/SYSPSSWD/'$sys_passwd'/g' ./PERMISSIONS/permissions.sh > temp
+mv temp ./PERMISSIONS/permissions.sh
+sed 's/DBA/'$dba_name'/g' ./SCHEMA/drop_user.ddl > temp
+mv temp ./SCHEMA/drop_user.ddl 
+sed 's/DBA/'$dba_name'/g' ./SCHEMA/index.ddl > temp
+mv temp ./SCHEMA/index.ddl
+sed 's/DBA/'$dba_name'/g' ./SCHEMA/primkey.ddl > temp
+mv temp ./SCHEMA/primkey.ddl
+sed 's/DBA/'$dba_name'/g' ./SCHEMA/syn.ddl > temp
+mv temp ./SCHEMA/syn.ddl
+sed 's/DBA/'$dba_name'/g' ./SCHEMA/user.ddl > temp
+mv temp ./SCHEMA/user.ddl
+sed 's/PASSWD/'$passwd'/g' ./SCHEMA/user.ddl > temp
+mv temp ./SCHEMA/user.ddl
+sed 's/PASSWD/'$passwd'/g' ./SCHEMA/role.ddl > temp
+mv temp ./SCHEMA/role.ddl
+sed 's/DBA/'$dba_name'/g' ./SCHEMA/userpriv.ddl > temp
+mv temp ./SCHEMA/userpriv.ddl
+sed 's/DBA/'$dba_name'/g' ./SCHEMA/userprivsys.ddl > temp
+mv temp ./SCHEMA/userprivsys.ddl
+
+# Making the permissions script executable.
+
+chmod +x ./PERMISSIONS/permissions.sh
+
+# Inputting .ddl files into sqlplus
+
+sqlplus sys/$sys_passwd    < ./SCHEMA/user.ddl        > out1
+grep ERROR out1
+sqlplus $dba_name/$passwd  < ./SCHEMA/tbl.ddl         > out2
+grep ERROR out2
+sqlplus $dba_name/$passwd  < ./SCHEMA/timeSeries.ddl  > out3
+grep ERROR out3
+sqlplus $dba_name/$passwd  < ./SCHEMA/userprivsys.ddl > out4
+grep ERROR out4
+sqlplus $dba_name/$passwd  < ./SCHEMA/syn.ddl         > out5
+grep ERROR out5
+sqlplus $dba_name/$passwd  < ./SCHEMA/role.ddl        > out6
+grep ERROR out6
+sqlplus $dba_name/$passwd  < ./SCHEMA/rolepriv.ddl    > out7
+grep ERROR out7
+sqlplus $dba_name/$passwd  < ./SCHEMA/index.ddl       > out8
+grep ERROR out8
+sqlplus $dba_name/$passwd  < ./SCHEMA/primkey.ddl     > out9
+grep ERROR out9
+sqlplus $dba_name/$passwd  < ./CONSTRAINTS/constraints.script > out10
+grep ERROR out10
+sqlplus $dba_name/$passwd  < ./SCHEMA/view.ddl > out11
+grep ERROR out11
+
+# Running permissions script.
+
+sh ./PERMISSIONS/permissions.sh 
+
+# Continuing to input .ddl files into sqlplus.
+
+sqlplus $dba_name/$passwd  < ./PACKAGES/package.script > out12
+grep ERROR out12
+sqlplus $dba_name/$passwd  < ./PROCEDURES/procedure.script > out13
+grep ERROR out13
+sqlplus $dba_name/$passwd  < ./TRIGGERS/trigger.script > out14
+grep ERROR out14
+sqlplus $dba_name/$passwd  < ./SCHEMA/userpriv.ddl > out15
+grep ERROR out15
+
+echo                   IMPORTANT 
+echo Database has been created. Loading standard data.
+echo
+
+sh ./STANDARD_DATA/standard.sh $dba_name $passwd
+
+echo Load of standard date complete.
+echo Don't forget to check output in the .log and .out files in STANDARD_DATA

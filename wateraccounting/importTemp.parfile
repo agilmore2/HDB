@@ -1,0 +1,8 @@
+userid = acctdba/ms_cuhdb
+file = tempDmiTables.dmp
+grants = N
+indexes = N
+rows = Y
+constraints = N
+tables =  TEMP_WA_DMI_PHYS_OBJ_SLOT TEMP_WA_SLOT_DATATYPE_MAP 
+log = tempDmiTablesImp.log

@@ -1,0 +1,80 @@
+# Name: 
+#    initnewhdb.ora
+#    created by Carol Marra, 5/30/98
+#    edited by Kelly Bourke, 9/28/99
+#
+##############################################################################
+db_name = newhdb
+
+/* ora1, ora2, and ora3 indicate 3 different disks; use any
+   of the separate disks (eg for system, rbs, redo logs, etc) that you
+   have available. */ 
+control_files = (/ora1/oradata/newhdb/newhdb_ctl1.ctl,
+                 /ora2/oradata/newhdb/newhdb_ctl2.ctl,
+		 /ora3/oradata/newhdb/newhdb_ctl3.ctl)
+
+background_dump_dest = /usr/local/oracle/admin/newhdb/bdump
+core_dump_dest       = /usr/local/oracle/admin/newhdb/cdump
+user_dump_dest       = /usr/local/oracle/admin/newhdb/udump
+
+db_block_size = 4096
+
+db_file_multiblock_read_count = 16                                  # MEDIUM 
+
+db_block_buffers = 1000   
+
+# Changed for installation of designer
+shared_pool_size = 18000000          
+optimizer_mode = choose
+
+db_files = 100
+open_cursors = 50
+sort_area_size = 500000
+sort_area_retained_size = 250000
+
+log_checkpoint_interval = 10000
+
+processes = 20                                                     # MEDIUM 
+
+dml_locks = 200                                                     # MEDIUM 
+
+log_buffer = 163840                                                 # LARGE
+
+# audit_trail = true            # if you want auditing
+# timed_statistics = true       # if you want timed statistics
+
+max_dump_file_size = 10240
+
+# Uncommenting the line below will cause automatic archiving if archiving has
+# been enabled using ALTER DATABASE ARCHIVELOG.
+#log_archive_start = true      
+#log_archive_dest = /ora4/arch
+#log_archive_format = "%s.arc" 
+
+# If using private rollback segments, place lines of the following
+# form in each of your instance-specific init.ora files:
+# rollback_segments = (name1, name2)   
+
+# If using public rollback segments, define how many
+# rollback segments each instance will pick up, using the formula
+#   # of rollback segments = transactions / transactions_per_rollback_segment
+# In this example each instance will grab 40/10 = 4:
+# transactions = 40 
+# transactions_per_rollback_segment = 10 
+
+# Global Naming -- enforce that a dblink has same name as the db it connects to
+global_names = FALSE
+
+# variable needed to enforce profiles - kelly 4/18/00
+resource_limit = true
+
+
+# undo tablespace management
+# change name for undots accordingly
+#undo_management = auto
+#undo_tablespace = undots
+
+#Parameter added by Data Migration Assistant
+compatible = 8.1.5
+#compatible = 9.0.1
+# if using 9i databases with undots

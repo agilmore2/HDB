@@ -1,0 +1,48 @@
+This file documents the scripts in this directory:
+
+
+cr_trigs.sql: Creates the primary key triggers on each of the ref_ tables 
+whose primary keys can be assigned automatically. Created manually at
+installation by copying all ref_ triggers from MASTER_SITE/cr_trigs.sql
+
+create_snapshot_inst.sh: The driver script which calls all other scripts to
+set up a snapshot installation.
+
+destroy_snapshot_inst.sh: Undoes a snapshot installation. Out of date.
+
+disable_hdb_fk.sql: Disables all original foreign keys which point to
+original hdb_ tables (rather than snapshots). Creates disable_hdb_fk_script.sql.
+MUST RUN USING @, not <
+
+drop_snap_fk.sql: Drops all foreign keys which point to snapshots. Creates
+drop_snap_fk_script.sql. MUST RUN USING @, not <
+
+enbl_con.sql: Enables all original foreign keys which point to hdb_
+tables. Creates enbl_con_script.sql. MUST RUN USING @, not <
+
+metaDataUser.ddl: Creates the user meta_data_user.
+
+new_hdb_fk.sql: Creates foreign keys which point to snapshots. Creates
+new_hdb_fk_script.sql. MUST RUN USING @, not <
+
+precreate_snapshot_inst.sh: Script which must be run on snapshot installation
+before creating master installation. (Remainder of snapshot installation must
+be created after the master is in place.)
+
+ref_refresh_monitor.sql: Creates the table ref_refresh_monitor.
+
+refresh_hdb_snap.sql: Creates the procedure refresh_hdb_snap, for refreshing
+snapshots.
+
+run_refresh_hdb_snap.sql: Creates run_refresh_hdb_snap, which puts
+refresh_hdb_snap on the job queue.
+
+snap_de.sql: De-installs a snapshot installation. Queries the DB to 
+automatically handle the objects it needs to handle.
+
+snap_ins.sql: Called by create_snapshot_inst.sh; does the bulk of the work of
+creating a snapshot installation. Queries the DB to automatically handle
+the objects it needs to handle.
+
+v_grant.sql: Grants meta_data_user select on v$parameter; required for some
+forms. 

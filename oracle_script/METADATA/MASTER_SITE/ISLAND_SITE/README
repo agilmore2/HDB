@@ -1,0 +1,4 @@
+This file documents the scripts in this directory:
+
+create_island_inst.sh: The driver script which calls all other scripts (in ../ and ../../) to set up an island installation.
+

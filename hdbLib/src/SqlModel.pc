@@ -1,0 +1,265 @@
+/*****************************************************************************
+* DESCRIPTION
+* This file contains functions used in the management of model IDs and 
+* model run Ids.
+*
+*********************************
+* SqlGetModelId
+* Purpose: Retrieve appropriate numerical model_id given the name of
+*	   the model.
+* 
+* Input
+* 	char    *modelName - name of model
+*	ID      *modelId --  ID for this model.
+* Return
+* 	int	OK or ERROR: indicates if sourcetypeId was found
+*
+*********************************
+* SqlGetModelRunId
+* Purpose: Given the model_id, model_run_name, and run_date, create a 
+*          unique model_run_id. 
+* 
+* Input
+*       ID       - modelId
+*       char*    - modelRunName
+*       SQL_DATE - runDate
+*	int      - probability
+*       char *   - modelType
+*       ID       - userId
+*       SQL_DATE - startDate
+*       SQL_DATE - endDate
+*       char *   - timeStep
+*       char *   - comment
+*       ID *     - modelRunId
+*
+* Return
+* 	int	OK or ERROR: indicates if modelRunId was created
+* 
+*
+* Assumptions
+*
+* AUTHOR - EDITORS
+* Carol Marra
+*****************************************************************************/
+
+EXEC SQL INCLUDE SQLCA;
+#include <stdio.h>
+#include <string.h>
+#include <defines.h>
+#include <typedefs.h>
+#include <dbutils.h>
+#include <utils.h>
+
+#define FUNC_NAME    "SqlGetModelId"
+
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetModelId
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetModelId (char *, ID *)
+
+<P> <STRONG>Function description:</STRONG> Retrieve appropriate numerical model_run_id given the name of the model.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *modelName: Name of the model.
+<BR><DD> ID *modelId:     The retrieved model_run_id corresponding to the model name.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetModelId (char *modelName, ID *modelId)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    char *sqlModelName;
+    ID *sqlModelId = modelId;
+  EXEC SQL END DECLARE SECTION;
+  
+  int result;
+
+  sqlModelName = strdup (modelName);
+
+  EXEC SQL AT :current_dbsite SELECT model_id 
+    INTO :sqlModelId
+    FROM hdb_model
+    WHERE model_name = :sqlModelName;
+ 
+  result = SqlErrorHandler(FUNC_NAME, FALSE,
+         "Error retrieving model_id for %s.\n\tIs hdb_model loaded properly?\n\tExiting.",
+         modelName);
+  if (result == ERROR)
+    {		
+      EXEC SQL AT :current_dbsite ROLLBACK;
+      return (ERROR);
+    }
+  
+  EXEC SQL AT :current_dbsite COMMIT;
+  
+  return (OK);
+}
+
+/***************************************************************************/
+#define FUNC_NAME    "SqlGetModelRunId"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetModelRunId
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetModelRunId (ID, char *, SQL_DATE, int, char *, ID, SQL_DATE, SQL_DATE, char *, char *,ID *)
+
+
+<P> <STRONG>Function description:</STRONG> Create a new model_run_id, given the information which defines a model run.
+ 
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> ID modelId:         The model_id which this model_run_id will be associated with.
+<BR><DD> char *modelRunName: Name assigned to the new model_run_id.
+<BR><DD> SQL_DATE runDate:   Date the model run is run.
+<BR><DD> int probability:    Hydrologic probability, 50 is normal.
+<BR><DD> char *modelType:    P (preliminary), M (mid-month), F (final).
+<BR><DD> ID userId:          Model run user's HDB user_id.
+<BR><DD> SQL_DATE startDate: Model run start date.
+<BR><DD> SQL_DATE endDate:   Model run end date.
+<BR><DD> char *timeStep:     Indicator of model timestep (e.g., "daily")
+<BR><DD> char *comment:      Any comment on model run or its purpose.
+<BR><DD> ID *modelRunId:     The assigned model_run_id.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetModelRunId (ID modelId, char *modelRunName, SQL_DATE runDate,
+		      int probability, char *modelType, ID userId,
+		      SQL_DATE startDate, SQL_DATE endDate, 
+		      char *timeStep, char *comment, ID *modelRunId)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    ID sqModelId = modelId;
+    char *sqlModelRunName;
+    SQL_DATE sqlRunDate;
+    int sqlProbability;
+    char *sqlModelType;
+    ID sqlUserId;
+    SQL_DATE sqlStartDate, 
+             sqlEndDate;
+    char *sqlTimeStep,
+         *sqlComment;
+    ID *sqlModelRunId = modelRunId,
+        maxId;
+    IND probInd = 0,
+        modelTypeInd = 0,
+        userIdInd = 0,
+        startDateInd = 0,
+        endDateInd = 0,
+        timeStepInd = 0,
+        commentInd = 0;
+  EXEC SQL END DECLARE SECTION;
+
+  int   result;
+
+
+  EXEC SQL AT :current_dbsite 
+     SELECT maxid INTO :maxId FROM ref_db_list WHERE session_no = 1;
+  if ((result = SqlErrorHandler
+     (FUNC_NAME, FALSE, "Could not retrieve the maxId.\n")) != OK)
+   {
+     return (ERROR);
+   }
+
+  *sqlModelRunId = 0;
+  sqlModelRunName = strdup (modelRunName);
+  result = SqlFormatDate (runDate, sqlRunDate);
+  if (result == ERROR)
+  {
+     PrintError ("%s: Problem formatting model run date.\n", FUNC_NAME);
+     return (ERROR);
+  }
+
+  /* Set null indicator variables. */
+  if (probability == NA)
+    probInd = NULL_IND;
+  else
+    sqlProbability = probability;
+
+  if (!modelType)
+  {
+    modelTypeInd = NULL_IND;
+    sqlModelType = NULL;
+  }
+  else
+    sqlModelType = strdup (modelType);
+
+  if (userId == NA)
+    userIdInd = NULL_IND;
+  else
+    sqlUserId = userId;
+
+  if (!startDate)
+  {
+     startDateInd = NULL_IND;
+     sqlStartDate[0] = '\0';
+  }
+  else
+     if ((result = SqlFormatDate (startDate, sqlStartDate)) == ERROR)
+     {
+	PrintError ("%s: Could not format startDate.\n", FUNC_NAME);
+	return (ERROR);
+     }
+
+  if (!endDate)
+   {
+      endDateInd = NULL_IND;
+      sqlEndDate[0] = '\0';
+   }
+  else
+     if ((result = SqlFormatDate (endDate, sqlEndDate)) == ERROR)
+     {
+	PrintError ("%s: Could not format endDate.\n", FUNC_NAME);
+	return (ERROR);
+     }
+
+  if (!timeStep)
+  {
+     timeStepInd = NULL_IND;
+     sqlTimeStep = NULL;
+  }
+  else
+    sqlTimeStep = strdup (timeStep);
+  
+  if (!comment)
+  {
+    commentInd = NULL_IND;
+    sqlComment = NULL;
+  }
+    
+  else
+    sqlComment = strdup (comment);
+
+
+  EXEC SQL AT :current_dbsite INSERT INTO ref_model_run 
+    VALUES (:sqlModelRunId, :sqlModelRunName, :sqModelId, sysdate,
+	    TO_DATE(:sqlRunDate, 'DD-MON-YYYY HH24:MI:SS'),
+	    :sqlProbability:probInd, :sqlModelType:modelTypeInd,
+	    :sqlUserId:userIdInd, 
+	    TO_DATE(:sqlStartDate:startDateInd, 'DD-MON-YYYY HH24:MI:SS'), 
+	    TO_DATE(:sqlEndDate:endDateInd, 'DD-MON-YYYY HH24:MI:SS'), 
+	    :sqlTimeStep:timeStepInd, :sqlComment:commentInd);
+
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE, "Problem inserting record for model_run_id %d.\n\tExiting", *sqlModelRunId)) 
+      != OK)
+    {
+      return (ERROR);
+    }
+
+  EXEC SQL AT :current_dbsite COMMIT;
+
+  *sqlModelRunId = maxId; 
+  return (OK);
+}
+/******************************************************************/
+    

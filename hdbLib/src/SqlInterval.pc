@@ -1,0 +1,453 @@
+/*****************************************************************************
+* DESCRIPTION
+* This file contains functions which perform various functions associated
+* with intervals in HDB.
+*
+* AUTHOR - EDITORS
+* Carol Marra
+*****************************************************************************/
+
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <malloc.h>
+#include <math.h>
+#include <defines.h> 
+#include <typedefs.h>
+#include <dbutils.h>
+#include <utils.h>
+
+EXEC SQL INCLUDE sqlca;
+EXEC SQL INCLUDE sqlda;
+
+#define FUNC_NAME "SqlGetNumSecondsInMonth"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetNumSecondsInMonth
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetNumSecondsInMonth (SQL_DATE, long *)
+
+<P> <STRONG>Function description:</STRONG> Determines number of seconds in the month of the specified date.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> SQL_DATE theDate: Date (dd-mon-yyyy hh24:mi:ss)
+<BR><DD> long *seconds:    Number of seconds in month, calculated.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+  
+int SqlGetNumSecondsInMonth (SQL_DATE theDate, long *seconds)    
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    long *sqlSeconds = seconds;
+    SQL_DATE tempDate;
+    int sqlSecondsInDay = SECONDS_IN_DAY;
+  EXEC SQL END DECLARE SECTION;
+
+  int result,
+      month,
+      year;
+
+  /* Make sure date represented is first day of month */
+  if ((result = SqlExtractDatePart (theDate, MONTH, &month)) != OK)
+    return (ERROR);
+  if ((result = SqlExtractDatePart (theDate, YEAR, &year)) != OK)
+    return (ERROR);
+  sprintf (tempDate, "01-%d-%d", month, year);
+
+
+#ifdef DEBUG
+  printf("%s\n",query);
+#endif
+
+  EXEC SQL AT :current_dbsite SELECT 
+     to_number (add_months(to_date (:tempDate, 'dd-mm-yyyy'), 1)  - to_date (:tempDate, 'dd-mm-yyyy')) * :sqlSecondsInDay
+     INTO :sqlSeconds
+     FROM dual;
+
+  if ((result = SqlErrorHandler
+       (FUNC_NAME, FALSE,
+        "Error retrieving number of seconds for month %s.\n\tExiting.",
+        tempDate)) == ERROR)
+    {
+      EXEC SQL ROLLBACK;
+      return (ERROR);
+    }
+
+  EXEC SQL AT :current_dbsite COMMIT;
+
+  return(OK);
+
+}
+
+/*****************************************************************************/
+#define FUNC_NAME	"SqlNumIntervalsBetweenDates"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlNumIntervalsBetweenDates
+
+<P> <STRONG>Function signature:</STRONG> int SqlNumIntervalsBetweenDates (SQL_DATE, SQL_DATE, SQL_INTERVAL, double *)
+
+<P> <STRONG>Function description:</STRONG> For the interval (MONTH, DAY, etc) passed in, determines how many complete intervals are between the start and end dates.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> SQL_DATE sDate:        Start date; must be on beginning of interval, e.g., if interval is MONTH, must be 1st day of month (dd-mon-yyyy hh24:mi:ss)
+<BR><DD> SQL_DATE eDate:        End date; must be end of inteval - 1 second, e.g., if interval is Month, must be 23:59:59 on last day of month (31-jan-1998 23:59:59)
+<BR><DD> SQL_INTERVAL interval: Interval for which count is needed.
+<BR><DD> double *numIntervals:  Number of intervals in range, calculated.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlNumIntervalsBetweenDates (SQL_DATE sDate, SQL_DATE eDate, 
+				SQL_INTERVAL interval, double *numIntervals)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    double       *sqlNumIntervals = numIntervals;
+    SQL_DATE     sqlSDate,
+                 sqlEDate;
+    int          factor;
+  EXEC SQL END DECLARE SECTION;
+
+  int result,
+      sMonth,
+      eMonth,
+      sYear,
+      eYear,
+      nMonths;
+
+  sprintf (sqlSDate, sDate);
+  sprintf (sqlEDate, eDate);
+
+  /* This function does not always have the expected effect when the
+     interval specified is months, quarters or years. This is because
+     the number of days per month/quarter/year is a fraction (eg 30.4368)
+     and may not map onto the supplied dates appropriately. Apr1 - Jul1
+     will show up as *less than* 3 months. So, for months, quarters and
+     years, do not use "interval" function. Instead, do "date_part", using
+     the specified interval, to get the desired effect. ASSUMPTION: 
+     sDate is beginning of interval value, and eDate is beginning of interval
+     - 1 second. */
+  if (!strcmp (interval, MONTH))
+  {
+     if ((result = SqlExtractDatePart (sDate, MONTH, &sMonth)) != OK)
+     {
+	PrintError ("%s: Exiting.", FUNC_NAME);
+	return (ERROR);
+     }
+
+     if ((result = SqlExtractDatePart (sDate, YEAR, &sYear)) != OK)
+     {
+	PrintError ("%s: Exiting.", FUNC_NAME);
+	return (ERROR);
+     }
+     
+     if ((result = SqlExtractDatePart (eDate, MONTH, &eMonth)) != OK)
+     {
+	PrintError ("%s: Exiting.", FUNC_NAME);
+	return (ERROR);
+     }
+     if ((result = SqlExtractDatePart (eDate, YEAR, &eYear)) != OK)
+     {
+	PrintError ("%s: Exiting.", FUNC_NAME);
+	return (ERROR);
+     }
+     
+     nMonths = eMonth - sMonth;
+     
+     if (nMonths < 0)
+     {
+	nMonths += 12;
+	nMonths ++;
+	nMonths += (eYear - sYear - 1) * 12;
+     }
+     else
+     {
+	nMonths ++;
+	nMonths += (eYear - sYear) * 12;
+     }
+     
+     *numIntervals = (double)nMonths;
+  }
+  
+  else if (!strcmp (interval, YEAR))
+  {
+     if ((result = SqlExtractDatePart (sDate, interval, &sYear)) != OK)
+     {
+	PrintError ("%s: Exiting.", FUNC_NAME);
+	return (ERROR);
+     }
+     if ((result = SqlExtractDatePart (eDate, interval, &eYear)) != OK)
+     {
+	PrintError ("%s: Exiting.", FUNC_NAME);
+	return (ERROR);
+     }
+     *numIntervals = (double)(eYear - sYear + 1);
+  }
+
+  /* Otherwise, date math works. Oracle returns the number of days between
+   dates, so need to multiply the result (days) by the number of intervals in a
+   day. MONTH, YEAR and quarter already accounted for. Also must truncate the
+   value to eliminate unwanted decimal places. */
+  else
+    {
+       if(strcmp(interval, DAY)==0)
+	  factor = 1;
+       else if(strcmp(interval, HOUR)==0)
+	  factor = 24;
+       else if(strcmp(interval, MINUTE)==0)
+	  factor = 1440;
+       else if(strcmp(interval, SECOND)==0)
+	  factor = 86400;
+
+      EXEC SQL AT :current_dbsite SELECT trunc (to_number (to_char ((to_date (:sqlEDate, 'dd-mon-yyyy hh24:mi:ss'))  - (to_date (:sqlSDate, 'dd-mon-yyyy hh24:mi:ss')))) * :factor) + 1 
+	 INTO :sqlNumIntervals
+         FROM dual;
+
+      if ((result = SqlErrorHandler 
+	   (FUNC_NAME, FALSE,
+	    "Error retrieving number of %s between %s and %s.\n\tExiting.",
+	    interval, sDate, eDate)) == ERROR)
+	{		
+	  EXEC SQL AT :current_dbsite ROLLBACK;
+	  return (ERROR);
+	}
+    }
+
+  EXEC SQL AT :current_dbsite COMMIT;
+
+ return(OK);
+}
+
+/*****************************************************************************/
+#define FUNC_NAME	"SqlIntervalCount"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlIntervalCount
+
+<P> <STRONG>Function signature:</STRONG> int SqlIntervalCount (int *)
+
+<P> <STRONG>Function description:</STRONG> Finds the maximum interval order number defined for HDB in the hdb_interval table.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> int *intervalCount:  Maximum interval order number.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlIntervalCount(int* intervalCount)
+{
+   /* Find the maximum interval order number defined in HDB */
+
+   EXEC SQL BEGIN DECLARE SECTION;
+      int sqlNumber;
+   EXEC SQL END DECLARE SECTION;
+
+   int result;
+
+   /* Select max of interval_order */
+   EXEC SQL AT :current_dbsite 
+      SELECT MAX(interval_order)
+         INTO :sqlNumber
+         FROM hdb_interval;
+
+   if ((result = SqlErrorHandler (FUNC_NAME, FALSE,
+      "Problem finding maximum interval order number in hdb_interval\n"))
+      != OK)
+   {
+         return (ERROR);
+   }
+
+   /* Successful - assign return parameter */   
+   EXEC SQL AT :current_dbsite COMMIT;
+   *intervalCount = sqlNumber;
+   return (OK);
+}
+
+/*****************************************************************************/
+#define FUNC_NAME	"SqlGetIntOrder"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetIntOrder
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetIntOrder (SQL_INTERVAL, int *)
+
+<P> <STRONG>Function description:</STRONG> Finds the interval order number given the interval name.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> SQL_INTERVAL name:  Name of the interval.
+<BR><DD> int *order:  Order number for the interval.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetIntOrder(SQL_INTERVAL name, int* order)
+{
+   /* Find the interval_order number given the interval name */
+
+   EXEC SQL BEGIN DECLARE SECTION;
+      int sqlOrder;
+      SQL_INTERVAL sqlName;
+   EXEC SQL END DECLARE SECTION;
+
+   int result;
+
+   /* Assign sql declared variable to the input interval name */
+   strcpy (sqlName, name);   
+
+   /* Select from the interval table */
+   EXEC SQL AT :current_dbsite 
+      SELECT interval_order
+         INTO :sqlOrder
+         FROM hdb_interval
+         WHERE interval_name = :sqlName;
+
+   if ((result = SqlErrorHandler (FUNC_NAME, FALSE,
+      "Problem finding interval order number for the interval named %s\n",
+       name)) != OK)
+   {
+      return (ERROR);
+   }
+   
+   /* Successful - assign return parameter */
+   EXEC SQL AT :current_dbsite COMMIT;
+   *order = sqlOrder;
+   return(OK);
+}
+
+/*****************************************************************************/
+#define FUNC_NAME	"SqlGetIntName"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetIntName
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetIntName (int, SQL_INTERVAL)
+
+<P> <STRONG>Function description:</STRONG> Finds the interval name given the interval order number.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> int order:  Order number for the interval.
+<BR><DD> SQL_INTERVAL name:  Name of the interval.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetIntName(int order, SQL_INTERVAL name)
+{
+   /* Find the interval name given the interval_order number */
+
+   EXEC SQL BEGIN DECLARE SECTION;
+      int sqlOrder;
+      SQL_INTERVAL sqlName;
+   EXEC SQL END DECLARE SECTION;
+
+   int result;
+
+   /* Assign sql declared variable to the input interval order */
+   sqlOrder = order;   
+
+   /* Select from the interval table */
+   EXEC SQL AT :current_dbsite 
+      SELECT interval_name
+         INTO :sqlName
+         FROM hdb_interval
+         WHERE interval_order = :sqlOrder;
+
+   if ((result = SqlErrorHandler (FUNC_NAME, FALSE,
+      "Problem finding interval name for the interval order number %d\n",
+       order)) != OK)
+   {
+      return (ERROR);
+   }
+   
+   /* Successful - assign return parameter */
+   EXEC SQL AT :current_dbsite COMMIT;
+   strcpy (name, sqlName);
+   return(OK);
+}
+
+/*****************************************************************************/
+#define FUNC_NAME	"SqlGetPreviousIntName"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetPreviousIntName
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetPreviousIntName (SQL_INTERVAL, SQL_INTERVAL, int *)
+
+<P> <STRONG>Function description:</STRONG> Finds the previous interval's name given an interval name.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> SQL_INTERVAL name:  Name of the interval.
+<BR><DD> SQL_INTERVAL previousName:  Name of the previous interval.
+<BR><DD> int *valid:  Indicates if a valid previous interval name is returned.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetPreviousIntName(SQL_INTERVAL name, SQL_INTERVAL previousName, int* valid)
+{
+   /* Find the previous interval name given an interval name */
+
+   EXEC SQL BEGIN DECLARE SECTION;
+      IND sqlPreviousName_ind;
+      SQL_INTERVAL sqlName;
+      SQL_INTERVAL sqlPreviousName;
+   EXEC SQL END DECLARE SECTION;
+
+   int result;
+
+   /* Assign sql declared variable to the input interval name */
+   strcpy (sqlName, name);   
+
+   /* Select from the interval table */
+   EXEC SQL AT :current_dbsite 
+      SELECT previous_interval_name
+         INTO :sqlPreviousName INDICATOR :sqlPreviousName_ind
+         FROM hdb_interval
+         WHERE interval_name = :sqlName;
+
+   if ((result = SqlErrorHandler (FUNC_NAME, FALSE,
+      "Problem finding the previous interval name for the interval named %s\n",
+       name)) != OK)
+   {
+      return (ERROR);
+   }
+
+   EXEC SQL AT :current_dbsite COMMIT;
+   
+   /* Assign return parameters */
+   if (sqlPreviousName_ind == -1)
+   {
+      *valid = 0;
+   }
+   else
+   {
+      strcpy (previousName, sqlPreviousName);
+      *valid = 1;
+   }
+   return(OK);
+}

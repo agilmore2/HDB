@@ -1,0 +1,19 @@
+echo Enter dba user name
+read dba
+echo Enter dba password
+read dba_passwd
+echo Enter sys password
+read sys_passwd
+sqlplus $dba/$dba_passwd < ./SCHEMA/drop_index.ddl > out
+grep ERROR out
+sqlplus $dba/$dba_passwd < ./SCHEMA/drop_role.ddl > out
+grep ERROR out
+sqlplus sys/$sys_passwd < ./SCHEMA/drop_syn.ddl > out
+grep ERROR out
+sqlplus sys/$sys_passwd < ./SCHEMA/drop_user.ddl > out
+grep ERROR out
+sqlplus sys/$sys_passwd < ./PERMISSIONS/drop_psswd_user.sql > out
+grep ERROR out
+sqlplus sys/$sys_passwd < ./PERMISSIONS/drop_app_user.sql > out
+grep ERROR out
+rm out*

@@ -1,0 +1,446 @@
+/****************************************************************************
+* DESCRIPTION
+* This file contains 4 functions to be used in handling database errors:
+*   SqlErrorHandler
+*   SqlCheckError
+*   SqlCheckErrorNoRows
+*   SqlCheckWarning
+* 
+*********************************
+* SqlErrorHandler
+* Purpose: Called after every EXEC SQL operation; checks for both
+* 	   DB errors and warnings.  Prints error messages.
+* 
+* Input:
+*	char *func_name - name of calling function
+*	short noRowsOK - indicates which checkError function to call
+*	char *message - message to print if there's an error or warning
+*
+* Return:
+* 	short sqlError - indicates if error or warning was found
+*
+*********************************
+* SqlCheckError
+* Purpose: Checks if the database is in error. If the database has produced 
+*	   an error it returns the error message.
+* Input
+* 	char *func_name - name of calling function
+*
+* Return
+* 	char *errorMessage
+*
+*********************************
+* SqlCheckErrorNoRows
+* Purpose: Checks if the database is in error. An sqlca.sqlcode of >0 is
+*	   *not* considered an error; if this function is called, it is ok
+*	   if the statement processed no rows. If the database has produced 
+*	   an error it returns the error message.
+* Input
+* 	char *func_name - name of calling function
+*
+* Return
+* 	char *errorMessage
+*
+*********************************
+* SqlCheckWarning
+* Purpose: Checks if the database has produced a warning. If so, the warning 
+*	   message is returned.
+* Input
+* 	char *func_name - name of calling function
+*
+* Return
+* 	char *warningMessage
+*
+*********************************
+* SqlFilePrintErrorHandler
+* Purpose: Can be called after every EXEC SQL operation; checks for both
+* 	   DB errors and warnings.  Prints error messages and sends them
+*          to a logfile.
+* 
+* Input:
+*       FILE * - logfile to print message to
+*	char *func_name - name of calling function
+*	short noRowsOK - indicates which checkError function to call
+*	char *message - message to pass on if there's an error or warning
+*
+* Return:
+* 	short sqlError - indicates if error or warning was found
+*
+*********************************
+* SqlFileErrorHandler
+* Purpose: Can be called after every EXEC SQL operation; checks for both
+* 	   DB errors and warnings.  Sends error messages to a 
+*          logfile only.
+* 
+* Input:
+*       FILE * - logfile to print message to
+*	char *func_name - name of calling function
+*	short noRowsOK - indicates which checkError function to call
+*	char *message - message to pass on if there's an error or warning
+*
+* Return:
+* 	short sqlError - indicates if error or warning was found
+*
+*********************************
+* AUTHOR - EDITORS
+* Carol Marra
+* Neil Wilson
+****************************************************************************/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <defines.h> 
+#include <typedefs.h>
+#include <dbutils.h>
+#include <utils.h>
+
+EXEC SQL INCLUDE sqlca;
+
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlErrorHandler
+
+<P> <STRONG>Function signature:</STRONG> int SqlErrorHandler(char *, short, char *, ...)
+
+
+<P> <STRONG>Function description:</STRONG> Checks the results of the most recently executed SQL function.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *funcName: Name of calling function.
+<BR><DD> short noRowsOk: Indicator (0 or 1) if it's OK for the SQL function to have processed no rows.
+<BR><DD> char *message:  Message to be printed if there was an error; can contain C format elements.
+<BR><DD> ...:            Variable arguments to the message string.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK, ERROR, or WARNING
+
+</HTML>
+*/
+
+int SqlErrorHandler(char *funcName, short noRowsOk,
+		      char *message, ...)
+{
+  va_list arg_list;
+  char *returnMessage;
+
+  va_start (arg_list, message);
+  
+  if (noRowsOk)
+  {
+     if ((returnMessage = SqlCheckErrorNoRows(funcName)) != NULL)
+     {
+	fprintf (stdout, "%s\n\t", returnMessage);
+	PrintDbError (message, arg_list);
+	return (ERROR);
+     }
+  }
+  else 
+     if ((returnMessage = SqlCheckError(funcName)) != NULL)
+     {
+	fprintf (stdout, "%s\n\t", returnMessage);
+	PrintDbError (message, arg_list);
+	return (ERROR);
+     }
+
+  if((returnMessage = SqlCheckWarning (funcName)) != NULL)
+  {
+     fprintf (stdout, "%s\n\t", returnMessage);
+     PrintDbError (message, arg_list);
+     return (WARNING);
+  }
+  
+  va_end (arg_list);
+  
+  return(OK);
+}
+
+/*****************************************************************************/
+ /*last changed 6/25/97*/
+
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlCheckError
+
+<P> <STRONG>Function signature:</STRONG> char *SqlCheckError(char *)
+
+<P> <STRONG>Function description:</STRONG> Determine if any error, including no rows processed, was incurred by last SQL statement.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *funcName: Name of function passed to SqlErrorHandler.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> char *, error message string
+
+</HTML>
+*/
+char *SqlCheckError(char *funcName)
+{
+  SQL_ERROR_MSG sqlError;
+  
+  ERROR_MSG tmp;
+  char *errorMessage;
+  
+  if ((sqlca.sqlcode == 0))
+    return(NULL);
+
+  sqlError[0] = '\0'; 
+  strcpy(sqlError,sqlca.sqlerrm.sqlerrmc);
+  sprintf(tmp,"\nSQL error in %s\n\t%s", funcName, 
+	  sqlError);
+  errorMessage = strdup (tmp);
+  return((char *) errorMessage);
+}
+
+/*****************************************************************************/
+ /*last changed 6/25/97*/
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlCheckErrorNoRows
+
+<P> <STRONG>Function signature:</STRONG> char *SqlCheckErrorNoRows(char *)
+
+<P> <STRONG>Function description:</STRONG> Determine if any error, excluding no rows processed, was incurred by last SQL statement.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *funcName: Name of function passed to SqlErrorHandler.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> char *, error message string
+
+</HTML>
+*/
+char *SqlCheckErrorNoRows(char *funcName)
+
+{
+  SQL_ERROR_MSG sqlError;
+  
+  ERROR_MSG tmp;
+  char *errorMessage;
+  
+  if ((!sqlca.sqlcode) ||(sqlca.sqlcode > 0))
+    return(NULL);
+
+  sqlError[0] = '\0'; 
+  strcpy(sqlError,sqlca.sqlerrm.sqlerrmc);
+  sprintf(tmp,"\nSQL error in %s\n\t%s", funcName, 
+	  sqlError);
+  errorMessage = strdup (tmp);
+  return((char *) errorMessage);
+}
+/*****************************************************************************/
+    /*last changed 6/25/97*/
+#define WARN_MESSAGE "Database SQL warning : "
+#define NO_WARNING_CODE " "
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlCheckWarning
+
+<P> <STRONG>Function signature:</STRONG> char *SqlCheckWarning(char *)
+
+<P> <STRONG>Function description:</STRONG> Determine if any warnings were incurred by last SQL statement.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *funcName: Name of function passed to SqlErrorHandler
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> char *, warning message string
+
+</HTML>
+*/
+
+char *SqlCheckWarning(char *funcName)
+
+{
+  static SQL_ERROR_MSG message;
+  SQL_ERROR_MSG sqlError;
+  ERROR_MSG tmp;
+  char *warningMessage;
+  
+  if(sqlca.sqlwarn[0] != 'W') /* there is no warning */
+     return(NULL);
+  
+  strcpy (message, WARN_MESSAGE);
+  
+  if(sqlca.sqlwarn[1] == 'W')
+     strcat(message, "truncated column...");
+
+  if(sqlca.sqlwarn[2] == 'W')
+     strcat(message, "NULL column unused in group function...");
+
+  if(sqlca.sqlwarn[3] == 'W')
+     strcat(message, "number of columns in query does not match number of columns in INTO clause...");
+
+  if(sqlca.sqlwarn[4] == 'W')
+     strcat(message, "unconditional UPDATE or DELETE...");
+
+  if(sqlca.sqlwarn[5] == 'W')
+     strcat(message, "PL/SQL compilation error...");
+
+/* sqlca.sqlwarn[6] and sqlca.sqlwarn[7] are no longer in use 
+   (Programmer's Guide to the Oracle Precompilers (CD-version 2.2);  */
+
+  sqlError[0] = '\0'; 
+  strcpy(sqlError,sqlca.sqlerrm.sqlerrmc);
+
+  sprintf (tmp, "\nSQL warning in %s\n\t%s\n\t%s", funcName,
+	   message, sqlError);
+
+  warningMessage = (char*)strdup(tmp);
+  return (warningMessage);
+}
+/*****************************************************************************/
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlFilePrintErrorHandler
+
+<P> <STRONG>Function signature:</STRONG> int SqlFilePrintErrorHandler(FILE *, 
+char *, short, char *, ...)
+
+
+<P> <STRONG>Function description:</STRONG> Checks the results of the most
+recently executed SQL function and writes to log file as well as prints
+any problems.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> FILE *filePointer: Pointer to logfile to write to.
+<BR><DD> char *funcName: Name of calling function.
+<BR><DD> short noRowsOk: Indicator (0 or 1) if it's OK for the SQL function to
+have processed no rows.
+<BR><DD> char *message:  Message to be printed if there was an error; can contain C format elements.
+<BR><DD> ...:            Variable arguments to the message string.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK, ERROR, or WARNING
+
+</HTML>
+*/
+
+int SqlFilePrintErrorHandler(FILE *filePointer, char *funcName, short noRowsOk,
+		      char *message, ...)
+{
+  va_list arg_list;
+  char *returnMessage;
+
+  va_start (arg_list, message);
+  
+  if (noRowsOk)
+  {
+     if ((returnMessage = SqlCheckErrorNoRows(funcName)) != NULL)
+     {
+        /* Send message to file */
+	fprintf (filePointer, "%s\n\t", returnMessage);
+	vfprintf (filePointer, message, arg_list);
+
+        /* Print message */
+	fprintf (stdout, "%s\n\t", returnMessage);
+	PrintDbError (message, arg_list);
+
+	return (ERROR);
+     }
+  }
+  else 
+     if ((returnMessage = SqlCheckError(funcName)) != NULL)
+     {
+        /* Send message to file */
+	fprintf (filePointer, "%s\n\t", returnMessage);
+	vfprintf (filePointer, message, arg_list);
+
+        /* Print message */
+	fprintf (stdout, "%s\n\t", returnMessage);
+	PrintDbError (message, arg_list);
+
+	return (ERROR);
+     }
+
+  if((returnMessage = SqlCheckWarning (funcName)) != NULL)
+  {
+     /* Send message to file */
+     fprintf (filePointer, "%s\n\t", returnMessage);
+     vfprintf (filePointer, message, arg_list);
+
+     /* Print message */
+     fprintf (stdout, "%s\n\t", returnMessage);
+     PrintDbError (message, arg_list);
+
+     return (WARNING);
+  }
+  
+  va_end (arg_list);
+  
+  return(OK);
+}
+/*****************************************************************************/
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlFileErrorHandler
+
+<P> <STRONG>Function signature:</STRONG> int SqlFileErrorHandler(FILE *, 
+char *, short, char *, ...)
+
+
+<P> <STRONG>Function description:</STRONG> Checks the results of the most
+recently executed SQL function and writes problems to log file.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> FILE *filePointer: Pointer to logfile to write to.
+<BR><DD> char *funcName: Name of calling function.
+<BR><DD> short noRowsOk: Indicator (0 or 1) if it's OK for the SQL function to
+have processed no rows.
+<BR><DD> char *message:  Message to be printed if there was an error; can contain C format elements.
+<BR><DD> ...:            Variable arguments to the message string.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK, ERROR, or WARNING
+
+</HTML>
+*/
+
+int SqlFileErrorHandler(FILE *filePointer, char *funcName, short noRowsOk,
+		      char *message, ...)
+{
+  va_list arg_list;
+  char *returnMessage;
+
+  va_start (arg_list, message);
+  
+  if (noRowsOk)
+  {
+     if ((returnMessage = SqlCheckErrorNoRows(funcName)) != NULL)
+     {
+        /* Send message to file */
+	fprintf (filePointer, "%s\n\t", returnMessage);
+	vfprintf (filePointer, message, arg_list);
+
+	return (ERROR);
+     }
+  }
+  else 
+     if ((returnMessage = SqlCheckError(funcName)) != NULL)
+     {
+        /* Send message to file */
+	fprintf (filePointer, "%s\n\t", returnMessage);
+	vfprintf (filePointer, message, arg_list);
+
+	return (ERROR);
+     }
+
+  if((returnMessage = SqlCheckWarning (funcName)) != NULL)
+  {
+     /* Send message to file */
+     fprintf (filePointer, "%s\n\t", returnMessage);
+     vfprintf (filePointer, message, arg_list);
+
+     return (WARNING);
+  }
+  
+  va_end (arg_list);
+  
+  return(OK);
+}

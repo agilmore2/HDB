@@ -1,0 +1,27 @@
+undefine tbl_owner
+define tbl_owner = &1
+set echo off
+
+
+CREATE OR REPLACE FUNCTION &&tbl_owner..get_hdb_site_name(site_no in NUMBER)
+return VARCHAR2
+IS
+
+  object_name VARCHAR2(240);
+BEGIN
+
+   SELECT site_name into object_name
+   FROM hdb_site
+   WHERE site_id = site_no;
+   
+   if object_name = null then object_name := ' '; end if;
+
+   return (object_name);
+
+   
+END;
+/
+create public synonym get_hdb_site_name for &&tbl_owner..get_hdb_site_name;
+grant execute on &&tbl_owner..get_hdb_site_name to public;
+
+

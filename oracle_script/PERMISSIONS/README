@@ -1,0 +1,12 @@
+All of the scripts in this directory are invoked through the
+permissions.sh file.
+
+The permissions.sh file must be modified at each HDB installation: 
+- the correct password for the sys user must be supplied on the first two 
+  and last two invocations of sqlplus. Replace all occurrences of
+  SYSPSSWD with the appropriate password.
+- replace all occurrences of PSSWDPSSWD with the value of HDB_LOCAL.
+
+The template file local_users.sql must be filled in appropriately to
+delete unwanted users, create needed ones, and modify all existing users
+to have the appropriate roles and default roles.

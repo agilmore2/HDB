@@ -1,0 +1,363 @@
+/*****************************************************************************
+* DESCRIPTION
+* These functions update the value(s) in the r_instant table with the 
+* values in the array basinArray, for either percent snow 
+* (SqlUpdateBasPctSnow) or percent precip (SqlUpdateBasPctPrecip).
+*
+* If a record does not exist for the current site/datatype/date combination,
+* then a new record is inserted.
+*
+* Currently, basins with an ID of 0 are NOT inserted; this is an
+* invalid basin ID.
+*
+* ASSUMPTIONS 
+*
+* INPUT
+* BASIN*        - basin_data
+* int           - number of elements in basin_array
+* char *        - date of values
+* ID            - source ID for this run of the application
+* int *         - total number of values inserted
+*
+* OUTPUT
+* warnings and error messages
+*
+* RETURN
+* RET_ERROR - values not successfully updated
+* short - number of sites successfully updated
+*
+*
+* COMMENTS
+*
+* AUTHOR - EDITORS
+* Carol Marra
+* Rick Casey, May 2003. Modified for HDB2.
+*****************************************************************************/
+
+#include <stdlib.h>
+#include <math.h>
+#include "basins.h"
+#include "dbutils.h"
+#include "utils.h"
+#include "defines.h"
+#include "typedefs.h"
+#include "basinTypedefs.h"
+
+EXEC SQL INCLUDE sqlca;
+
+#define FUNC_NAME "SqlUpdateBasPctSnow"
+
+int SqlUpdateBasPctSnow (BASIN *basinArray, int numSites, SQL_DATE date, 
+			 ID sourceId, int *totalNumValues)
+
+{
+ EXEC SQL BEGIN DECLARE SECTION;
+   ID            siteDatatypeId,
+                 sqlSourceId = sourceId;
+   float         pctSnow;
+   char          validationFlag[2],
+				 method_name[64];
+   SQL_DATE      sqlDate, start_date_time, end_date_time;
+	int 		 loading_application_id,
+				 agen_id,
+				 collection_system_id,
+				 method_id,
+				 computation_id;
+ EXEC SQL END DECLARE SECTION;
+
+ int         rowCount,
+             result;
+ ID          siteId;
+
+ sprintf (sqlDate, date);
+
+	/* Create the date variables. They are the same for all updates or inserts. */
+	 sprintf(sqlDate, date);
+	 EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
+ 	 EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
+ (*totalNumValues) = 0;
+
+	 /* Fetch the foreign keys required for performing any inserts to r_base.  */
+	 if ( (result = SqlFetchRbasekeys(&loading_application_id, &agen_id, 
+			 &collection_system_id, &computation_id) ) == ERROR)
+	 {
+		return (ERROR);
+	 }
+	 /* Get the method id for the method for Basin Percent Snow. */
+	 strcpy(method_name,BAS_PCT_SNOW_METHOD_NAME);
+	 if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
+	 {
+		return (ERROR);
+	 }
+
+ /* loop through the basinArray, updating all of the values for 
+    each site in basinArray */
+ for (rowCount = 0; rowCount < numSites; rowCount++)
+   {
+     siteId = basinArray[rowCount].siteId;
+
+     /* proceed only if siteId is valid */
+     if (siteId)
+       {
+	 if ((result = SqlGetSiteDataTypeIdWithName (siteId, BAS_PCT_SNOW, 
+						     &siteDatatypeId)) 
+	     != CREATE_SDI)
+	   {
+	     if (result != OK)
+	       return (ERROR);
+	 
+	     if ((result = SqlGetValidationFlag (siteDatatypeId, 
+						 validationFlag)) == ERROR)
+	       return (ERROR);
+	 
+	     /* Now update value for this site_datatype, date; if none exists,
+		insert a new value */
+	     pctSnow = basinArray[rowCount].percentSnow;
+	     
+	     if (pctSnow != BAD_DATA)
+	       {
+		   /*
+		 	* EXEC SQL UPDATE r_instant
+		    *	SET value = :pctSnow,
+		    * 	source_id = :sqlSourceId,
+		    *	validation = :validationFlag
+		    *	WHERE site_datatype_id = :siteDatatypeId
+		    *	 AND date_time = to_date (:sqlDate, 'dd-mon-yyyy hh24:mi:ss');
+			*/
+		 
+					EXEC SQL UPDATE r_base
+							SET value = :pctSnow,
+							validation = :validationFlag
+							WHERE site_datatype_id = :siteDatatypeId
+							AND interval = 'day'
+							AND start_date_time = to_date (:start_date_time, 'dd-mon-yyyy hh24:mi:ss');
+		 /* No rows processed; insert value */
+		 if (sqlca.sqlcode > 0)
+		   {
+			/*
+		     * EXEC SQL INSERT INTO r_instant 
+		     *   VALUES (:siteDatatypeId, 
+             *               to_date (:sqlDate, 'dd-mon-yyyy hh24:mi:ss'),
+             *              :pctSnow, :sqlSourceId, :validationFlag);
+			 */
+		     
+					EXEC SQL INSERT INTO r_base
+						(site_datatype_id,
+						interval, 
+						start_date_time, 
+						end_date_time,
+						value,
+						agen_id,
+						validation,
+						collection_system_id,
+						loading_application_id,
+						method_id,
+						computation_id)
+					VALUES
+						(:siteDatatypeId,
+						'day',
+						to_date (:start_date_time, 'dd-mon-yyyy hh24:mi:ss'),
+						to_date (:end_date_time, 'dd-mon-yyyy hh24:mi:ss'),
+						:pctSnow,
+						:agen_id,
+						:validationFlag,
+						:collection_system_id,
+						:loading_application_id,
+						:method_id,
+						:computation_id);
+
+		     if ((result = SqlErrorHandler 
+			  (FUNC_NAME, FALSE,
+			   "Problem inserting %s row for basin site: %d.",
+			   BAS_PCT_SNOW, siteId)) != OK)
+		       {
+			 EXEC SQL ROLLBACK;
+			 return (ERROR);
+		       }
+		   }
+		 
+		 /* Check to make sure no errors on update */
+		 else
+		   {
+		     if ((result = SqlErrorHandler 
+			  (FUNC_NAME, FALSE,
+			   "Problem updating %s row for basin site: %d.",
+			   BAS_PCT_SNOW, siteId)) != OK)
+		       {
+			 EXEC SQL ROLLBACK;
+			 return (ERROR);
+		       }
+		   }
+		 
+		 EXEC SQL COMMIT;
+		 (*totalNumValues)++;
+	       }
+	   }
+
+	 /* If site_datatype is not known, continue */
+	 else
+	   {
+	     PrintError ("***Continuing to process known site_datatypes.\n");
+	   }
+       }
+   }
+ return (OK);
+}
+
+/****************************************************************************/
+#define FUNC_NAME "SqlUpdateBasPctPrecip"
+
+int SqlUpdateBasPctPrecip (BASIN *basinArray, int numSites, SQL_DATE date, 
+			   ID sourceId, int *totalNumValues)
+
+{
+ EXEC SQL BEGIN DECLARE SECTION;
+   ID            siteDatatypeId,
+                 sqlSourceId = sourceId;
+   float         pctPrecip;
+   char          validationFlag[2], method_name[64];
+   SQL_DATE      sqlDate, start_date_time, end_date_time;
+	int 		 loading_application_id,
+				 agen_id,
+				 collection_system_id,
+				 method_id,
+				 computation_id;
+ EXEC SQL END DECLARE SECTION;
+
+ int         rowCount,
+             result;
+ ID          siteId;
+
+	/* Create the date variables. They are the same for all updates or inserts. */
+	 sprintf(sqlDate, date);
+	 EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
+ 	 EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
+ (*totalNumValues) = 0;
+
+	 /* Fetch the foreign keys required for performing any inserts to r_base.  */
+	 if ( (result = SqlFetchRbasekeys(&loading_application_id, &agen_id, 
+			 &collection_system_id, &computation_id) ) == ERROR)
+	 {
+		return (ERROR);
+	 }
+	 /* Get the method id for the method for Basin Percent Precip. */
+	 strcpy(method_name,BAS_PCT_PCP_METHOD_NAME);
+	 if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
+	 {
+		return (ERROR);
+	 }
+
+ /* loop through the basinArray, updating all of the values for 
+    each site in basinArray. Note that this is precip data, so the alternate 
+    (climate site) ID is used. */
+ for (rowCount = 0; rowCount < numSites; rowCount++)
+   {
+     siteId = basinArray[rowCount].siteId;
+
+     /* proceed only if siteId is valid */
+     if (siteId)
+       {
+	 if ((result = SqlGetSiteDataTypeIdWithName (siteId, BAS_PCT_PCP, 
+						     &siteDatatypeId)) 
+	     != CREATE_SDI)
+	   {
+	     if (result != OK)
+	       return (ERROR);
+	 
+	     if ((result = SqlGetValidationFlag (siteDatatypeId, 
+						 validationFlag)) == ERROR)
+	       return (ERROR);
+	 
+	     /* Now update value for this site_datatype, date; if none exists,
+		insert a new value */
+	     pctPrecip = basinArray[rowCount].percentPrecip;
+	     
+	     if (pctPrecip != BAD_DATA)
+	       {
+		   /*
+			* EXEC SQL UPDATE r_instant
+			*   SET value = :pctPrecip,
+			*   source_id = :sqlSourceId,
+			*   validation = :validationFlag
+			*   WHERE site_datatype_id = :siteDatatypeId
+			*     AND date_time = to_date (:sqlDate, 'dd-mon-yyyy hh24:mi:ss');
+		    */
+		 
+					EXEC SQL UPDATE r_base
+							SET value = :pctPrecip,
+							validation = :validationFlag
+							WHERE site_datatype_id = :siteDatatypeId
+							AND interval = 'day'
+							AND start_date_time = to_date (:start_date_time, 'dd-mon-yyyy hh24:mi:ss');
+
+		 /* No rows processed; insert value */
+		 if (sqlca.sqlcode > 0)
+		   {
+		   /*
+		    * EXEC SQL INSERT INTO r_instant
+		    *   VALUES (:siteDatatypeId, 
+            *               to_date (:sqlDate, 'dd-mon-yyyy hh24:mi:ss'), 
+            *               :pctPrecip, :sqlSourceId, :validationFlag);
+			*/
+					EXEC SQL INSERT INTO r_base
+						(site_datatype_id,
+						interval, 
+						start_date_time, 
+						end_date_time,
+						value,
+						agen_id,
+						validation,
+						collection_system_id,
+						loading_application_id,
+						method_id,
+						computation_id)
+					VALUES
+						(:siteDatatypeId,
+						'day',
+						to_date (:start_date_time, 'dd-mon-yyyy hh24:mi:ss'),
+						to_date (:end_date_time, 'dd-mon-yyyy hh24:mi:ss'),
+						:pctPrecip,
+						:agen_id,
+						:validationFlag,
+						:collection_system_id,
+						:loading_application_id,
+						:method_id,
+						:computation_id);
+
+		     if ((result = SqlErrorHandler 
+			  (FUNC_NAME, FALSE,
+			   "Problem inserting %s row for basin site: %d.",
+			   BAS_PCT_PCP, siteId)) != OK)
+		       {
+			 EXEC SQL ROLLBACK;
+			 return (ERROR);
+		       }
+		   }
+		 
+		 /* Check to make sure no errors on update */
+		 else
+		   {
+		     if ((result = SqlErrorHandler 
+			  (FUNC_NAME, FALSE,
+			   "Problem updating %s row for basin site: %d.",
+			   BAS_PCT_PCP, siteId)) != OK)
+		       {
+			 EXEC SQL ROLLBACK;
+			 return (ERROR);
+		       }
+		   }
+		 
+		 EXEC SQL COMMIT;
+		 (*totalNumValues)++;
+	       }
+	   }
+
+	 /* If site_datatype is not known, continue */
+	 else
+	   {
+	     PrintError ("***Continuing to process known site_datatypes.\n");
+	   }
+       }
+   }
+ return (OK);
+}

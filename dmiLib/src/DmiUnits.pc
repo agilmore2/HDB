@@ -1,0 +1,251 @@
+/*****************************************************************************
+* DESCRIPTION
+* This file contains functions which perform various Unit operations.
+*
+*********************************
+* DmiVerifyUnits
+*
+* Return
+*       ERROR - 
+*       OK - 
+*
+*
+*********************************
+*/
+
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <malloc.h>
+#include <math.h>
+#include "dbutils.h"
+#include "dmi_utils.h"
+#include "utils.h"
+#include "defines.h"
+#include "typedefs.h"
+
+EXEC SQL INCLUDE sqlca;
+
+#define FUNC_NAME       "DmiVerifyUnits"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> DmiVerifyUnits
+
+<P> <STRONG>Function signature:</STRONG> int DmiVerifyUnits(char *, int)
+
+<P> <STRONG>Function description:</STRONG> Determines if the Riverware unit string passed in is a valid unit for the indicated site_datatype_id.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *riverware_unit_name:    Name of Riverware units.
+<BR><DD> int hdb_site_datatype_id: HDB site_datatype_id.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int DmiVerifyUnits(char * riverware_unit_name,
+                   int hdb_site_datatype_id)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    int i;
+    int  unit_id_value;
+    ID   sqlUnitId,
+         sqlSDI;
+    char proper_units_string[UNIT_NAME_LEN + 1];
+  EXEC SQL END DECLARE SECTION;
+
+    if (!riverware_unit_name) {
+        PrintError("DMI: No units passed to DmiVerifyUnits.\n");
+        return(ERROR);
+    }
+
+    if (hdb_site_datatype_id <= 0) {
+        PrintError("DMI: Invalid site_datatype_id (%d)passed to DmiVerifyUnits.\n", hdb_site_datatype_id);
+        return(ERROR);
+    }
+
+    i = 0;
+    while (unit_lookup_array[i].hdb_unit_id != 0) {
+        if (strcmp(riverware_unit_name, unit_lookup_array[i].riverware_unit_name)
+            == 0) {
+                break;
+        }
+        i++;
+    }
+
+    if (unit_lookup_array[i].hdb_unit_id != 0) {
+       
+       /* Set values on host variables to be used in SELECT statement. */
+       sqlSDI = hdb_site_datatype_id;
+       sqlUnitId = unit_lookup_array[i].hdb_unit_id;
+        
+       EXEC SQL AT :current_dbsite SELECT b.unit_id 
+	  INTO :unit_id_value
+	  FROM hdb_site_datatype a, hdb_datatype b 
+	  WHERE a.site_datatype_id = :sqlSDI
+	  AND a.datatype_id = b.datatype_id 
+	  AND b.unit_id = :sqlUnitId;
+	  
+       if (SqlErrorHandler (FUNC_NAME, TRUE,
+			    "Problem Selecting the unit_id from hdb_unit.\n") != OK) {
+	  return(ERROR);
+       }
+       
+       if (sqlca.sqlcode > 0) { /* Data is not stored in HDB with these units */
+
+            EXEC SQL AT :current_dbsite SELECT c.unit_name 
+	       INTO :proper_units_string
+	       FROM hdb_site_datatype a, hdb_datatype b, hdb_unit c 
+	       WHERE a.site_datatype_id = :sqlSDI
+	       AND a.datatype_id = b.datatype_id 
+	       AND b.unit_id = c.unit_id;
+
+            if (SqlErrorHandler (FUNC_NAME, FALSE,
+				 "Problem Selecting proper units from hdb_unit.\n") != OK) {
+               return(ERROR);
+            }
+	    
+            PrintError("DMI: RiverWare units '%s' not appropriate for site_datatype_id %d.\nThe appropriate units are '%s'.",
+		       riverware_unit_name,
+		       hdb_site_datatype_id,
+		       proper_units_string);
+
+            return(ERROR);
+       }
+    }
+    else { /* no mapping from RiverWare units to a unit_id in unit_lookup_array */
+       PrintError("DMI: RiverWare Units '%s' Not represented in HDB.\n",
+		  riverware_unit_name);
+       return(ERROR);
+    }
+    
+    return (OK);
+}
+
+#define FUNC_NAME       "DmiLookupRiverWareUnitsForSDI"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> DmiLookupRiverWareUnitsForSDI
+
+<P> <STRONG>Function signature:</STRONG> int DmiLookupRiverWareUnitsForSDI (int, char **)
+
+<P> <STRONG>Function description:</STRONG> For the indicated SDI, finds the appropriate Riverware units string.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> int site_datatype_id: HDB site_datatype_id.
+<BR><DD> char ** pr_units:     Riverware units string for this SDI; output.    
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int DmiLookupRiverWareUnitsForSDI(int site_datatype_id,
+                              char ** pr_units)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    int i;
+    int  unit_id_value;
+    char units_string[UNIT_NAME_LEN + 1];
+    ID sqlSDI = site_datatype_id;
+  EXEC SQL END DECLARE SECTION;
+
+/*
+ * Note: pr_units is not initialized -- allocate here.
+ */
+
+    EXEC SQL AT :current_dbsite SELECT c.unit_name, c.unit_id 
+       INTO :units_string, :unit_id_value
+       FROM hdb_site_datatype a, hdb_datatype b, hdb_unit c 
+       WHERE a.site_datatype_id = :sqlSDI
+       AND a.datatype_id = b.datatype_id 
+       AND b.unit_id = c.unit_id;
+
+    if (SqlErrorHandler (FUNC_NAME, FALSE,
+       "Problem Selecting the unit_id from hdb_unit.\n") != OK) {
+       return(ERROR);
+    }
+
+    /*
+    ** Find the RiverWare units for the unit_id.
+    */
+    i = 0;
+    while (unit_lookup_array[i].hdb_unit_id != 0) {
+        if (unit_lookup_array[i].hdb_unit_id == unit_id_value) {
+                break;
+        }
+        i++;
+    }
+
+    if (unit_lookup_array[i].hdb_unit_id != 0) {
+        /*
+        ** The search was successful. Malloc space for the string.
+        */
+        PrintError("Units: %s are default for site_datatype_id %d\n",
+                    unit_lookup_array[i].riverware_unit_name, 
+                    site_datatype_id);
+        *pr_units = (char *) malloc(strlen(unit_lookup_array[i].riverware_unit_name) + 1);
+        strcpy(*pr_units, unit_lookup_array[i].riverware_unit_name);
+        return(OK);
+    }
+    else {
+        PrintError("Could not find mapping for site_datatype_id: %d (%s) in DMI\n",
+                    site_datatype_id,
+                    units_string);
+        return(ERROR);
+    }
+}
+
+#define FUNC_NAME       "DmiLookupRiverWareUnitScale"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> DmiLookupRiverWareUnitsScale
+
+<P> <STRONG>Function signature:</STRONG> int DmiLookupRiverWareUnitsScale (int, char *, int *)
+
+<P> <STRONG>Function description:</STRONG> Given an HDB unit_id, determines the corresponding units and scale for Riverware.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> int unit_id:     HDB unit_id.
+<BR><DD> char * pr_units: Riverware units string for this HDB unit_id; output.
+<BR><DD> int * pr_units:  Scale; output.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int DmiLookupRiverWareUnitScale (int hdb_unit_id,
+                             char *pr_units,
+                             int *pr_scale)
+{
+  int i = 0;
+
+  while (unit_lookup_array[i].hdb_unit_id != 0)
+    {
+      if (unit_lookup_array[i].hdb_unit_id == hdb_unit_id)
+        break;
+
+      i++;
+    }
+
+  if (unit_lookup_array[i].hdb_unit_id != 0)
+    {
+      strcpy (pr_units, unit_lookup_array[i].riverware_unit_name);
+      *pr_scale = unit_lookup_array[i].scale;
+    }
+  else
+    {
+      pr_units[0] = '\0';
+      *pr_scale = NA;
+    }
+
+  return (OK);
+}

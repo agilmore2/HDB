@@ -1,0 +1,23 @@
+drop procedure check_interval_usage;
+drop procedure check_sdi_auth;
+drop procedure check_sdi_auth_with_site;
+drop procedure check_site_id_auth;
+drop procedure check_source_data_codes;
+drop procedure check_valid_site_objtype;
+drop procedure check_valid_site_ot_id;
+drop procedure check_valid_datatype;
+drop procedure check_valid_noop;
+drop procedure check_valid_agg_disagg_method;
+drop procedure check_valid_unit;
+drop procedure check_valid_unit_spec;
+drop procedure deny_action;
+drop procedure update_new_modelrun_id;
+drop procedure insert_r_base;
+drop procedure update_r_base;
+drop procedure lookup_application;
+drop procedure lookup_hydromet_sdi;
+drop procedure lookup_sdi;
+drop procedure modify_r_base_raw;
+~
+
+

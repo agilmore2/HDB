@@ -1,0 +1,272 @@
+/*****************************************************************************
+* DESCRIPTION
+* This file contains miscellaneous functions used in getting information 
+* about unit types and unit conversion factors.
+*
+* AUTHOR 
+* Carol Marra
+* March 1995
+*****************************************************************************/
+
+EXEC SQL INCLUDE SQLCA;
+#include <stdio.h>
+#include <stdlib.h>
+#include <defines.h>
+#include <typedefs.h>
+#include <dbutils.h>
+#include <utils.h>
+
+#define FUNC_NAME "SqlGetUnitInfo"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetUnitInfo
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetUnitInfo (ID, UNIT_INFO *)
+
+<P> <STRONG>Function description:</STRONG> Given a unit_id, retrive all associated unit information (dimension, stored_unit_id, etc). Uses oradecimal converted to long double to store the multiplication factor.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> ID unitId:           The HDB unit_id.
+<BR><DD> UNIT_INFO *unitInfo: Structure holding all unit information, retrieved.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+    
+int SqlGetUnitInfo (ID unitId, UNIT_INFO *unitInfo)
+
+{
+   EXEC SQL BEGIN DECLARE SECTION;
+   ID sqlUnitId2 = unitId;
+   char name[33];
+   ID dimension,
+      storedUnitId;
+   char monthYear[2];
+   char overMonthYear[2];
+   int isFactor;
+   oradecimal multFactor;
+   long double realMultFactor;
+   char fromExpression[65],
+      toExpression[65];
+   IND monthYearInd,
+      overMonthYearInd,
+      factorInd,
+      fromExpressionInd,
+      toExpressionInd;
+   EXEC SQL END DECLARE SECTION;
+   
+   int result; 
+   
+
+   EXEC SQL AT :current_dbsite 
+      SELECT unit_name, dimension_id, stored_unit_id, month_year, over_month_year,
+      is_factor, mult_factor, from_stored_expression, 
+      to_stored_expression
+      INTO :name, :dimension, :storedUnitId, :monthYear:monthYearInd,
+      :overMonthYear:overMonthYearInd,
+      :isFactor, :multFactor:factorInd, 
+      :fromExpression:fromExpressionInd,
+      :toExpression:toExpressionInd
+      FROM hdb_unit
+      WHERE unit_id = :sqlUnitId2;
+   
+   if ((result = SqlErrorHandler 
+	(FUNC_NAME, FALSE,
+	 "Error retrieving unit info for unit %d.\n\tExiting.", 
+	 unitId)) == ERROR)
+   {		
+      EXEC SQL AT :current_dbsite ROLLBACK;
+      return (ERROR);
+   }
+   
+   EXEC SQL AT :current_dbsite COMMIT;
+   
+   unitInfo->unitId = unitId;
+   strcpy (unitInfo->name, name);
+   unitInfo->dimension = dimension;
+   unitInfo->storedUnitId = storedUnitId;
+   unitInfo->isFactor = isFactor;
+   
+   if (isFactor)
+      {
+        realMultFactor = (long double) atof (multFactor);
+        unitInfo->multFactor = realMultFactor;
+      }
+   else
+      unitInfo->multFactor = NA;
+   
+   if (!isFactor)
+   {
+      strcpy (unitInfo->fromStdExpression, fromExpression);
+      strcpy (unitInfo->toStdExpression, toExpression);
+   }
+   else
+   {
+      unitInfo->fromStdExpression[0] = '\0';
+      unitInfo->toStdExpression[0] = '\0';
+   }
+   
+  if (monthYearInd == NULL_IND && overMonthYearInd == NULL_IND)
+  {
+     unitInfo->monthly = FALSE;
+     unitInfo->yearly = FALSE;
+     unitInfo->overTime = FALSE;
+  }
+  else if (monthYear[0] == 'M')
+  {
+     unitInfo->monthly = TRUE;
+     unitInfo->yearly = FALSE;
+     unitInfo->overTime = FALSE;
+  }
+  else if (overMonthYear[0] == 'M')
+  {
+     unitInfo->monthly = TRUE;
+     unitInfo->yearly = FALSE;
+      unitInfo->overTime = TRUE;
+  }
+  else
+    {
+       unitInfo->monthly = FALSE;
+       
+       /* Year indicator must hold interval to indicate
+	  BY_WY or BY_YEAR */
+       if (monthYear[0] == 'Y')
+       {
+	  unitInfo->yearly = BY_YEAR;
+	  unitInfo->overTime = FALSE;
+       }
+       else if (monthYear[0] == 'W')
+       {
+	  unitInfo->yearly = BY_WY;
+	  unitInfo->overTime = FALSE;
+       }
+       else if (overMonthYear[0] == 'Y')
+       {
+	  unitInfo->yearly = BY_YEAR;
+	  unitInfo->overTime = TRUE;
+       }
+       else if (overMonthYear[0] == 'W')
+       {
+	  unitInfo->yearly = BY_WY;
+	  unitInfo->overTime = TRUE;
+       }
+       else
+       {
+	  unitInfo->yearly = FALSE; 
+	  unitInfo->overTime = FALSE; 
+       }
+    }
+  
+  return (OK);
+}
+
+
+/*************************************************************************/
+
+#define FUNC_NAME    "SqlGetUnitId"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetUnitId
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetUnitId (ID, ID *)
+
+<P> <STRONG>Function description:</STRONG> Given the HDB datatype_id, retrieve the unit_id in which it is stored.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> ID datatypeId: The HDB datatype_id.
+<BR><DD> ID *unitId:    The associated HDB unit_id, retrieved.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetUnitId (ID datatypeId, ID *unitId)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    ID sqlDatatypeId = datatypeId;
+    ID *sqlUnitId = unitId;
+  EXEC SQL END DECLARE SECTION;
+  
+  int result;
+  
+  EXEC SQL AT :current_dbsite SELECT unit_id 
+    INTO :sqlUnitId
+    FROM hdb_datatype
+    WHERE datatype_id = :sqlDatatypeId;
+  
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE,
+	"Error retrieving unit_id for datatype %d.\n\tExiting.", 
+	sqlDatatypeId)) == ERROR)
+    {		
+      EXEC SQL AT :current_dbsite ROLLBACK;
+      return (ERROR);
+    }
+  
+  EXEC SQL AT :current_dbsite COMMIT;
+  
+  return (OK);
+}
+
+/*************************************************************************/
+
+
+#define FUNC_NAME    "SqlGetDimensionId"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetDimensionId
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetDimensionId (ID, ID *)
+
+<P> <STRONG>Function description:</STRONG> Given the HDB datatype_id, retrieve the unit_id in which it is stored.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> ID datatypeId: The HDB datatype_id.
+<BR><DD> ID *unitId:    The associated HDB unit_id, retrieved.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetDimensionId (ID unitId, ID *dimensionId)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    ID sqlUnitId = unitId;
+    ID *sqlDimensionId = dimensionId;
+  EXEC SQL END DECLARE SECTION;
+  
+  int result;
+  
+  EXEC SQL AT :current_dbsite SELECT dimension_id 
+    INTO :sqlDimensionId
+    FROM hdb_unit
+    WHERE unit_id = :sqlUnitId;
+  
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE,
+	"Error retrieving dimension_id for unit %d.\n\tExiting.", 
+	sqlUnitId)) == ERROR)
+    {		
+      EXEC SQL AT :current_dbsite ROLLBACK;
+      return (ERROR);
+    }
+  
+  EXEC SQL AT :current_dbsite COMMIT;
+  
+  return (OK);
+}
+
+/*************************************************************************/
+
+
+
+

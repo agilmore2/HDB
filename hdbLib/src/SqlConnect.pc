@@ -1,0 +1,775 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <defines.h>
+#include <typedefs.h>
+#include <dbutils.h>
+#include <utils.h>
+
+EXEC SQL INCLUDE SQLCA;
+
+
+#define MAX_CONNECTIONS 25
+#define DB "db1"
+
+/* Set the global vars to maintain connection info: num connections,
+   current connections, list of connections */
+int db_connected= 0;
+DATABASE_ALIAS dbconnected_array[MAX_CONNECTIONS];
+
+#define FUNC_NAME "SqlCommit"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlCommit
+
+<P> <STRONG>Function signature:</STRONG> int SqlCommit ()
+
+<P> <STRONG>Function description:</STRONG> Commits the open transaction to the database.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlCommit( )
+{
+   int result;
+   EXEC SQL AT :current_dbsite COMMIT;
+   if ((result = SqlErrorHandler
+	(FUNC_NAME, FALSE,
+	 "Error in SQL Commit \n")) == ERROR)
+   {
+      return (ERROR);
+   }
+   
+   else
+   {
+      return (OK);
+   }
+}
+
+/****************************************************************************/
+#define FUNC_NAME    "SqlConnect"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlConnect
+
+<P> <STRONG>Function signature:</STRONG> int SqlConnect (char *, char *, char *)
+
+<P> <STRONG>Function description:</STRONG> Connects twice to specified database as specified user. One connection is named, the other is not.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *dbName:  Name (SID) of the database to which to connect.
+<BR><DD> char *usrname: Name of Oracle user connecting.
+<BR><DD> char *id:      Password of Oracle user.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlConnect(char *dbName, char* usrname, char* id)
+{
+   /*Database host variables*/
+   EXEC SQL BEGIN DECLARE SECTION;
+   char *usr;
+   char *uid; 
+   char *dbstring;
+   EXEC SQL END DECLARE SECTION;
+   
+   int   result;
+   
+   usr = usrname;
+   uid = id;
+
+   /* set the name of the database, and the logical name for the 2nd 
+      connection */
+   dbstring = dbName;
+
+   /* connect to the specified database, first with an unnamed (default)
+      connection, then with a named connection */
+   EXEC SQL CONNECT :usr IDENTIFIED BY :uid USING :dbstring;
+   result = SqlErrorHandler(FUNC_NAME, FALSE,
+	 "Error connecting to %s.\n\t as %s %s", dbstring, usr, uid);
+   if (result != OK)
+     return (ERROR);
+
+   db_connected++; 
+   if ((result = AddConnection (NULL)) == ERROR)
+   {
+      printf ("Problem adding default connection to dbsite_array. Exiting.\n");
+      return (ERROR);
+   }
+   EXEC SQL COMMIT;
+
+   /* Make the named connection. */
+   if ((result = SqlConnectAt (DB, dbstring, usrname, id)) == ERROR)
+     return (ERROR);
+
+   return (OK);
+}
+
+/****************************************************************************/
+#define FUNC_NAME "SqlConnectAt"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlConnectAt
+
+<P> <STRONG>Function signature:</STRONG> int SqlConnectAt (char *, char *, char *, char *)
+
+<P> <STRONG>Function description:</STRONG> Connects to specified database as specified user, using the AT syntax. Sets the global variable current_dbsite and adds the connection name to the global list of connections.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *dbSiteAlias:  Logical name of connection (db_site_code)
+<BR><DD> char *dbName:       Name (SID) of the database to which to connect.
+<BR><DD> char *usrname:      Name of Oracle user connecting.
+<BR><DD> char *id:           Password of Oracle user.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlConnectAt(char *dbSiteAlias, char *dbName, char* usrname, char* id)
+{
+   /*Database host variables*/
+   EXEC SQL BEGIN DECLARE SECTION;
+   char *usr;
+   char *uid; 
+   char *dbstring;
+   char *dbSite;
+   EXEC SQL END DECLARE SECTION;
+   
+   int   result;
+   
+   usr = usrname;
+   uid = id;
+
+   /* set the name of the database and its logical name*/
+   dbstring = dbName;
+   dbSite = dbSiteAlias;
+
+   /* connect to the specified database with a named connection,
+      and set the global pointer to the current database. */
+   EXEC SQL CONNECT :usr IDENTIFIED BY :uid AT :dbSite USING :dbstring;
+   result = SqlErrorHandler(FUNC_NAME, FALSE,
+	 "Error connecting AT %s to %s.\n\t as %s %s", dbSite, dbstring, usr, 
+			    uid);
+   if (result != OK)
+     return (ERROR);
+
+   db_connected++; 
+   if ((result = AddConnection (dbSite)) == ERROR)
+   {
+      printf ("Problem adding connection %s to dbsite_array. Exiting.\n",
+	      dbSite);
+      return (ERROR);
+   }
+
+   EXEC SQL AT :dbSite COMMIT;
+   strcpy (current_dbsite, dbSite);
+  
+   return (OK);
+
+}
+
+/****************************************************************************/
+#define FUNC_NAME    "SqlConnectRole"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlConnectRole
+
+<P> <STRONG>Function signature:</STRONG> int SqlConnectRole (char *, char *, char *, char *)
+
+<P> <STRONG>Function description:</STRONG> Connects to the specified database twice as the specified user, once using a named connection and once an unnamed one. Enables the indicated role on both connections.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *dbName:  Name (SID) of the database to which to connect.
+<BR><DD> char *usrname: Name of Oracle user connecting.
+<BR><DD> char *id:      Password of Oracle user.
+<BR><DD> char *role:    Role to enable.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlConnectRole(char *dbName, char* userName, char* id, char *roleName)
+{
+   /*Database host variables*/
+   EXEC SQL BEGIN DECLARE SECTION;
+   char dbSite[3];
+   char *user;
+   char *uid;
+   char *dbstring;
+   char *psswdUser;
+   char rolePsswd[24];
+   char setRoleStatement[100];
+   EXEC SQL END DECLARE SECTION;
+   
+   /*integer for checking the result of a function call*/
+   int   result;
+
+   user = userName;
+   uid = id;
+
+   /* set the name of the database and get the password user*/
+   dbstring = dbName;
+   strcpy (dbSite, DB);
+
+   psswdUser = NULL;
+   psswdUser = getenv("PSSWD_USER");
+
+   if (psswdUser == NULL)
+   {
+      PrintError("Environment variable PSSWD_USER not set...\n");
+      return(ERROR);
+   }
+
+   /* Connect to the local database as the psswd_user, to get the roleName's
+      if the user (userName) has been granted that role. 
+      Use SqlConnectAt so that global current_dbsite will be set
+      and the two functions called can refer to the global. */
+   
+   if ((result = SqlConnectAt (DB, dbstring, psswdUser, dbstring)) != OK)
+   {
+      return (ERROR);
+   }
+   else
+   {
+      /* First, verify that specified user has been granted the needed
+	 application role. */
+      
+      if ((result = SqlCheckGrantedRole (userName, roleName)) != OK)
+      {
+	 return (ERROR);
+      }
+
+      if ((result = SqlGetRolePsswd (roleName, rolePsswd)) != OK)
+      {
+	 return (ERROR);
+      }
+
+      SqlDisconnectAt(DB);
+
+   }
+   /* Now connect as the user for the remainder of the program,
+      enabling needed roles.
+      Use SqlConnect to establish both the named and unnamed connection. */
+   if ((result = SqlConnect (dbstring, user, uid)) != OK)
+   {
+      return (ERROR);
+   }
+   
+   else
+   {
+      /* Enable needed role, plus CONNECT, for both connections */
+      /* For unnamed connection. */
+      EXEC SQL WHENEVER NOT FOUND continue;
+      sprintf (setRoleStatement, "set role %s identified by %s, CONNECT",
+	       roleName, rolePsswd);
+      
+      EXEC SQL EXECUTE IMMEDIATE :setRoleStatement;
+      if ((result = SqlErrorHandler
+	   (FUNC_NAME, FALSE,
+	    "Error setting role to: %s on default connection.\n\tExiting.", roleName)) == ERROR)
+      {
+	 SqlDisconnect();
+	 return (ERROR);
+      }
+
+      EXEC SQL AT :dbSite EXECUTE IMMEDIATE :setRoleStatement;
+      if ((result = SqlErrorHandler
+	   (FUNC_NAME, FALSE,
+	    "Error setting role to: %s AT %s.\n\tExiting.", roleName, 
+	    dbSite)) == ERROR)
+      {
+	 SqlDisconnect();
+	 return (ERROR);
+      }
+   }
+   return (OK);
+}
+
+
+/****************************************************************************/
+#define FUNC_NAME    "SqlConnectRoleAt"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlConnectRoleAt
+
+<P> <STRONG>Function signature:</STRONG> int SqlConnectRoleAt (char *, char *, char *, char *, char *)
+
+<P> <STRONG>Function description:</STRONG> Connects to the specified database as the specified user, using the AT syntax. Enables the indicated role.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *dbSiteAlias:  Logical name of connection (db_site_code)
+<BR><DD> char *dbName:       Name (SID) of the database to which to connect.
+<BR><DD> char *usrname:      Name of Oracle user connecting.
+<BR><DD> char *id:           Password of Oracle user.
+<BR><DD> char *role:         Role to enable.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlConnectRoleAt(char *dbSiteAlias, char *dbName, char* userName, 
+		     char* id, char *roleName)
+{
+   /*Database host variables*/
+   EXEC SQL BEGIN DECLARE SECTION;
+   char *user;
+   char *uid;
+   char *dbstring;
+   char *dbSite;
+   char *psswdUser;
+   char rolePsswd[24];
+   char setRoleStatement[100];
+   EXEC SQL END DECLARE SECTION;
+   
+   /*integer for checking the result of a function call*/
+   int   result;
+
+   user = userName;
+   uid = id;;
+
+   /* set the name of the database and its logical name,
+      and get the password user*/
+   dbstring = dbName;
+   dbSite = dbSiteAlias;
+
+   psswdUser = NULL;
+   psswdUser = getenv("PSSWD_USER");
+
+   if (psswdUser == NULL)
+   {
+      PrintError("Environment variable PSSWD_USER not set...\n");
+      return(ERROR);
+   }
+
+   /* Connect to the local database as the psswd_user, to get the roleName's
+      if the user (userName) has been granted that role. 
+      Use SqlConnectAt so that global current_dbsite will be set
+      and the two functions called can refer to the global. */
+
+   if ((result = SqlConnectAt (dbSite, dbstring, psswdUser, dbstring)) != OK)
+   {
+      return (ERROR);
+   }
+   else
+   {
+      /* First, verify that specified user has been granted the needed
+	 application role. */
+
+      if ((result = SqlCheckGrantedRole (userName, roleName)) != OK)
+      {
+	 return (ERROR);
+      }
+
+      if ((result = SqlGetRolePsswd (roleName, rolePsswd)) != OK)
+      {
+	 return (ERROR);
+      }
+
+      SqlDisconnectAt(dbSite);
+   }
+    
+   /* Now connect as the user for the remainder of the program,
+      enabling needed roles. */
+   if ((result = SqlConnectAt (dbSite, dbstring, userName, uid)) != OK)
+   {
+      return (ERROR);
+   }
+   
+   else
+   {
+      /* Enable needed role, plus CONNECT role */
+      EXEC SQL WHENEVER NOT FOUND continue;
+      sprintf (setRoleStatement, "set role %s identified by %s, CONNECT",
+	       roleName, rolePsswd);
+      
+      EXEC SQL AT :dbSite EXECUTE IMMEDIATE :setRoleStatement;
+      
+      if ((result = SqlErrorHandler
+	   (FUNC_NAME, FALSE,
+	    "Error setting role to: %s AT %s.\n\tExiting.", roleName, 
+	    dbSite)) == ERROR)
+      {
+	 SqlDisconnectAt(dbSite);
+	 return (ERROR);
+      }
+   }
+	
+   EXEC SQL AT :current_dbsite COMMIT;
+   return (OK);
+}
+
+
+/*****************************************************************************/
+#define FUNC_NAME    "SqlCheckGrantedRole"
+
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlCheckGrantedRole
+
+<P> <STRONG>Function signature:</STRONG> int SqlCheckGrantedRole (char *, char *)
+
+<P> <STRONG>Function description:</STRONG> Called by SqlConnectRole to verify that the specified user has been granted the needed role.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *userName: Oracle user needing the role.
+<BR><DD> char *roleName: The role needed.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlCheckGrantedRole (char* userName, char *roleName)
+{
+   /*Database host variables*/
+   EXEC SQL BEGIN DECLARE SECTION;
+   char user[20];
+   char role[20];
+   int  result = 0;   
+   EXEC SQL END DECLARE SECTION;
+
+   char *message;
+
+   strcpy(user, userName);
+   strcpy(role, roleName);
+
+   EXEC SQL WHENEVER SQLWARNING GOTO check_result;
+
+   EXEC SQL AT :current_dbsite SELECT count(granted_role)
+      INTO :result
+   FROM dba_role_privs
+   WHERE grantee = UPPER(:user)
+      AND granted_role = UPPER(:role);
+
+   /* Check to see if no rows were selected. */
+
+check_result:
+   /* first undo thw whenever checking for the rest of this file */
+
+   EXEC SQL WHENEVER SQLWARNING CONTINUE;
+
+   if (result < 1)
+   {
+      PrintError ("User %s has not been granted role %s \n needed for this application", userName, roleName);
+      return (ERROR);
+   }
+
+/* must still check for an SQL error */
+
+   message = SqlCheckError(FUNC_NAME);
+   if (message != NULL)
+   {
+      PrintError ("Error in %s:\n %s\n",FUNC_NAME,message); 
+      return (ERROR);
+   }
+   
+   EXEC SQL AT :current_dbsite COMMIT;
+   return (OK);
+}
+/****************************************************************************/
+#define FUNC_NAME    "SqlGetRolePsswd"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetRolePsswd
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetRolePsswd (char *, char *)
+
+<P> <STRONG>Function description:</STRONG> Retrieves the password of the specified role from a protected table and sets the password variable with the value.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *roleName:  Name of role whose password is needed.
+<BR><DD> char *rolePsswd: Holds value of retrieved password.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+
+int SqlGetRolePsswd (char *roleName, char *rolePsswd)
+{
+   /*Database host variables*/
+   EXEC SQL BEGIN DECLARE SECTION;
+   char role[20];
+   char psswd[20];
+   int   result = 0;   
+   EXEC SQL END DECLARE SECTION;
+
+   strcpy(role, roleName);
+   
+   EXEC SQL AT :current_dbsite SELECT psswd
+      INTO :psswd
+   FROM role_psswd
+   WHERE UPPER (role) = UPPER (:role);
+
+   /* Check to see if no rows were selected. */
+   if (sqlca.sqlcode > 0)
+   {
+      PrintError ("There is no entry for role %s in role_psswd\n", roleName);
+      return (ERROR);
+   }
+
+   if ((result = SqlErrorHandler
+	(FUNC_NAME, FALSE,
+	 "Error selecting from role_psswd for role %s\n\tExiting.", role)) 
+       == ERROR)
+   {
+      return (ERROR);
+   }
+
+   EXEC SQL AT :current_dbsite COMMIT;
+   strcpy (rolePsswd, psswd);
+
+   return (OK);
+}
+
+/*****************************************************************************/
+#define FUNC_NAME "SqlDisconnect"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlDisconnect
+
+<P> <STRONG>Function signature:</STRONG> int SqlDisconnect ()
+
+<P> <STRONG>Function description:</STRONG> Commits all open transactions on both DB connections and disconnects from both.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlDisconnect()
+{
+  int result1, result2;
+
+  /* db_connected is decremented in SqlDisconnectAt */
+  /* Disconnect from default connection. */
+  result1 = SqlDisconnectAt (NULL);
+
+  /* Disconnect from named connection */
+  result2 = SqlDisconnectAt (DB);
+
+  if (result1 == ERROR || result2 == ERROR)
+     return (ERROR);
+  else
+     return (OK);
+}
+
+/******************************************************************/
+#define FUNC_NAME "SqlDisconnectAt"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlDisconnectAt
+
+<P> <STRONG>Function signature:</STRONG> int SqlDisconnectAt (char *)
+
+<P> <STRONG>Function description:</STRONG> Commits all open transactions on the named connection, and disconnects.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *dbSiteAlias:  Logical name of connection (db_site_code)
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlDisconnectAt(char *dbAlias)
+{
+  int result;
+  DATABASE_ALIAS dbName;
+
+  if (!dbAlias)
+  {
+     /* Disconnect from default connection. */
+     EXEC SQL COMMIT RELEASE;
+     if ((result = SqlErrorHandler 
+	  (FUNC_NAME, FALSE, 
+	   "Error disconnecting from default database.\n\tExiting.")) == ERROR)
+	return (ERROR);
+  }
+  else
+  {
+     /* Disconnect from named connection */
+     strcpy (dbName, dbAlias);
+
+     EXEC SQL AT :dbName COMMIT RELEASE;
+     if ((result = SqlErrorHandler 
+	  (FUNC_NAME, FALSE, 
+	   "Error disconnecting from database %s.\n\tExiting.", dbName)) == ERROR)
+	return (ERROR);
+  }
+
+  db_connected--;
+  return (OK);
+}
+
+/******************************************************************/
+
+#define FUNC_NAME "SqlDisconnectAll"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlDisconnectAll
+
+<P> <STRONG>Function signature:</STRONG> int SqlDisconnectAll (void)
+
+<P> <STRONG>Function description:</STRONG> Disconnects from (all) databases.
+This function is primarily called by SignalHandler, and apps connecting to 
+more than one database.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+int SqlDisconnectAll(void)
+{
+/* This function is called by SignalHandler() and all applications
+   which open connections to more than on database. It is responsible for
+   closing all open database connections. It uses the global variable
+   "db_connected" to check the number of open sessions
+
+   db_connected is modified only by the SqlConnect and
+   SQlDisconnect functions. */
+
+   int counter;
+   int result;
+   ERROR_MSG errorMessage;
+   int err = FALSE,
+       num_connections;
+
+   if (db_connected == 0) /* no open connections */
+   {
+      PrintError("No database connections open...\n");
+      return(OK);
+   }
+
+   strcpy (errorMessage, "Problem disconnecting from database(s):");
+
+   /* remember db_connected, as it will be changed by SqlDisconnectAt! */
+   num_connections = db_connected;
+
+   for (counter = 0; counter < num_connections; counter++)
+   {
+      result = SqlDisconnectAt(dbconnected_array[counter]);
+      if (result != OK)
+      {
+	 strcat (errorMessage, " ");
+	 strcat (errorMessage, dbconnected_array[counter]);
+	 err = TRUE;
+      }
+   }
+
+   if (err)
+   {
+      PrintError ("%s\n", errorMessage);
+      PrintError ("All other connection(s) closed.\n");
+   }
+   else
+      PrintError("DB connection(s) closed...\n");
+
+   return(OK);
+}
+
+/******************************************************************/
+#define FUNC_NAME "AddConnection"
+
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> AddConnection
+
+<P> <STRONG>Function signature:</STRONG> int AddConnection (char *)
+
+<P> <STRONG>Function description:</STRONG> Adds the named connection to the global list of connections (dbconnected_array).
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *dbSiteAlias:  Logical name of connection (db_site_code)
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int AddConnection (char *dbAlias)
+{
+   if (dbAlias)
+      strcpy (dbconnected_array[db_connected - 1], dbAlias);
+   else
+      dbconnected_array[db_connected - 1][0] = '\0';
+   return (OK);
+}
+
+/******************************************************************/
+#define FUNC_NAME "SwitchSession"
+
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SwitchSession
+
+<P> <STRONG>Function signature:</STRONG> int SwitchSession (char *)
+
+<P> <STRONG>Function description:</STRONG> Sets the global variable current_dbsite to the indicated connection, effectively making all subsequent SQL statements affect the indicated connection.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *dbSiteAlias:  Logical name of connection (db_site_code)
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SwitchSession (char *dbAlias)
+{
+   int i;
+
+   for (i = 0; i < db_connected; i++)
+   {
+      if (!strcmp (dbAlias, dbconnected_array[i]))
+      {
+	 strcpy (current_dbsite, dbAlias);
+	 current_dbsite[strlen(dbAlias)] = '\0';
+	 return (OK);
+      }
+   }
+
+   /* Didn't find dbAlias in list of connections. */
+   PrintError ("%s: Alias %s not a valid connection identifier.\n", 
+	       FUNC_NAME, dbAlias);
+   return (ERROR);
+}

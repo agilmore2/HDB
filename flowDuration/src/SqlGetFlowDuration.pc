@@ -1,0 +1,411 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
+#include "dbutils.h"
+#include "typedefs.h"
+#include "utils.h"
+#include "defines.h"
+#include "flowDuration.h"
+
+#define VERSION "1.1"
+
+EXEC SQL INCLUDE SQLCA;
+
+INC_HEADER header;
+
+#define FUNC_NAME "SqlGetFlowDuration"
+int SqlGetFlowDuration (ID siteId, ID datatypeId, SQL_DATE begDate, 
+	SQL_DATE endDate, int getReal, ID modelRunId)
+{
+   EXEC SQL BEGIN DECLARE SECTION;
+     ID sqSiteId,
+	sqDatatypeId;
+     varchar siteName[65],
+	     datatypeName[65];
+     char    selectStatement[2000];
+     float   values[30000];
+   EXEC SQL END DECLARE SECTION;
+
+   int numRows,
+       rowCount,
+       result;
+   char whereClause[200];
+   char temp[100];
+
+   INCREMENT *current;
+
+   /* Initialize host variables */
+   sqSiteId = siteId;
+   sqDatatypeId = datatypeId;
+   
+   EXEC SQL SELECT site_name 
+      INTO :siteName
+	  FROM hdb_site 
+      WHERE site_id = :sqSiteId;
+   
+   if ((result = SqlErrorHandler 
+	(FUNC_NAME, FALSE, "Problem selecting site name name.\n")) 
+       != OK)
+   {
+      SqlDisconnect();
+      return (ERROR);
+   }
+
+   EXEC SQL SELECT datatype_name
+      INTO :datatypeName
+      FROM hdb_datatype 
+      WHERE datatype_id = :sqDatatypeId;
+
+   if ((result = SqlErrorHandler 
+	(FUNC_NAME, FALSE, "Problem selecting datatype name.\n")) 
+       != OK)
+   {
+      SqlDisconnect();
+      return (ERROR);
+   }
+
+   strncpy (temp, siteName.arr, siteName.len);
+   temp[siteName.len] = '\0';
+   printf ("     Station - %s.\n", temp);
+   strncpy (temp, datatypeName.arr, datatypeName.len);
+   temp[datatypeName.len] = '\0';
+   printf("               Flow duration for %s daily %s\n\n",
+	  getReal ? "observed" : "modeled", temp);
+
+  /* create the select statement */
+
+/* (rc, 4/18/03) Modified for HDB2 schema.
+ *   sprintf (selectStatement, "select value from %s a, hdb_site_datatype b where a.site_datatype_id = b.site_datatype_id and b.site_id = %d and b.datatype_id = %d and a.date_day between '%s' and '%s'", getReal ? "r_day" : "m_day", sqSiteId, sqDatatypeId, begDate, endDate);
+ */
+
+   sprintf (selectStatement, "select value from %s a, hdb_site_datatype b where a.site_datatype_id = b.site_datatype_id and b.site_id = %d and b.datatype_id = %d and a.start_date_time between to_date('%s','dd-mon-yyyy hh24:mi:ss') and to_date('%s','dd-mon-yyyy hh24:mi:ss')", getReal ? "r_day" : "m_day", sqSiteId, sqDatatypeId, begDate, endDate);
+
+   /* Add model_run_id restriction for modeled data queries */
+   if (!getReal)
+   {
+      sprintf (whereClause, " and a.model_run_id = %d", modelRunId);
+      strcat (selectStatement, whereClause);
+   }
+
+   EXEC SQL PREPARE sel FROM :selectStatement;
+   if ((result = SqlErrorHandler 
+	(FUNC_NAME, FALSE, "Problem preparing select statement:\n\t%s\n",
+	 selectStatement)) 
+       != OK)
+   {
+      SqlDisconnect();
+      return (ERROR);
+   }
+
+	/* debugging:
+	 * printf("select statement:\n%s\n",selectStatement);
+	 */
+
+   EXEC SQL DECLARE aa CURSOR FOR sel;
+   if ((result = SqlErrorHandler 
+	(FUNC_NAME, FALSE, "Problem declaring cursor aa.\n",
+	 selectStatement)) 
+       != OK)
+   {
+      SqlDisconnect();
+      return (ERROR);
+   }
+
+  EXEC SQL OPEN aa;
+   if ((result = SqlErrorHandler 
+	(FUNC_NAME, FALSE, "Problem opening cursor aa.\n",
+	 selectStatement)) != OK)
+   {
+      SqlDisconnect();
+      return (ERROR);
+   }
+
+   EXEC SQL WHENEVER NOT FOUND GOTO close_aa;
+
+   rowCount = 0;
+
+   while (1)
+    {
+      EXEC SQL FETCH aa
+	INTO :values[rowCount];
+
+      numRows = rowCount;
+      rowCount++;
+    }
+  
+close_aa:
+   EXEC SQL CLOSE aa;
+   EXEC SQL COMMIT;
+
+   fprintf(stderr,"The number of rows is %d\n", numRows);
+
+   if ((result = SortValues (values, numRows)) != OK)
+   {
+      PrintError ("Error sorting values array\n\tExiting");
+      return (ERROR);
+   }
+
+   if ((result = CalcIncrements (values, numRows))
+       != OK)
+   {
+      PrintError ("Problem determining increments on values\n\tExiting");
+      return (ERROR);
+   }
+
+
+   current = header.list;
+   while (current)
+    {
+      printf("     Percent of values over %d cfs is %5.2f percent\n",
+	     current->maxVal, current->pctVals * 100);
+      current = current->next;
+    }
+
+  return (OK);
+}
+
+#define FUNC_NAME "SortValues"
+
+int SortValues (float *values, int size)
+
+{
+
+    qsort(values, size, sizeof(float), 
+	  (int (*) (int *,int*)) CompareValues);
+
+    return (OK);
+}
+
+
+#define FUNC_NAME "CompareValues"
+
+/* A function to sort in reverse order; descending */
+int CompareValues (int *arg1, int *arg2)
+{
+  /* compare values */
+  if (*arg1 < *arg2)
+     return(-1);
+  else if (*arg1 > *arg2)
+     return (1);
+  else
+     return (0);
+}
+
+
+#define FUNC_NAME "CalcIncrements"
+
+int CalcIncrements (float *values, int numRows)
+
+{
+   float max,
+         min,
+         range,
+         increment;
+   long  bottomOfRange;
+
+   /* Start figuring appropriate ranges */
+   min = values[0];
+   max = values[numRows-1];
+   range = max - min;
+
+   if (range < 1)
+   {
+      increment = .01;
+      bottomOfRange = floor (min);
+   }
+   else if (range < 10)
+   {
+      increment = .1;
+      bottomOfRange = floor (min);
+   }
+   else if (range < 100)
+   {
+      increment = 1; 
+      bottomOfRange = floor (min);
+   }			
+   else if (range < 1000)
+   {
+      increment = 10;
+      bottomOfRange = floor(min/10) * 10;
+   }
+   else if (range < 5000)
+   {
+      increment = 100;
+      bottomOfRange = floor(min/100) * 100;
+   }
+   else 
+   {
+      increment = 1000;
+      bottomOfRange = floor(min/1000) * 1000;
+   }  
+
+   /* Now decrement the bottom of range by 1 increment, so that output
+      will reflect range in which lowest value occurs */
+   bottomOfRange -= increment;
+
+   /* Initial call of routine which creates increments at appropriate 
+      percentage levels */
+   header.numElements = 0;
+   header.list = NULL;
+   MakeIncrements (bottomOfRange, 0, numRows, numRows, values, increment, 
+		   header.list);
+   
+   return (OK);
+}
+
+#define FUNC_NAME "MakeIncrements"
+int MakeIncrements (long bottomOfRange, int minIndex, int maxIndex, 
+		    int numVals, float *values, float increment, 
+		    INCREMENT *current)
+{
+   int index,
+       prevIndex,
+       tempMinIndex;
+   int valsInRange = 0;
+   float topOfRange,
+         delta;
+   long tempBottomOfRange;
+   INCREMENT *new, *next, *temp, *prev, *firstEl;
+
+   firstEl = current;
+   /* for all recursive calls, start w/ valsInRange set to number
+      for last completely processed range */
+   if (current)
+      valsInRange = current->numVals;
+
+   /* Initialize first range */
+   topOfRange = bottomOfRange + increment;
+
+   for (index = minIndex, prevIndex = minIndex; index <= maxIndex; )
+   {
+      /* When index = maxIndex, else will be taken and last range
+	 will be completed. */
+      if ((values[index] <= topOfRange) && (index < maxIndex))
+      {
+	 valsInRange++;
+	 index++;
+      }
+      else
+      {
+	 /* Done w/ this range; now set the range and % of values */
+
+	 /* First of all allocate a new list member and put it in place */
+	 if ((new = (INCREMENT *) malloc (sizeof (INCREMENT))) == NULL)
+	 {
+	    PrintError ("Error malloc'ing new list member.\n\tExiting");
+	 }
+	 
+	 if (current)
+	 {
+	    if (current->next)
+	    {
+	       next = current->next;
+	       new->next = next;
+	       next->prev = new;
+	    }
+	    else
+	    {
+	       new->next = NULL;
+	    }
+	    
+	    new->prev = current;
+	    current->next = new;
+	 }
+	 else
+	 {
+	    new->prev = NULL;
+	    new->next = NULL;
+	    header.list = new;
+	 }
+
+	 new->minIndex = prevIndex;
+	 new->minVal = bottomOfRange;
+	 new->maxVal = topOfRange;
+	 new->pctVals = 1 - (float)valsInRange/(float)numVals;
+	 new->numVals = valsInRange;
+	 new->increment = increment;
+
+	 prevIndex = index;
+	 header.numElements++;
+	 bottomOfRange = topOfRange;
+	 topOfRange += increment;
+	 current = new;
+
+	 /* check for last value condition; increment index to drop out of 
+	    loop */
+	 if (index == maxIndex)
+	    index++;
+      }
+   }
+
+   /* Check the delta between each pctValue in list, to see if there are
+      any gaps that are too large. If so, scale the increment in the
+      appropriate range*/
+
+   /* if first time through, set to first list element; otherwise,
+      set to first *new* list element. */
+   if (minIndex !=0)
+      current = firstEl;
+   else
+      current = header.list;
+   next = current->next;
+   while (next && next->minIndex != maxIndex)
+   {
+      delta = current->pctVals - next->pctVals;
+      if (delta > .05)
+      {
+	 /* need to subdivide 'next' increment */
+	 temp = next;
+	 next = temp->next;
+	 current->next = next;
+	 next->prev = current;
+
+	 /* Temp points to space to be freed; next now points to the 
+	    element after next.... */
+	 tempMinIndex = temp->minIndex;
+	 tempBottomOfRange = temp->minVal;
+
+	 free (temp);
+   
+	 MakeIncrements (tempBottomOfRange, tempMinIndex, next->minIndex, 
+			 numVals, values, increment/10, current);
+
+	 /* Set pointer back one element, so a comparison is made between
+	    last range in just-subdivided increment, and the next increment */
+	 next = next->prev;
+      }
+      
+      current = next;
+      next = current->next;
+   }
+   
+   return (OK);
+}
+
+#define FUNC_NAME "RemoveIncrement"
+int RemoveIncrement (INCREMENT *current)
+{
+   INCREMENT *prev,
+      *next,
+      *temp;
+   
+   /* Assign pointers */
+   prev = current->prev;
+   next = current->next;
+   
+   next->prev = prev;
+   prev->next = next;
+
+   /* Temp points to space to be freed; current now points to the 
+      previous element in the list */
+   temp = current;
+   current = prev;
+
+   free (temp);
+   
+   return (OK);
+}
+   
+   
+

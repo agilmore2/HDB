@@ -1,0 +1,66 @@
+/*****************************************************************************
+* DESCRIPTION
+* This file contains code to get the upper and lower colorado database  
+* names from the local data base. 
+*
+* COMMENTS
+*
+* AUTHOR - EDITORS
+* Julien Chastang 
+* Octber 1997, May 1998 
+*****************************************************************************/
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include <utils.h>
+#include <dbutils.h>
+#include <defines.h>
+#include <typedefs.h>
+
+EXEC SQL INCLUDE sqlca;
+
+#define FUNC_NAME "SqlGetDBName" 
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetDBName
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetDBName(char *DB, char *dbname) 
+
+<P> <STRONG>Function description:</STRONG> Gets the indicated database name from the local database, using the database code.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *DB      : The code (i.e. LC)
+<BR><DD> char *dbname  : The db name character string (i.e. lchdb); from database.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetDBName(char *DB, char *dbname)
+{
+    EXEC SQL BEGIN DECLARE SECTION; 
+        VARCHAR sql_db_site_db_name[25];
+        char *sql_DB = DB;
+    EXEC SQL END DECLARE SECTION;
+
+
+    EXEC SQL SELECT db_site_db_name
+    INTO :sql_db_site_db_name
+    FROM ref_db_list
+    WHERE db_site_code = :sql_DB;
+
+    if (SqlErrorHandler (FUNC_NAME, TRUE,
+           "Problem Selecting the database name.\n") != OK)
+    {
+        return(ERROR);
+    }
+
+    sql_db_site_db_name.arr[sql_db_site_db_name.len] = '\0';
+    strncpy (dbname, sql_db_site_db_name.arr, sql_db_site_db_name.len + 1);
+    return(OK);
+}

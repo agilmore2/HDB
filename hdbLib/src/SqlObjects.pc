@@ -1,0 +1,432 @@
+/*****************************************************************************
+* DESCRIPTION
+* This file contains miscellaneous functions used in getting information 
+* about objects and objecttypes.
+*
+*******************************
+* SqlGetObjecttypeId
+* Purpose: Retrieve appropriate numerical objecttype_id given the 3-character
+*          objecttype tag.
+* 
+* Input
+* 	char    *objecttypeTag - object abbreviation in database
+*	int     *objecttypeId -- objecttype_id for this tag
+* Return
+* 	int	OK or ERROR: indicates if sourcetypeId was found
+*
+*******************************
+* SqlGetSiteDatatypeIdWithId
+* Purpose: Retrieve appropriate numerical site_datatype_id given the site_id,
+*	   and the datatype_id.
+* 
+* Input
+*	ID     siteId
+*	ID     datatype_id
+*	ID     *siteDatatypeId
+*
+* Return
+* 	int	OK or ERROR: indicates if sourcetypeId was found
+*******************************
+* SqlGetSiteDatatypeIdWithCode
+* Purpose: Retrieve appropriate numerical site_datatype_id given the site_id,
+*	   and the datatype_coden.
+* 
+* Input
+*	ID     siteId
+*	char * datatype_code
+*	ID     *siteDatatypeId
+*
+* Return
+* 	int	OK or ERROR: indicates if sourcetypeId was found
+*
+* AUTHOR - EDITORS
+* Carol Marra
+*****************************************************************************/
+
+EXEC SQL INCLUDE SQLCA;
+#include <stdio.h>
+#include <strings.h>
+#include <defines.h>
+#include <typedefs.h>
+#include <dbutils.h>
+#include <utils.h>
+
+#define FUNC_NAME    "SqlGetObjecttypeId"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetObjecttypeId
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetObjecttypeId (char *, ID *)
+
+<P> <STRONG>Function description:</STRONG> Given the tag for an objecttype (e.g., "bas") returns the numerical objecttype_id.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *objecttypeTag: 3-character tag indicating objecttype.
+<BR><DD> ID *objecttypeId:    Objecttype_id associated with tag, retrieved.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetObjecttypeId (char *objecttypeTag, ID *objecttypeId)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    char *sqlObjecttypeTag = objecttypeTag;
+    ID *sqlObjecttypeId = objecttypeId;
+  EXEC SQL END DECLARE SECTION;
+  
+  int result;
+  
+  EXEC SQL AT :current_dbsite SELECT objecttype_id 
+    INTO :sqlObjecttypeId
+    FROM hdb_objecttype
+    WHERE objecttype_tag = :sqlObjecttypeTag;
+  
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE,
+	"Error retrieving objecttype_id for %s.\n\tExiting.", objecttypeTag)) 
+      == ERROR)
+    {		
+      EXEC SQL AT :current_dbsite ROLLBACK;
+      return (ERROR);
+    }
+  
+  EXEC SQL AT :current_dbsite COMMIT;
+  
+  return (OK);
+}
+
+/***************************************************************************/
+#define FUNC_NAME    "SqlGetSiteDatatypeIdWithId"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetSiteDatatypeWithId
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetSiteDatatypeIdWithId (ID, ID, ID *)
+
+<P> <STRONG>Function description:</STRONG> Given a site_id and a datatype_id, retrieves the site_datatype_id.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> ID siteId:          The HDB site_id.
+<BR><DD> ID datatypeId:      The HDB datatype_id.
+<BR><DD> ID *siteDatatypeId: The retrieved site_datatype_id.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetSiteDatatypeIdWithId (ID siteId, ID datatypeId, ID *siteDatatypeId)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    ID sqlSiteId = siteId,
+       sqlDatatypeId = datatypeId,
+       *sqlSiteDatatypeId = siteDatatypeId;
+  EXEC SQL END DECLARE SECTION;
+
+  int result; 
+
+  EXEC SQL AT :current_dbsite SELECT site_datatype_id
+    INTO :sqlSiteDatatypeId
+    FROM hdb_site_datatype
+    WHERE site_id = :sqlSiteId
+      AND datatype_id = :sqlDatatypeId;
+
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE,
+	"Error retrieving site_datatype_id for site: %d datatype %d.\n\tExiting.", 
+	siteId, datatypeId)) == ERROR)
+    {		
+      EXEC SQL AT :current_dbsite ROLLBACK;
+      return (ERROR);
+    }
+  
+  EXEC SQL AT :current_dbsite COMMIT;
+  
+  return (OK);
+}
+
+/***************************************************************************/
+#define FUNC_NAME    "SqlGetSiteDatatypeIdWithCode"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetSiteDatatypeWithCode
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetSiteDatatypeIdWithCode (ID, char *, ID *)
+
+<P> <STRONG>Function description:</STRONG> Given a site_id and a datatype_code, retrieves the site_datatype_id.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> ID siteId:          The HDB site_id.
+<BR><DD> char *datatypeCode: The HDB datatype_code.
+<BR><DD> ID *siteDatatypeId: The retrieved site_datatype_id.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetSiteDatatypeIdWithCode (ID siteId, char *datatypeCode, 
+				  ID *siteDatatypeId)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    ID sqlSiteId = siteId,
+       *sqlSiteDatatypeId = siteDatatypeId;
+    char *sqlDatatypeCode = datatypeCode;
+  EXEC SQL END DECLARE SECTION;
+
+  int result; 
+
+  EXEC SQL AT :current_dbsite SELECT site_datatype_id
+    INTO :sqlSiteDatatypeId
+    FROM hdb_site_datatype a, hdb_datatype b
+    WHERE a.site_id = :sqlSiteId
+      AND b.datatype_code = :sqlDatatypeCode
+      AND a.datatype_id = b.datatype_id;
+
+  if (sqlca.sqlcode > 0)
+    {
+      PrintError ("No site_datatype_id exists for site: %d datatype %s.\n\tYou must create one before loading this data.\n", siteId, datatypeCode);
+      EXEC SQL AT :current_dbsite ROLLBACK;
+      return (CREATE_SDI);
+    }
+
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE,
+	"Error retrieving site_datatype_id for site: %d datatype %s.\n\tExiting.", 
+	siteId, datatypeCode)) == ERROR)
+    {		
+      EXEC SQL AT :current_dbsite ROLLBACK;
+      return (ERROR);
+    }
+  
+  EXEC SQL AT :current_dbsite COMMIT;
+  
+  return (OK);
+}
+  
+/***************************************************************************/
+
+#define FUNC_NAME    "SqlDatatypeIsInstant"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlDatatypeIsInstant
+
+<P> <STRONG>Function signature:</STRONG> int SqlDatatypeIsInstant (ID, int *)
+
+<P> <STRONG>Function description:</STRONG> Given a datatype_id, determines if the datatype is instantaneous or not.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> ID datatypeId:  HDB datatype_id.
+<BR><DD> int *isInstant: Returned indicator; 0 if FALSE, 1 if TRUE.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlDatatypeIsInstant (ID datatypeId, int *isInstant)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    ID sqlDatatypeId = datatypeId;
+    char sqlInterval[11];
+  EXEC SQL END DECLARE SECTION;
+  
+  int result;
+  
+  /* This query should return only 1 row; if it returns more, there
+     is something wrong with the definition of v_valid_interval_datatype */
+  EXEC SQL AT :current_dbsite SELECT distinct a.interval
+    INTO :sqlInterval
+    FROM v_valid_interval_datatype a, hdb_site_datatype b
+    WHERE b.datatype_id = :sqlDatatypeId
+      AND a.site_datatype_id = b.site_datatype_id;
+  
+  if ((result = SqlErrorHandler (FUNC_NAME, FALSE, "Error retrieving interval information for datatype %d.\n\tExiting.", sqlDatatypeId)) == ERROR)
+    {		
+      EXEC SQL AT :current_dbsite ROLLBACK;
+      return (ERROR);
+    }
+  
+  if (!strncmp (sqlInterval, INSTANTANEOUS, strlen (INSTANTANEOUS)))
+     *isInstant = TRUE;
+  else
+     *isInstant = FALSE;
+
+  EXEC SQL AT :current_dbsite COMMIT;
+  
+  return (OK);
+}
+
+/***************************************************************************/
+
+#define FUNC_NAME    "SqlGetDatatypeEnding"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetDatatypeEnding
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetDatatypeEnding (ID, char *)
+
+<P> <STRONG>Function description:</STRONG> Retrieves the last 3 characters of the datatype_code for the indicated datatype_id; these characters indicate things like "eop", "ave", "tot", etc.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> ID datatypeId:        HDB datatype_id.
+<BR><DD> char *datatypeEnding: The retrieved 3-character ending of the datatype_code.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetDatatypeEnding (ID datatypeId, char *datatypeEnding)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    ID sqlDatatypeId = datatypeId;
+    char sqlDatatypeEnding[4];
+  EXEC SQL END DECLARE SECTION;
+  
+  int result;
+  
+  EXEC SQL AT :current_dbsite SELECT SUBSTR (datatype_code, -3)
+    INTO :sqlDatatypeEnding
+    FROM hdb_datatype
+    WHERE datatype_id = :sqlDatatypeId;
+  
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE,
+	"Error retrieving datatypeEnding (datatypeCode) for datatype %d.\n\tExiting.", 
+	sqlDatatypeId)) == ERROR)
+    {		
+      EXEC SQL AT :current_dbsite ROLLBACK;
+      return (ERROR);
+    }
+  
+  EXEC SQL AT :current_dbsite COMMIT;
+  
+  strcpy (datatypeEnding, sqlDatatypeEnding);
+  datatypeEnding[3] = '\0';
+  
+  return (OK);
+}
+
+/***********************************************************/
+
+#define FUNC_NAME    "SqlGetDatatypeMethodClassInfo"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetDatatypeMethodClassInfo
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetDatatypeMethodClassInfo (ID, METHOD_CLASS_INFO *)
+
+<P> <STRONG>Function description:</STRONG> Retrieves information on the method class associated with the input datatype_id.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> ID datatypeId:        HDB datatype_id.
+<BR><DD> METHOD_CLASS_INFO *   methodClassInfo
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetDatatypeMethodClassInfo (ID datatypeId, METHOD_CLASS_INFO *methodClassInfo)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    ID sqlDatatypeId = datatypeId;
+    ID methodClassId;
+    char methodClassName[33];
+    char methodClassType[25];
+  EXEC SQL END DECLARE SECTION;
+  
+  int result;
+  
+  EXEC SQL AT :current_dbsite SELECT a.method_class_id, a.method_class_name,
+     a.method_class_type
+     INTO :methodClassId, :methodClassName, :methodClassType
+    FROM hdb_method_class a, hdb_datatype b
+    WHERE b.datatype_id = :sqlDatatypeId
+      AND a.method_class_id = b.method_class_id;
+  
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE,
+	"Error retrieving method class info for datatype %d.\n\tExiting.", 
+	sqlDatatypeId)) == ERROR)
+    {		
+      EXEC SQL AT :current_dbsite ROLLBACK;
+      return (ERROR);
+    }
+  
+  EXEC SQL AT :current_dbsite COMMIT;
+  
+  methodClassInfo->methodClassId = methodClassId;
+  strcpy (methodClassInfo->name, methodClassName);
+  methodClassInfo->name[strlen(methodClassInfo->name)] = 
+     '\0';
+  strcpy (methodClassInfo->methodClassType, methodClassType);
+  methodClassInfo->methodClassType[strlen(methodClassInfo->methodClassType)] = 
+     '\0';
+
+  return (OK);
+}
+
+/***********************************************************/
+
+#define FUNC_NAME    "SqlMethodClassStatsOk"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlMethodClassStatsOk
+
+<P> <STRONG>Function signature:</STRONG> int SqlMethodClassStatsOk (METHOD_CLASS_INFO, int *)
+
+<P> <STRONG>Function description:</STRONG> Given METHOD_CLASS_INFO, determine if this method class can be used in generating statistics data.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> METHOD_CLASS_INFO methodClassInfo : Info for method class in question
+<BR><DD> int *statsOk: Returned indicator; 0 if FALSE, 1 if TRUE.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlMethodClassStatsOk (METHOD_CLASS_INFO methodClassInfo, int *statsOk)
+{
+
+   /* Must be a time agg method class to be considered for stats data;
+      calculation and N/A are not allowable. */
+   if (!strcmp (methodClassInfo.methodClassType, TIME_AGGREGATION))
+     {
+	switch (methodClassInfo.methodClassId)
+  	  {
+	     /* Of time agg method classes, eop, bop and sum are not
+		allowed in generating statistics data */
+	      case EOP_METHOD_CLASS:
+     	      case BOP_METHOD_CLASS:
+	      case SUM_METHOD_CLASS:
+		 *statsOk = FALSE;
+		 break;
+	      default:
+		 *statsOk = TRUE;
+		 break;
+	  }
+     }
+   else 
+      *statsOk = FALSE;
+
+  return (OK);
+}

@@ -1,0 +1,75 @@
+/***************************************************************************
+* AUTHOR - EDITORS
+* Carol Marra
+****************************************************************************/
+
+#include <stdio.h>
+#include <string.h>
+#include <defines.h>
+#include <dbutils.h>
+#include <utils.h>
+#include <typedefs.h>
+
+EXEC SQL INCLUDE sqlca;
+EXEC SQL INCLUDE sqlda;
+
+#define FUNC_NAME    "SqlGetAppSourceId"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetAppSourceId
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetAppSourceId (char *, ID *)
+
+<P> <STRONG>Function description:</STRONG> Retrieve appropriate numerical sourcetype_id given the name of the executable which is running.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *executableName: Name of current executable.
+<BR><DD> ID *sourceId:         Source ID associated with this exectuable, retrieved from database.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG>
+
+</HTML>
+*/
+
+int SqlGetAppSourceId (char *executableName, ID *sourceId)
+{
+   EXEC SQL BEGIN DECLARE SECTION;
+   char *sqlExecutableName;
+   ID sqlSourceId;
+   EXEC SQL END DECLARE SECTION;
+   
+   int result;
+   char *temp;
+   
+   /* Make sure executable name is *not* a full or relative path
+      specification */
+   
+   temp = strrchr (executableName, '/');
+   if (temp)
+      sqlExecutableName = ++temp;
+   else
+      sqlExecutableName = executableName;
+   
+   EXEC SQL AT :current_dbsite SELECT source_id 
+      INTO :sqlSourceId
+      FROM ref_app_data_source
+      WHERE executable_name = :sqlExecutableName;
+   
+   if ((result = SqlErrorHandler 
+	(FUNC_NAME, FALSE, 
+	 "Error retrieving source_id for %s.\n\tIs ref_app_data_source loaded properly?\n\tExiting.",	sqlExecutableName)) == ERROR)
+   {		
+      EXEC SQL AT :current_dbsite ROLLBACK;
+      return (ERROR);
+   }
+   
+   *sourceId = sqlSourceId;
+   EXEC SQL AT :current_dbsite COMMIT;
+   
+   return (OK);
+}
+
+
+    

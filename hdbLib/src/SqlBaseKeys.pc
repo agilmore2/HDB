@@ -1,0 +1,338 @@
+/*****************************************************************************
+* DESCRIPTION
+* This file contains lookup functions based on names to get ids for foreign
+* key fields in r_base.
+*
+* AUTHOR - EDITORS
+* Neil Wilson
+*****************************************************************************/
+
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <malloc.h>
+#include <math.h>
+#include <defines.h> 
+#include <typedefs.h>
+#include <dbutils.h>
+#include <utils.h>
+
+EXEC SQL INCLUDE sqlca;
+EXEC SQL INCLUDE sqlda;
+
+/*****************************************************************************/
+#define FUNC_NAME	"SqlGetAgencyId"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetAgencyId
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetAgencyId (char *, int *)
+
+<P> <STRONG>Function description:</STRONG> Finds the agency id given the agency name.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char* name:  Name of the agency.
+<BR><DD> int* id:     Id for the agency.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetAgencyId(char* name, int* id)
+{
+   /* Find the agency id given the agency name */
+
+   EXEC SQL BEGIN DECLARE SECTION;
+      int sqlId;
+      char* sqlName = name;
+   EXEC SQL END DECLARE SECTION;
+
+   int result;
+
+   /* Select from the agency table */
+   EXEC SQL AT :current_dbsite 
+      SELECT agen_id
+         INTO :sqlId
+         FROM hdb_agen
+         WHERE agen_name = :sqlName;
+
+   if ((result = SqlErrorHandler (FUNC_NAME, FALSE,
+      "Problem finding agency id for the agency named %s\n",
+       name)) != OK)
+   {
+      return (ERROR);
+   }
+   
+   /* Successful - assign return parameter */
+   EXEC SQL AT :current_dbsite COMMIT;
+   *id = sqlId;
+   return(OK);
+}
+
+/*****************************************************************************/
+#define FUNC_NAME	"SqlGetLoadingId"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetLoadingId
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetLoadingId (char *, int *)
+
+<P> <STRONG>Function description:</STRONG> Finds the loading application id
+given the loading application name.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char* name:  Name of the loading application.
+<BR><DD> int* id:     Id for the loading application.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetLoadingId(char* name, int* id)
+{
+   /* Find the loading application id given the loading application name */
+
+   EXEC SQL BEGIN DECLARE SECTION;
+      int sqlId;
+      char* sqlName = name;
+   EXEC SQL END DECLARE SECTION;
+
+   int result;
+
+   /* Select from the loading application table */
+   EXEC SQL AT :current_dbsite 
+      SELECT loading_application_id
+         INTO :sqlId
+         FROM hdb_loading_application
+         WHERE loading_application_name = :sqlName;
+
+   if ((result = SqlErrorHandler (FUNC_NAME, FALSE,
+      "Problem finding loading application id for the loading application named %s\n",
+       name)) != OK)
+   {
+      return (ERROR);
+   }
+   
+   /* Successful - assign return parameter */
+   EXEC SQL AT :current_dbsite COMMIT;
+   *id = sqlId;
+   return(OK);
+}
+
+/*****************************************************************************/
+#define FUNC_NAME	"SqlGetCollectionId"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetCollectionId
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetCollectionId (char *, int *)
+
+<P> <STRONG>Function description:</STRONG> Finds the collection system id
+given the collection system name.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char* name:  Name of the collection system.
+<BR><DD> int* id:     Id for the collection system.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetCollectionId(char* name, int* id)
+{
+   /* Find the collection system id given the collection system name */
+
+   EXEC SQL BEGIN DECLARE SECTION;
+      int sqlId;
+      char* sqlName = name;
+   EXEC SQL END DECLARE SECTION;
+
+   int result;
+
+   /* Select from the collection system table */
+   EXEC SQL AT :current_dbsite 
+      SELECT collection_system_id
+         INTO :sqlId
+         FROM hdb_collection_system
+         WHERE collection_system_name = :sqlName;
+
+   if ((result = SqlErrorHandler (FUNC_NAME, FALSE,
+      "Problem finding collection system id for the collection system named %s\n",
+       name)) != OK)
+   {
+      return (ERROR);
+   }
+   
+   /* Successful - assign return parameter */
+   EXEC SQL AT :current_dbsite COMMIT;
+   *id = sqlId;
+   return(OK);
+}
+
+/*****************************************************************************/
+#define FUNC_NAME	"SqlGetMethodId"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetMethodId
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetMethodId (char *, int *)
+
+<P> <STRONG>Function description:</STRONG> Finds the method id
+given the method name.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char* name:  Name of the method.
+<BR><DD> int* id:     Id for the method.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetMethodId(char* name, int* id)
+{
+   /* Find the method id given the method name */
+
+   EXEC SQL BEGIN DECLARE SECTION;
+      int sqlId;
+      char* sqlName = name;
+   EXEC SQL END DECLARE SECTION;
+
+   int result;
+
+   /* Select from the method table */
+   EXEC SQL AT :current_dbsite 
+      SELECT method_id
+         INTO :sqlId
+         FROM hdb_method
+         WHERE method_name = :sqlName;
+
+   if ((result = SqlErrorHandler (FUNC_NAME, FALSE,
+      "Problem finding method id for the method named %s\n",
+       name)) != OK)
+   {
+      return (ERROR);
+   }
+   
+   /* Successful - assign return parameter */
+   EXEC SQL AT :current_dbsite COMMIT;
+   *id = sqlId;
+   return(OK);
+}
+
+/*****************************************************************************/
+#define FUNC_NAME	"SqlGetComputationId"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetComputationId
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetComputationId (char *, int *)
+
+<P> <STRONG>Function description:</STRONG> Finds the computation id
+given the computation name.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char* name:  Name of the computation.
+<BR><DD> int* id:     Id for the computation.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetComputationId(char* name, int* id)
+{
+   /* Find the computation id given the computation name */
+
+   EXEC SQL BEGIN DECLARE SECTION;
+      int sqlId;
+      char* sqlName = name;
+   EXEC SQL END DECLARE SECTION;
+
+   int result;
+
+   /* Select from the computed datatype table */
+   EXEC SQL AT :current_dbsite 
+      SELECT computation_id
+         INTO :sqlId
+         FROM hdb_computed_datatype
+         WHERE computation_name = :sqlName;
+
+   if ((result = SqlErrorHandler (FUNC_NAME, FALSE,
+      "Problem finding computation id for the computation named %s\n",
+       name)) != OK)
+   {
+      return (ERROR);
+   }
+   
+   /* Successful - assign return parameter */
+   EXEC SQL AT :current_dbsite COMMIT;
+   *id = sqlId;
+   return(OK);
+}
+
+/*****************************************************************************/
+#define FUNC_NAME	"SqlGetOverwriteFlag"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlGetOverwriteFlag
+
+<P> <STRONG>Function signature:</STRONG> int SqlGetOverwriteFlag (char *, char *)
+
+<P> <STRONG>Function description:</STRONG> Finds the overwrite flag
+given the overwrite name. 
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char* name:  Name of the overwrite.
+<BR><DD> int* id:     Flag for the overwrite.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlGetOverwriteFlag(char* name, char* flag)
+{
+   /* Find the overwrite flag given the overwrite name */
+
+   EXEC SQL BEGIN DECLARE SECTION;
+      char sqlFlag[2];
+      char* sqlName = name;
+   EXEC SQL END DECLARE SECTION;
+
+   int result;
+
+   /* Select from the computed datatype table */
+   EXEC SQL AT :current_dbsite 
+      SELECT overwrite_flag
+         INTO :sqlFlag
+         FROM hdb_overwrite_flag
+         WHERE overwrite_flag_name = :sqlName;
+
+   if ((result = SqlErrorHandler (FUNC_NAME, FALSE,
+      "Problem finding overwrite flag for the overwrite named %s\n",
+       name)) != OK)
+   {
+      return (ERROR);
+   }
+   
+   /* Successful - assign return parameter */
+   EXEC SQL AT :current_dbsite COMMIT;
+   strcpy (flag, sqlFlag);
+   return(OK);
+}

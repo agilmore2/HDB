@@ -1,0 +1,93 @@
+/*****************************************************************************
+* SqlCountValues
+*
+* AUTHOR - EDITORS
+* Carol Marra
+*****************************************************************************/
+
+EXEC SQL INCLUDE SQLCA;
+#include <stdio.h>
+#include <defines.h>
+#include <typedefs.h>
+#include <dbutils.h>
+#include <utils.h>
+
+#define FUNC_NAME    "SqlSelectCount"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlSelectCount
+
+<P> <STRONG>Function signature:</STRONG> int SqlSelectCount (char *, int *)
+
+<P> <STRONG>Function description:</STRONG> Takes the "select count" statement supplied and executes it, returning the count result.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> char *countStatement: The count statement to be executed.
+<BR><DD> int *count:           The count retrieved from the database.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+
+int SqlSelectCount (char *countStatement, int *count)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    char *sqlCountStatement = countStatement;
+    ID *sqlCount = count;
+  EXEC SQL END DECLARE SECTION;
+  
+  int result;
+
+  EXEC SQL AT :current_dbsite DECLARE selCount STATEMENT;
+  EXEC SQL PREPARE selCount FROM :sqlCountStatement;
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE,
+	"Error preparing selectCount statement.\n\tExiting.", 
+	sqlCountStatement)) == ERROR)
+    {		
+      EXEC SQL ROLLBACK;
+      return (ERROR);
+    }
+
+  EXEC SQL DECLARE c1 CURSOR FOR selCount;
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE,
+	"Error declaring cursor c1 for selCount.\n\t%s.\n\tExiting.", 
+	sqlCountStatement)) == ERROR)
+    {		
+      EXEC SQL ROLLBACK;
+      return (ERROR);
+    }
+
+  EXEC SQL OPEN c1;
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE,
+	"Error opening cursor c1.\n\tExiting.", 
+	sqlCountStatement)) == ERROR)
+    {		
+      EXEC SQL ROLLBACK;
+      return (ERROR);
+    }
+
+  
+  EXEC SQL FETCH c1 into :sqlCount;
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE,
+	"Error retrieving count for\n\t%s.\n\tExiting.", 
+	sqlCountStatement)) == ERROR)
+    {		
+      EXEC SQL ROLLBACK;
+      return (ERROR);
+    }
+  
+  EXEC SQL CLOSE c1;
+
+  EXEC SQL AT :current_dbsite COMMIT;
+  
+  return (OK);
+}
+
+

@@ -1,0 +1,164 @@
+/* A few SQL functions to select various pieces of meta-data */
+
+#include <stdio.h>
+#include <string.h>
+#include "dbutils.h"
+#include "typedefs.h"
+#include "utils.h"
+#include "defines.h"
+
+EXEC SQL INCLUDE SQLCA;
+
+#define FUNC_NAME "SqlSelectDatatypeInfo"
+int SqlSelectDatatypeInfo (ID datatype_id, char *datatype_name, ID *unit_id)
+{
+   EXEC SQL BEGIN DECLARE SECTION;
+    ID sq_datatype_id = datatype_id;
+    varchar sq_datatype_name[65];
+    ID sq_unit_id;  
+   EXEC SQL END DECLARE SECTION;
+   
+   int           result;
+   
+   EXEC SQL SELECT DATATYPE_NAME, UNIT_ID  
+      INTO :sq_datatype_name, :sq_unit_id 
+      FROM HDB_DATATYPE
+      WHERE DATATYPE_ID = :sq_datatype_id;
+   
+   /* the following checks to see if no records were returned */
+   if (sqlca.sqlcode > 0)
+   {
+      PrintError ("A valid datatype does not exist for datatype_id %6d \n\n",
+		  datatype_id);
+      return(ERROR);
+   } 
+
+   if ((result = SqlErrorHandler 
+	(FUNC_NAME, FALSE, "Problem selecting from hdb_datatype.\n")) != OK)
+   {
+      return (ERROR);
+   }
+
+   EXEC SQL COMMIT;
+
+   sq_datatype_name.arr[sq_datatype_name.len] = '\0';
+   strncpy (datatype_name, sq_datatype_name.arr, sq_datatype_name.len + 1);
+   *unit_id = sq_unit_id;
+
+   return (OK);
+}
+
+#define FUNC_NAME "SqlSelectUnitName"
+int SqlSelectUnitName (ID unit_id, char *unit_name)
+{
+   EXEC SQL BEGIN DECLARE SECTION;
+    ID sq_unit_id = unit_id;
+    varchar sq_unit_name[33];
+   EXEC SQL END DECLARE SECTION;
+   
+   int           result;
+   
+   EXEC SQL SELECT UNIT_NAME  
+      INTO :sq_unit_name 
+      FROM HDB_UNIT
+      WHERE UNIT_ID = :sq_unit_id;
+
+   /* the following checks to see if no records were returned */
+   if (sqlca.sqlcode > 0)
+   {
+      PrintError ("A valid unit does not exist for unit_id %6d \n\n",
+		  unit_id);
+      return(ERROR);
+   } 
+
+   if ((result = SqlErrorHandler 
+	(FUNC_NAME, FALSE, "Problem selecting from hdb_unit.\n")) != OK)
+   {
+      return (ERROR);
+   }
+
+   EXEC SQL COMMIT;
+
+
+   sq_unit_name.arr[sq_unit_name.len] = '\0';
+   strncpy (unit_name, sq_unit_name.arr, sq_unit_name.len + 1);
+
+   return (OK);
+}
+   
+#define FUNC_NAME "SqlSelectSiteName"
+int SqlSelectSiteName (ID site_id, char *site_name)
+{
+   EXEC SQL BEGIN DECLARE SECTION;
+    ID sq_site_id = site_id;
+    varchar sq_site_name[33];
+   EXEC SQL END DECLARE SECTION;
+   
+   int           result;
+   
+   EXEC SQL SELECT SITE_NAME  
+      INTO :sq_site_name 
+      FROM HDB_SITE
+      WHERE SITE_ID = :sq_site_id;
+
+   /* the following checks to see if no records were returned */
+   if (sqlca.sqlcode > 0)
+   {
+      PrintError ("A valid site does not exist for site_id %6d \n\n",
+		  site_id);
+      return(ERROR);
+   } 
+
+   if ((result = SqlErrorHandler 
+	(FUNC_NAME, FALSE, "Problem selecting from hdb_site.\n")) != OK)
+   {
+      return (ERROR);
+   }
+
+   EXEC SQL COMMIT;
+
+   sq_site_name.arr[sq_site_name.len] = '\0';
+   strncpy (site_name, sq_site_name.arr, sq_site_name.len + 1);
+
+   return (OK);
+}
+   
+
+#define FUNC_NAME "SqlSelectModelRunName"
+int SqlSelectModelRunName (ID model_run_id, char *model_run_name)
+{
+   EXEC SQL BEGIN DECLARE SECTION;
+    ID sq_model_run_id = model_run_id;
+    varchar sq_model_run_name[65];
+   EXEC SQL END DECLARE SECTION;
+   
+   int           result;
+   
+   EXEC SQL SELECT MODEL_RUN_NAME  
+      INTO :sq_model_run_name 
+      FROM REF_MODEL_RUN
+      WHERE MODEL_RUN_ID = :sq_model_run_id;
+
+   /* the following checks to see if no records were returned */
+   if (sqlca.sqlcode > 0)
+   {
+      PrintError ("A valid model does not exist for model_run_id %6d \n\n",
+		  model_run_id);
+      return(ERROR);
+   } 
+
+   if ((result = SqlErrorHandler 
+	(FUNC_NAME, FALSE, "Problem selecting from ref_model_run.\n")) != OK)
+   {
+      return (ERROR);
+   }
+
+   EXEC SQL COMMIT;
+
+   sq_model_run_name.arr[sq_model_run_name.len] = '\0';
+   strncpy (model_run_name, sq_model_run_name.arr, sq_model_run_name.len + 1);
+
+   return (OK);
+}
+   
+   

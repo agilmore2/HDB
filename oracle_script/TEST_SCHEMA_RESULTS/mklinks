@@ -1,0 +1,4 @@
+ln -s /projects/hdb/hdb2/builds/oracle_script/TEST_SCHEMA_RESULTS/ISLAND ISLAND 
+ln -s /projects/hdb/hdb2/builds/oracle_script/TEST_SCHEMA_RESULTS/MASTER MASTER 
+ln -s /projects/hdb/hdb2/builds/oracle_script/TEST_SCHEMA_RESULTS/SNAPSHOT SNAPSHOT 
+ln -s /projects/hdb/hdb2/builds/oracle_script/TEST_SCHEMA_RESULTS/schemaTest.sql schemaTest.sql 

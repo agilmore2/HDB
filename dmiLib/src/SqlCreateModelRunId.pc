@@ -1,0 +1,328 @@
+
+/* standard includes */
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <malloc.h>
+
+/* HDB includes */
+#include "dbutils.h"
+#include "utils.h"
+#include "defines.h"
+#include "typedefs.h"
+
+/* application-specific include */
+#include "dmi_utils.h"
+
+EXEC SQL INCLUDE sqlca;
+
+#define FUNC_NAME "SqlCreateModelRunId"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlCreateModelRunId
+
+<P> <STRONG>Function signature:</STRONG> int SqlCreateModelRunId(model_run *, int *)
+
+<P> <STRONG>Function description:</STRONG> Creates a new model_run_id in ref_model_run based on the spec.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> model_run *spec: Specification of model_run_id to be created.
+<BR><DD> int *suc:        Indicator of success of model_run_id creation. Output.
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+int SqlCreateModelRunId(model_run *spec, int *suc)
+{
+   EXEC SQL BEGIN DECLARE SECTION;
+   short int probNull, modelTypeNull, userIdNull,
+      startDateNull, endDateNull,
+      timeStepNull, commentNull;
+   int runId, modelId, prob, userId;
+   char runName[65], runDate[25], modelType[25], startDate[25], 
+      endDate[25], timeStep[129], comment[1001];
+   EXEC SQL END DECLARE SECTION;
+   
+   int result;
+  
+/* This routine inserts run information into the ref_model_run table.
+   We insert the information at the local database only.  A rule on the 
+   database will increment ref_db_site_list.maxid automatically.
+   (Note that we are not connected using the model_role, hence the 
+   trigger will fire).
+   Remote sites will update their tables through a call to 
+   SqlSyncModelRuns().  */
+
+/* Initialize the indicator variables.  -1 is NULL and 0 is not NULL */
+   
+   probNull = modelTypeNull = userIdNull = startDateNull = endDateNull =
+      timeStepNull = commentNull = 0;
+   
+   result = SwitchSession(dbsite_array[0].dbsite_alias);
+   if(result != OK)
+   {
+      PrintError("ERROR occurred changing to session 1\n");
+      return(ERROR);
+   }
+   
+   EXEC SQL AT :current_dbsite SELECT maxid INTO :runId 
+            FROM ref_db_list 
+            WHERE session_no = 1;
+
+   result = SqlErrorHandler(FUNC_NAME, FALSE, 
+                            "Could not retrieve the maxId.\n");
+   if(result != OK)
+   {
+       PrintError("ERROR retrieving maxId from ref_dblist.\n");
+       return (ERROR);
+   }
+   
+   /* The following four tests are to see if the first four fields
+      in a record for ref_model_run_id are indeed not NULL.  If one of them
+      is NULL, return but do not close any database connections; connections
+      are closed by the top level calling routine. */
+   
+   if(spec[0].Name == NULL)
+   {
+      PrintError("Error: model_run_name may not be NULL\n");
+      return (ERROR);
+   }
+   strcpy(runName, spec[0].Name);
+
+   if(spec[0].modelId == NA)
+   {
+      PrintError("Error: model_Id may not be NULL\n");
+      return (ERROR);
+   }
+   modelId = spec[0].modelId;
+
+   if(spec[0].runDate == NULL)
+   {
+      PrintError("Error: model_run_date may not be NULL\n");
+      return (ERROR);
+   }
+   if ((result = SqlFormatDate (spec[0].runDate, runDate)) != OK)
+	{
+	   PrintError ("Error formatting run date %s. Exiting. \n", 
+		       spec[0].runDate);
+	   return (ERROR);
+	}
+
+   if(spec[0].modelType == NULL)
+   {
+      PrintError("Error: modelType may not be NULL\n");
+      return (ERROR);
+   }
+   strcpy(modelType, spec[0].modelType);
+   
+   if(spec[0].prob == NA) probNull = -1;
+   else prob = spec[0].prob;
+   if(spec[0].userId == NA) userIdNull = -1;
+   else userId = spec[0].userId;
+   if(spec[0].startDate[0] == '\0') startDateNull = -1;
+   else if ((result = SqlFormatDate (spec[0].startDate, startDate)) != OK)
+   {
+      PrintError ("Error formatting start date %s. Exiting. \n", spec[0].startDate);
+      return (ERROR);
+   }
+   if(spec[0].endDate[0] == '\0') endDateNull = -1;
+   else if ((result = SqlFormatDate (spec[0].endDate, endDate)) != OK)
+   {
+      PrintError ("Error formatting end date %s. Exiting. \n", spec[0].endDate);
+      return (ERROR);
+   }
+   if(spec[0].timeStep[0] == '\0') timeStepNull = -1;
+   else strcpy(timeStep, spec[0].timeStep);
+   if(spec[0].Comment[0] == '\0') commentNull = -1;
+   else strcpy(comment, spec[0].Comment);
+      
+   /* now connect to other sessions and insert the data into temp table */
+   /* from here on, if there's failure, must rollback all sessions      */
+   /* NOTE: if the process ends w/o commit, rollback is implicit        */
+ 
+   result = SwitchSession(dbsite_array[0].dbsite_alias);
+   if(result != OK)
+   {
+      PrintError("Could not connect to site database %s\n",
+		 dbsite_array[0].dbsite_alias);
+      return (ERROR);
+   }
+
+   model_run_id = runId;
+
+   /* Insert model_run_id of 0, because procedure will update it 
+      appropriately. */ 
+   EXEC SQL AT :current_dbsite 
+      INSERT INTO ref_model_run VALUES (0, :runName, :modelId, 
+      sysdate, to_date (:runDate, 'dd-mon-yyyy hh24:mi:ss'), :prob:probNull, 
+      :modelType:modelTypeNull, :userId:userIdNull, 
+      to_date (:startDate:startDateNull, 'dd-mon-yyyy hh24:mi:ss'),
+      to_date (:endDate:endDateNull, 'dd-mon-yyyy hh24:mi:ss'), 
+      :timeStep:timeStepNull, :comment:commentNull);  
+   result = SqlErrorHandler(FUNC_NAME, FALSE, 
+			       "Problem executing insert_new...\n");
+   if(result != OK)
+       return (ERROR);
+
+   EXEC SQL AT :current_dbsite COMMIT;
+   result = SqlErrorHandler (FUNC_NAME, TRUE,
+			     "Could not commit changes.\n");
+   if(result != OK)
+   {
+      PrintError("ERROR in Commit\n");
+      return (ERROR);
+   }
+   *suc = 1;
+   return (OK);
+}
+
+#define FUNC_NAME "SqlUpdateModelRunId"
+/*
+<HTML>
+
+<P> <STRONG>Function name:</STRONG> SqlUpdateModelRunId
+
+<P> <STRONG>Function signature:</STRONG> int SqlUpdateModelRunId(model_run *, int *)
+
+<P> <STRONG>Function description:</STRONG> Updates an existing model_run_id in ref_model_run based on the spec.
+
+<P><DL> <STRONG>Function arguments:</STRONG>
+<BR><DD> model_run *spec: Specification of model_run_id to be updated.
+<BR><DD> int *suc:        Indicator of success of model_run_id update. Output.
+
+</DL>
+
+<P> <STRONG>Function return value:</STRONG> OK or ERROR
+
+</HTML>
+*/
+int SqlUpdateModelRunId(model_run *spec, int *suc)
+{
+   EXEC SQL BEGIN DECLARE SECTION;
+   short int probNull, modelTypeNull, userIdNull,
+      startDateNull, endDateNull,
+      timeStepNull, commentNull;
+   int runId, modelId, prob, userId;
+   char runName[65], runDate[25], modelType[25], startDate[25], 
+      endDate[25], timeStep[129], comment[1001];
+   EXEC SQL END DECLARE SECTION;
+   
+   int result;
+  
+/* This routine updates run information in the ref_model_run table.
+   We update the information at the local database only.  
+   Remote sites will update their tables through a call to 
+   SqlSyncModelRuns().  */
+
+/* Initialize the indicator variables.  -1 is NULL and 0 is not NULL */
+   
+   probNull = modelTypeNull = userIdNull = startDateNull = endDateNull =
+      timeStepNull = commentNull = 0;
+   
+   result = SwitchSession(dbsite_array[0].dbsite_alias);
+   if(result != OK)
+   {
+      PrintError("ERROR occurred changing to session 1\n");
+      return(ERROR);
+   }
+   
+   /* The following four tests are to see if the first four fields
+      in a record for ref_model_run_id are indeed not NULL.  If one of them
+      is NULL, return but do not close any database connections; connections
+      are closed by the top level calling routine. */
+   
+   if(spec[0].Name == NULL)
+   {
+      PrintError("Error: model_run_name may not be NULL\n");
+      return (ERROR);
+   }
+   strcpy(runName, spec[0].Name);
+
+   if(spec[0].modelId == NA)
+   {
+      PrintError("Error: model_Id may not be NULL\n");
+      return (ERROR);
+   }
+   modelId = spec[0].modelId;
+
+   if(spec[0].runDate == NULL)
+   {
+      PrintError("Error: model_run_date may not be NULL\n");
+      return (ERROR);
+   }
+   if ((result = SqlFormatDate (spec[0].runDate, runDate)) != OK)
+	{
+	   PrintError ("Error formatting run date %s. Exiting. \n", 
+		       spec[0].runDate);
+	   return (ERROR);
+	}
+
+   if(spec[0].modelType == NULL)
+   {
+      PrintError("Error: modelType may not be NULL\n");
+      return (ERROR);
+   }
+   strcpy(modelType, spec[0].modelType);
+   
+   if(spec[0].prob == NA) probNull = -1;
+   else prob = spec[0].prob;
+   if(spec[0].userId == NA) userIdNull = -1;
+   else userId = spec[0].userId;
+   if(spec[0].startDate[0] == '\0') startDateNull = -1;
+   else if ((result = SqlFormatDate (spec[0].startDate, startDate)) != OK)
+   {
+      PrintError ("Error formatting start date %s. Exiting. \n", spec[0].startDate);
+      return (ERROR);
+   }
+   if(spec[0].endDate[0] == '\0') endDateNull = -1;
+   else if ((result = SqlFormatDate (spec[0].endDate, endDate)) != OK)
+   {
+      PrintError ("Error formatting end date %s. Exiting. \n", spec[0].endDate);
+      return (ERROR);
+   }
+   if(spec[0].timeStep[0] == '\0') timeStepNull = -1;
+   else strcpy(timeStep, spec[0].timeStep);
+   if(spec[0].Comment[0] == '\0') commentNull = -1;
+   else strcpy(comment, spec[0].Comment);
+
+   /* Set the model_run_id to update */
+   runId = spec[0].modelRunId;
+
+   /* Insert model_run_id of 0, because procedure will update it 
+      appropriately. */ 
+   EXEC SQL AT :current_dbsite 
+      UPDATE ref_model_run 
+	SET model_run_name = :runName, 
+	    model_id = :modelId, 
+	    sys_date = sysdate,
+	    run_date = to_date (:runDate, 'dd-mon-yyyy hh24:mi:ss'), 
+	    probability = :prob:probNull, 
+	    modeltype = :modelType:modelTypeNull, 
+	    user_id = :userId:userIdNull, 
+            start_date = to_date (:startDate:startDateNull, 'dd-mon-yyyy hh24:mi:ss'),
+	    end_date = to_date (:endDate:endDateNull, 'dd-mon-yyyy hh24:mi:ss'), 
+	    time_step_descriptor = :timeStep:timeStepNull, 
+	    cmmnt = :comment:commentNull
+	WHERE model_run_id = runId;
+
+   result = SqlErrorHandler(FUNC_NAME, FALSE, 
+			       "Problem executing update of ref_model_run...\n");
+   if(result != OK)
+       return (ERROR);
+
+   EXEC SQL AT :current_dbsite COMMIT;
+   result = SqlErrorHandler (FUNC_NAME, TRUE,
+			     "Could not commit changes.\n");
+   if(result != OK)
+   {
+      PrintError("ERROR in Commit\n");
+      return (ERROR);
+   }
+   *suc = 1;
+   return (OK);
+}
+

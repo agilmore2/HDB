@@ -1,0 +1,43 @@
+#ORACLE SPECIFIC - required for all Oracle applications
+setenv ORACLE_HOME       /usr/local/oracle/product/816
+setenv ORACLE_BASE       /usr/local/oracle
+setenv ORACLE_DOC        $ORACLE_HOME/doc
+setenv ORACLE_NLS32      $ORACLE_HOME/ocommon/nls/admin/data
+setenv TNS_ADMIN         $ORACLE_HOME/network/admin
+setenv ORACLE_LPPROG     /usr/ucb/lpr
+setenv ORACLE_LPSTAT     /usr/ucb/lpq
+setenv ORACLE_PAGER      /usr/ucb/more
+setenv ORACLE_TERM       xsun
+setenv ORACLE_SID        hdb2 
+
+# HDB - required for all HDB interactions (should be set in users' .cshrc)
+setenv HDB_LOCAL         hdb2 
+setenv HDB_ENV           /projects/hdb/hdb2/builds
+
+# ORACLE Permissions - required for all Oracle applications
+setenv PSSWD_USER        psswd_user
+setenv APP_USER          app_user
+setenv APP_ROLE          app_role
+setenv HDB_META_ROLE     hdb_meta_role
+setenv REF_META_ROLE     ref_meta_role
+setenv MODEL_ROLE        model_role
+setenv DERIVATION_ROLE   derivation_role
+
+# HYDROMET DATA LOADING - required for hydromet applications
+setenv ARCHIVE_DIR $HDB_ENV/hydromet/archiveFiles
+setenv DAYFILE_DIR $HDB_ENV/hydromet/dayfiles
+setenv ROOTDO_ADM  $HDB_ENV/rootdo/local/adm
+setenv CUTOFF_HOUR 5
+setenv CUTOFF_MINUTE 14
+setenv NUM_DELETE_DAYS 45
+setenv NUM_CRSP_VALUES 5
+
+# HYDROMET HDB/VAX - required for crossmount and shell scripts
+setenv DAYDATA_DIR $HDB_ENV/appCode/hydromet/dayfiles 
+setenv ARCDATA_DIR $HDB_ENV/appCode/hydromet/archiveFiles 
+setenv MOUNTDIR "" 
+setenv HYD_HOST cadswes 
+setenv HYD_USER marra 
+setenv COMFILE_DIR ""
+
+

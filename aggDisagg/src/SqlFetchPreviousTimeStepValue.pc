@@ -1,0 +1,83 @@
+/*****************************************************************************
+* DESCRIPTION
+*
+* This file contains a functions that looks up the previous value in a table
+* given a date type and a time step.
+*
+*
+*
+* Author
+*
+* Julien Chastang
+* March, 1999
+****************************************************************************/
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include "aggDisagg.h"
+#include "aggDisaggDefines.h"
+#include "utils.h"
+#include "dbutils.h"
+#include "defines.h"
+#include "typedefs.h"
+#include "aggDisaggTypedefs.h"
+#include "lc_apps.h"
+
+EXEC SQL INCLUDE sqlca;
+
+#define FUNC_NAME "SqlFetchPreviousTimeStepValue"
+
+int SqlFetchPreviousTimeStepValue (OBJECTTYPE_NAME tableSource, TIME_INTERVAL_TYPES obsSource, int model_run_id_src, ID siteDatatypeId, SQL_DATE dateLow, double *previous_timestep_value)
+{
+     EXEC SQL BEGIN DECLARE SECTION;
+         int result;
+         int success;
+         float return_val = 0;
+         short return_ind = 0;
+         char sql_statement[600];
+         SQL_DATE start_date;
+     EXEC SQL END DECLARE SECTION;
+
+     success = SqlDateMath(SUBTRACTION,dateLow,start_date,1,MONTH);
+
+     if (success == ERROR)
+     {
+         PrintError("Problem doing date math. Exiting.\n");
+         exit(ERROR);
+     }
+
+     sprintf(sql_statement,"SELECT value from %s WHERE site_datatype_id = %d and model_run_id = %d AND date%s = to_date('%s','dd-mon-yyyy hh24:mi:ss')", tableSource, siteDatatypeId, model_run_id_src, strstr (tableSource, "_"), start_date); 
+
+    EXEC SQL AT :current_dbsite DECLARE sel STATEMENT;
+
+    EXEC SQL PREPARE sel FROM :sql_statement;
+
+    if (SqlErrorHandler (FUNC_NAME, TRUE, "Problem preparing sel from statement: \n\t%s.\n", sql_statement) != OK)
+    {
+           return(ERROR);
+    }
+
+    EXEC SQL DECLARE c1 CURSOR FOR sel;
+    if ((result = SqlErrorHandler (FUNC_NAME, FALSE, "Error declaring cursor c1 for sel.\n\t%s.\n", sql_statement)) == ERROR)
+    {
+       return (ERROR);
+    }
+
+    EXEC SQL OPEN c1;
+    if ((result = SqlErrorHandler (FUNC_NAME, FALSE, "Error opening cursor c1.\n", sql_statement)) == ERROR)
+    {
+       return (ERROR);
+    }
+
+
+    EXEC SQL FETCH c1 into :return_val:return_ind;
+    if ((result = SqlErrorHandler (FUNC_NAME, TRUE, "Problem selecting the value.\n")) == ERROR)
+    {
+       return (ERROR);
+    }
+
+    EXEC SQL CLOSE c1;
+
+    *previous_timestep_value = return_val;
+    return (OK);
+}

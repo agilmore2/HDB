@@ -1,0 +1,305 @@
+/*
+* DESCRIPTION
+* These functions retrieve the site ID and site name for every site which is
+* of the object type indicated.  These values are retrieved from hdb_site and
+* inserted into the names array.
+*
+* The function SqlFetchSiteNamesPlusAltId, in addition, retrieves,, for every
+* site, the site_id of another object type (altObjectTypeId) which is in the
+* same geographic location as the original site.  For instance, by passing
+* in objecttypeId for snotel sites, and altObjecttypeId for climate sites,
+* the names array will be filled with all snotel site IDs and names, as well
+* as all climate site IDs which correspond to a snotel site ID.
+*
+*
+* INPUT
+* ID	      	object type (primary site)
+* NAME_ID *	array of names, IDs, etc to be filled in
+* int *		number of sites found
+* ID		object type of alternate site identifiers; in
+*		  SqlFetchSiteNamesPlusAltId only
+*
+* OUTPUT
+* warnings and error messages
+*
+* RETURN
+* OK or ERROR
+*
+*
+* COMMENTS
+*
+* AUTHOR - EDITORS  
+* Carol Marra
+* Rick Casey
+* 
+* Notes
+* 8-April-2003 (rc) Added function to return the loading application id.
+*****************************************************************************/
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include "basins.h"
+#include "dbutils.h"
+#include "utils.h"
+#include "defines.h"
+#include "typedefs.h"
+#include "basinTypedefs.h"
+
+EXEC SQL INCLUDE sqlca;
+
+#define FUNC_NAME "SqlFetchSiteNames"
+
+int SqlFetchSiteNamesPlusAltId (ID objecttypeId, NAME_ID *names, int *numSites,
+				ID altObjecttypeId)
+
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    ID siteId;
+    SITE_NAME siteName;
+    ID altId;
+    ID sqlObjecttypeId = objecttypeId,
+       sqlAltObjecttypeId = altObjecttypeId;
+    int nameLength;
+  EXEC SQL END DECLARE SECTION;
+
+  int       siteCount,
+	    result;
+
+  EXEC SQL WHENEVER NOT FOUND GOTO close_c1;
+  EXEC SQL DECLARE c1 CURSOR FOR 
+    SELECT primary.site_id, primary.site_name, 
+	LENGTH (primary.site_name), secondary.site_id
+    FROM hdb_site primary, hdb_site secondary
+    WHERE primary.parent_objecttype_id = secondary.parent_objecttype_id
+      AND primary.parent_site_id = secondary.parent_site_id
+      AND primary.objecttype_id = :sqlObjecttypeId
+      AND secondary.objecttype_id = :sqlAltObjecttypeId;
+
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE, "Problem declaring cursor c1.")) != OK)
+    {
+      return (ERROR);
+    }
+
+  EXEC SQL OPEN c1;
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE, "Problem opening cursor c1.")) != OK)
+    {
+      return (ERROR);
+    }
+
+  for (siteCount = 0; ; siteCount++) 
+    {
+      EXEC SQL FETCH c1 INTO :siteId, :siteName, :nameLength, :altId;
+      if ((result = SqlErrorHandler 
+	   (FUNC_NAME, FALSE, "Problem opening cursor c1.")) != OK)
+	{
+	  return (ERROR);
+	}
+
+      /* Assign selected values to names[siteCount]. */
+      names[siteCount].siteId = siteId;
+      strncpy (names[siteCount].siteName, siteName, nameLength);
+      names[siteCount].altId = altId;
+      
+#ifdef DEBUG	
+      fprintf(stdout, "ID: %d  NAME: %s  ALT ID: %d\n", 
+	      names[siteCount].siteId, names[siteCount].siteName,
+	      names[siteCount].altId);
+#endif
+
+    }
+
+ close_c1:  EXEC SQL CLOSE c1;
+            EXEC SQL COMMIT;
+
+#ifdef DEBUG	
+  fprintf (stdout, "Number of sites: %d\n", siteCount);
+#endif
+
+  /* return */
+  *numSites = siteCount;
+  return (OK);
+}
+
+/***************************************************************************/
+
+int SqlFetchSiteNames (ID objecttypeId, NAME_ID *names, int *numSites)
+
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+    ID siteId;
+    SITE_NAME siteName;
+    ID altId;
+    ID sqlObjecttypeId = objecttypeId;
+    int nameLength;
+  EXEC SQL END DECLARE SECTION;
+
+  int       siteCount,
+	    result;
+
+  EXEC SQL WHENEVER NOT FOUND GOTO close_c2;
+  EXEC SQL DECLARE c2 CURSOR FOR 
+    SELECT site_id, site_name, LENGTH (site_name), -1
+    FROM hdb_site
+    WHERE objecttype_id = :sqlObjecttypeId;
+
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE, "Problem declaring cursor c2.")) != OK)
+    {
+      return (ERROR);
+    }
+
+  EXEC SQL OPEN c2;
+  if ((result = SqlErrorHandler 
+       (FUNC_NAME, FALSE, "Problem opening cursor c2.")) != OK)
+    {
+      return (ERROR);
+    }
+
+  for (siteCount = 0; ; siteCount++) 
+    {
+      EXEC SQL FETCH c2 INTO :siteId, :siteName, :nameLength, :altId;
+      if ((result = SqlErrorHandler 
+	   (FUNC_NAME, FALSE, "Problem opening cursor c2.")) != OK)
+	{
+	  return (ERROR);
+	}
+      
+      /* Assign selected values to names[siteCount]. */
+      names[siteCount].siteId = siteId;
+      strncpy (names[siteCount].siteName, siteName, nameLength);
+      names[siteCount].altId = altId;
+
+#ifdef DEBUG	
+      fprintf(stdout, "ID: %d  NAME: %s  ALT ID: %d\n", 
+	      names[siteCount].siteId, names[siteCount].siteName,
+	      names[siteCount].altId);
+#endif
+
+    }
+
+close_c2: EXEC SQL close c2;
+          EXEC SQL COMMIT;
+
+#ifdef DEBUG	
+  fprintf (stdout, "Number of sites: %d\n", siteCount);
+#endif
+
+  /* return */
+  *numSites = siteCount;
+  return (OK);
+}
+
+
+/****************************************************************************
+ *
+ * SqlFetchRbasekeys
+ * Author: Rick Casey
+ * 8-April-2003
+ * 
+ * Input parameters (all pointers):
+ *  loading_application_id
+ *  agen_id
+ *  collection_system_id
+ *  computation_id
+ * Output:
+ *  populates the function arguements
+ *	returns 0 or 1 (NO_ERROR or ERROR)
+ * 
+ * Description:
+ * Looks up foreign keys required for r_base inserts based on #define's in
+ * basinTypedefs.h.
+ * 
+ * (note: at this point in time, the function that looks up the validation 
+ * value is hardcoded to return 'Z'. A future validation function would be plugged 
+ * in there. (see SqlGetValidationFlag in $HDB_ENV/hdbLib/src/SqlValidation.pc).
+ *
+ ****************************************************************************/
+int SqlFetchRbasekeys (int * p_loading_application_id, int * p_agen_id, int * p_collection_system_id, int * p_computation_id)
+{
+	int		result;
+
+	EXEC SQL BEGIN DECLARE SECTION;
+	  int           agen_id,
+	  				collection_system_id, 
+					computation_id, 
+					loading_application_id; 
+	  char          agen_name[64],
+					collection_system_name[64],
+					computation_name[64],
+					loading_application_name[64];
+	EXEC SQL END DECLARE SECTION;
+
+	EXEC SQL WHENEVER NOT FOUND go to close_FetchRbaseKeys;
+
+	/* Assign #define's to host variables. */
+	strcpy(agen_name,AGEN_NAME);
+	strcpy(collection_system_name,COLLECTION_SYSTEM_NAME);
+	strcpy(computation_name,COMPUTATION_NAME);
+	strcpy(loading_application_name,LOADING_APPLICATION_NAME);
+
+	EXEC SQL SELECT agen_id INTO :agen_id
+		FROM hdb_agen 
+		WHERE hdb_agen.agen_name = :agen_name;
+
+	if ( (result = SqlErrorHandler 
+		(FUNC_NAME, FALSE, "Problem selecting foreign keys from hdb_agen for r_base.") ) != OK)
+    {
+		return (ERROR);
+    }
+
+	EXEC SQL SELECT collection_system_id INTO :collection_system_id 
+		FROM hdb_collection_system 
+		WHERE hdb_collection_system.collection_system_name = :collection_system_name;
+
+	if ( (result = SqlErrorHandler 
+		(FUNC_NAME, FALSE, "Problem selecting foreign keys from hdb_collection_system for r_base.") ) != OK)
+    {
+		return (ERROR);
+    }
+
+	EXEC SQL SELECT computation_id INTO :computation_id
+		FROM hdb_computed_datatype
+		WHERE hdb_computed_datatype.computation_name = :computation_name;
+
+	if ( (result = SqlErrorHandler 
+		(FUNC_NAME, FALSE, "Problem selecting foreign keys from hdb_computated_datatype for r_base.") ) != OK)
+    {
+		return (ERROR);
+    }
+
+	EXEC SQL SELECT loading_application_id INTO :loading_application_id
+		FROM hdb_loading_application
+		WHERE hdb_loading_application.loading_application_name = :loading_application_name;
+
+	if ( (result = SqlErrorHandler 
+		(FUNC_NAME, FALSE, "Problem selecting foreign keys from hdb_loading_application for r_base.") ) != OK)
+    {
+		return (ERROR);
+    }
+
+	/* Assign results to parameters by reference. */
+	*p_loading_application_id = loading_application_id;
+	*p_agen_id = agen_id;
+	*p_collection_system_id = collection_system_id;
+	*p_computation_id = computation_id;
+
+	/* debugging statements...
+	printf("Return values from HDB calls:\n");
+	printf("loading_application_id = %d\n",loading_application_id);
+	printf("agen_id = %d\n",agen_id);
+	printf("collection_system_id = %d\n",collection_system_id);
+	printf("computation_id = %d\n",computation_id);
+	*/
+
+
+	close_FetchRbaseKeys: 
+	if ( (result = SqlErrorHandler 
+		(FUNC_NAME, FALSE, "Problem selecting foreign keys for r_base.") ) != OK)
+    {
+		return (ERROR);
+    }
+	return (OK);
+}
