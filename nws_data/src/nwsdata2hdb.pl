@@ -3,7 +3,9 @@
 #insert HDB library
 
 use lib "$ENV{HDB_ENV}/perlLib/lib";
-use lib "$ENV{HDB_ENV}/perlLib/lib/i386-linux";
+# Don't need
+#use lib "$ENV{HDB_ENV}/perlLib/lib/i386-linux";
+
 use Hdb;
 
 use Date::Calc qw(:all);
@@ -169,13 +171,12 @@ my $collect_id;
 my $load_app_id;
 my $method_id;
 my $unk_computation_id;
-my $diff_computation_id;
 
 
 sub get_app_ids
 {
 # Get ids to describe where data came from
-  my $agen_name = 'NWS';
+  my $agen_name = 'National Weather Service';
   my $collect_name = '(see agency)';
   my $load_app_name = 'nwstemps2hdb.pl';
   my $method_name = 'unknown';
@@ -207,21 +208,12 @@ sub get_app_ids
     $sth->execute;
   };
 
-
-  if ($@) { # something screwed up
-    print $hdb->dbh->errstr, " $@\n";
-    die "Errors occurred during selection of ids for application.\n";
-  }
-
-  $sth = $hdb->dbh->prepare("select computation_id from hdb_computed_datatype where computation_name = 'difference'");
-  eval {
-    $sth->execute;
-    $sth->bind_col(1,\$diff_computation_id);
-    $sth->fetch;
-    $sth->finish;
-  };
-
-  if ($@) { # something screwed up
+  if ($@ or
+      !defined($unk_computation_id) or
+      !defined($agen_id) or
+      !defined($collect_id) or
+      !defined($load_app_id) or
+      !defined($method_id)) { # something screwed up
     print $hdb->dbh->errstr, " $@\n";
     die "Errors occurred during selection of ids for application.\n";
   }
@@ -233,12 +225,13 @@ sub insert_values
     my($sdi) = $_[3];    
     my($value) = $_[4];
 
+    my $end_date_time = undef;
     my($modsth, $sth);
 #    print @_;
 
     my $modify_data_statement = "
     BEGIN
-        modify_r_base_raw(?,'day',?,null,?, /* sdi, interval, start_date_time, end_date_time (null), value */
+        modify_r_base_raw(?,'day',?,?,?, /* sdi, interval, start_date_time, end_date_time (in/out, not used), value */
                           null,'Z',              /* overwrite, validation */
                           $agen_id,$collect_id,$load_app_id,$method_id,$unk_computation_id,
                           'Y');                 /*do update? */
@@ -267,7 +260,8 @@ sub insert_values
 	}
 	$modsth->bind_param(1,$sdi);
 	$modsth->bind_param(2,$datestr);
-	$modsth->bind_param(3,$value);
+	$modsth->bind_param_inout(3,\$end_date_time, 50);
+	$modsth->bind_param(4,$value);
 	$modsth->execute|| die $modsth->errstr;
       }
       $modsth->finish;
