@@ -8,7 +8,10 @@ fi
 
 file=hydromet_$3.dat
 echo "              Printing Hydromet data"
-./prp $file
+#commented out the print sequence below which
+#was causing more trees to get cut down for 
+#no good reason
+#./prp $file
 echo "       Transferring data to Hydromet"
 # annoying stuff to deal with letter case 
 # because VMS does wierd things to conserve the case both in NFS and scp
