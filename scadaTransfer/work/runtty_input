@@ -1,80 +1,167 @@
-echo 'runtty_input started'
+#!/bin/bash
+umask 002
+echo '       runtty_input started'
 #keep hydromet files around as well
 #rm hydromet_*
 # run program to handle serial line communication and output file creation
-tty_input
+# Loop the running of tty_input to handle weekends
+
+# First, define this function
+prompt_user () {
+
+    #ask if they need to use the SCADA terminal at all
+    read -p "$loopprompt" endloop
+    if [ -z $endloop ] 
+    then
+        endloop='n'
+    fi
+}
+
+# Call it once, to see if we need to go to the SCADA at all
+loopprompt='Are you finished with the SCADA Terminal (y,n) [n] ?'
+prompt_user
+
+#then loop until they say they are done with the terminal
+until [ $endloop = 'y' ]
+do 
+    echo 'To abort getting input from the SCADA terminal, hit ctrl-C'
+    ./tty_input
+    prompt_user
+done
+
+#tty_input appends the dates it reads to the file 'current_dates'
+# this file is removed at the end of this program.
+# Check dates
+touch current_dates
+echo 'Dates currently selected for HDB loading are:'
+cat current_dates
+
+loopprompt="Is this set of dates correct? (y,n) [n] ?"
+prompt_user
+until [ $endloop = 'y' ]
+do 
+    #currently only allow either or, and only one time through this loop,
+    # so we remove the file to start
+    \rm -f current_dates
+    echo 'Select date type:'
+    echo '(1) Sequential (04AUG18 - 04AUG21)'
+    echo '(2) Specific (04AUG18, 04AUG22)'
+    read date_type
+
+    if [ $date_type -eq 1 ]
+    then
+        read -p 'Enter Beginning Date: ' beg_date
+        read -p 'Enter Ending Date: ' end_date
+        for date in `./gendates $beg_date $end_date`
+        do
+            echo $date >>current_dates
+        done
+        cat current_dates
+        prompt_user
+    elif [ $date_type -eq 2 ]
+    then
+        until [ $endloop = 'y' ]
+        do 
+            read -p 'Enter Date: ' date
+            echo $date >>current_dates
+            cat current_dates
+            prompt_user
+        done
+    fi
+done
+
+
 #echo ' '
-echo ' '
 echo '        Initiating program to load data into Oracle HDB'
-echo ' ' 
 #set $1 to first field in this file
-set `cat ./crsp_file`
+for date in `cat current_dates`
+do
 # application scadaTransfer is run using the applications role
 # it has two arguments the name of the log file and the password
 # this application can be run independant of this script
 # if the log file needs to be edited, edit the file (correct the 
 # data - then run the following executable (scadaTransfer)
-echo 'Placing Data into HDB2'
-scadaTransfer $1 app_user uchdb2
+    echo 'Placing Data into HDB2'
+    scadaTransfer crsp_$date.dat app_user uchdb2
+    stat=$?
+    if [ $stat -ne 0 ]
+    then
+        echo "scadaTransfer failed, exiting!"
+        exit $stat
+    fi
+done
 # now run the derivation app to place the data into r_day
-derivation app_user uchdb2 & 
+derivation app_user uchdb2 &
+
+# For testing
+#(sleep 2 && /bin/false) &
+#/bin/true &
+
+# Get the Process ID (pid) of the last process put in the backgroup
+pid=$!
 # This application takes a bit of time, so we put it in the background
 # we do all the other processing, then wait(1) for the derivation app
 # then we can run scadadata, and create the hydromet input file from HDB2
-echo ' '
-echo '       Transferring data to Flagstaff'
-echo ' '
-ftp_orca
-#rm hydromet_*
-mail_wapa
-echo ' ' 
+for date in `cat current_dates`
+do
+    echo '       Transferring data to Flagstaff'
+    ./ftp_orca $date
+    stat=$?
+    if [ $stat -ne 0 ] 
+    then
+        echo 'ERROR IN DATA TRANSFER TO FLAGSTAFF! Notify Rick or Andrew.'
+        echo "Exited with status: $stat."
+#Not a fatal error
+#        exit 1
+    fi
+
+    echo '       Mailing data to WAPA'
+    ./mail_wapa $date
+    stat=$?
+    if [ $stat -ne 0 ] 
+    then
+        echo 'ERROR IN MAILING DATA TO WAPA! Notify Rick or Andrew.'
+        echo "Exited with status: $stat."
+#Not a fatal error
+#        exit 1
+    fi
+done
+    echo '' 
+
 # Now we wait
-echo "Waiting for derivation application to finish"
-wait
-echo 'Derivation application done, creating and transferring hydromet input file'
+# We use /bin/bash as the shell for this since the
+# pure sh shell doesn't hold on to the exit status of the background
+# process if it exits before the wait.
+echo "        Waiting for derivation application to finish"
+
+wait $pid
+stat=$?
+
+#test the result of the wait command
+#if the exit status is non-zero and less than 127
+# the exit status is from the derivation application
+if [ $stat -ne 0 ] 
+then
+    echo "ERROR IN THE DERIVATION APPLICATION. Exited with status: $stat."
+    echo 'The hydromet file was not created. Exiting program.'
+    exit 1
+fi
+
+echo '       Derivation application done, creating and transferring hydromet input file'
 # now run the application to generate the hydromet input file
-scadaData app_user uchdb2 `cat current_date`
-echo ' '
-#now set $1 to first field in this file
-set `cat ./hydro_file`
-echo ' '
-echo "              Printing Hydromet data"
-echo ' '
-prp $1
-echo ' '
-echo ' '
-echo "       Transferring data to Hydromet on the ALPHA"
-echo ' '
-# annoying stuff to deal with letter case 
-# because NFS on slcalp does wierd things to conserve the case
-# hydromet_##SEP.dat becomes HYDROMET_##$SEP.$DAT on vms
-# so we handle it ahead of time the vms $ in the name indicates a case shift
-u=`cat LChydro_file`
+for date in `cat current_dates`
+do
+    scadaData app_user uchdb2 $date 
+    if [ $? -ne 0 ]
+    then
+        echo "scadaData failed, exiting!"
+        exit
+    fi
+done
 
-chmod ugo+rwx $1
-scp -p $1 hydromet@zippy:scada_files/$u
+\rm -f current_dates
 
-#do we need to do this?
-#ssh zippy -l hydromet "set sec [.scada_files]$u /prot=(s:rwed,o:rwed,g:rwed,w:re)"
-
-#
-# these commands below are the previous version, and are less efficient.
-#
-# now, we take advantage of the nfsmount on zimmy, and
-# copy the file to the alpha directory as mounted on zimmy
-#scp `cat dum` zimmy:/alpdata/archives/xferscada/$u
-# now, login to the alpha and copy the file to where it needs to be
-# this command complains that $U is not locked, but it is, so...
-#ssh -1 slcalp -l hydromet 'pipe set def custom$:[archives.xferscada]'" && unlock $U && copy $U uc280:[hydromet.scada_files]"
-#instead, do this command which just changes the protection on the file.
-#ssh zippy -l hydromet "set sec [.scada_files]$U /prot=(s:rwed,o:rwed,g:rwed,w:re)"
-# then, delete the copied file
-#ssh zimmy "rm /alpdata/archives/xferscada/$u"
-#done!
-echo ' '
-echo ' '
 echo '              runtty_input script now complete'
-echo ' ' 
 echo '         Please report all errors seen in this script'
-echo ' '
 exit
+
