@@ -165,3 +165,4 @@ int SqlLoadAggDisagg (RUN_CONTROL *runControl, int aggDisaggId)
 
   return (OK);
 }
+
