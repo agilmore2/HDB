@@ -27,7 +27,7 @@
 #
 # Read data from CO DOMSAT website
 #
-27 06,10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/codwr2hdb/src; ./codwr2hdb.pl -u app_user -p <PASSWORD> -a > $HDB_ENV/codwr2hdb/src/codwr2hdb.log 2> $HDB_ENV/codwr2hdb/src/codwr2hdb.err
+27 7,9,16,21 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/codwr2hdb/src; ./codwr2hdb.pl -u app_user -p <PASSWORD> -a > $HDB_ENV/codwr2hdb/src/codwr2hdb.log 2> $HDB_ENV/codwr2hdb/src/codwr2hdb.err
 #
 # Run Archive Loader for current water year
 #
@@ -83,6 +83,10 @@
 # Starvation and Jordanelle (and a BUNCH more sites)
 #
 55 6 * * * csh -c "source /wrg/home/uchdba/.cshrc; cd /wrg/hdb/HDB2_applications/xferftp/src; ./xferftp_starvjordan.sh" >> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_starvjordan.out 2> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_starvjordan.err
+#
+# Transfer SQL generated data file to NWS CBRFC 
+#
+13 8,10 * * * csh -c "source /wrg/home/uchdba/.cshrc; cd $HDB_ENV/nws_report/src; ./xferftp_nwsdata.sh" >> $HDB_ENV/nws_report/src/xferftp_nwsdata.out 2> $HDB_ENV/nws_report/src/xferftp_nwsdata.err
 #
 # Tea cup diagrams (used to be in Amy Thatcher's crontab)
 #
