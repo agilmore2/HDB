@@ -14,7 +14,7 @@ float readone(int site,int datatype, char *date)
   
    EXEC SQL BEGIN DECLARE SECTION;
 
-   SQL_DATE      day;
+   char     oradate[6];
    ID	        site_id, datatype_id;
    float         value;
    /*   char 		Site_Name[65]; */
@@ -28,8 +28,8 @@ float readone(int site,int datatype, char *date)
    site_id = site;
    datatype_id = datatype;
 
-   EXEC SQL SELECT value, date_day
-      INTO :value, :day
+   EXEC SQL SELECT value, trim(to_char(date_day,'MM/DD'))
+      INTO :value, :oradate
       FROM HDB_SITE_DATATYPE a, R_DAY b
       WHERE SITE_ID = :site_id
       AND DATATYPE_ID = :datatype_id
@@ -48,11 +48,11 @@ float readone(int site,int datatype, char *date)
       exit(ERROR);
    }
   
-   /*All that is below this line is just error handling stuff*/
-
-   strcpy(date,day);
+   strcpy(date,oradate);
   
    return value;
+
+   /*All that is below this line is just error handling stuff*/
 
  errrpt:
   
