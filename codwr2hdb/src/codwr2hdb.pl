@@ -412,7 +412,7 @@ sub insert_values
 
   my $i = 0;
   my $first_date = undef;
-  my ($value, $value_date, $updated_date);
+  my ($value, $value_date, $updated_date, $end_date_time);
   my ($line);
   my ($old_val, $old_source);
 
@@ -420,7 +420,7 @@ sub insert_values
 
   my $modify_data_statement = "
     BEGIN
-        modify_r_base_raw(?,'instant',?,null,?, /* sdi, interval, start_date_time, end_date_time (null), value */
+        modify_r_base_raw(?,'instant',?,?,?, /* sdi, interval, start_date_time, end_date_time (in/out, not used), value */
                           null,'Z',              /* overwrite, validation */
                           $agen_id,$collect_id,$load_app_id,$method_id,$computation_id,
                           'Y');                 /*do update? */
@@ -468,7 +468,8 @@ sub insert_values
 	#modify
 	$modsth->bind_param(1,$cur_sdi);
 	$modsth->bind_param(2,$value_date);
-	$modsth->bind_param(3,$value);
+	$modsth->bind_param_inout(3,$end_date_time);
+	$modsth->bind_param(4,$value);
 	$modsth->execute;
 	if (!defined($first_date)) { # mark that data has changed
 	  $first_date = $value_date;
