@@ -3,7 +3,7 @@
 #insert HDB library
 
 use lib "$ENV{HDB_ENV}/perlLib/lib";
-use lib "$ENV{HDB_ENV}/perlLib/lib/sun4-solaris";
+use lib "$ENV{HDB_ENV}/perlLib/lib/i386-linux";
 
 use LWP::UserAgent;
 use Date::Calc qw(Delta_DHMS);
