@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE refresh_HDB_snap  (which_table IN varchar2)
              AND constraint_type = 'P';
 
          CURSOR fk_constraints ( pk_name VARCHAR) IS
-             SELECT constraint_name, table_name
+             SELECT constraint_name, table_name, owner
              FROM all_constraints
              WHERE r_constraint_name =  pk_name;
 
@@ -36,8 +36,9 @@ CREATE OR REPLACE PROCEDURE refresh_HDB_snap  (which_table IN varchar2)
 		 table_owner := a_constraint.owner;
 
                FOR single_fk IN fk_constraints(a_constraint.constraint_name) LOOP
-                  alter_stmt := 'ALTER TABLE '||single_fk.table_name||
-                                     ' DISABLE CONSTRAINT '||single_fk.constraint_name;
+                  alter_stmt := 'ALTER TABLE '|| single_fk.owner || '.' || 
+				single_fk.table_name ||
+                                ' DISABLE CONSTRAINT '||single_fk.constraint_name;
 
 
                   curs_handle := DBMS_SQL.OPEN_CURSOR;
@@ -64,7 +65,8 @@ CREATE OR REPLACE PROCEDURE refresh_HDB_snap  (which_table IN varchar2)
          -- re-enable all the constraints on "the_table"
          FOR a_constraint IN the_table_constraints LOOP
                FOR single_fk IN fk_constraints(a_constraint.constraint_name) LOOP
-                  alter_stmt := 'ALTER TABLE '||single_fk.table_name||
+                  alter_stmt := 'ALTER TABLE '|| single_fk.owner || '.' ||
+                                     single_fk.table_name ||
                                      ' ENABLE CONSTRAINT '||single_fk.constraint_name;
                   curs_handle := DBMS_SQL.OPEN_CURSOR;
                   DBMS_SQL.PARSE( curs_handle, alter_stmt, DBMS_SQL.NATIVE );
@@ -81,10 +83,10 @@ CREATE OR REPLACE PROCEDURE refresh_HDB_snap  (which_table IN varchar2)
 
 	   DELETE FROM ref_refresh_monitor; 
 
-         SELECT substr (value, 1, instr(value,'hdb',1,1) + 3)
+         SELECT db_site_db_name
          INTO the_db_name
-         FROM v$parameter
-         WHERE name = 'db_name';
+         FROM ref_db_list
+         WHERE session_no = 1;
 
          -- Oracle Consulting:  Gary Coy 29-OCT-1998
          -- This effectively 'hardcodes' the master HDB site
