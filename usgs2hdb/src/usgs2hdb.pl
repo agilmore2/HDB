@@ -233,12 +233,15 @@ until (!defined($data[0])) {
   my $cur_sdi = $usgs_sites->{$usgs_no}->{site_datatype_id};
   my $cur_site = $usgs_sites->{$usgs_no}->{site_id};
 
+
   # put data into database, handing site id and agg id for use
   # when aggDisagg is called, unless testflag is set
   # function returns date of first value and last value updated
   my ($first_date, $updated_date);
 
   if (defined($insertflag)) {
+  #tell user something, so they know it is working
+    print "Working on USGS gage number: $usgs_no\n";
     ($first_date, $updated_date) = insert_values(\@cur_values, $cur_sdi);
     if (!defined($first_date)) {
       print "No data updated for $cur_site\n";
@@ -262,14 +265,14 @@ until (!defined($data[0])) {
     my ($houragg_id, $dayagg_id) = find_agg_id()
     or die "No aggregation id for moving flows from r_instant or r_hour exist, one must be created.\n";
 
-    my $cmd = qq{aggDisagg $hdbuser $hdbpass $houragg_id 1 n n n r d $num_hours '$agg_date $aggtime' $cur_site >aggDisagg_usgshour$usgs_no.out 2>aggDisagg_usgshour$usgs_no.err};
+    my $cmd = qq{aggDisagg $hdbuser $hdbpass $houragg_id 1 n n n r d $num_hours '$agg_date $aggtime' $cur_site >logs/aggDisagg_usgshour$usgs_no.out 2>logs/aggDisagg_usgshour$usgs_no.err};
     print "$cmd\n" if defined($debug);
     system $cmd unless defined($debug);
 
     my $num_days =  sprintf("%d", $num_hours/24);
     $num_days++;
 
-    $cmd = qq{aggDisagg $hdbuser $hdbpass $dayagg_id 1 n n n r d $num_days '$agg_date' $cur_site >aggDisagg_usgsday$usgs_no.out 2>aggDisagg_usgsday$usgs_no.err};
+    $cmd = qq{aggDisagg $hdbuser $hdbpass $dayagg_id 1 n n n r d $num_days '$agg_date' $cur_site >logs/aggDisagg_usgsday$usgs_no.out 2>logs/aggDisagg_usgsday$usgs_no.err};
     print "$cmd\n" if defined($debug);
     system $cmd unless defined($debug);
   }
