@@ -71,8 +71,8 @@
   } UNIT_INFO;
   typedef struct method_class_info {
     ID methodClassId;
-    char name[33];
-    char methodClassType[17];
+    char name[65];
+    char methodClassType[25];
   } METHOD_CLASS_INFO;
 #define NUM_TIME_INTERVALS 8
 #ifdef MAIN

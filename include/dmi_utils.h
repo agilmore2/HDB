@@ -9,8 +9,8 @@
 #include "typedefs.h"
 
 #ifndef ORA_PROC
-#include "/usr/local/tcl-tk/include/tcl.h"
-#include "/usr/local/tcl-tk/include/tk.h"
+#include "tcl.h"
+#include "tk.h"
 #endif
 
 /* Defaults */
