@@ -649,12 +649,14 @@ int readOutputControlFile(char *controlFile, dmi_header_struct **list)
         slot_name[SLOT_NAME_LEN + 1],
         *file_name,
         *unit_descriptor,
-        *char_destination;
+        *char_destination,
+        *char_overwrite;
 
    dmi_header_struct *current, *new;
    
    int destination = MODEL;    /* default for output DMI is MODEL */
    int model_destination = UNUSED;
+   int is_overwrite;
    
    /*
     * Initialize head of linked list to NULL
@@ -733,8 +735,28 @@ int readOutputControlFile(char *controlFile, dmi_header_struct **list)
        {
          case 'r': destination = REAL;
                    model_destination = UNUSED;
-                   break;
 
+		   /* Read flag that specifies whether data is to be written as
+		      an overwrite. Valid only for destination of real. */
+
+		   char_overwrite = GetToken(buff, "overwrite=");
+		   if (char_overwrite)
+		     switch (char_overwrite[0])
+		       {
+  		         case 'y': is_overwrite = TRUE;
+			           break;
+ 		         case 'n': is_overwrite = FALSE;
+          			   break;
+ 		         default: PrintError("Invalid !overwrite value; must be y or n\n");
+			          return(ERROR);
+		       }
+		   else
+		     /* Do not print a warning, as this is not required -- 
+			just set default. */
+		     is_overwrite = FALSE;
+		   
+                   break;
+		   
          case 'm':  destination = MODEL;
                     model_destination = atoi(&char_destination[1]);
                     if (!model_destination)
@@ -790,6 +812,7 @@ int readOutputControlFile(char *controlFile, dmi_header_struct **list)
       current->pr_units = unit_descriptor;
       current->destination = destination;
       current->model_destination = model_destination;
+      current->is_overwrite = is_overwrite;
       
       /* Init data to NULL, to protect against erroneous free statements. */
       current->data = NULL;
