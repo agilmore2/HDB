@@ -2,19 +2,19 @@
 
 use strict;
 
-my $number_of_days = $ARGV[0];
+my $numdays = $ARGV[0];
 my $status = 0;
 
 my ($app,$sqlfile, $output);
-my $subject = "Subject: Data Consistency Check Failed!\n";
+my $subject = "Subject: $numdays Day Data Consistency Check Failed!\n";
 
 
-if (!$ARGV[0]) {
+if (!$numdays) {
   print "Usage: check_consistency.pl <number of days to look back>\n";
   exit 1;
 }
-elsif ($ARGV[0] =~ /\D/ ) {
-  print "ERROR!: Argument for days to look back was not a integer.\n";
+elsif ($numdays =~ /\D/ ) {
+  print "ERROR!: Argument for days to look back: $numdays is not a integer.\n";
   print "Usage: check_consistency.pl <number of days to look back>\n";
   exit 1;
 }
@@ -27,7 +27,7 @@ while (<INFILE>)
   chomp;
   ($app,$sqlfile) = split '=';
 
-  my $sqlout = `sqlplus -S -L app_user/uchdb2 \@$sqlfile $number_of_days`;
+  my $sqlout = `sqlplus -S -L app_user/uchdb2 \@$sqlfile $numdays`;
   my $result = $?;
 
   if ($result) {
@@ -40,7 +40,7 @@ while (<INFILE>)
 }
 
 if ($status) {
-  open MAIL, "|mail $ENV{HDB_XFER_EMAIL},rclayton\@uc.usbr.gov";
+  open MAIL, "|mail -t $ENV{HDB_XFER_EMAIL},rclayton\@uc.usbr.gov";
   print MAIL $subject, $output;
 
   close MAIL;
