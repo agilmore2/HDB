@@ -14,6 +14,8 @@ static char *datatypeName[NUM_DATATYPES] = {"water_surface_elev",
 					      "pwr_releases",
 					      "combined_releases"};
 
+ID agen_id,collection_system_id,loading_application_id,method_id,computation_id;
+
 /* declare functions; support ANSI or K and R C. */
 
 int insertScada(
@@ -25,8 +27,10 @@ ID,
 char *
 #endif
 );
-
+/*
 int SqlSetDateFormat(
 #ifdef ANSIPROTO
+		     int
 #endif
 );
+*/

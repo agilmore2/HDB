@@ -25,6 +25,7 @@ int main( int argc, char** argv )
   char *dbName;
   char *appRole;
   SQL_DATE   dater, date1, formattedDates[NUM_HOURS];
+  char  newDateFormat[] = "DD-MON-YYYY HH24:MI:SS\0";
   char   buffer[BUFFER_LENGTH];
   char   validationFlag[2];
   char   charYear[3], temp[15];
@@ -35,7 +36,7 @@ int main( int argc, char** argv )
     
   float  values[NUM_SITES][NUM_DATATYPES][NUM_HOURS], tail[NUM_SITES][NUM_HOURS], vals_array[NUM_HOURS];
   float  spill[NUM_SITES][NUM_HOURS], bypass[NUM_SITES][NUM_HOURS], hour[NUM_SITES][NUM_HOURS];
-  
+
   FILE   *in;
 
   /*initialize site_datatypes */
@@ -110,7 +111,7 @@ int main( int argc, char** argv )
   
   fprintf(stdout, "Connected to ORACLE.\n");
   
-  if ((result = SqlSetDateFormat ()) != OK)
+  if ((result = SqlSetDateFormat (newDateFormat)) != OK)
     {
       PrintError ("Problem setting default date format.\n\tExiting.");
       SqlDisconnect();
@@ -153,12 +154,12 @@ int main( int argc, char** argv )
 
 /* add a call to SqlGetAppSourceId on 10/8/96 */
 
-  if((result = SqlGetAppSourceId(argv[0], &sourceId)) != OK)
+/*  if((result = SqlGetAppSourceId(argv[0], &sourceId)) != OK)
     {
       SqlDisconnect();
       exit (ERROR);
     }
-
+*/
   for( j=0; j < NUM_SITES; j++)
     { 
 
