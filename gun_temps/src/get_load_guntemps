@@ -1,7 +1,6 @@
 #!/bin/csh -f
 #delete the files
-\rm gunnison.out
-\rm gunnison.shef
+\rm gunnison.txt
 touch marker.delete
 #activate the get_snotel script which get the data from portland
 get_guntemps
@@ -13,7 +12,7 @@ if ($sa[1] != marker.delete)then
     echo  
     source /wrg/hdb/HDB_applications/.cshrc_hdb_app
     rehash
-    /wrg/hdb/HDB_applications/bin/guntemps2hdb.pl gunnison.out app_user uchdb
+    /wrg/hdb/HDB_applications/bin/guntemps2hdb.pl gunnison.txt app_user uchdb
 else 
     echo 'FTP transfer failed!'
     exit 1
