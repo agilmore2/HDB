@@ -74,7 +74,7 @@ ncy and sdi*/
      THEN
 
      DELETE FROM R_BASE                                                               
-     WHERE site_datatype_id = SITE_DATATYPE_ID                               
+     WHERE site_datatype_id = SITE_DATATYPE_ID_IN                               
        AND interval = INTERVAL_IN                                              
        AND start_date_time = START_DATE_TIME_IN                                 
        and end_date_time = END_DATE_TIME_IN;                                    
