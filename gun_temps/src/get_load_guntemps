@@ -18,6 +18,7 @@ else
     echo 'FTP transfer failed!'
     exit 1
 endif
+\rm marker.delete
 echo ' ' 
 echo '     The script - get_load_guntemps - is  complete'
 echo ' '
