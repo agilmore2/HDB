@@ -93,7 +93,7 @@ main ( int argc, char** argv )
     }
   else
     {
-      printf("\n%2$*1$s%4$.*3$s\n",(80-site_name.len)/2-1," ",site_name.len,site_name.arr);
+      printf("\n%*s%.*s\n",(80-site_name.len)/2-1," ",site_name.len,site_name.arr);
       printf("\n         Date        Elevation      Content       Inflow      Release\n");
       printf("                       (feet)        (AF)          (cfs)        (cfs)\n\n");
       
