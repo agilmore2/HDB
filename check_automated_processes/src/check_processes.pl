@@ -1,12 +1,13 @@
 #!/usr/bin/perl -w
 
 use strict;
+use English;
 
 # check on all the crontab applications
 open INFILE, 'automatedapps';
 
 my ($app,$errfile,$expectfile,$cmdname,$ps,$line,@dirent,$HDB_ENV);
-
+my $DEBUG = 0;
 my $status = 0;
 my $subject = "Subject: Failure Detected in Automated uchdb2 Process\n";
 my $output;
@@ -34,14 +35,28 @@ while (<INFILE>)
       if (`diff $errfile $expectfile`) {
         $status = 1;
         $output .= "\nApplication $app had an error! $errfile is not as expected\n";
-        open ERRFILE, $errfile;
-        $output .= <ERRFILE>;
+      #Make this file get sucked in completely, don't break on newlines
+      my $oldsep = $INPUT_RECORD_SEPARATOR;
+      $INPUT_RECORD_SEPARATOR = undef;
+
+      open ERRFILE, $errfile;
+      $output .= <ERRFILE>;
+
+      #reset the record separator
+      $INPUT_RECORD_SEPARATOR = $oldsep;
       }
     } else {
       $status = 1;
       $output .= "\nApplication $app had an error! $errfile is not empty\n";
+      #Make this file get sucked in completely, don't break on newlines
+      my $oldsep = $INPUT_RECORD_SEPARATOR;
+      $INPUT_RECORD_SEPARATOR = undef;
+
       open ERRFILE, $errfile;
       $output .= <ERRFILE>;
+
+      #reset the record separator
+      $INPUT_RECORD_SEPARATOR = $oldsep;
     }
   }
 }
@@ -61,11 +76,15 @@ while (<INFILE>)
   }
 }
 
-if ($status) {
-  open MAIL, "|mail $ENV{HDB_XFER_EMAIL}";
+if ($status && !$DEBUG) {
+  open MAIL, "|mail -t $ENV{HDB_XFER_EMAIL}";
   print MAIL $subject, $output;
 
   close MAIL;
+}
+
+if ($DEBUG) {
+  print $output;
 }
 
 exit $status;
