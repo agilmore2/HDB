@@ -3,7 +3,8 @@
 #insert HDB library
 
 use lib "$ENV{HDB_ENV}/perlLib/lib";
-use lib "$ENV{HDB_ENV}/perlLib/lib/i386-linux";
+# Don't need?
+#use lib "$ENV{HDB_ENV}/perlLib/lib/i386-linux";
 use Hdb;
 
 use Date::Calc qw(:all);
@@ -201,7 +202,7 @@ my $diff_computation_id;
 sub get_app_ids
 {
 # Get ids to describe where data came from
-  my $agen_name = 'NRCS';
+  my $agen_name = 'Natural Resources Conservation Service';
   my $collect_name = 'Snotel';
   my $load_app_name = 'guntemps2hdb.pl';
   my $method_name = 'unknown';
@@ -233,10 +234,14 @@ sub get_app_ids
     $sth->execute;
   };
 
-
-  if ($@) { # something screwed up
+  if ($@ or 
+      !defined($unk_computation_id) or
+      !defined($agen_id) or
+      !defined($collect_id) or
+      !defined($load_app_id) or
+      !defined($method_id)) { # something screwed up
     print $hdb->dbh->errstr, " $@\n";
-    die "Errors occurred during selection of ids for application.\n";
+    die "Errors occurred during selection of foreign keys for r_base.\n";
   }
 
   $sth = $hdb->dbh->prepare("select computation_id from hdb_computed_datatype where computation_name = 'difference'");
@@ -247,9 +252,9 @@ sub get_app_ids
     $sth->finish;
   };
 
-  if ($@) { # something screwed up
+  if ($@ or !defined($diff_computation_id)) { # something screwed up
     print $hdb->dbh->errstr, " $@\n";
-    die "Errors occurred during selection of ids for application.\n";
+    die "Errors occurred during selection of difference computation ids for r_base.\n";
   }
 }
 
@@ -258,32 +263,26 @@ sub insert_values
     my(@value_date) = @_[0,1,2];
     my($cum_precip) = $value_hash{"total wy precip"};
 
-    my($modsth, $modtotsth, $sth);
+    my $end_date_time = undef;
+    my($modsth, $computation_id);
     my($day_precip) = undef;
 #    print @_;
 
     my $modify_data_statement = "
     BEGIN
-        modify_r_base_raw(?,'day',?,null,?, /* sdi, interval, start_date_time, end_date_time (null), value */
+        modify_r_base_raw(?,'day',?,?,?, /* sdi, interval, start_date_time, end_date_time (in/out, not used), value */
                           null,'Z',              /* overwrite, validation */
-                          $agen_id,$collect_id,$load_app_id,$method_id,$unk_computation_id,
+                          $agen_id,$collect_id,$load_app_id,$method_id,?, /*unk_ or diff_computation_id*/
                           'Y');                 /*do update? */
     END;";
 
-    my $modify_tot_data_statement = "
-    BEGIN
-        modify_r_base_raw(?,'day',?,null,?, /* sdi, interval, start_date_time, end_date_time (null), value */
-                          null,'Z',              /* overwrite, validation */
-                          $agen_id,$collect_id,$load_app_id,$method_id,$diff_computation_id,
-                          'Y');                 /*do update? */
-    END;";
 
     $datestr = sprintf("%02d-%.3s-%4d",$value_date[2],
 			   Month_to_Text($value_date[1]), $value_date[0]);
 
     eval {
       $modsth = $hdb->dbh->prepare($modify_data_statement) || die $modsth->errstr;
-      $modtotsth = $hdb->dbh->prepare($modify_tot_data_statement) || die $modtotsth->errstr;
+#      $modtotsth = $hdb->dbh->prepare($modify_tot_data_statement) || die $modtotsth->errstr;
 
 # do precip, if the data are listed from 10/01 ( cumulative till midnight of 9/30), the cumulative counter resets.
       if ($value_date[1] == 9 && $value_date[2] == 30) {
@@ -320,16 +319,15 @@ sub insert_values
       foreach $datatype ( keys %site_datatype_hash )
 	{
           if ($datatype eq 'precip total') {
-            $sth = $modtotsth;
+            $computation_id  = $diff_computation_id;
           } else {
-            $sth = $modsth;
+            $computation_id  = $unk_computation_id;
           }
+
 	  undef $old_val;
-# skip butte max temps, because they are broken. UG. ME HACK.
-          next if $site_datatype_hash{$datatype} == 884;
 	  $old_val = check_value($datestr, $site_datatype_hash{$datatype});
 	  if (!defined $value_hash{$datatype}) {
-	    #could delete data if data is -99.9, otherwise do nothing.
+	    # do nothing, could delete a value if it is in the db here?
 	  }
 	  elsif (defined($old_val) and $old_val == $value_hash{$datatype}) {
 	    next;
@@ -340,14 +338,15 @@ sub insert_values
             } else {
               print "modifying for $site_datatype_hash{$datatype}, date $datestr, value $value_hash{$datatype}, old_val = $old_val\n";
             }
-	    $sth->bind_param(1,$site_datatype_hash{$datatype});
-	    $sth->bind_param(2,$datestr);
-	    $sth->bind_param(3,$value_hash{$datatype});
-	    $sth->execute|| die $sth->errstr;
+	    $modsth->bind_param(1,$site_datatype_hash{$datatype});
+	    $modsth->bind_param(2,$datestr);
+	    $modsth->bind_param_inout(3,\$end_date_time,50);
+	    $modsth->bind_param(4,$value_hash{$datatype});
+	    $modsth->bind_param(5,$computation_id);
+	    $modsth->execute|| die $modsth->errstr;
 	  }
 	}
       $modsth->finish;
-      $modtotsth->finish;
     };
     if ($@) {
       $hdb->dbh->rollback;
