@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 use LWP::UserAgent;
+use Date::Calc qw(:all);
 use DBI;
 use strict;
 
@@ -36,7 +37,7 @@ if ($ARGV[0] =~ m/\D/) {
 }
 
 if ($ARGV[0] >31 ) {
-  print "Number of days must be less than 31.\n";
+  print "Number of days must be 31 or less.\n";
   print "Usage: $progname <num days> <hdbusername> <hdbpassword>\n";
   exit (1);
 }
@@ -44,15 +45,15 @@ if ($ARGV[0] >31 ) {
 #create connection to database
 connect_to_db($ARGV[1], $ARGV[2]);
 
-my $url = "http://waterdata.usgs.gov/nwis/uv?format=rdb&period=$ARGV[0]&site_no=";
+my $url = "http://waterdata.usgs.gov/nwis/uv?parameter_cd=00060&format=rdb&period=$ARGV[0]&site_no=";
 
-my $get_usgs_no_statement = "select a.usgs_id, b.site_datatype_id from
+my $get_usgs_no_statement = "select a.usgs_id, a.site_id, b.site_datatype_id from
 hdb_site a, hdb_site_datatype b, hdb_datatype c, ref_hm_site_datatype d
 where a.site_id = b.site_id and
 b.datatype_id = c.datatype_id and
 b.datatype_id = 18 and
 a.usgs_id is not null and
-/*a.usgs_id like '09165000%' and*/
+a.usgs_id like '09119000%' and
 b.site_datatype_id = d.site_datatype_id and
 d.hourly = 'Y'";
 
@@ -84,14 +85,14 @@ USGSNO: foreach $usgs_no (keys %$usgs_sites) {
     #figure out which column has data
     @headers = split /\t/, $data[0];
     if (@headers <4) {
-        print STDERR "unable to find any data for this site: $usgs_no\n";
-	next USGSNO;
+      print STDERR "unable to find any data for this site: $usgs_no\n";
+      next USGSNO;
     }
-# 00060 is discharge. Lameness abounds.
+    # 00060 is discharge. Lameness abounds.
     my $i=0;
     until (defined($headers[$i]) && ($headers[$i] =~ m/_00060/)) {
       $i++;
-      if ($i>20) { #don't expect more than 16 realtime parameters per site
+      if ($i>20) {		#don't expect more than 16 realtime parameters per site
         print STDERR "unable to find any data for this site: $usgs_no\n";
 	next USGSNO;
       }
@@ -102,10 +103,31 @@ USGSNO: foreach $usgs_no (keys %$usgs_sites) {
     # now we have data
     insert_values(\@data, $usgs_sites->{$usgs_no}->{site_datatype_id},
 		  $column);
+
+    my @row = split /\t/, $data[0];
+    my $value_date = $row[2];
+    my ($startdate,$starttime) = split / /, $value_date;
+    my ($startyear,$startmonth,$startday) = split /-/, $startdate;
+    my ($starthour,$startminute) = split /:/, $starttime;
+    
+    @row = split /\t/, $data[$#data];
+    $value_date = $row[2];
+    my ($enddate,$endtime) = split / /, $value_date;
+    my ($endyear,$endmonth,$endday) = split /-/, $enddate;
+    my ($endhour,$endminute) = split /:/, $endtime;
+
+    my ($Dd,$Dh,$Dm,$Ds) =
+             Delta_DHMS($startyear,$startmonth,$startday,
+			$starthour,$startminute,0,
+			$endyear,$endmonth,$endday,
+			$endhour,$endminute,0);
+    my $num_hours = $Dd*24 + $Dh + ($Dm > 0 ? 1 : 0);
+
+    system qq{aggDisagg $ARGV[1] $ARGV[2] 83 1 n n n r d $num_hours '$startmonth/$startday/$startyear $starttime' $usgs_sites->{$usgs_no}->{site_id}};
   } else {
     print $response->error_as_HTML;
   }
-  sleep 5;
+
 }
 
 $dbh->disconnect();
@@ -179,7 +201,6 @@ sub insert_values
 	next;
       } elsif ($old_val != $value) {
 	print "updating for $cur_sdi, date $value_date, value $value, old_val = $old_val\n";
-	next;
 	#update instead of insert
 	$upsth->bind_param(1,$value);
 	$upsth->bind_param(2,$cur_sdi);
