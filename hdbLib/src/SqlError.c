@@ -7,7 +7,7 @@
     unsigned int curocn;
     void *ptr1;
     void *ptr2;
-    unsigned long magic;
+    unsigned int magic;
   };
   typedef struct sql_cursor sql_cursor;
   typedef struct sql_cursor SQL_CURSOR;
@@ -69,11 +69,11 @@ static const struct sqlcxp sqlfpn =
 };
 
 
-static unsigned long sqlctx = 164955;
+static unsigned int sqlctx = 164955;
 
 
 static struct sqlexd {
-   unsigned int   sqlvsn;
+   unsigned long  sqlvsn;
    unsigned int   arrsiz;
    unsigned int   iters;
    unsigned int   offset;
@@ -85,34 +85,42 @@ static struct sqlexd {
       const char  *stmt;
    sqladts *sqladtp;
    sqltdss *sqltdsp;
-            void  **sqphsv;
-   unsigned int   *sqphsl;
+   unsigned char  **sqphsv;
+   unsigned long  *sqphsl;
             int   *sqphss;
-            void  **sqpind;
+            short **sqpind;
             int   *sqpins;
-   unsigned int   *sqparm;
-   unsigned int   **sqparc;
+   unsigned long  *sqparm;
+   unsigned long  **sqparc;
    unsigned short  *sqpadto;
    unsigned short  *sqptdso;
-            void  *sqhstv[1];
-   unsigned int   sqhstl[1];
+   unsigned int   sqlcmax;
+   unsigned int   sqlcmin;
+   unsigned int   sqlcincr;
+   unsigned int   sqlctimeout;
+   unsigned int   sqlcnowait;
+            int   sqfoff;
+   unsigned int   sqcmod;
+   unsigned int   sqfmod;
+   unsigned char  *sqhstv[1];
+   unsigned long  sqhstl[1];
             int   sqhsts[1];
-            void  *sqindv[1];
+            short *sqindv[1];
             int   sqinds[1];
-   unsigned int   sqharm[1];
-   unsigned int   *sqharc[1];
+   unsigned long  sqharm[1];
+   unsigned long  *sqharc[1];
    unsigned short  sqadto[1];
    unsigned short  sqtdso[1];
-} sqlstm = {10,1};
+} sqlstm = {12,1};
 
 /* SQLLIB Prototypes */
-extern void sqlcxt (void **, unsigned long *,
+extern void sqlcxt (void **, unsigned int *,
                     struct sqlexd *, const struct sqlcxp *);
-extern void sqlcx2t(void **, unsigned long *,
+extern void sqlcx2t(void **, unsigned int *,
                     struct sqlexd *, const struct sqlcxp *);
 extern void sqlbuft(void **, char *);
 extern void sqlgs2t(void **, char *);
-extern void sqlorat(void **, unsigned long *, void *);
+extern void sqlorat(void **, unsigned int *, void *);
 
 /* Forms Interface */
 static const int IAPSUCC = 0;
@@ -125,7 +133,7 @@ typedef struct { unsigned short len; unsigned char arr[1]; } varchar;
 
 /* cud (compilation unit data) array */
 static const short sqlcud0[] =
-{10,4130,0,0,0,
+{12,4130,1,0,0,
 };
 
 
@@ -363,7 +371,7 @@ int SqlErrorHandler(char *funcName, short noRowsOk,
   {
      if ((returnMessage = SqlCheckErrorNoRows(funcName)) != NULL)
      {
-	fprintf (stdout, "%s\n\t", returnMessage);
+	fprintf (stderr, "%s\n\t", returnMessage);
 	PrintDbError (message, arg_list);
 	return (ERROR);
      }
@@ -371,14 +379,14 @@ int SqlErrorHandler(char *funcName, short noRowsOk,
   else 
      if ((returnMessage = SqlCheckError(funcName)) != NULL)
      {
-	fprintf (stdout, "%s\n\t", returnMessage);
+	fprintf (stderr, "%s\n\t", returnMessage);
 	PrintDbError (message, arg_list);
 	return (ERROR);
      }
 
   if((returnMessage = SqlCheckWarning (funcName)) != NULL)
   {
-     fprintf (stdout, "%s\n\t", returnMessage);
+     fprintf (stderr, "%s\n\t", returnMessage);
      PrintDbError (message, arg_list);
      return (WARNING);
   }

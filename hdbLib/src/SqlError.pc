@@ -131,7 +131,7 @@ int SqlErrorHandler(char *funcName, short noRowsOk,
   {
      if ((returnMessage = SqlCheckErrorNoRows(funcName)) != NULL)
      {
-	fprintf (stdout, "%s\n\t", returnMessage);
+	fprintf (stderr, "%s\n\t", returnMessage);
 	PrintDbError (message, arg_list);
 	return (ERROR);
      }
@@ -139,14 +139,14 @@ int SqlErrorHandler(char *funcName, short noRowsOk,
   else 
      if ((returnMessage = SqlCheckError(funcName)) != NULL)
      {
-	fprintf (stdout, "%s\n\t", returnMessage);
+	fprintf (stderr, "%s\n\t", returnMessage);
 	PrintDbError (message, arg_list);
 	return (ERROR);
      }
 
   if((returnMessage = SqlCheckWarning (funcName)) != NULL)
   {
-     fprintf (stdout, "%s\n\t", returnMessage);
+     fprintf (stderr, "%s\n\t", returnMessage);
      PrintDbError (message, arg_list);
      return (WARNING);
   }

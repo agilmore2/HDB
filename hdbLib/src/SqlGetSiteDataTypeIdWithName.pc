@@ -31,10 +31,6 @@ int SqlGetSiteDataTypeIdWithName (ID siteId, char *datatypeName, ID *siteDatatyp
   EXEC SQL END DECLARE SECTION;
 
   int result; 
-if (siteId == 217)
-{
-	printf("Got there...\n");
-}
 
   EXEC SQL AT :current_dbsite SELECT site_datatype_id
     INTO :sqlSitedatatypeId

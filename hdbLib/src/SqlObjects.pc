@@ -30,7 +30,7 @@
 * SqlGetSiteDatatypeIdWithCode
 * Purpose: Retrieve appropriate numerical site_datatype_id given the site_id,
 *	   and the datatype_coden.
-* 
+*
 * Input
 *	ID     siteId
 *	char * datatype_code
@@ -347,14 +347,14 @@ int SqlGetDatatypeMethodClassInfo (ID datatypeId, METHOD_CLASS_INFO *methodClass
   EXEC SQL BEGIN DECLARE SECTION;
     ID sqlDatatypeId = datatypeId;
     ID methodClassId;
-    char methodClassName[33];
+    char methodClassName[65];
     char methodClassType[25];
   EXEC SQL END DECLARE SECTION;
   
   int result;
   
-  EXEC SQL AT :current_dbsite SELECT a.method_class_id, a.method_class_name,
-     a.method_class_type
+  EXEC SQL AT :current_dbsite SELECT a.method_class_id, rtrim (a.method_class_name),
+     rtrim (a.method_class_type)
      INTO :methodClassId, :methodClassName, :methodClassType
     FROM hdb_method_class a, hdb_datatype b
     WHERE b.datatype_id = :sqlDatatypeId
