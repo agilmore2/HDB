@@ -39,6 +39,7 @@ do
     #currently only allow either or, and only one time through this loop,
     # so we remove the file to start
     \rm -f current_dates
+    touch current_dates
     echo 'Select date type:'
     echo '(1) Sequential (04AUG18 - 04AUG21)'
     echo '(2) Specific (04AUG18, 04AUG22)'
@@ -59,7 +60,16 @@ do
         until [ "$endloop" = 'y' ]
         do 
             read -p 'Enter Date: ' date
-            echo $date >>current_dates
+
+            case "$date" in
+                [0][0-9][ADFJMNOS][ACEOPU][BCGLNPRTVY][0-3][0-9])
+                    echo $date >>current_dates
+                    ;;
+                *) #not a date
+                    echo "\"$date\" is not a correct date, not placed in list!"
+                    ;;
+            esac
+
             cat current_dates
             echo "To empty the date set, hit ctrl-C and start runtty_input over."
             prompt_user
@@ -70,13 +80,14 @@ done
 #echo ' '
 echo '        Initiating program to load data into Oracle HDB'
 #set $1 to first field in this file
+if [ ! -s current_dates ]
+then
+    echo "ERROR! No dates selected, exiting program!"
+    exit 1;
+fi
+
 for date in `cat current_dates`
 do
-    if [ -z "$date" ]
-    then
-        echo "Date is empty, error in date file"
-        exit 1;
-    fi
 
 # application scadaTransfer is run using the applications role
 # it has two arguments the name of the log file and the password
