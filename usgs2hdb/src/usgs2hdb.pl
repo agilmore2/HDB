@@ -1,18 +1,19 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl -wd
 
 #insert HDB library
 
-use lib "$ENV{HDB_ENV}/perlLib/lib $ENV{HDB_ENV}/perlLib/lib/sun4-solaris";
+use lib "$ENV{HDB_ENV}/perlLib/lib";
+use lib "$ENV{HDB_ENV}/perlLib/lib/sun4-solaris";
 
 use LWP::UserAgent;
 use Date::Calc qw(Delta_DHMS);
 use Compress::Zlib;
 use File::Basename;
 use Data::Dumper;
+use Hdb;
 
 use strict;
 
-use Hdb;
 
 #check to see command line usage.
 my $progname = basename($0);
@@ -245,10 +246,10 @@ until (!defined($data[0])) {
   }
 
   # now call aggDisagg (an HDB application) to move data up to
-  # r_hour table, uses max_date from previous function
-  if (defined($runagg)) {
-    if (!defined($insertflag) and !defined($first_date)) { 
-      # no insert, need dates
+  # r_hour table, uses dates returned from insert from previous function
+  # 
+  if (defined($runagg) and (defined($first_date) or !defined($insertflag))) {
+    if (!defined($insertflag)) { # no insert, need dates
       $first_date = $firstrow[2];
       $updated_date = (split /\t/, $data[$i-1])[2];
     }
@@ -265,11 +266,10 @@ until (!defined($data[0])) {
     print "$cmd\n" if defined($debug);
     system $cmd unless defined($debug);
 
-    my $num_days;
-    sprintf($num_days, "%d",$num_hours/24);
+    my $num_days =  sprintf("%d", $num_hours/24);
     $num_days++;
 
-    $cmd = qq{aggDisagg $hdbuser $hdbpass $dayagg_id 1 n n n r d $num_days '$agg_date $aggtime' $cur_site >>aggDisagg_usgsday$usgs_no.out 2>aggDisagg_usgsday$usgs_no.err};
+    $cmd = qq{aggDisagg $hdbuser $hdbpass $dayagg_id 1 n n n r d $num_days '$agg_date' $cur_site >>aggDisagg_usgsday$usgs_no.out 2>aggDisagg_usgsday$usgs_no.err};
     print "$cmd\n" if defined($debug);
     system $cmd unless defined($debug);
   }
@@ -516,7 +516,7 @@ sub agg_hours
   Delta_DHMS($startyear,$startmonth,$startday,
 	     $starthour,$startminute,0,
 	     $endyear,$endmonth,$endday,
-	     $endhour,$endminute,0);
+	     $endhour,$endminute,0) or die "Date Calculation failed.\n";
 
   #return number of hours, and properly formatted date and time
   return $Dd*24 + $Dh + 1, "$startmonth/$startday/$startyear", $starttime;
