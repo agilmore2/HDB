@@ -13,10 +13,10 @@ echo ' '
 umask 022
 set nonomatch
 
-set FTP_HOST    = wcc.nrcs.usda.gov
-set FTP_DIR     = .
-set FTP_USER    = usbr49
-set FTP_PASSWD  = kb287u
+set FTP_HOST    = ftp.wcc.nrcs.usda.gov
+set FTP_DIR     = /support/snow_users/usbrslc
+set FTP_USER    = anonymous
+set FTP_PASSWD  = uchdba@
 
 set noglob
 unset noglob
@@ -29,8 +29,7 @@ user $FTP_USER $FTP_PASSWD \
 binary \
 hash \
 cd $FTP_DIR \
-get gunnison.out \
-get gunnison.shef \
+get gunnison.txt \
 quit" \
 | ftp -n -i -v -d
 echo ' '
