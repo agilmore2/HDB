@@ -24,7 +24,7 @@ sub passdie {
 %siteid_hash = ('ELEPHANT BUTTE RESERVOIR', 1119, "CABALLO RESERVOIR", 1094);
 
 %datatype_hash = ("ELEVATION", 49, "RELEASE", 42, "STORAGE", 17,
-		  "COMPUTED INFLOW", 30);
+		  "COMPUTED INFLOW", 29);
 
 %site_datatype_hash = ("ELEVATION", undef, "RELEASE", undef, "STORAGE", undef,
 		       "COMPUTED INFLOW", undef);
@@ -133,6 +133,10 @@ READ: while ($line = <INFILE>)
 #  if ($inflow == /\D/ ) {
 #    $inflow = undef;
 #  }
+
+  if ($inflow) {
+    $inflow /= 1.98347;
+  }
 
   if ($site_id) {
     insert_values(@value_date, $elevation, $release, $storage, $inflow);
