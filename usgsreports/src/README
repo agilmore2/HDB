@@ -7,3 +7,7 @@ cd to usgsreports/src
 type make
 
 Run a test report for your site.
+Note: This report will query for sites and pcodes defined in 
+ref_hm_site_pcode. This probably is not everything.
+I'm interested in hearing alternatives at
+agilmore@uc.usbr.gov
