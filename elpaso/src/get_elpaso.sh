@@ -15,7 +15,7 @@ umask 022
 FTP_HOST=140.217.80.16 # elpsun1.rgpo.uc.usbr.gov
 FTP_DIR=/usr1/home/jgrajeda/website
 FTP_USER=waterguy
-FTP_PASSWD=sea22sea
+FTP_PASSWD=gx22c2cc
 
 ncftpget -u $FTP_USER -p $FTP_PASSWD $FTP_HOST . $FTP_DIR/Dailyflo.htm
 
