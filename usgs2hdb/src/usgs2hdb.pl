@@ -244,7 +244,7 @@ until (!defined($data[0])) {
     print "Working on USGS gage number: $usgs_no\n";
     ($first_date, $updated_date) = insert_values(\@cur_values, $cur_sdi);
     if (!defined($first_date)) {
-      print "No data updated for $cur_site\n";
+      print "No data updated for $usgs_no\n";
     }
   }
 
@@ -402,7 +402,8 @@ b.datatype_id = c.datatype_id and
 b.datatype_id = 18 and
 a.usgs_id is not null and $id_limit_clause
 b.site_datatype_id = d.site_datatype_id and
-d.hourly = 'Y'";
+d.hourly = 'Y'
+order by usgs_id";
 
   $hdb->dbh->{FetchHashKeyName} = 'NAME_lc';
 
