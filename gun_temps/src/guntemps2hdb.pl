@@ -62,7 +62,7 @@ $check_data_statement = "select value from r_day where date_day = ? and site_dat
 $find_data_statement = "select a.value from r_day a where
 a.site_datatype_id = ? and
 a.date_day = (select max(date_day) from r_day a where
-a.site_datatype_id = 616 and
+a.site_datatype_id = ? and
 a.date_day < ? )
 ";
 
@@ -179,6 +179,7 @@ sub last_value
 
     $sth->bind_param(1,$site_datatype_id);
     $sth->bind_param(2,$prev_date);
+    $sth->bind_param(3,$site_datatype_id);
     $sth->execute || mydie $sth->errstr;
     $sth->bind_col(1,\$myval);
     $sth->fetch;
