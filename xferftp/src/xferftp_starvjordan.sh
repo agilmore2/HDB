@@ -26,5 +26,5 @@ mv $$.dat data.dat
 
 # then place those files on the ftp site
 
-ncftpput -f account.dat COE/ hour.dat
-ncftpput -f account.dat COE/ data.dat
+ncftpput -e coehour.ftperr -f account.dat COE/ hour.dat
+ncftpput -e coedata.ftperr -f account.dat COE/ data.dat
