@@ -1,0 +1,77 @@
+rm hydromet_*
+tty_input
+set `cat ./dum`
+echo ' '
+echo "              Printing Hydromet data"
+echo ' '
+prp $1
+echo ' '
+echo ' '
+echo "       Transferring data to Hydromet on the ALPHA"
+echo ' '
+# annoying stuff to deal with letter case 
+# because NFS on slcalp does wierd things to conserve the case
+# hydromet_##SEP.dat becomes HYDROMET_##$SEP.$DAT on vms
+# so we handle it ahead of time the vms $ in the name indicates a case shift
+u=`cat dum | tr A-Z a-z`
+U=`cat dum | tr a-z A-Z`
+
+chmod ugo+rwx `cat dum`
+scp -p `cat dum` hydromet@zippy:scada_files/$u
+
+ssh zippy -l hydromet "set sec [.scada_files]$U /prot=(s:rwed,o:rwed,g:rwed,w:re)"
+
+#
+# these commands below are the previous version, and are less efficient.
+# now, we take advantage of the nfsmount on zimmy, and
+# copy the file to the alpha directory as mounted on zimmy
+#scp `cat dum` zimmy:/alpdata/archives/xferscada/$u
+# now, login to the alpha and copy the file to where it needs to be
+# this command complains that $U is not locked, but it is, so...
+#ssh -1 slcalp -l hydromet 'pipe set def custom$:[archives.xferscada]'" && unlock $U && copy $U uc280:[hydromet.scada_files]"
+#instead, do this command which just changes the protection on the file.
+#ssh zippy -l hydromet "set sec [.scada_files]$U /prot=(s:rwed,o:rwed,g:rwed,w:re)"
+# then, delete the copied file
+#ssh zimmy "rm /alpdata/archives/xferscada/$u"
+#done!
+
+
+# commented out transfer to RFC 12/11 by t ryan
+# echo "transferring data to River Forecast Center"
+# ftp rfc < rfc.script
+echo ' '
+#echo '       Transferring data to Flagstaff'
+echo ' '
+ftp_orca
+#rm hydromet_*
+set `cat ./dum1`
+echo ' '
+mail_wapa
+# application scadaTransfer is run using the applications role
+# it has two arguments the name of the log file and the password
+# this application can be run independant of this script
+# if the log file needs to be edited, edit the file (correct the 
+# data - then run the following executable (scadaTransfer)
+sleep 3
+#echo ' '
+#echo '  Initiating program to load data into Ingres HDB'
+#echo ' '
+#/net/ucsun1/export/home/uchdba/HDB_applications/bin/scadaTransfer $1 hdb_app
+echo ' '
+#echo '        Initiating program to load data into Oracle HDB'
+echo ' ' 
+#sleep 1
+#This program should now be in the HDB applications dir.
+scadaTransfer $1 app_user uchdb
+echo ' ' 
+# now put data into HDB2 as well
+echo 'Placing Data into HDB2'
+. /wrg/hdb/HDB_RELEASE.040101/.bashrc_hdb_app
+scadaTransfer $1 app_user uchdb2
+echo ' '
+echo ' '
+echo '              runtty_input script now complete'
+echo ' ' 
+echo '         Please report all errors seen in this script'
+echo ' '
+exit
