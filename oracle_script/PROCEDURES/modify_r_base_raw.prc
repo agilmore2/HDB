@@ -1,11 +1,11 @@
 create or replace PROCEDURE modify_r_base_raw ( SITE_DATATYPE_ID NUMBER,
 			      INTERVAL VARCHAR2,
 			      START_DATE_TIME DATE,
-			      END_DATE_TIME DATE,
+			      END_DATE_TIME IN OUT DATE,
 			      VALUE FLOAT,
+                              AGEN_ID NUMBER,
 			      OVERWRITE_FLAG VARCHAR2,
 			      VALIDATION CHAR,
-                              AGEN_ID NUMBER,
                               COLLECTION_SYSTEM_ID NUMBER,
                               LOADING_APPLICATION_ID NUMBER,
                               METHOD_ID NUMBER,
@@ -44,6 +44,7 @@ BEGIN
 	    DENY_ACTION ( INTERVAL || ' IS AN INVALID INTERVAL WITH A NULL END DATE TIME.' );
 	END IF;
 
+        END_DATE_TIME := END_DATE_TIME_NEW;
     END IF;
 
     /*  go see if a record already exists ; if not do an insert otherwise do an update as long as do_update <> 'N'  */

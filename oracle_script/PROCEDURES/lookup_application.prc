@@ -27,7 +27,7 @@ BEGIN
 	SELECT agen_id
 	  INTO AGEN_ID
 	  FROM hdb_agen
-	 WHERE agen_abbrev = temp_name;
+	 WHERE agen_name = temp_name;
 	EXCEPTION
 	    WHEN OTHERS THEN DENY_ACTION ( 'INVALID AGENCY NAME:' || AGEN_NAME );
     END;
