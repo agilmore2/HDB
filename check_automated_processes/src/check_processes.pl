@@ -30,17 +30,18 @@ while (<INFILE>)
   #  print "@dirent\n";
 
   if ($dirent[7] != 0) {
+    my $errfiletime = localtime $dirent[9];
     $expectfile = $errfile . ".expected";
     if (stat($expectfile)) {
       $result = `diff -u $expectfile $errfile`;
       if ($?) {
         $status = 1;
-        $output .= "\nApplication $app had an error! $errfile is not as expected\n";
+        $output .= "\nApplication $app had an error! $errfile is not as expected as of $errfiletime\n";
         $output .= $result;
       }
     } else {
       $status = 1;
-      $output .= "\nApplication $app had an error! $errfile is not empty\n";
+      $output .= "\nApplication $app had an error!\n$errfile is not empty as of $errfiletime\n";
       #Make this file get sucked in completely, don't break on newlines
       my $oldsep = $INPUT_RECORD_SEPARATOR;
       $INPUT_RECORD_SEPARATOR = undef;
@@ -76,7 +77,7 @@ if ($status && !$DEBUG) {
   close MAIL;
 }
 
-if ($DEBUG) {
+if ($status && $DEBUG) {
   print $output;
 }
 
