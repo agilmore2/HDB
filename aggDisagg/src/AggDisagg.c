@@ -10,7 +10,7 @@
 * February, 1996
 *****************************************************************************/
 #define MAIN 1
-#define VERSION "3.0"
+#define VERSION "3.1"
 
 #include <stdio.h>
 #include <stdlib.h>
