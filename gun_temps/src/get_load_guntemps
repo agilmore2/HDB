@@ -3,14 +3,14 @@
 \rm gunnison.txt
 touch marker.delete
 #activate the get_snotel script which get the data from portland
-get_guntemps
+./get_guntemps
 #see if new files have come back
 set sa = (`ls -at`)
 if ($sa[1] != marker.delete)then
     echo ''
     echo '    new files were retrieved from NRCS  -> continue processing'
     echo  
-    source /wrg/hdb/HDB_applications/.cshrc_hdb_app
+    source /wrg/hdb/HDB_9iexperimental/.cshrc_hdb_app
     rehash
     guntemps2hdb.pl gunnison.txt app_user uchdb2
 else 
