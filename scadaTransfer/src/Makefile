@@ -12,15 +12,22 @@ OBJS = \
 
 main: $(TARGET)
 
+clean: 
+	rm -f $(TARGET) $(OBJS)
+
 $(TARGET): $(OBJS)
-	$(CC) $(OBJS) $(LIBS) -o $(TARGET)
+	$(CC) $(OBJS) $(LIBS) -luc -o $(TARGET)
+
+#Note, unless app_user has execute priviledge on modify_r_base_raw, this compile will fail.
 
 $(OBJDIR)/insertScada.o: \
 					insertScada.pc \
 					$(HDB_APP_LIB)/libhdb.a \
 					$(HDB_APP_LIB)/libutils.a
-	proc iname=insertScada.pc include=$(HDB_APP_INCLUDE)
+	proc user=app_user/$(HDB_LOCAL) iname=insertScada.pc include=$(HDB_APP_INCLUDE) sqlcheck=semantics
 	$(CC) $(CFLAGS) -c insertScada.c -o $@
+
+
 
 $(OBJDIR)/scadaTransfer.o: \
 					scadaTransfer.c \
