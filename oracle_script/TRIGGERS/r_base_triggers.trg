@@ -29,7 +29,7 @@ begin
 
     select count(*) into v_count from hdb_method
       where :new.method_id=method_id and
-      upper(method_name) = 'UNKNOWN';
+      upper(method_name) in ('UNKNOWN', 'COPY OF DATA', 'SIMPLE DIVISION');
 
     if v_count = 0 then
         select count(*) into v_count 
