@@ -15,7 +15,7 @@ set termout off
 spool nwsdata.dat
 
 /* Daily Query. Format is quote-delimited text, and comma separated values in the form:
- * "SITE NAME","DATATYPE NAME","YYYY-MM-DD",round(value,2), ie
+ * "SITE NAME","datatype name","YYYY-MM-DD",round(value,2), ie
  * "FLAMING GORGE","release","2004-08-30",999.67
  */
 
@@ -68,9 +68,9 @@ a.site_id = b.site_id and
   (d.start_date_time >= add_months(sysdate,-13) and -- plus the last y months of data
   d.date_time_loaded >= sysdate - 20)) and -- that have changed in the last z days
 -- site and datatype selection section
-(b.site_id in (451,716,719,720,721,722,723,1065,1301,1302,1303,1304,1482,1483,924,951,955,959,
-		912,925,927,928,930,931,932,936,938,939,944,945,948,949,952,956,957,958,960,961,
-		963,933,934,935,940,941,942,946,947,953,958,962,964,913,914,915,916,917,919,920) and
+(b.site_id in (924,951,955,959,912,925,927,928,930,931,932,936,938,939,944,
+               945,948,949,952,956,957,958,960,961,963,933,934,935,940,941,
+               942,946,947,953,958,962,964,913,914,915,916,917,919,920) and
  c.datatype_id = 17)
 -- sort section, get all sites and their datatypes together, then 
 -- order by date ascending
