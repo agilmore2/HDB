@@ -10,9 +10,9 @@ if ($sa[1] != marker.delete)then
     echo ''
     echo '    new files were retrieved from NRCS  -> continue processing'
     echo  
-    source /wrg/hdb/HDB_9iexperimental/.cshrc_hdb_app
+    source $HDB_ENV/.cshrc_hdb_app
     rehash
-    guntemps2hdb.pl gunnison.txt app_user uchdb2
+    $HDB_ENV/bin/guntemps2hdb.pl gunnison.txt app_user uchdb2
 else 
     echo 'FTP transfer failed!'
     exit 1
