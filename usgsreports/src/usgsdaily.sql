@@ -3,6 +3,7 @@ define site_code = &1;
 define pcode = &2;
 define year = &3;
 
+/* setup report variables */
 set colsep '';
 set pagesize 42;
 set linesize 132;
@@ -14,9 +15,11 @@ set termout off;
 set numwidth 8;
 set null '       ---';
 
+/* get previous year, for use with water year */
 column beginyear new_value beginyear nopri;
 select to_char(&&year - 1) beginyear from dual;
 
+/* get site_datatype_id needs work*/
 column sdi new_value sdi;
 select hm_site_code, hm_pcode, to_char(site_datatype_id) sdi from
 ref_hm_site_pcode
@@ -26,6 +29,7 @@ hm_pcode = '&&pcode' and
 site_datatype_id IS NOT NULL
 ;
 
+/* find HDB names for site and datatype for sdi */
 column site_name new_value name;
 column datatype_name new_value datatype;
 select a.site_name site_name, b.datatype_name datatype_name
@@ -36,6 +40,16 @@ b.datatype_id = c.datatype_id and
 c.site_datatype_id = &&sdi
 ;
 
+/* get the unit name*/
+column unit_name new_value unit;
+select c.unit_name from 
+hdb_site_datatype a, hdb_datatype b, hdb_unit c
+where 
+a.site_datatype_id = &sdi and
+a.datatype_id = b.datatype_id and
+b.unit_id = c.unit_id;
+
+/* setup fake columns for reporting values */
 column min new_value min;
 column max new_value max;
 column ave new_value ave;
@@ -66,11 +80,13 @@ column novsum new_value novsum;
 column decave new_value decave;
 column decsum new_value decsum;
 
-select nvl(max(a.value),0) max, nvl(round(sum(a.value),2),0) sum
+/* get these for selecting number formats, reselect later for format*/
+select nvl(max(a.value),0) max, nvl(sum(a.value),0) sum
 from r_day a
 where a.site_datatype_id = &&sdi
 and a.date_day between '01-oct-&beginyear' and last_day('01-sep-&year');
 
+/* 10 character wide formats (remember space for minus sign)*/
 column numformat new_value numformat;
 select case 
 when &max > 999999999 then '99.99EEEE'
@@ -81,144 +97,162 @@ from dual;
 
 column sumformat new_value sumformat;
 select case 
-when &sum/12 > 50000000 then '99.99EEEE'
-when &sum/12 > 500000 then   '999999999'
-else '999990.00'
+when &sum > 99999999 then '99.99EEEE'
+when &sum > 999999 then   '999999999'
+else                      '999990.00'
 end sumformat
 from dual;
 
+/*get the statistics for the whole year*/
 select to_char(min(a.value),'&numformat') min, to_char(max(a.value),'&numformat') max,
-       round(avg(a.value),2) ave, round(sum(a.value),2) sum
+       to_char(avg(a.value),'&numformat') ave, to_char(sum(a.value),'&sumformat') sum
 from r_day a
 where a.site_datatype_id = &sdi
 and a.date_day between '01-oct-&beginyear' and last_day('01-sep-&year');
 
-select to_char(round(avg(a.value),2),'&numformat') janave, to_char(round(sum(a.value),2),'&sumformat') jansum
+/*get statistics for each month.
+  Only ave and sum are in here, the min and max are calculated by the compute
+  statements lower down */
+select to_char(avg(a.value),'&numformat') janave, to_char(sum(a.value),'&sumformat') jansum
 from r_day a
 where a.site_datatype_id = &sdi
 and a.date_day between '01-jan-&year' and last_day('01-jan-&year');
 
-select to_char(round(avg(a.value),2),'&numformat') febave, to_char(round(sum(a.value),2),'&sumformat') febsum
+select to_char(avg(a.value),'&numformat') febave, to_char(sum(a.value),'&sumformat') febsum
 from r_day a
 where a.site_datatype_id = &sdi
 and a.date_day between '01-feb-&year' and last_day('01-feb-&year');
 
-select to_char(round(avg(a.value),2),'&numformat') marave, to_char(round(sum(a.value),2),'&sumformat') marsum
+select to_char(avg(a.value),'&numformat') marave, to_char(sum(a.value),'&sumformat') marsum
 from r_day a
 where a.site_datatype_id = &sdi
 and a.date_day between '01-mar-&year' and last_day('01-mar-&year');
 
-select to_char(round(avg(a.value),2),'&numformat') aprave, to_char(round(sum(a.value),2),'&sumformat') aprsum
+select to_char(avg(a.value),'&numformat') aprave, to_char(sum(a.value),'&sumformat') aprsum
 from r_day a
 where a.site_datatype_id = &sdi
 and a.date_day between '01-apr-&year' and last_day('01-apr-&year');
 
-select to_char(round(avg(a.value),2),'&numformat') mayave, to_char(round(sum(a.value),2),'&sumformat') maysum
+select to_char(avg(a.value),'&numformat') mayave, to_char(sum(a.value),'&sumformat') maysum
 from r_day a
 where a.site_datatype_id = &sdi
 and a.date_day between '01-may-&year' and last_day('01-may-&year');
 
-select to_char(round(avg(a.value),2),'&numformat') junave, to_char(round(sum(a.value),2),'&sumformat') junsum
+select to_char(avg(a.value),'&numformat') junave, to_char(sum(a.value),'&sumformat') junsum
 from r_day a
 where a.site_datatype_id = &sdi
 and a.date_day between '01-jun-&year' and last_day('01-jun-&year');
 
-select to_char(round(avg(a.value),2),'&numformat') julave, to_char(round(sum(a.value),2),'&sumformat') julsum
+select to_char(avg(a.value),'&numformat') julave, to_char(sum(a.value),'&sumformat') julsum
 from r_day a
 where a.site_datatype_id = &sdi
 and a.date_day between '01-jul-&year' and last_day('01-jul-&year');
 
-select to_char(round(avg(a.value),2),'&numformat') augave, to_char(round(sum(a.value),2),'&sumformat') augsum
+select to_char(avg(a.value),'&numformat') augave, to_char(sum(a.value),'&sumformat') augsum
 from r_day a
 where a.site_datatype_id = &sdi
 and a.date_day between '01-aug-&year' and last_day('01-aug-&year');
 
-select to_char(round(avg(a.value),2),'&numformat') sepave, to_char(round(sum(a.value),2),'&sumformat') sepsum
+select to_char(avg(a.value),'&numformat') sepave, to_char(sum(a.value),'&sumformat') sepsum
 from r_day a
 where a.site_datatype_id = &sdi
 and a.date_day between '01-sep-&year' and last_day('01-sep-&year');
 
-select to_char(round(avg(a.value),2),'&numformat') octave, to_char(round(sum(a.value),2),'&sumformat') octsum
+select to_char(avg(a.value),'&numformat') octave, to_char(sum(a.value),'&sumformat') octsum
 from r_day a
 where a.site_datatype_id = &sdi
 and a.date_day between '01-oct-&beginyear' and last_day('01-oct-&beginyear');
 
-select to_char(round(avg(a.value),2),'&numformat') novave, to_char(round(sum(a.value),2),'&sumformat') novsum
+select to_char(avg(a.value),'&numformat') novave, to_char(sum(a.value),'&sumformat') novsum
 from r_day a
 where a.site_datatype_id = &sdi
 and a.date_day between '01-nov-&beginyear' and last_day('01-nov-&beginyear');
 
-select to_char(round(avg(a.value),2),'&numformat') decave, to_char(round(sum(a.value),2),'&sumformat') decsum
+select to_char(avg(a.value),'&numformat') decave, to_char(sum(a.value),'&sumformat') decsum
 from r_day a
 where a.site_datatype_id = &sdi
 and a.date_day between '01-dec-&beginyear' and last_day('01-dec-&beginyear');
 
-column unit_name new_value unit;
-select c.unit_name from 
-hdb_site_datatype a, hdb_datatype b, hdb_unit c
-where 
-a.site_datatype_id = &sdi and
-a.datatype_id = b.datatype_id and
-b.unit_id = c.unit_id;
-
-set termout on;
-
+/* now start the report*/
+/* top title, datatype names can be really long!*/
 ttitle center "site: &&name(&&site_code) datatype: &&datatype(&&pcode) in &&unit" skip -
        center "Water Year October &beginyear to September &year";
+
+/*bottom title, this is where the monthly average and sum statistics and the
+  statistics for the whole yearare reported*/
 
 btitle left 'Ave&octave&novave&decave&janave&febave&marave&aprave&mayave&junave&julave&augave&sepave' skip -
 btitle left 'Sum&octsum&novsum&decsum&jansum&febsum&marsum&aprsum&maysum&junsum&julsum&augsum&sepsum' skip -
 btitle left 'Water Year &year Sum &sum Average &ave Max &max Min &min';
 
+/*setup columns for report justify needed because columns are not numbers any more*/
 column day heading "Day" format 99;
-column jan heading "Jan" jus right;
-column feb heading "Feb" jus right;
-column mar heading "Mar" jus right;
-column apr heading "Apr" jus right;
-column may heading "May" jus right;
-column jun heading "Jun" jus right;
-column jul heading "Jul" jus right;
-column aug heading "Aug" jus right;
-column sep heading "Sep" jus right;
-column oct heading "Oct" jus right;
-column nov heading "Nov" jus right;
-column dec heading "Dec" jus right;
+column jan heading "Jan" justify right;
+column feb heading "Feb" justify right;
+column mar heading "Mar" justify right;
+column apr heading "Apr" justify right;
+column may heading "May" justify right;
+column jun heading "Jun" justify right;
+column jul heading "Jul" justify right;
+column aug heading "Aug" justify right;
+column sep heading "Sep" justify right;
+column oct heading "Oct" justify right;
+column nov heading "Nov" justify right;
+column dec heading "Dec" justify right;
 
-comp max label "Max" min label "Min" of jan on report;
-comp max label "Max" min label "Min" of feb on report;
-comp max label "Max" min label "Min" of mar on report;
-comp max label "Max" min label "Min" of apr on report;
-comp max label "Max" min label "Min" of may on report;
-comp max label "Max" min label "Min" of jun on report;
-comp max label "Max" min label "Min" of jul on report;
-comp max label "Max" min label "Min" of aug on report;
-comp max label "Max" min label "Min" of sep on report;
-comp max label "Max" min label "Min" of oct on report;
-comp max label "Max" min label "Min" of nov on report;
-comp max label "Max" min label "Min" of dec on report;
+/*at bottom of report, compute max and mins. These are lexical,
+  because the columns are now character strings due to number format.
+  Cannot control what order these statements show up!
+  have to do sum elsewhere because cannot include number formats in
+  these statements*/
+
+compute max label "Max" min label "Min" of jan on report;
+compute max label "Max" min label "Min" of feb on report;
+compute max label "Max" min label "Min" of mar on report;
+compute max label "Max" min label "Min" of apr on report;
+compute max label "Max" min label "Min" of may on report;
+compute max label "Max" min label "Min" of jun on report;
+compute max label "Max" min label "Min" of jul on report;
+compute max label "Max" min label "Min" of aug on report;
+compute max label "Max" min label "Min" of sep on report;
+compute max label "Max" min label "Min" of oct on report;
+compute max label "Max" min label "Min" of nov on report;
+compute max label "Max" min label "Min" of dec on report;
 
 break on report;
 
+/* this command has a bug in it, careful what is right before it*/
+set termout on;
+
+/* at last, the QUERY!*/
 select days.day day,
-to_char(round(j.value,2),'&numformat') oct, to_char(round(k.value,2),'&numformat') nov,
-to_char(round(l.value,2),'&numformat') dec, to_char(round(a.value,2),'&numformat') jan,
-to_char(round(b.value,2),'&numformat') feb, to_char(round(c.value,2),'&numformat') mar,
-to_char(round(d.value,2),'&numformat') apr, to_char(round(e.value,2),'&numformat') may,
-to_char(round(f.value,2),'&numformat') jun, to_char(round(g.value,2),'&numformat') jul,
-to_char(round(h.value,2),'&numformat') aug, to_char(round(i.value,2),'&numformat') sep
+/* note that j, k, l are first, to get oct, nov, dec values in front
+   everywhere else, these tables are done in order */
+to_char(j.value,'&numformat') oct, to_char(k.value,'&numformat') nov,
+to_char(l.value,'&numformat') dec, to_char(a.value,'&numformat') jan,
+to_char(b.value,'&numformat') feb, to_char(c.value,'&numformat') mar,
+to_char(d.value,'&numformat') apr, to_char(e.value,'&numformat') may,
+to_char(f.value,'&numformat') jun, to_char(g.value,'&numformat') jul,
+to_char(h.value,'&numformat') aug, to_char(i.value,'&numformat') sep
 from 
 r_day a, r_day b, r_day c, r_day d,
 r_day e, r_day f, r_day g, r_day h,
 r_day i, r_day j, r_day k, r_day l,
+/* this COOL subquery just returns numbers 1 through 31
+   there may be a better way to do this. */
 (select 0+rownum day from r_day 
 where rownum <= 31) days
 where
+/* notice the outer joins. These allow any time to not have a value, and
+   a null will show up in the right places
+   any faster to put all of this in one statement? */
 a.site_datatype_id(+) = &sdi and b.site_datatype_id(+) = &sdi and
 c.site_datatype_id(+) = &sdi and d.site_datatype_id(+) = &sdi and
 e.site_datatype_id(+) = &sdi and f.site_datatype_id(+) = &sdi and
 g.site_datatype_id(+) = &sdi and h.site_datatype_id(+) = &sdi and
 i.site_datatype_id(+) = &sdi and j.site_datatype_id(+) = &sdi and
 k.site_datatype_id(+) = &sdi and l.site_datatype_id(+) = &sdi and
+/* if I use to_char(x,'yyyy') instead, this query is way too slow*/
 a.date_day (+) between '01-jan-&year' and last_day('01-jan-&year') and
 b.date_day (+) between '01-feb-&year' and last_day('01-feb-&year') and
 c.date_day (+) between '01-mar-&year' and last_day('01-mar-&year') and
@@ -231,6 +265,7 @@ i.date_day (+) between '01-sep-&year' and last_day('01-sep-&year') and
 j.date_day (+) between '01-oct-&beginyear' and last_day('01-oct-&beginyear') and
 k.date_day (+) between '01-nov-&beginyear' and last_day('01-nov-&beginyear') and
 l.date_day (+) between '01-dec-&beginyear' and last_day('01-dec-&beginyear') and
+/*finally, get the days in order*/
 to_char(a.date_day(+),'DD') = days.day and
 to_char(b.date_day(+),'DD') = days.day and
 to_char(c.date_day(+),'DD') = days.day and
