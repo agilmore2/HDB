@@ -96,8 +96,7 @@ int DeriveList(SQL_INTERVAL destInterval,
                               refDestination,
                               &destParameters)) != OK)
    {
-      FilePrintError(LOGFILE, "Problem getting the destination parameters for the
-                  derivation\n");
+      FilePrintError(LOGFILE, "Problem getting the destination parameters for the derivation\n");
       return (ERROR);
    }
 
@@ -434,8 +433,8 @@ int GetDestParam(SQL_INTERVAL destInterval,
    }
    else
    {
-      FilePrintError(LOGFILE, "Code for the interval named %s needs to be written in
-                  the function GetDestParam\n", 
+      FilePrintError(LOGFILE, "Code for the interval named %s needs to be written in\n"
+                  "the function GetDestParam\n", 
                   destInterval);
       return (ERROR);      
    }
