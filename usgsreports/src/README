@@ -1,0 +1,9 @@
+Installation:
+
+as the HDB dba (uchdba, lchdba, yakdba)
+unpack at the HDB applications level (eg: /wrg/hdb/HDB_RELEASE.010427)
+a directory usgsreports will be created
+cd to usgsreports/src
+type make
+
+Run a test report for your site.
