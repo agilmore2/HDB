@@ -31,7 +31,7 @@ set termout on
 column site format A25
 column datatype format A15
 select a.start_date_time "Day",
-a.value "Hydromet", b.value "r_day", abs(a.value -b.value) "Diff",
+round(a.value,3) "Hydromet", round(b.value,3) "r_day", round(abs(a.value -b.value),3) "Diff",
 d.site_common_name site, e.datatype_common_name datatype, a.site_datatype_id sdi
 from r_base a, r_day b, hdb_site_datatype c, hdb_site d, hdb_datatype e where
 a.interval = 'day' and
