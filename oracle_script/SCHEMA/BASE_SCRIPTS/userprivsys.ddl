@@ -1,4 +1,4 @@
-grant all privileges to DBA;     
-grant create session to DBA;    
-grant create public synonym to DBA;
-grant select on user$ to DBA;
+grant all privileges to uchdba;     
+grant create session to uchdba;    
+grant create public synonym to uchdba;
+grant select on sys.user$ to uchdba;
