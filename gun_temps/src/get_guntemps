@@ -24,6 +24,7 @@ unset noglob
 unset noclobber
 
 # Unfortunate long echo for shell variable expansion -- "here document" no good.
+#removed -d option on ftp session to avoid stderr output of "ftp: setsockopt (ignored): Permission denied"
 echo "open $FTP_HOST \
 user $FTP_USER $FTP_PASSWD \
 binary \
@@ -31,7 +32,7 @@ hash \
 cd $FTP_DIR \
 get gunnison.txt \
 quit" \
-| ftp -n -i -v -d
+| ftp -n -i -v
 echo ' '
 echo '     FTP Processing complete'
 echo ' '
