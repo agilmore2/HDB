@@ -1,4 +1,6 @@
-grant all privileges to uchdba;     
-grant create session to uchdba;    
-grant create public synonym to uchdba;
-grant select on sys.user$ to uchdba;
+set echo on
+grant all privileges to DBA;     
+grant create session to DBA;    
+grant create public synonym to DBA;
+-- The following removed by M. Bogner 2/24/2005 due to problems and not needed 
+--grant select on user$ to DBA;
