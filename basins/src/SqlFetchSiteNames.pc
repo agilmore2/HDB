@@ -286,23 +286,8 @@ int SqlFetchRbasekeys (int * p_loading_application_id, int * p_agen_id, int * p_
 	*p_collection_system_id = collection_system_id;
 	*p_computation_id = computation_id;
 
-	/* debugging statements...*/
-	printf("Return values from HDB calls:\n");
-	printf("loading_application_id = %d\n",loading_application_id);
-	printf("agen_id = %d\n",agen_id);
-	printf("collection_system_id = %d\n",collection_system_id);
-	printf("computation_id = %d\n",computation_id);
-	/**/
-
 
 	close_FetchRbaseKeys: 
-        /* debugging statements...*/
-        printf("Return values from HDB calls:\n");
-        printf("loading_application_id = %d\n",loading_application_id);
-        printf("agen_id = %d\n",agen_id);
-        printf("collection_system_id = %d\n",collection_system_id);
-        printf("computation_id = %d\n",computation_id);
-        /**/
 
 	if ( (result = SqlErrorHandler 
 		(FUNC_NAME, FALSE, "Problem selecting foreign keys for r_base.") ) != OK)
