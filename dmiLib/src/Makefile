@@ -4,7 +4,7 @@
 include ../../Environ
 
 OBJDIR = $(HDB_ENV)/dmiLib/obj
-INCLUDES = -I$(HDB_APP_INCLUDE) -I$(TK_INCLUDES) -I/usr/local/X11R5/include
+INCLUDES = -I$(HDB_APP_INCLUDE) -I$(TK_INCLUDES) -I$(TK_HEADER) -I/usr/local/X11R5/include
 PC_INCLUDES = include=$(HDB_APP_INCLUDE)
 LIBS = $(HDB_LIBS) -lm -ldl
 CFLAGS = -ansi -Wall -c -g -DANSIPROTO $(INCLUDES)

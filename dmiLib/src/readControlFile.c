@@ -66,43 +66,51 @@
 
 #define BUFFSIZE 700
 
-#define FUNC_NAME "GetObjName"
+#define FUNC_NAME "GetObjAndSlotName"
 /*
 <HTML>
 
-<P> <STRONG>Function name:</STRONG> GetObjName
+<P> <STRONG>Function name:</STRONG> GetObjAndSlotName
 
-<P> <STRONG>Function signature:</STRONG> char * GetObjName(char *)
+<P> <STRONG>Function signature:</STRONG> int GetObjAndSlotName (char*, char*, char*)
 
-<P> <STRONG>Function description:</STRONG> Parse out the Riverware object name from a line (of the control file).
+<P> <STRONG>Function description:</STRONG> Parse out the Riverware object and slot names from a line (of the control file).
 
 <P><DL> <STRONG>Function arguments:</STRONG>
 <BR><DD> char *line: The line from the control file.
+<BR><DD> char *line: The object name; set in function.
+<BR><DD> char *line: The slot name; set in function.
 </DL>
 
 <P> <STRONG>Function return value:</STRONG> Object name or NULL
 
 </HTML>
 */
-char * GetObjName(char * line)
+int GetObjAndSlotName(char * line, char* obj_name, char* slot_name)
 {
    char * colSpace = ": ";
-   char * name,
-      * name_start,
-      * name_end,
+   char * obj = "obj";
+   char * space = " ";
+   char * payback = "Payback";
+   char * obj_slot_name_start,
+      * obj_slot_name_end,
       * colon_space,
-      * period;
+      * rightmostPeriod,
+      * leftmostPeriod,
+        objTypeName[OBJECTTYPE_NAME_LENGTH],
+      * objTypeStart,
+      * objTypeEnd;
    int len;
    
    /*
     * Name is first thing in line -- walk past any spaces.
     */
-   name_start = line;
-   while (isspace (*name_start))
-      name_start++;
-   if (!name_start) {
+   obj_slot_name_start = line;
+   while (isspace (*obj_slot_name_start))
+      obj_slot_name_start++;
+   if (!obj_slot_name_start) {
       PrintError("DMI: No object name.\n");
-      return(NULL);
+      return(ERROR);
    }
    
    /*
@@ -111,158 +119,101 @@ char * GetObjName(char * line)
    colon_space = strstr(line, colSpace);
    if (!colon_space) {
       PrintError("DMI: Could not determine object name (colon_space missing).\n");
-      return(NULL);
+      return(ERROR);
    }
    
    
    /*
     * colon_space is the end of the object.slot name
     */
-   name_end = colon_space;
-   if (!name_end) {
-      PrintError("DMI: No object name in line (name_end not found).\n");
-      return(NULL);
+   obj_slot_name_end = colon_space;
+   if (!obj_slot_name_end) {
+      PrintError("DMI: No object name in line (obj_slot_name_end not found).\n");
+      return(ERROR);
    }
    
    
    /*
-    * Walk back to the period separating the obj name from the slot name
+    * Walk back to the rightmost period; if that is the only period, it
+      separates the obj name from the slot name. If there is another,
+      must determine if middle portion belongs with object name or slot name
     */
-   period = name_end;
-   while ( (*period != '.') && (period >= name_start) )
-      period--;
-   if (period == name_start) { /* if there was no period, period = name_start */
+   rightmostPeriod = obj_slot_name_end;
+   while ( (*rightmostPeriod != '.') && (rightmostPeriod >= obj_slot_name_start) )
+      rightmostPeriod--;
+   if (rightmostPeriod == obj_slot_name_start) { /* if there was no period, rightmostPeriod = obj_slot_name_start */
       PrintError("DMI: No delimiter between object and slot name in line:\n%s\n",
 		 line);
-      return(NULL);
+      return(ERROR);
    }
+
+   /* Now see if there's another period. */
+   leftmostPeriod = rightmostPeriod-1;
+   while ( (*leftmostPeriod != '.') && (leftmostPeriod >= obj_slot_name_start) )
+      leftmostPeriod--;
+
+   /* if there is only one period, can set object and slot name now */
+   if (leftmostPeriod == obj_slot_name_start)
+   {
+      /*
+       * Calculate the length of the object name.
+       */
+      len = rightmostPeriod - obj_slot_name_start;
    
-   /*
-    * Calculate the length of the name.
-    */
-   len = period - name_start;
+      /*
+       * copy the object name and NULL terminate
+       */
+      strncpy(obj_name, obj_slot_name_start, len);
+      obj_name[len] = '\0';
+
+
+      /*
+       * Calculate the length of the slot name.
+       */
+      len = obj_slot_name_end - rightmostPeriod - 1;
    
-   /*
-    * allocate memory for the object name string,
-    *   including for the NULL terminator
-    */
-   name = (char *) malloc(len+1);
-   if (!name) {
-      printf("DMI: Failure to allocate memory for Object Name\n");
-      return(NULL);
+      /*
+       * copy the slot name to that location and NULL terminate
+       */
+      strncpy(slot_name, rightmostPeriod+1, len);
+      slot_name[len] = '\0';
    }
+   else
+     {
+       objTypeStart = strstr(line, obj);
+       objTypeStart += 4; /* skip over "obj=" */
+       objTypeEnd = strstr (objTypeStart, space);
+       len = objTypeEnd - objTypeStart;
+       strncpy (objTypeName, objTypeStart, len);
+       objTypeName[len] = '\0';
+
+       /* If not a payback, structure is obj.tableSlot.slot */
+       if (strncmp (objTypeName, payback, len))
+	 {
+	   len = leftmostPeriod - obj_slot_name_start;
+	   strncpy (obj_name, obj_slot_name_start, len);
+	   obj_name[len] = '\0';
+
+	   len = obj_slot_name_end - leftmostPeriod - 1;
+	   strncpy (slot_name, leftmostPeriod + 1, len);
+	   slot_name[len] = '\0';
+	 }
+       /* otherwise, payback structure is exchange.supply.slot */
+       else
+	 {
+	   len = rightmostPeriod - obj_slot_name_start;
+	   strncpy (obj_name, obj_slot_name_start, len);
+	   obj_name[len] = '\0';
+
+	   len = obj_slot_name_end - rightmostPeriod - 1;
+	   strncpy (slot_name, rightmostPeriod + 1, len);
+	   slot_name[len] = '\0';
+	 }
+     }
    
-   /*
-    * copy the object name to that location and NULL terminate
-    */
-   strncpy(name, name_start, len);
-   name[len] = '\0';
-   
-   return(name);
+   return(OK);
 }
 
-#define FUNC_NAME "GetSlotName"
-/*
-<HTML>
-
-<P> <STRONG>Function name:</STRONG> GetSlotName
-
-<P> <STRONG>Function signature:</STRONG> char * GetSlotName(char *)
-
-<P> <STRONG>Function description:</STRONG> Parse out the Riverware slot name from a line (of the control file).
-
-<P><DL> <STRONG>Function arguments:</STRONG>
-<BR><DD> char *line: The line from the control file.
-</DL>
-
-<P> <STRONG>Function return value:</STRONG> Slot name or NULL
-
-</HTML>
-*/
-char * GetSlotName(char * line)
-{
-   /*
-    * NOTE: This is VERY similar to GetObjName. Small changes allow it to
-    *         get the slot name instead. Same code is repeated for clarity.
-    */
-   char * colSpace = ": ";
-   char * name,
-      * name_start,
-      * name_end,
-      * colon_space,
-      * period;
-   int len;
-   
-   /*
-    * Name is first thing in line -- walk past any spaces.
-    */
-   name_start = line;
-   while (isspace (*name_start))
-      name_start++;
-   if (!name_start) {
-      PrintError("DMI: No slot name.\n");
-      return(NULL);
-   }
-   
-   /*
-    * search for the first occurrence of a ': '
-    */
-
-   colon_space = strstr(line, colSpace);
-   if (!colon_space) {
-      PrintError("DMI: Could not determine slot name (colon_space missing).\n");
-      return(NULL);
-   }
-   
-   /*
-    * colon_space is the end of the object.slot name
-    */
-   name_end = colon_space;
-   if (!name_end) {
-      PrintError("DMI: No slot name in line (name_end not found).\n");
-      return(NULL);
-   }
-   
-   /*
-    * Walk back to the period separating the obj name from the slot name
-    */
-   period = name_end;
-   while ( (*period != '.') && (period >= name_start) )
-      period--;
-   if (period == name_start) { /* if there was no period, period = name_start */
-      PrintError("DMI: No delimiter between object and slot name in line:\n%s\n", 
-		 line);
-      return(NULL);
-   }
-   
-   /*
-    * Reset the name_start to the char after the period.
-    */
-   name_start = period + 1;
-   
-   /*
-    * Calculate the length of the name.
-    */
-   len = name_end - name_start;
-   
-   /*
-    * allocate memory for the slot name string,
-    *   including for the NULL terminator
-    */
-   name = (char *) malloc(len+1);
-   if (!name) {
-      printf("DMI: Failure to allocate memory for Slot Name\n");
-      return(NULL);
-   }
-   
-   /*
-    * copy the slot name to that location and NULL terminate
-    */
-   strncpy(name, name_start, len);
-   name[len] = '\0';
-   
-   return(name);
-}
 
 #define FUNC_NAME "GetToken"
 /*
@@ -376,8 +327,8 @@ int readInputControlFile(char *controlFile, dmi_header_struct **list,
 {
    FILE *fptr;
    char buff[BUFFSIZE];
-   char *obj_name,
-      *slot_name,
+   char obj_name[OBJECT_NAME_LEN + 1],
+        slot_name[SLOT_NAME_LEN + 1],
       *file_name,
       *unit_descriptor,
       *load_model_data_flag,
@@ -414,9 +365,9 @@ int readInputControlFile(char *controlFile, dmi_header_struct **list,
    { 
       /* Get the object name.
          This requires a special routine b/c there can be multiple colons
-         in an object name.  */
+         and multiple periods in an object/slot name.  */
 
-      obj_name = GetObjName(buff);
+      GetObjAndSlotName(buff, obj_name, slot_name);
       if (!obj_name) 
       {
 	    PrintError("DMI: Could not determine object name from line:\n %s\n",
@@ -424,18 +375,11 @@ int readInputControlFile(char *controlFile, dmi_header_struct **list,
 	    continue;
       }
       
-      /* Get the slot name.
-         This requires a special routine b/c there can be multiple colons
-         in an object name.  */
-
-      obj_name = GetObjName(buff);
-      slot_name = GetSlotName(buff);
       if (!slot_name) 
       {
 	    PrintError("DMI: Could not determine slot name from line:\n %s\n",
 		           buff);
-	    free(obj_name);
-	    obj_name = NULL;
+	    obj_name[0] = '\0';
 	    continue;
       }
       
@@ -447,10 +391,8 @@ int readInputControlFile(char *controlFile, dmi_header_struct **list,
       {
 	    PrintError("DMI: Could not determine file name from line:\n %s\n",
 		           buff);
-	    free(obj_name);
-	    obj_name = NULL;
-	    free(slot_name);
-	    slot_name = NULL;
+	    obj_name[0] = '\0';
+	    slot_name[0] = '\0';
 	    continue;
       }
       
@@ -478,10 +420,8 @@ int readInputControlFile(char *controlFile, dmi_header_struct **list,
       {
 	     PrintError("Invalid load_model_data keyword in control file: %s\n", 
                     load_model_data_flag);
-	     free(obj_name);
-	     obj_name = NULL;
-	     free(slot_name);
-	     slot_name = NULL;
+	     obj_name[0] = '\0';
+	     slot_name[0] = '\0';
 	     if (unit_descriptor) 
 	     {
 	       free(unit_descriptor);
@@ -643,11 +583,13 @@ int readInputControlFile(char *controlFile, dmi_header_struct **list,
       
       /*
        * Put the parsed values into the new list member.
+         Strdup object and slot name as they are not
+	 malloc'd memory 
        */
-      current->object_name = obj_name;
-      current->slot_name = slot_name;
+      current->object_name = strdup(obj_name);
+      current->slot_name = strdup(slot_name);
       current->pr_datafile_name = file_name;
-      current->pr_units = unit_descriptor;
+      current->pr_units = unit_descriptor; 
       current->load_model_data = load_model_data_flag;
       current->number_of_hist_timesteps = num_hist_timesteps;
       current->hist_source = hist_source;
@@ -674,7 +616,8 @@ int readInputControlFile(char *controlFile, dmi_header_struct **list,
        globalInclude/dmi_utils.h file.
        */
    return(OK);
-} /* end routine */
+}
+/* end routine */
 
 
 #define FUNC_NAME "readOutputControlFile"
@@ -702,8 +645,8 @@ int readOutputControlFile(char *controlFile, dmi_header_struct **list)
 {
    FILE *fptr;
    char buff[BUFFSIZE];
-   char *obj_name,
-        *slot_name,
+   char obj_name[OBJECT_NAME_LEN + 1],
+        slot_name[SLOT_NAME_LEN + 1],
         *file_name,
         *unit_descriptor,
         *char_destination;
@@ -733,47 +676,40 @@ int readOutputControlFile(char *controlFile, dmi_header_struct **list)
    */
    while(fgets(buff,BUFFSIZE,fptr) != NULL)  
    { /* reads in to newline char*/
+
       /*
        * Get the object name.
        *   This requires a special routine b/c there can be multiple colons
-       *     in an object name.
+       *     in an object name, and multiple periods in an object/slot combo
        */
-      obj_name = GetObjName(buff);
+
+      GetObjAndSlotName(buff, obj_name, slot_name);
+
       if (!obj_name) 
       {
 	 PrintError("DMI: Could not determine object name from line:\n %s\n",                        buff);
 	 continue;
       }
       
-      /*
-       * Get the slot name.
-       *   This requires a special routine b/c there can be multiple colons
-       *     in an object name.
-       */
-      obj_name = GetObjName(buff);
-      slot_name = GetSlotName(buff);
       if (!slot_name) 
       {
 	 PrintError("DMI: Could not determine slot name from line:\n %s\n",
 		    buff);
-	 free(obj_name);
-	 obj_name = NULL;
+	 obj_name[0] = '\0';
 	 continue;
       }
       
       /*
        * Get the file name.
-       *   This is a mandatory item. Free the header if not found.
+       *   This is a mandatory item. 
        */
       file_name = GetToken(buff, "file=");
       if (!file_name) 
       {
 	 PrintError("DMI: Could not determine file name from line:\n %s\n",
 		    buff);
-	 free(obj_name);
-	 obj_name = NULL;
-	 free(slot_name);
-	 slot_name = NULL;
+	 obj_name[0] = '\0';
+	 slot_name[0] = '\0';
 	 continue;
       }
       
@@ -845,9 +781,11 @@ int readOutputControlFile(char *controlFile, dmi_header_struct **list)
       
       /*
        * Put the parsed values into the new list member.
+         Strdup object and slot name as they are not
+	 malloc'd memory 
        */
-      current->object_name = obj_name;
-      current->slot_name = slot_name;
+      current->object_name = strdup(obj_name);
+      current->slot_name = strdup(slot_name);
       current->pr_datafile_name = file_name;
       current->pr_units = unit_descriptor;
       current->destination = destination;
@@ -862,10 +800,4 @@ int readOutputControlFile(char *controlFile, dmi_header_struct **list)
    */
    fclose(fptr);
    return(OK);
-} /* end routine */
-
-
-
-
-
-
+}
