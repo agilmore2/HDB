@@ -17,11 +17,11 @@ res_data 928 40 |\grep -v ORACLE | ncftpput -c -e starvation.ftperr -f account.d
 # we have to do so with the tr -d \0 command
 
 scp hydromet@zippy:hour.dat .
-tr -d \0 hour.dat >$$.dat
+tr -d '\0' < hour.dat > $$.dat
 mv $$.dat hour.dat
 
 scp hydromet@zippy:data.dat .
-tr -d \0 data.dat >$$.dat
+tr -d '\0' < data.dat > $$.dat
 mv $$.dat data.dat
 
 # then place those files on the ftp site
