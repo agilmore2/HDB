@@ -77,6 +77,7 @@ int DmiSaveRealData(dmi_header_struct * header)
        int           loadingId;
        int           methodId;
        int           result;
+       char          *overwrite;
     EXEC SQL END DECLARE SECTION;
 
     int the_result;
@@ -215,17 +216,24 @@ int DmiSaveRealData(dmi_header_struct * header)
 	    {
 	      /* PrintError("Updating or inserting value.\n"); */
 
-	      /* OverwriteFlag and ValidationFlag are both null */
-	      EXEC SQL AT :current_dbsite EXECUTE
-		BEGIN
-		modify_r_base_raw (:siteDatatypeId,
-				   :dataInterval, :start_date,
-				   :end_date, :value,
-				   :agencyId, NULL, NULL, :collectionId, 
-				   :loadingId, :methodId, :computationId, 'Y');
-	      END;
-	      END-EXEC;
-	      
+	      /* Easiest to do 2 separate statements to distinguish
+		 null vs. not-null overwrite flag */
+	      if (header->is_overwrite)
+		overwrite = strdup (OVERWRITE_FLAG);
+	      else
+		overwrite = NULL;
+
+		  EXEC SQL AT :current_dbsite EXECUTE
+		    BEGIN
+		    modify_r_base_raw (:siteDatatypeId,
+				       :dataInterval, :start_date,
+				       :end_date, :value,
+				       :agencyId, :overwrite, NULL, 
+				       :collectionId, :loadingId, :methodId, 
+				       :computationId, 'Y');
+	          END;
+		  END-EXEC;
+
 	      if ((result = SqlErrorHandler 
 		   (FUNC_NAME, FALSE,
 		    "Problem in modify_r_base_raw.")) != OK)
