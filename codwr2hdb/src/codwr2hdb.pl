@@ -131,15 +131,15 @@ data is in REVERSE order!
 
 my (@data);
 
-#note the DISCHRG codee, some sites use numbers on the end, but this matches ok
-my $datate = new HTML::TableExtract(headers =>
-				    ["Date/Time", "DISCHRG"]);
-my $i;
+#note the DISCHRG code, some sites use numbers on the end, but this matches ok
+
+my $i = 0;
 
 if (defined($readfile))
 {
   $i = 0;
-
+  my $datate = new HTML::TableExtract(headers =>
+				    ["Date/Time", "DISCHRG"]);
   $datate->parse_file($readfile) or die "HTML parse of $readfile failed: $!\n";
   foreach my $row ($datate->rows) {
     $data[$i][0] = $$row[0]; #note headers above, so this is date/time
@@ -148,12 +148,15 @@ if (defined($readfile))
 # we get the site_id from the html, looking for the following data:
 #<p align='left'><big>Current Conditions For UCANALCO -- U LATERAL CANAL BELOW GREAT CUT DIKE NEAR DOLORES</big></p>
 
-#first Link in the document is the sitename!
+#first Link in the document is the sitename! Not any more, now it is the third
+# table cell. Grr.
   my $p = HTML::TokeParser->new($readfile);
-  my $token = $p->get_tag("p");
-  my $text = $p->get_trimmed_text("/p");
+  my $token = $p->get_tag("td");
+     $token = $p->get_tag("td");
+     $token = $p->get_tag("td");
+  my $text = $p->get_trimmed_text("/td");
 
-  my ($codwr_no) = $text =~ /^Current Conditions For ([A-Z]{8})/
+  my ($codwr_no) = $text =~ /^([A-Z]{8}) --/
      or die "File does not appear to be a CO DWR DOMSAT data file\n";
 
   print Dumper(@data) if defined($debug);
@@ -187,6 +190,8 @@ if (defined($readfile))
     }
 
     $i = 0;
+    my $datate = new HTML::TableExtract(headers =>
+				    ["Date/Time", "DISCHRG"]);
 
     $datate->parse($response->content)
        or die "HTML parse of response failed: $!\n"; ;
@@ -195,6 +200,7 @@ if (defined($readfile))
       $data[$i][0] = $$row[0]; #note headers above, so this is date/time
       $data[$i++][1] = $$row[1]; # and this is discharge
     }
+
     print Dumper(@data) if defined($debug);
     process_data(\@data, $codwr_no);
   }
