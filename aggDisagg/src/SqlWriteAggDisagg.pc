@@ -44,28 +44,98 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
   EXEC SQL BEGIN DECLARE SECTION;
-    SQL_DATE      date1;
-    SQL_DATE      date2;
+   SQL_DATE      date1;
+   SQL_DATE      date2;
     int           index1;
     int           index2;
     double        value;
     char          insertStatement[1000];
     char          updateStatement[1000];
-    ID            sdi = siteDatatypeId;
- EXEC SQL END DECLARE SECTION;
+    char          tempValidationFlag[2];
+    varchar       validationFlag[2];
+    varchar       overwriteFlag[2];
+    short         overwriteInd;
+    ID            sdi,
+                  agencyId,
+        	  collectionSystemId,
+		  loadingApplicationId,
+		  methodId, 
+		  computationId;
+   varchar        interval[SQL_INTERVAL_LENGTH];
+  EXEC SQL END DECLARE SECTION;
 
   int         valueCount,
               result;
-  char        validationFlag[2],
-              dateColumn[30],
+  char        dateColumn[30],
               valuesStatement[200],
               whereStatement[200];
-  
+
   /* Get the validation flag for this site/datatype */
-  if ((result = SqlGetValidationFlag (sdi, validationFlag)) != OK)
+  if ((result = SqlGetValidationFlag (sdi, tempValidationFlag)) != OK)
     {
       return (ERROR);
     }
+
+  /* Handle values that are written to r_base by calling stored procedure;
+     don't need to construct insert and update statements */
+  if (!runControl.isStat && !runControl.destIsRange)
+  {
+     for (valueCount = 0; valueCount < numDisAggValues; valueCount++)
+     {
+	/* Write needed data to host variables */
+	sdi = siteDatatypeId;
+	strcpy (interval.arr, runControl.interval); 
+	interval.len = strlen (interval.arr);
+	interval.arr[interval.len] = '\0';
+	strcpy (date1, disAggValueList[valueCount].dateStart);
+	strcpy (date2, disAggValueList[valueCount].dateEnd);
+	value = disAggValueList[valueCount].value;
+	strcpy (overwriteFlag.arr, runControl.overwriteFlag); 
+	overwriteFlag.len = strlen (overwriteFlag.arr);
+	overwriteFlag.arr[overwriteFlag.len] = '\0';
+	if (overwriteFlag.len < 1) 
+	  overwriteInd = -1;
+	else
+	  overwriteInd = 0;
+	agencyId = runControl.agencyId;
+	collectionSystemId = runControl.collectionSystemId;
+	loadingApplicationId = runControl.loadingApplicationId;
+	methodId = runControl.methodId;
+	computationId = runControl.computationId;
+	strcpy (validationFlag.arr, tempValidationFlag); 
+	validationFlag.len = strlen (validationFlag.arr);
+	validationFlag.arr[validationFlag.len] = '\0';
+
+       EXEC SQL EXECUTE
+        BEGIN
+	  modify_r_base_raw (:sdi, 
+			     :interval,
+			      :date1,:date2,
+			      :value, :agencyId, 
+			      :overwriteFlag:overwriteInd,
+			      :validationFlag,
+			      :collectionSystemId, :loadingApplicationId, 
+			      :methodId, :computationId, 'Y'); 
+        END;
+       END-EXEC;
+
+       if ((result = SqlErrorHandler 
+	    (FUNC_NAME, FALSE,
+	     "Problem in modify_r_base_raw.")) != OK)
+       {
+	  EXEC SQL ROLLBACK;
+	  return (ERROR);
+       }
+
+     }
+   
+     /* Done with inserts/updates to r_base for this site_datatype_id;
+	no need to proceed */
+     EXEC SQL COMMIT;
+     return (OK);
+  }
+
+  /* Now process values that go somewhere other than r_base */
 
   /* Set date column based on destination interval. */
   if ((result = GetDateColumn (runControl.obsDest, runControl.isStat,
@@ -83,18 +153,6 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 		 "VALUES (%d, :a, :b, %d)",
 		 siteDatatypeId, runControl.modelOrSourceId);
 	sprintf (whereStatement, "%s = :d", dateColumn);
-      }
-      else
-      {
-	 sprintf (valuesStatement, 
-		  "VALUES (%d, '%s', to_date (:a, 'dd-mon-yyyy hh24:mi:ss'), to_date (:b, 'dd-mon-yyyy hh24:mi:ss'), :c, %d, '%s', SYSDATE, '%s', %d, %d, %d, %d)",
-		  siteDatatypeId, runControl.interval, 
-		  runControl.agencyId, runControl.overwriteFlag,
-		  validationFlag, runControl.collectionSystemId, 
-		  runControl.loadingApplicationId, runControl.methodId,
-		  runControl.computationId);
-	 sprintf (whereStatement, "start_%s = to_date (:d, 'dd-mon-yyyy hh24:mi:ss') AND end_%s = to_date (:e, 'dd-mon-yyyy hh24:mi:ss') AND interval = '%s'" ,
-		  dateColumn, dateColumn, runControl.interval);
       }
     }
   else
@@ -122,11 +180,7 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
   if (!runControl.isStat)
   {
-  /* OVERWRITE - set it here if it's variable !*/
-     if (!runControl.destIsRange)
-	sprintf (updateStatement, "UPDATE %s SET value = :v WHERE site_datatype_id = %d AND %s", runControl.tableDest, 
-		 siteDatatypeId, whereStatement);
-     else
+     if (runControl.destIsRange)
 	sprintf (updateStatement, "UPDATE %s SET value = :v, source_id = %d WHERE site_datatype_id = %d AND %s", runControl.tableDest, 
 		 runControl.modelOrSourceId, siteDatatypeId, whereStatement);
   }
@@ -166,14 +220,7 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
      /* Try first to update an appropriate record */
      if (!runControl.destIsRange)
        {
-	 if (!runControl.isStat)
-	   {
-	     strcpy (date1, disAggValueList[valueCount].dateStart);
-	     strcpy (date2, disAggValueList[valueCount].dateEnd);
-	     EXEC SQL EXECUTE update_vals
-		USING :value, :date1, :date2;
-	   }
-	 else
+	 if (runControl.isStat)
 	   {
 	     index1 = disAggValueList[valueCount].timeIndexStart;
 	     EXEC SQL EXECUTE update_vals
@@ -204,9 +251,7 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
        {
 	 if (!runControl.destIsRange)
 	   {
-	     if (!runControl.isStat)
-	       EXEC SQL EXECUTE insert_vals USING :date1, :date2, :value;
-	     else
+	     if (runControl.isStat)
 	       EXEC SQL EXECUTE insert_vals USING :index1, :value;
 	   }
 	 else
@@ -259,7 +304,9 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
     double        value;
     char          insertStatement[1000];
     char          updateStatement[1000];
-    ID            sdi;
+    ID            sdi,
+                  modelRunId;
+    varchar       interval[SQL_INTERVAL_LENGTH];
  EXEC SQL END DECLARE SECTION;
 
   int         valueCount,
@@ -267,7 +314,49 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
   char        dateColumn[30],
               valuesStatement[200],
               whereStatement[200];
-  
+
+  /* Handle values that are written to m_ interval tables (not range
+     or statistics) by calling stored procedure;
+     don't need to construct insert and update statements */
+  if (!runControl.isStat && !runControl.destIsRange)
+  {
+     for (valueCount = 0; valueCount < numDisAggValues; valueCount++)
+     {
+	/* Write needed data to host variables */
+	sdi = siteDatatypeId;
+	modelRunId = runControl.modelOrSourceId;
+	strcpy (interval.arr, runControl.interval);
+	interval.len = strlen (interval.arr);
+	interval.arr[interval.len] = '\0';
+	strcpy (date1, disAggValueList[valueCount].dateStart);
+	strcpy (date2, disAggValueList[valueCount].dateEnd);
+	value = disAggValueList[valueCount].value;
+
+       EXEC SQL EXECUTE
+        BEGIN
+	  modify_m_table_raw (:modelRunId, :sdi, 
+			      :date1, :date2, :value, :interval, 'Y');
+        END;
+       END-EXEC;
+
+       if ((result = SqlErrorHandler 
+	    (FUNC_NAME, FALSE,
+	     "Problem in modify_m_table_raw.")) != OK)
+       {
+	  EXEC SQL ROLLBACK;
+	  return (ERROR);
+       }
+
+     }
+   
+     /* Done with inserts/updates to m_ interval tables for this 
+	site_datatype_id; no need to proceed */
+     EXEC SQL COMMIT;
+     return (OK);
+  }
+
+  /* Now process values that go into m_ stat or range tables */
+
   /* Set date column based on destination interval. */
   if ((result = GetDateColumn (runControl.obsDest, runControl.isStat,
 			       runControl.destIsRange, dateColumn)) != OK)
@@ -284,14 +373,6 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 		  "VALUES (%d, %d, :a, :b)",
 		  runControl.modelOrSourceId, siteDatatypeId);
 	 sprintf (whereStatement, "%s = :d", dateColumn);
-      }
-      else
-      {
-	 sprintf (valuesStatement, 
-		  "VALUES (%d, %d, to_date (:a, 'dd-mon-yyyy hh24:mi:ss'), to_date (:b, 'dd-mon-yyyy hh24:mi:ss'), :c)",
-		  runControl.modelOrSourceId, siteDatatypeId);
-	 sprintf (whereStatement, "start_%s = to_date (:d, 'dd-mon-yyyy hh24:mi:ss') AND end_%s = to_date (:e, 'dd-mon-yyyy hh24:mi:ss')", 
-		  dateColumn, dateColumn);
       }
     }
   else
@@ -352,14 +433,7 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
      /* Try first to update an appropriate record */
      if (!runControl.destIsRange)
        {
-	  if (!runControl.isStat)
-	  {
-	     strcpy (date1, disAggValueList[valueCount].dateStart);
-	     strcpy (date2, disAggValueList[valueCount].dateEnd);
-	     EXEC SQL EXECUTE update_vals
-		USING :value, :date1, :date2;
-	  }
-	  else
+	  if (runControl.isStat)
 	  {
 	     index1 = disAggValueList[valueCount].timeIndexStart;
 	     EXEC SQL EXECUTE update_vals
@@ -389,9 +463,7 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
        {
 	 if (!runControl.destIsRange)
 	 {
-	    if (!runControl.isStat)	
-	       EXEC SQL EXECUTE insert_vals USING :date1, :date2, :value;
-	    else
+	    if (runControl.isStat)	
 	       EXEC SQL EXECUTE insert_vals USING :index1, :value;
 	 }
 	 else
@@ -429,11 +501,3 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
   EXEC SQL COMMIT;	
   return (OK);
 }
-
-
-
-
-
-
-
-

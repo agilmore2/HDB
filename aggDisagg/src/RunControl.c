@@ -426,15 +426,18 @@ int SetRunControl (RUN_CONTROL *runControl)
     }
   
   /* If this is disagg of real data, set overwrite flag. Otherwise,
-     it's already set appropriately. (Default is null, or user
-     may specify 'O' for dimension changes in base area */
+     set it to NULL */
   if (runControl->opType == DISAGG && runControl->sourceIsReal)
-     if ((result = SqlGetOverwriteFlag (OVERWRITE,
- 				        runControl->overwriteFlag)) != OK)
-     {
-	PrintError ("Problem getting overwrite flag.\n\tExiting.");
-	return (ERROR);
-     }
+    {
+      if ((result = SqlGetOverwriteFlag (OVERWRITE,
+					 runControl->overwriteFlag)) != OK)
+	{
+	  PrintError ("Problem getting overwrite flag.\n\tExiting.");
+	  return (ERROR);
+	}
+    }
+  else
+    runControl->overwriteFlag[0] = '\0';
 
   if ((result = SqlGetCollectionId (SEE_LOADING_APP,
 				    &(runControl->collectionSystemId))) != OK)
@@ -450,12 +453,15 @@ int SetRunControl (RUN_CONTROL *runControl)
       return (ERROR);
     }
 
-  /* This will change if aggDisagg methods are synched up w/ existing
-     method keys. */
-  if ((result = SqlGetMethodId (UNKNOWN, &(runControl->methodId))) != OK)
+  /* Set methodId to UNKNOWN only if it's NA, meaning user defined function;
+   otherwise, use method indicated in ref_agg_disagg table */
+  if (runControl->methodId == NA)
     {
-      PrintError ("Problem getting method ID.\n\tExiting.");
-      return (ERROR);
+      if ((result = SqlGetMethodId (UNKNOWN, &(runControl->methodId))) != OK)
+	{
+	  PrintError ("Problem getting method ID.\n\tExiting.");
+	  return (ERROR);
+	}
     }
 
   if ((result = SqlGetComputationId (UNKNOWN, &(runControl->computationId))) != OK)
@@ -556,7 +562,6 @@ int VerifyInputs (RUN_CONTROL runControl)
       isInstant,
       statsOk,
       compareResult;
-  char methodCode[4];
   METHOD_CLASS_INFO methodClassInfo;
   
   /* Disallow aggregation of real data that is not stat, range,
@@ -619,7 +624,7 @@ int VerifyInputs (RUN_CONTROL runControl)
 	  
 	  if (!statsOk)
 	    {
-	      PrintError ("Method '%s' of destination datatype %d indicates invalid datatype for statistics.\n\tExiting.", methodCode, runControl.datatypeDest);
+	      PrintError ("Method '%s' of destination datatype %d indicates invalid datatype for statistics.\n\tExiting.", methodClassInfo.name, runControl.datatypeDest);
 	      return (ERROR);
 	    }
 	}
@@ -797,7 +802,8 @@ int Bookkeeping (RUN_CONTROL *runControl, char *executableName)
      the result in runControl->modelOrSourceId */
   if (runControl->destIsReal)
     {
-       if (runControl->dimensionChangeInBaseArea)
+       if (runControl->dimensionChangeInBaseArea ||
+	   (runControl->opType == DISAGG && runControl->sourceIsReal))
        {
 	  if ((result = SqlGetLoadingId (LOADING_APPLICATION_NAME, &sourceId)) != OK)
 	  {

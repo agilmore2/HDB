@@ -4,7 +4,7 @@
 include ../../Environ
 
 OBJDIR = $(HDB_ENV)/aggDisagg/obj
-INCLUDES = -I$(HDB_APP_INCLUDE) -I/usr/local/X11R5/include
+INCLUDES = -I$(HDB_APP_INCLUDE) -I$(TK_INCLUDES) -I$(TK_HEADER) -I/usr/local/X11R5/include
 LIBS = $(HDB_LIBS) -lm -ldl
 CFLAGS = -ansi -Wall -g -DANSIPROTO $(INCLUDES)
 
@@ -62,7 +62,7 @@ $(OBJDIR)/SqlLoadAggDisagg.o: \
 	$(HDB_APP_INCLUDE)/defines.h \
 	$(HDB_APP_LIB)/libutils.a \
 	$(HDB_APP_INCLUDE)/typedefs.h
-	proc code=ansi_c iname=SqlLoadAggDisagg.pc include=$(HDB_APP_INCLUDE)
+	proc code=ansi_c CHAR_MAP=string iname=SqlLoadAggDisagg.pc include=$(HDB_APP_INCLUDE)
 	$(CC) $(CFLAGS) -c SqlLoadAggDisagg.c -o $@
 
 $(OBJDIR)/SqlBoundaryDates.o: \
@@ -165,5 +165,5 @@ $(OBJDIR)/SqlWriteAggDisagg.o: \
 	$(HDB_APP_INCLUDE)/defines.h \
 	$(HDB_APP_LIB)/libutils.a \
 	$(HDB_APP_INCLUDE)/typedefs.h
-	proc code=ansi_c iname=SqlWriteAggDisagg.pc include=$(HDB_APP_INCLUDE)
+	proc code=ansi_c CHAR_MAP=string sqlcheck=semantics userid=$(DBA)/$(DBA_PASSWD) iname=SqlWriteAggDisagg.pc include=$(HDB_APP_INCLUDE)
 	$(CC) $(CFLAGS) -c SqlWriteAggDisagg.c -o $@

@@ -78,6 +78,13 @@ int main (int argc, char **argv)
 
     } 
 
+  if ((result = SqlSetDateFormat ("DD-MON-YYYY HH24:MI:SS")) != OK)
+    {
+      PrintError ("%s: Problem setting date format. Exiting.\n", FUNC_NAME);
+      return (ERROR);
+    }
+
+
   if ((result = ParseCommandLine (&runControl, argc - 3, &(argv[3]), 
 				  siteList, &numSites)) != OK)
   {

@@ -7,7 +7,7 @@
     unsigned int curocn;
     void *ptr1;
     void *ptr2;
-    unsigned long magic;
+    unsigned int magic;
   };
   typedef struct sql_cursor sql_cursor;
   typedef struct sql_cursor SQL_CURSOR;
@@ -69,11 +69,11 @@ static const struct sqlcxp sqlfpn =
 };
 
 
-static unsigned long sqlctx = 42229667;
+static unsigned int sqlctx = 42229667;
 
 
 static struct sqlexd {
-   unsigned int   sqlvsn;
+   unsigned long  sqlvsn;
    unsigned int   arrsiz;
    unsigned int   iters;
    unsigned int   offset;
@@ -85,34 +85,42 @@ static struct sqlexd {
       const char  *stmt;
    sqladts *sqladtp;
    sqltdss *sqltdsp;
-            void  **sqphsv;
-   unsigned int   *sqphsl;
+   unsigned char  **sqphsv;
+   unsigned long  *sqphsl;
             int   *sqphss;
-            void  **sqpind;
+            short **sqpind;
             int   *sqpins;
-   unsigned int   *sqparm;
-   unsigned int   **sqparc;
+   unsigned long  *sqparm;
+   unsigned long  **sqparc;
    unsigned short  *sqpadto;
    unsigned short  *sqptdso;
-            void  *sqhstv[10];
-   unsigned int   sqhstl[10];
+   unsigned int   sqlcmax;
+   unsigned int   sqlcmin;
+   unsigned int   sqlcincr;
+   unsigned int   sqlctimeout;
+   unsigned int   sqlcnowait;
+            int   sqfoff;
+   unsigned int   sqcmod;
+   unsigned int   sqfmod;
+   unsigned char  *sqhstv[10];
+   unsigned long  sqhstl[10];
             int   sqhsts[10];
-            void  *sqindv[10];
+            short *sqindv[10];
             int   sqinds[10];
-   unsigned int   sqharm[10];
-   unsigned int   *sqharc[10];
+   unsigned long  sqharm[10];
+   unsigned long  *sqharc[10];
    unsigned short  sqadto[10];
    unsigned short  sqtdso[10];
-} sqlstm = {10,10};
+} sqlstm = {12,10};
 
 /* SQLLIB Prototypes */
-extern void sqlcxt (void **, unsigned long *,
+extern void sqlcxt (void **, unsigned int *,
                     struct sqlexd *, const struct sqlcxp *);
-extern void sqlcx2t(void **, unsigned long *,
+extern void sqlcx2t(void **, unsigned int *,
                     struct sqlexd *, const struct sqlcxp *);
 extern void sqlbuft(void **, char *);
 extern void sqlgs2t(void **, char *);
-extern void sqlorat(void **, unsigned long *, void *);
+extern void sqlorat(void **, unsigned int *, void *);
 
 /* Forms Interface */
 static const int IAPSUCC = 0;
@@ -125,9 +133,9 @@ typedef struct { unsigned short len; unsigned char arr[1]; } varchar;
 
 /* cud (compilation unit data) array */
 static const short sqlcud0[] =
-{10,4130,0,0,0,
-5,0,0,1,369,0,4,68,0,0,10,1,0,1,0,2,3,0,0,2,97,0,0,2,97,0,0,2,3,0,0,2,97,0,0,2,
-97,0,0,2,3,0,0,2,3,0,0,2,9,0,0,1,3,0,0,
+{12,4130,1,0,0,
+5,0,0,1,372,0,4,68,0,0,10,1,0,1,0,2,3,0,0,2,5,0,0,2,5,0,0,2,3,0,0,2,5,0,0,2,5,
+0,0,2,3,0,0,2,3,0,0,2,9,0,0,1,3,0,0,
 60,0,0,2,0,0,31,82,0,0,0,0,0,1,0,
 };
 
@@ -313,11 +321,11 @@ struct { unsigned short len; unsigned char arr[33]; } functionName;
       :functionName:functionInd
     FROM ref_agg_disagg a, hdb_method b
     WHERE a.agg_disagg_id = :sqlAggDisaggId
-      AND a.method_id = b.method_id; */ 
+      AND a.method_id = b.method_id(+); */ 
 
 {
   struct sqlexd sqlstm;
-  sqlstm.sqlvsn = 10;
+  sqlstm.sqlvsn = 12;
   sqlstm.arrsiz = 10;
   sqlstm.sqladtp = &sqladt;
   sqlstm.sqltdsp = &sqltds;
@@ -325,7 +333,8 @@ struct { unsigned short len; unsigned char arr[33]; } functionName;
 ,a.dest_datatype_unit_ind ,a.dest_datatype_or_unit_id ,a.dest_observation_inte\
 rval ,a.method_or_function ,a.method_id ,b.method_class_id ,a.agg_disagg_funct\
 ion_name into :b0,:b1,:b2,:b3,:b4,:b5,:b6:b7,:b8:b9,:b10:b11  from ref_agg_dis\
-agg a ,hdb_method b where (a.agg_disagg_id=:b12 and a.method_id=b.method_id)";
+agg a ,hdb_method b where (a.agg_disagg_id=:b12 and a.method_id=b.method_id(+)\
+)";
   sqlstm.iters = (unsigned int  )1;
   sqlstm.offset = (unsigned int  )5;
   sqlstm.selerr = (unsigned short)1;
@@ -333,84 +342,84 @@ agg a ,hdb_method b where (a.agg_disagg_id=:b12 and a.method_id=b.method_id)";
   sqlstm.sqlest = (unsigned char  *)&sqlca;
   sqlstm.sqlety = (unsigned short)256;
   sqlstm.occurs = (unsigned int  )0;
-  sqlstm.sqhstv[0] = (         void  *)&datatypeSource;
-  sqlstm.sqhstl[0] = (unsigned int  )sizeof(int);
+  sqlstm.sqhstv[0] = (unsigned char  *)&datatypeSource;
+  sqlstm.sqhstl[0] = (unsigned long )sizeof(int);
   sqlstm.sqhsts[0] = (         int  )0;
-  sqlstm.sqindv[0] = (         void  *)0;
+  sqlstm.sqindv[0] = (         short *)0;
   sqlstm.sqinds[0] = (         int  )0;
-  sqlstm.sqharm[0] = (unsigned int  )0;
+  sqlstm.sqharm[0] = (unsigned long )0;
   sqlstm.sqadto[0] = (unsigned short )0;
   sqlstm.sqtdso[0] = (unsigned short )0;
-  sqlstm.sqhstv[1] = (         void  *)obsSource;
-  sqlstm.sqhstl[1] = (unsigned int  )17;
+  sqlstm.sqhstv[1] = (unsigned char  *)obsSource;
+  sqlstm.sqhstl[1] = (unsigned long )17;
   sqlstm.sqhsts[1] = (         int  )0;
-  sqlstm.sqindv[1] = (         void  *)0;
+  sqlstm.sqindv[1] = (         short *)0;
   sqlstm.sqinds[1] = (         int  )0;
-  sqlstm.sqharm[1] = (unsigned int  )0;
+  sqlstm.sqharm[1] = (unsigned long )0;
   sqlstm.sqadto[1] = (unsigned short )0;
   sqlstm.sqtdso[1] = (unsigned short )0;
-  sqlstm.sqhstv[2] = (         void  *)dtUnitInd;
-  sqlstm.sqhstl[2] = (unsigned int  )2;
+  sqlstm.sqhstv[2] = (unsigned char  *)dtUnitInd;
+  sqlstm.sqhstl[2] = (unsigned long )2;
   sqlstm.sqhsts[2] = (         int  )0;
-  sqlstm.sqindv[2] = (         void  *)0;
+  sqlstm.sqindv[2] = (         short *)0;
   sqlstm.sqinds[2] = (         int  )0;
-  sqlstm.sqharm[2] = (unsigned int  )0;
+  sqlstm.sqharm[2] = (unsigned long )0;
   sqlstm.sqadto[2] = (unsigned short )0;
   sqlstm.sqtdso[2] = (unsigned short )0;
-  sqlstm.sqhstv[3] = (         void  *)&datatypeOrUnitDest;
-  sqlstm.sqhstl[3] = (unsigned int  )sizeof(int);
+  sqlstm.sqhstv[3] = (unsigned char  *)&datatypeOrUnitDest;
+  sqlstm.sqhstl[3] = (unsigned long )sizeof(int);
   sqlstm.sqhsts[3] = (         int  )0;
-  sqlstm.sqindv[3] = (         void  *)0;
+  sqlstm.sqindv[3] = (         short *)0;
   sqlstm.sqinds[3] = (         int  )0;
-  sqlstm.sqharm[3] = (unsigned int  )0;
+  sqlstm.sqharm[3] = (unsigned long )0;
   sqlstm.sqadto[3] = (unsigned short )0;
   sqlstm.sqtdso[3] = (unsigned short )0;
-  sqlstm.sqhstv[4] = (         void  *)obsDest;
-  sqlstm.sqhstl[4] = (unsigned int  )17;
+  sqlstm.sqhstv[4] = (unsigned char  *)obsDest;
+  sqlstm.sqhstl[4] = (unsigned long )17;
   sqlstm.sqhsts[4] = (         int  )0;
-  sqlstm.sqindv[4] = (         void  *)0;
+  sqlstm.sqindv[4] = (         short *)0;
   sqlstm.sqinds[4] = (         int  )0;
-  sqlstm.sqharm[4] = (unsigned int  )0;
+  sqlstm.sqharm[4] = (unsigned long )0;
   sqlstm.sqadto[4] = (unsigned short )0;
   sqlstm.sqtdso[4] = (unsigned short )0;
-  sqlstm.sqhstv[5] = (         void  *)opOrFcn;
-  sqlstm.sqhstl[5] = (unsigned int  )2;
+  sqlstm.sqhstv[5] = (unsigned char  *)opOrFcn;
+  sqlstm.sqhstl[5] = (unsigned long )2;
   sqlstm.sqhsts[5] = (         int  )0;
-  sqlstm.sqindv[5] = (         void  *)0;
+  sqlstm.sqindv[5] = (         short *)0;
   sqlstm.sqinds[5] = (         int  )0;
-  sqlstm.sqharm[5] = (unsigned int  )0;
+  sqlstm.sqharm[5] = (unsigned long )0;
   sqlstm.sqadto[5] = (unsigned short )0;
   sqlstm.sqtdso[5] = (unsigned short )0;
-  sqlstm.sqhstv[6] = (         void  *)&method;
-  sqlstm.sqhstl[6] = (unsigned int  )sizeof(int);
+  sqlstm.sqhstv[6] = (unsigned char  *)&method;
+  sqlstm.sqhstl[6] = (unsigned long )sizeof(int);
   sqlstm.sqhsts[6] = (         int  )0;
-  sqlstm.sqindv[6] = (         void  *)&methodInd;
+  sqlstm.sqindv[6] = (         short *)&methodInd;
   sqlstm.sqinds[6] = (         int  )0;
-  sqlstm.sqharm[6] = (unsigned int  )0;
+  sqlstm.sqharm[6] = (unsigned long )0;
   sqlstm.sqadto[6] = (unsigned short )0;
   sqlstm.sqtdso[6] = (unsigned short )0;
-  sqlstm.sqhstv[7] = (         void  *)&methodClass;
-  sqlstm.sqhstl[7] = (unsigned int  )sizeof(int);
+  sqlstm.sqhstv[7] = (unsigned char  *)&methodClass;
+  sqlstm.sqhstl[7] = (unsigned long )sizeof(int);
   sqlstm.sqhsts[7] = (         int  )0;
-  sqlstm.sqindv[7] = (         void  *)&methodClassInd;
+  sqlstm.sqindv[7] = (         short *)&methodClassInd;
   sqlstm.sqinds[7] = (         int  )0;
-  sqlstm.sqharm[7] = (unsigned int  )0;
+  sqlstm.sqharm[7] = (unsigned long )0;
   sqlstm.sqadto[7] = (unsigned short )0;
   sqlstm.sqtdso[7] = (unsigned short )0;
-  sqlstm.sqhstv[8] = (         void  *)&functionName;
-  sqlstm.sqhstl[8] = (unsigned int  )35;
+  sqlstm.sqhstv[8] = (unsigned char  *)&functionName;
+  sqlstm.sqhstl[8] = (unsigned long )35;
   sqlstm.sqhsts[8] = (         int  )0;
-  sqlstm.sqindv[8] = (         void  *)&functionInd;
+  sqlstm.sqindv[8] = (         short *)&functionInd;
   sqlstm.sqinds[8] = (         int  )0;
-  sqlstm.sqharm[8] = (unsigned int  )0;
+  sqlstm.sqharm[8] = (unsigned long )0;
   sqlstm.sqadto[8] = (unsigned short )0;
   sqlstm.sqtdso[8] = (unsigned short )0;
-  sqlstm.sqhstv[9] = (         void  *)&sqlAggDisaggId;
-  sqlstm.sqhstl[9] = (unsigned int  )sizeof(int);
+  sqlstm.sqhstv[9] = (unsigned char  *)&sqlAggDisaggId;
+  sqlstm.sqhstl[9] = (unsigned long )sizeof(int);
   sqlstm.sqhsts[9] = (         int  )0;
-  sqlstm.sqindv[9] = (         void  *)0;
+  sqlstm.sqindv[9] = (         short *)0;
   sqlstm.sqinds[9] = (         int  )0;
-  sqlstm.sqharm[9] = (unsigned int  )0;
+  sqlstm.sqharm[9] = (unsigned long )0;
   sqlstm.sqadto[9] = (unsigned short )0;
   sqlstm.sqtdso[9] = (unsigned short )0;
   sqlstm.sqphsv = sqlstm.sqhstv;
@@ -434,7 +443,7 @@ agg a ,hdb_method b where (a.agg_disagg_id=:b12 and a.method_id=b.method_id)";
 
 {
       struct sqlexd sqlstm;
-      sqlstm.sqlvsn = 10;
+      sqlstm.sqlvsn = 12;
       sqlstm.arrsiz = 10;
       sqlstm.sqladtp = &sqladt;
       sqlstm.sqltdsp = &sqltds;

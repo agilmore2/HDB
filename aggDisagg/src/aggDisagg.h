@@ -156,10 +156,12 @@ int SqlFetchPreviousTimeStepValue(
 #ifdef ANSIPROTO
 OBJECTTYPE_NAME ,
 TIME_INTERVAL_TYPES,
-int,
 ID,
 SQL_DATE,
-double *
+double *,
+int,
+int,
+int
 #endif
 );
 

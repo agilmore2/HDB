@@ -7,7 +7,7 @@
     unsigned int curocn;
     void *ptr1;
     void *ptr2;
-    unsigned long magic;
+    unsigned int magic;
   };
   typedef struct sql_cursor sql_cursor;
   typedef struct sql_cursor SQL_CURSOR;
@@ -69,11 +69,11 @@ static const struct sqlcxp sqlfpn =
 };
 
 
-static unsigned long sqlctx = 85544867;
+static unsigned int sqlctx = 85544867;
 
 
 static struct sqlexd {
-   unsigned int   sqlvsn;
+   unsigned long  sqlvsn;
    unsigned int   arrsiz;
    unsigned int   iters;
    unsigned int   offset;
@@ -85,34 +85,42 @@ static struct sqlexd {
       const char  *stmt;
    sqladts *sqladtp;
    sqltdss *sqltdsp;
-            void  **sqphsv;
-   unsigned int   *sqphsl;
+   unsigned char  **sqphsv;
+   unsigned long  *sqphsl;
             int   *sqphss;
-            void  **sqpind;
+            short **sqpind;
             int   *sqpins;
-   unsigned int   *sqparm;
-   unsigned int   **sqparc;
+   unsigned long  *sqparm;
+   unsigned long  **sqparc;
    unsigned short  *sqpadto;
    unsigned short  *sqptdso;
-            void  *sqhstv[3];
-   unsigned int   sqhstl[3];
-            int   sqhsts[3];
-            void  *sqindv[3];
-            int   sqinds[3];
-   unsigned int   sqharm[3];
-   unsigned int   *sqharc[3];
-   unsigned short  sqadto[3];
-   unsigned short  sqtdso[3];
-} sqlstm = {10,3};
+   unsigned int   sqlcmax;
+   unsigned int   sqlcmin;
+   unsigned int   sqlcincr;
+   unsigned int   sqlctimeout;
+   unsigned int   sqlcnowait;
+            int   sqfoff;
+   unsigned int   sqcmod;
+   unsigned int   sqfmod;
+   unsigned char  *sqhstv[12];
+   unsigned long  sqhstl[12];
+            int   sqhsts[12];
+            short *sqindv[12];
+            int   sqinds[12];
+   unsigned long  sqharm[12];
+   unsigned long  *sqharc[12];
+   unsigned short  sqadto[12];
+   unsigned short  sqtdso[12];
+} sqlstm = {12,12};
 
 /* SQLLIB Prototypes */
-extern void sqlcxt (void **, unsigned long *,
+extern void sqlcxt (void **, unsigned int *,
                     struct sqlexd *, const struct sqlcxp *);
-extern void sqlcx2t(void **, unsigned long *,
+extern void sqlcx2t(void **, unsigned int *,
                     struct sqlexd *, const struct sqlcxp *);
 extern void sqlbuft(void **, char *);
 extern void sqlgs2t(void **, char *);
-extern void sqlorat(void **, unsigned long *, void *);
+extern void sqlorat(void **, unsigned int *, void *);
 
 /* Forms Interface */
 static const int IAPSUCC = 0;
@@ -125,37 +133,41 @@ typedef struct { unsigned short len; unsigned char arr[1]; } varchar;
 
 /* cud (compilation unit data) array */
 static const short sqlcud0[] =
-{10,4130,0,0,0,
-5,0,0,1,0,0,17,142,0,0,1,1,0,1,0,1,97,0,0,
-24,0,0,2,0,0,31,148,0,0,0,0,0,1,0,
-39,0,0,3,0,0,17,152,0,0,1,1,0,1,0,1,97,0,0,
-58,0,0,4,0,0,31,158,0,0,0,0,0,1,0,
-73,0,0,3,0,0,21,173,0,0,3,3,0,1,0,1,4,0,0,1,97,0,0,1,97,0,0,
-100,0,0,3,0,0,21,179,0,0,2,2,0,1,0,1,4,0,0,1,3,0,0,
-123,0,0,3,0,0,21,191,0,0,3,3,0,1,0,1,4,0,0,1,97,0,0,1,97,0,0,
-150,0,0,3,0,0,21,198,0,0,3,3,0,1,0,1,4,0,0,1,3,0,0,1,3,0,0,
-177,0,0,1,0,0,21,208,0,0,3,3,0,1,0,1,97,0,0,1,97,0,0,1,4,0,0,
-204,0,0,1,0,0,21,210,0,0,2,2,0,1,0,1,3,0,0,1,4,0,0,
-227,0,0,1,0,0,21,215,0,0,3,3,0,1,0,1,97,0,0,1,97,0,0,1,4,0,0,
-254,0,0,1,0,0,21,217,0,0,3,3,0,1,0,1,3,0,0,1,3,0,0,1,4,0,0,
-281,0,0,5,0,0,31,225,0,0,0,0,0,1,0,
-296,0,0,6,0,0,31,237,0,0,0,0,0,1,0,
-311,0,0,7,0,0,29,243,0,0,0,0,0,1,0,
-326,0,0,1,0,0,17,328,0,0,1,1,0,1,0,1,97,0,0,
-345,0,0,8,0,0,31,334,0,0,0,0,0,1,0,
-360,0,0,3,0,0,17,338,0,0,1,1,0,1,0,1,97,0,0,
-379,0,0,9,0,0,31,344,0,0,0,0,0,1,0,
-394,0,0,3,0,0,21,359,0,0,3,3,0,1,0,1,4,0,0,1,97,0,0,1,97,0,0,
-421,0,0,3,0,0,21,365,0,0,2,2,0,1,0,1,4,0,0,1,3,0,0,
-444,0,0,3,0,0,21,375,0,0,3,3,0,1,0,1,4,0,0,1,97,0,0,1,97,0,0,
-471,0,0,3,0,0,21,382,0,0,3,3,0,1,0,1,4,0,0,1,3,0,0,1,3,0,0,
-498,0,0,1,0,0,21,393,0,0,3,3,0,1,0,1,97,0,0,1,97,0,0,1,4,0,0,
-525,0,0,1,0,0,21,395,0,0,2,2,0,1,0,1,3,0,0,1,4,0,0,
-548,0,0,1,0,0,21,400,0,0,3,3,0,1,0,1,97,0,0,1,97,0,0,1,4,0,0,
-575,0,0,1,0,0,21,402,0,0,3,3,0,1,0,1,3,0,0,1,3,0,0,1,4,0,0,
-602,0,0,10,0,0,31,411,0,0,0,0,0,1,0,
-617,0,0,11,0,0,31,423,0,0,0,0,0,1,0,
-632,0,0,12,0,0,29,429,0,0,0,0,0,1,0,
+{12,4130,1,0,0,
+5,0,0,1,220,0,6,109,0,0,12,12,0,1,0,1,3,0,0,1,9,0,0,1,5,0,0,3,5,0,0,1,4,0,0,1,
+3,0,0,1,9,0,0,1,9,0,0,1,3,0,0,1,3,0,0,1,3,0,0,1,3,0,0,
+68,0,0,2,0,0,31,126,0,0,0,0,0,1,0,
+83,0,0,3,0,0,29,134,0,0,0,0,0,1,0,
+98,0,0,4,0,0,17,196,0,0,1,1,0,1,0,1,5,0,0,
+117,0,0,5,0,0,31,202,0,0,0,0,0,1,0,
+132,0,0,6,0,0,17,206,0,0,1,1,0,1,0,1,5,0,0,
+151,0,0,7,0,0,31,212,0,0,0,0,0,1,0,
+166,0,0,6,0,0,21,226,0,0,2,2,0,1,0,1,4,0,0,1,3,0,0,
+189,0,0,6,0,0,21,238,0,0,3,3,0,1,0,1,4,0,0,1,5,0,0,1,5,0,0,
+216,0,0,6,0,0,21,245,0,0,3,3,0,1,0,1,4,0,0,1,3,0,0,1,3,0,0,
+243,0,0,4,0,0,21,255,0,0,2,2,0,1,0,1,3,0,0,1,4,0,0,
+266,0,0,4,0,0,21,260,0,0,3,3,0,1,0,1,5,0,0,1,5,0,0,1,4,0,0,
+293,0,0,4,0,0,21,262,0,0,3,3,0,1,0,1,3,0,0,1,3,0,0,1,4,0,0,
+320,0,0,8,0,0,31,270,0,0,0,0,0,1,0,
+335,0,0,9,0,0,31,282,0,0,0,0,0,1,0,
+350,0,0,10,0,0,29,288,0,0,0,0,0,1,0,
+365,0,0,11,100,0,6,335,0,0,6,6,0,1,0,1,3,0,0,1,3,0,0,1,5,0,0,3,5,0,0,1,4,0,0,1,
+9,0,0,
+404,0,0,12,0,0,31,346,0,0,0,0,0,1,0,
+419,0,0,13,0,0,29,354,0,0,0,0,0,1,0,
+434,0,0,4,0,0,17,409,0,0,1,1,0,1,0,1,5,0,0,
+453,0,0,14,0,0,31,415,0,0,0,0,0,1,0,
+468,0,0,6,0,0,17,419,0,0,1,1,0,1,0,1,5,0,0,
+487,0,0,15,0,0,31,425,0,0,0,0,0,1,0,
+502,0,0,6,0,0,21,439,0,0,2,2,0,1,0,1,4,0,0,1,3,0,0,
+525,0,0,6,0,0,21,449,0,0,3,3,0,1,0,1,4,0,0,1,5,0,0,1,5,0,0,
+552,0,0,6,0,0,21,456,0,0,3,3,0,1,0,1,4,0,0,1,3,0,0,1,3,0,0,
+579,0,0,4,0,0,21,467,0,0,2,2,0,1,0,1,3,0,0,1,4,0,0,
+602,0,0,4,0,0,21,472,0,0,3,3,0,1,0,1,5,0,0,1,5,0,0,1,4,0,0,
+629,0,0,4,0,0,21,474,0,0,3,3,0,1,0,1,3,0,0,1,3,0,0,1,4,0,0,
+656,0,0,16,0,0,31,483,0,0,0,0,0,1,0,
+671,0,0,17,0,0,31,495,0,0,0,0,0,1,0,
+686,0,0,18,0,0,29,501,0,0,0,0,0,1,0,
 };
 
 
@@ -307,29 +319,265 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 {
   /* EXEC SQL BEGIN DECLARE SECTION; */ 
 
-    SQL_DATE      date1;
-    SQL_DATE      date2;
+   SQL_DATE      date1;
+   SQL_DATE      date2;
     int           index1;
     int           index2;
     double        value;
     char          insertStatement[1000];
     char          updateStatement[1000];
-    ID            sdi = siteDatatypeId;
- /* EXEC SQL END DECLARE SECTION; */ 
+    char          tempValidationFlag[2];
+    /* varchar       validationFlag[2]; */ 
+struct { unsigned short len; unsigned char arr[2]; } validationFlag;
+
+    /* varchar       overwriteFlag[2]; */ 
+struct { unsigned short len; unsigned char arr[2]; } overwriteFlag;
+
+    short         overwriteInd;
+    ID            sdi,
+                  agencyId,
+        	  collectionSystemId,
+		  loadingApplicationId,
+		  methodId, 
+		  computationId;
+   /* varchar        interval[SQL_INTERVAL_LENGTH]; */ 
+struct { unsigned short len; unsigned char arr[33]; } interval;
+
+  /* EXEC SQL END DECLARE SECTION; */ 
 
 
   int         valueCount,
               result;
-  char        validationFlag[2],
-              dateColumn[30],
+  char        dateColumn[30],
               valuesStatement[200],
               whereStatement[200];
-  
+
   /* Get the validation flag for this site/datatype */
-  if ((result = SqlGetValidationFlag (sdi, validationFlag)) != OK)
+  if ((result = SqlGetValidationFlag (sdi, tempValidationFlag)) != OK)
     {
       return (ERROR);
     }
+
+  /* Handle values that are written to r_base by calling stored procedure;
+     don't need to construct insert and update statements */
+  if (!runControl.isStat && !runControl.destIsRange)
+  {
+     for (valueCount = 0; valueCount < numDisAggValues; valueCount++)
+     {
+	/* Write needed data to host variables */
+	sdi = siteDatatypeId;
+	strcpy (interval.arr, runControl.interval); 
+	interval.len = strlen (interval.arr);
+	interval.arr[interval.len] = '\0';
+	strcpy (date1, disAggValueList[valueCount].dateStart);
+	strcpy (date2, disAggValueList[valueCount].dateEnd);
+	value = disAggValueList[valueCount].value;
+	strcpy (overwriteFlag.arr, runControl.overwriteFlag); 
+	overwriteFlag.len = strlen (overwriteFlag.arr);
+	overwriteFlag.arr[overwriteFlag.len] = '\0';
+	if (overwriteFlag.len < 1) 
+	  overwriteInd = -1;
+	else
+	  overwriteInd = 0;
+	agencyId = runControl.agencyId;
+	collectionSystemId = runControl.collectionSystemId;
+	loadingApplicationId = runControl.loadingApplicationId;
+	methodId = runControl.methodId;
+	computationId = runControl.computationId;
+	strcpy (validationFlag.arr, tempValidationFlag); 
+	validationFlag.len = strlen (validationFlag.arr);
+	validationFlag.arr[validationFlag.len] = '\0';
+
+       /* EXEC SQL EXECUTE
+        BEGIN
+	  modify_r_base_raw (:sdi, 
+			     :interval,
+			      :date1,:date2,
+			      :value, :agencyId, 
+			      :overwriteFlag:overwriteInd,
+			      :validationFlag,
+			      :collectionSystemId, :loadingApplicationId, 
+			      :methodId, :computationId, 'Y'); 
+        END;
+       END-EXEC; */ 
+
+{
+       struct sqlexd sqlstm;
+       sqlstm.sqlvsn = 12;
+       sqlstm.arrsiz = 12;
+       sqlstm.sqladtp = &sqladt;
+       sqlstm.sqltdsp = &sqltds;
+       sqlstm.stmt = "begin modify_r_base_raw ( :sdi , :interval , :date1 , \
+:date2 , :value , :agencyId , :overwriteFlag:overwriteInd , :validationFlag , \
+:collectionSystemId , :loadingApplicationId , :methodId , :computationId , 'Y'\
+ ) ; END ;";
+       sqlstm.iters = (unsigned int  )1;
+       sqlstm.offset = (unsigned int  )5;
+       sqlstm.cud = sqlcud0;
+       sqlstm.sqlest = (unsigned char  *)&sqlca;
+       sqlstm.sqlety = (unsigned short)256;
+       sqlstm.occurs = (unsigned int  )0;
+       sqlstm.sqhstv[0] = (unsigned char  *)&sdi;
+       sqlstm.sqhstl[0] = (unsigned long )sizeof(int);
+       sqlstm.sqhsts[0] = (         int  )0;
+       sqlstm.sqindv[0] = (         short *)0;
+       sqlstm.sqinds[0] = (         int  )0;
+       sqlstm.sqharm[0] = (unsigned long )0;
+       sqlstm.sqadto[0] = (unsigned short )0;
+       sqlstm.sqtdso[0] = (unsigned short )0;
+       sqlstm.sqhstv[1] = (unsigned char  *)&interval;
+       sqlstm.sqhstl[1] = (unsigned long )35;
+       sqlstm.sqhsts[1] = (         int  )0;
+       sqlstm.sqindv[1] = (         short *)0;
+       sqlstm.sqinds[1] = (         int  )0;
+       sqlstm.sqharm[1] = (unsigned long )0;
+       sqlstm.sqadto[1] = (unsigned short )0;
+       sqlstm.sqtdso[1] = (unsigned short )0;
+       sqlstm.sqhstv[2] = (unsigned char  *)date1;
+       sqlstm.sqhstl[2] = (unsigned long )21;
+       sqlstm.sqhsts[2] = (         int  )0;
+       sqlstm.sqindv[2] = (         short *)0;
+       sqlstm.sqinds[2] = (         int  )0;
+       sqlstm.sqharm[2] = (unsigned long )0;
+       sqlstm.sqadto[2] = (unsigned short )0;
+       sqlstm.sqtdso[2] = (unsigned short )0;
+       sqlstm.sqhstv[3] = (unsigned char  *)date2;
+       sqlstm.sqhstl[3] = (unsigned long )21;
+       sqlstm.sqhsts[3] = (         int  )0;
+       sqlstm.sqindv[3] = (         short *)0;
+       sqlstm.sqinds[3] = (         int  )0;
+       sqlstm.sqharm[3] = (unsigned long )0;
+       sqlstm.sqadto[3] = (unsigned short )0;
+       sqlstm.sqtdso[3] = (unsigned short )0;
+       sqlstm.sqhstv[4] = (unsigned char  *)&value;
+       sqlstm.sqhstl[4] = (unsigned long )sizeof(double);
+       sqlstm.sqhsts[4] = (         int  )0;
+       sqlstm.sqindv[4] = (         short *)0;
+       sqlstm.sqinds[4] = (         int  )0;
+       sqlstm.sqharm[4] = (unsigned long )0;
+       sqlstm.sqadto[4] = (unsigned short )0;
+       sqlstm.sqtdso[4] = (unsigned short )0;
+       sqlstm.sqhstv[5] = (unsigned char  *)&agencyId;
+       sqlstm.sqhstl[5] = (unsigned long )sizeof(int);
+       sqlstm.sqhsts[5] = (         int  )0;
+       sqlstm.sqindv[5] = (         short *)0;
+       sqlstm.sqinds[5] = (         int  )0;
+       sqlstm.sqharm[5] = (unsigned long )0;
+       sqlstm.sqadto[5] = (unsigned short )0;
+       sqlstm.sqtdso[5] = (unsigned short )0;
+       sqlstm.sqhstv[6] = (unsigned char  *)&overwriteFlag;
+       sqlstm.sqhstl[6] = (unsigned long )4;
+       sqlstm.sqhsts[6] = (         int  )0;
+       sqlstm.sqindv[6] = (         short *)&overwriteInd;
+       sqlstm.sqinds[6] = (         int  )0;
+       sqlstm.sqharm[6] = (unsigned long )0;
+       sqlstm.sqadto[6] = (unsigned short )0;
+       sqlstm.sqtdso[6] = (unsigned short )0;
+       sqlstm.sqhstv[7] = (unsigned char  *)&validationFlag;
+       sqlstm.sqhstl[7] = (unsigned long )4;
+       sqlstm.sqhsts[7] = (         int  )0;
+       sqlstm.sqindv[7] = (         short *)0;
+       sqlstm.sqinds[7] = (         int  )0;
+       sqlstm.sqharm[7] = (unsigned long )0;
+       sqlstm.sqadto[7] = (unsigned short )0;
+       sqlstm.sqtdso[7] = (unsigned short )0;
+       sqlstm.sqhstv[8] = (unsigned char  *)&collectionSystemId;
+       sqlstm.sqhstl[8] = (unsigned long )sizeof(int);
+       sqlstm.sqhsts[8] = (         int  )0;
+       sqlstm.sqindv[8] = (         short *)0;
+       sqlstm.sqinds[8] = (         int  )0;
+       sqlstm.sqharm[8] = (unsigned long )0;
+       sqlstm.sqadto[8] = (unsigned short )0;
+       sqlstm.sqtdso[8] = (unsigned short )0;
+       sqlstm.sqhstv[9] = (unsigned char  *)&loadingApplicationId;
+       sqlstm.sqhstl[9] = (unsigned long )sizeof(int);
+       sqlstm.sqhsts[9] = (         int  )0;
+       sqlstm.sqindv[9] = (         short *)0;
+       sqlstm.sqinds[9] = (         int  )0;
+       sqlstm.sqharm[9] = (unsigned long )0;
+       sqlstm.sqadto[9] = (unsigned short )0;
+       sqlstm.sqtdso[9] = (unsigned short )0;
+       sqlstm.sqhstv[10] = (unsigned char  *)&methodId;
+       sqlstm.sqhstl[10] = (unsigned long )sizeof(int);
+       sqlstm.sqhsts[10] = (         int  )0;
+       sqlstm.sqindv[10] = (         short *)0;
+       sqlstm.sqinds[10] = (         int  )0;
+       sqlstm.sqharm[10] = (unsigned long )0;
+       sqlstm.sqadto[10] = (unsigned short )0;
+       sqlstm.sqtdso[10] = (unsigned short )0;
+       sqlstm.sqhstv[11] = (unsigned char  *)&computationId;
+       sqlstm.sqhstl[11] = (unsigned long )sizeof(int);
+       sqlstm.sqhsts[11] = (         int  )0;
+       sqlstm.sqindv[11] = (         short *)0;
+       sqlstm.sqinds[11] = (         int  )0;
+       sqlstm.sqharm[11] = (unsigned long )0;
+       sqlstm.sqadto[11] = (unsigned short )0;
+       sqlstm.sqtdso[11] = (unsigned short )0;
+       sqlstm.sqphsv = sqlstm.sqhstv;
+       sqlstm.sqphsl = sqlstm.sqhstl;
+       sqlstm.sqphss = sqlstm.sqhsts;
+       sqlstm.sqpind = sqlstm.sqindv;
+       sqlstm.sqpins = sqlstm.sqinds;
+       sqlstm.sqparm = sqlstm.sqharm;
+       sqlstm.sqparc = sqlstm.sqharc;
+       sqlstm.sqpadto = sqlstm.sqadto;
+       sqlstm.sqptdso = sqlstm.sqtdso;
+       sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
+}
+
+
+
+       if ((result = SqlErrorHandler 
+	    (FUNC_NAME, FALSE,
+	     "Problem in modify_r_base_raw.")) != OK)
+       {
+	  /* EXEC SQL ROLLBACK; */ 
+
+{
+   struct sqlexd sqlstm;
+   sqlstm.sqlvsn = 12;
+   sqlstm.arrsiz = 12;
+   sqlstm.sqladtp = &sqladt;
+   sqlstm.sqltdsp = &sqltds;
+   sqlstm.iters = (unsigned int  )1;
+   sqlstm.offset = (unsigned int  )68;
+   sqlstm.cud = sqlcud0;
+   sqlstm.sqlest = (unsigned char  *)&sqlca;
+   sqlstm.sqlety = (unsigned short)256;
+   sqlstm.occurs = (unsigned int  )0;
+   sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
+}
+
+
+	  return (ERROR);
+       }
+
+     }
+   
+     /* Done with inserts/updates to r_base for this site_datatype_id;
+	no need to proceed */
+     /* EXEC SQL COMMIT; */ 
+
+{
+     struct sqlexd sqlstm;
+     sqlstm.sqlvsn = 12;
+     sqlstm.arrsiz = 12;
+     sqlstm.sqladtp = &sqladt;
+     sqlstm.sqltdsp = &sqltds;
+     sqlstm.iters = (unsigned int  )1;
+     sqlstm.offset = (unsigned int  )83;
+     sqlstm.cud = sqlcud0;
+     sqlstm.sqlest = (unsigned char  *)&sqlca;
+     sqlstm.sqlety = (unsigned short)256;
+     sqlstm.occurs = (unsigned int  )0;
+     sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
+}
+
+
+     return (OK);
+  }
+
+  /* Now process values that go somewhere other than r_base */
 
   /* Set date column based on destination interval. */
   if ((result = GetDateColumn (runControl.obsDest, runControl.isStat,
@@ -347,18 +595,6 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 		 "VALUES (%d, :a, :b, %d)",
 		 siteDatatypeId, runControl.modelOrSourceId);
 	sprintf (whereStatement, "%s = :d", dateColumn);
-      }
-      else
-      {
-	 sprintf (valuesStatement, 
-		  "VALUES (%d, '%s', to_date (:a, 'dd-mon-yyyy hh24:mi:ss'), to_date (:b, 'dd-mon-yyyy hh24:mi:ss'), :c, %d, '%s', SYSDATE, '%s', %d, %d, %d, %d)",
-		  siteDatatypeId, runControl.interval, 
-		  runControl.agencyId, runControl.overwriteFlag,
-		  validationFlag, runControl.collectionSystemId, 
-		  runControl.loadingApplicationId, runControl.methodId,
-		  runControl.computationId);
-	 sprintf (whereStatement, "start_%s = to_date (:d, 'dd-mon-yyyy hh24:mi:ss') AND end_%s = to_date (:e, 'dd-mon-yyyy hh24:mi:ss') AND interval = '%s'" ,
-		  dateColumn, dateColumn, runControl.interval);
       }
     }
   else
@@ -386,11 +622,7 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
   if (!runControl.isStat)
   {
-  /* OVERWRITE - set it here if it's variable !*/
-     if (!runControl.destIsRange)
-	sprintf (updateStatement, "UPDATE %s SET value = :v WHERE site_datatype_id = %d AND %s", runControl.tableDest, 
-		 siteDatatypeId, whereStatement);
-     else
+     if (runControl.destIsRange)
 	sprintf (updateStatement, "UPDATE %s SET value = :v, source_id = %d WHERE site_datatype_id = %d AND %s", runControl.tableDest, 
 		 runControl.modelOrSourceId, siteDatatypeId, whereStatement);
   }
@@ -407,23 +639,23 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
  struct sqlexd sqlstm;
- sqlstm.sqlvsn = 10;
- sqlstm.arrsiz = 1;
+ sqlstm.sqlvsn = 12;
+ sqlstm.arrsiz = 12;
  sqlstm.sqladtp = &sqladt;
  sqlstm.sqltdsp = &sqltds;
  sqlstm.stmt = "";
  sqlstm.iters = (unsigned int  )1;
- sqlstm.offset = (unsigned int  )5;
+ sqlstm.offset = (unsigned int  )98;
  sqlstm.cud = sqlcud0;
  sqlstm.sqlest = (unsigned char  *)&sqlca;
  sqlstm.sqlety = (unsigned short)256;
  sqlstm.occurs = (unsigned int  )0;
- sqlstm.sqhstv[0] = (         void  *)insertStatement;
- sqlstm.sqhstl[0] = (unsigned int  )1000;
+ sqlstm.sqhstv[0] = (unsigned char  *)insertStatement;
+ sqlstm.sqhstl[0] = (unsigned long )1000;
  sqlstm.sqhsts[0] = (         int  )0;
- sqlstm.sqindv[0] = (         void  *)0;
+ sqlstm.sqindv[0] = (         short *)0;
  sqlstm.sqinds[0] = (         int  )0;
- sqlstm.sqharm[0] = (unsigned int  )0;
+ sqlstm.sqharm[0] = (unsigned long )0;
  sqlstm.sqadto[0] = (unsigned short )0;
  sqlstm.sqtdso[0] = (unsigned short )0;
  sqlstm.sqphsv = sqlstm.sqhstv;
@@ -448,12 +680,12 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
      struct sqlexd sqlstm;
-     sqlstm.sqlvsn = 10;
-     sqlstm.arrsiz = 1;
+     sqlstm.sqlvsn = 12;
+     sqlstm.arrsiz = 12;
      sqlstm.sqladtp = &sqladt;
      sqlstm.sqltdsp = &sqltds;
      sqlstm.iters = (unsigned int  )1;
-     sqlstm.offset = (unsigned int  )24;
+     sqlstm.offset = (unsigned int  )117;
      sqlstm.cud = sqlcud0;
      sqlstm.sqlest = (unsigned char  *)&sqlca;
      sqlstm.sqlety = (unsigned short)256;
@@ -469,23 +701,23 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
  struct sqlexd sqlstm;
- sqlstm.sqlvsn = 10;
- sqlstm.arrsiz = 1;
+ sqlstm.sqlvsn = 12;
+ sqlstm.arrsiz = 12;
  sqlstm.sqladtp = &sqladt;
  sqlstm.sqltdsp = &sqltds;
  sqlstm.stmt = "";
  sqlstm.iters = (unsigned int  )1;
- sqlstm.offset = (unsigned int  )39;
+ sqlstm.offset = (unsigned int  )132;
  sqlstm.cud = sqlcud0;
  sqlstm.sqlest = (unsigned char  *)&sqlca;
  sqlstm.sqlety = (unsigned short)256;
  sqlstm.occurs = (unsigned int  )0;
- sqlstm.sqhstv[0] = (         void  *)updateStatement;
- sqlstm.sqhstl[0] = (unsigned int  )1000;
+ sqlstm.sqhstv[0] = (unsigned char  *)updateStatement;
+ sqlstm.sqhstl[0] = (unsigned long )1000;
  sqlstm.sqhsts[0] = (         int  )0;
- sqlstm.sqindv[0] = (         void  *)0;
+ sqlstm.sqindv[0] = (         short *)0;
  sqlstm.sqinds[0] = (         int  )0;
- sqlstm.sqharm[0] = (unsigned int  )0;
+ sqlstm.sqharm[0] = (unsigned long )0;
  sqlstm.sqadto[0] = (unsigned short )0;
  sqlstm.sqtdso[0] = (unsigned short )0;
  sqlstm.sqphsv = sqlstm.sqhstv;
@@ -510,12 +742,12 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
      struct sqlexd sqlstm;
-     sqlstm.sqlvsn = 10;
-     sqlstm.arrsiz = 1;
+     sqlstm.sqlvsn = 12;
+     sqlstm.arrsiz = 12;
      sqlstm.sqladtp = &sqladt;
      sqlstm.sqltdsp = &sqltds;
      sqlstm.iters = (unsigned int  )1;
-     sqlstm.offset = (unsigned int  )58;
+     sqlstm.offset = (unsigned int  )151;
      sqlstm.cud = sqlcud0;
      sqlstm.sqlest = (unsigned char  *)&sqlca;
      sqlstm.sqlety = (unsigned short)256;
@@ -534,65 +766,7 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
      /* Try first to update an appropriate record */
      if (!runControl.destIsRange)
        {
-	 if (!runControl.isStat)
-	   {
-	     strcpy (date1, disAggValueList[valueCount].dateStart);
-	     strcpy (date2, disAggValueList[valueCount].dateEnd);
-	     /* EXEC SQL EXECUTE update_vals
-		USING :value, :date1, :date2; */ 
-
-{
-      struct sqlexd sqlstm;
-      sqlstm.sqlvsn = 10;
-      sqlstm.arrsiz = 3;
-      sqlstm.sqladtp = &sqladt;
-      sqlstm.sqltdsp = &sqltds;
-      sqlstm.stmt = "";
-      sqlstm.iters = (unsigned int  )1;
-      sqlstm.offset = (unsigned int  )73;
-      sqlstm.cud = sqlcud0;
-      sqlstm.sqlest = (unsigned char  *)&sqlca;
-      sqlstm.sqlety = (unsigned short)256;
-      sqlstm.occurs = (unsigned int  )0;
-      sqlstm.sqhstv[0] = (         void  *)&value;
-      sqlstm.sqhstl[0] = (unsigned int  )sizeof(double);
-      sqlstm.sqhsts[0] = (         int  )0;
-      sqlstm.sqindv[0] = (         void  *)0;
-      sqlstm.sqinds[0] = (         int  )0;
-      sqlstm.sqharm[0] = (unsigned int  )0;
-      sqlstm.sqadto[0] = (unsigned short )0;
-      sqlstm.sqtdso[0] = (unsigned short )0;
-      sqlstm.sqhstv[1] = (         void  *)date1;
-      sqlstm.sqhstl[1] = (unsigned int  )21;
-      sqlstm.sqhsts[1] = (         int  )0;
-      sqlstm.sqindv[1] = (         void  *)0;
-      sqlstm.sqinds[1] = (         int  )0;
-      sqlstm.sqharm[1] = (unsigned int  )0;
-      sqlstm.sqadto[1] = (unsigned short )0;
-      sqlstm.sqtdso[1] = (unsigned short )0;
-      sqlstm.sqhstv[2] = (         void  *)date2;
-      sqlstm.sqhstl[2] = (unsigned int  )21;
-      sqlstm.sqhsts[2] = (         int  )0;
-      sqlstm.sqindv[2] = (         void  *)0;
-      sqlstm.sqinds[2] = (         int  )0;
-      sqlstm.sqharm[2] = (unsigned int  )0;
-      sqlstm.sqadto[2] = (unsigned short )0;
-      sqlstm.sqtdso[2] = (unsigned short )0;
-      sqlstm.sqphsv = sqlstm.sqhstv;
-      sqlstm.sqphsl = sqlstm.sqhstl;
-      sqlstm.sqphss = sqlstm.sqhsts;
-      sqlstm.sqpind = sqlstm.sqindv;
-      sqlstm.sqpins = sqlstm.sqinds;
-      sqlstm.sqparm = sqlstm.sqharm;
-      sqlstm.sqparc = sqlstm.sqharc;
-      sqlstm.sqpadto = sqlstm.sqadto;
-      sqlstm.sqptdso = sqlstm.sqtdso;
-      sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-	   }
-	 else
+	 if (runControl.isStat)
 	   {
 	     index1 = disAggValueList[valueCount].timeIndexStart;
 	     /* EXEC SQL EXECUTE update_vals
@@ -600,31 +774,31 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
       struct sqlexd sqlstm;
-      sqlstm.sqlvsn = 10;
-      sqlstm.arrsiz = 3;
+      sqlstm.sqlvsn = 12;
+      sqlstm.arrsiz = 12;
       sqlstm.sqladtp = &sqladt;
       sqlstm.sqltdsp = &sqltds;
       sqlstm.stmt = "";
       sqlstm.iters = (unsigned int  )1;
-      sqlstm.offset = (unsigned int  )100;
+      sqlstm.offset = (unsigned int  )166;
       sqlstm.cud = sqlcud0;
       sqlstm.sqlest = (unsigned char  *)&sqlca;
       sqlstm.sqlety = (unsigned short)256;
       sqlstm.occurs = (unsigned int  )0;
-      sqlstm.sqhstv[0] = (         void  *)&value;
-      sqlstm.sqhstl[0] = (unsigned int  )sizeof(double);
+      sqlstm.sqhstv[0] = (unsigned char  *)&value;
+      sqlstm.sqhstl[0] = (unsigned long )sizeof(double);
       sqlstm.sqhsts[0] = (         int  )0;
-      sqlstm.sqindv[0] = (         void  *)0;
+      sqlstm.sqindv[0] = (         short *)0;
       sqlstm.sqinds[0] = (         int  )0;
-      sqlstm.sqharm[0] = (unsigned int  )0;
+      sqlstm.sqharm[0] = (unsigned long )0;
       sqlstm.sqadto[0] = (unsigned short )0;
       sqlstm.sqtdso[0] = (unsigned short )0;
-      sqlstm.sqhstv[1] = (         void  *)&index1;
-      sqlstm.sqhstl[1] = (unsigned int  )sizeof(int);
+      sqlstm.sqhstv[1] = (unsigned char  *)&index1;
+      sqlstm.sqhstl[1] = (unsigned long )sizeof(int);
       sqlstm.sqhsts[1] = (         int  )0;
-      sqlstm.sqindv[1] = (         void  *)0;
+      sqlstm.sqindv[1] = (         short *)0;
       sqlstm.sqinds[1] = (         int  )0;
-      sqlstm.sqharm[1] = (unsigned int  )0;
+      sqlstm.sqharm[1] = (unsigned long )0;
       sqlstm.sqadto[1] = (unsigned short )0;
       sqlstm.sqtdso[1] = (unsigned short )0;
       sqlstm.sqphsv = sqlstm.sqhstv;
@@ -655,39 +829,39 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
       struct sqlexd sqlstm;
-      sqlstm.sqlvsn = 10;
-      sqlstm.arrsiz = 3;
+      sqlstm.sqlvsn = 12;
+      sqlstm.arrsiz = 12;
       sqlstm.sqladtp = &sqladt;
       sqlstm.sqltdsp = &sqltds;
       sqlstm.stmt = "";
       sqlstm.iters = (unsigned int  )1;
-      sqlstm.offset = (unsigned int  )123;
+      sqlstm.offset = (unsigned int  )189;
       sqlstm.cud = sqlcud0;
       sqlstm.sqlest = (unsigned char  *)&sqlca;
       sqlstm.sqlety = (unsigned short)256;
       sqlstm.occurs = (unsigned int  )0;
-      sqlstm.sqhstv[0] = (         void  *)&value;
-      sqlstm.sqhstl[0] = (unsigned int  )sizeof(double);
+      sqlstm.sqhstv[0] = (unsigned char  *)&value;
+      sqlstm.sqhstl[0] = (unsigned long )sizeof(double);
       sqlstm.sqhsts[0] = (         int  )0;
-      sqlstm.sqindv[0] = (         void  *)0;
+      sqlstm.sqindv[0] = (         short *)0;
       sqlstm.sqinds[0] = (         int  )0;
-      sqlstm.sqharm[0] = (unsigned int  )0;
+      sqlstm.sqharm[0] = (unsigned long )0;
       sqlstm.sqadto[0] = (unsigned short )0;
       sqlstm.sqtdso[0] = (unsigned short )0;
-      sqlstm.sqhstv[1] = (         void  *)date1;
-      sqlstm.sqhstl[1] = (unsigned int  )21;
+      sqlstm.sqhstv[1] = (unsigned char  *)date1;
+      sqlstm.sqhstl[1] = (unsigned long )21;
       sqlstm.sqhsts[1] = (         int  )0;
-      sqlstm.sqindv[1] = (         void  *)0;
+      sqlstm.sqindv[1] = (         short *)0;
       sqlstm.sqinds[1] = (         int  )0;
-      sqlstm.sqharm[1] = (unsigned int  )0;
+      sqlstm.sqharm[1] = (unsigned long )0;
       sqlstm.sqadto[1] = (unsigned short )0;
       sqlstm.sqtdso[1] = (unsigned short )0;
-      sqlstm.sqhstv[2] = (         void  *)date2;
-      sqlstm.sqhstl[2] = (unsigned int  )21;
+      sqlstm.sqhstv[2] = (unsigned char  *)date2;
+      sqlstm.sqhstl[2] = (unsigned long )21;
       sqlstm.sqhsts[2] = (         int  )0;
-      sqlstm.sqindv[2] = (         void  *)0;
+      sqlstm.sqindv[2] = (         short *)0;
       sqlstm.sqinds[2] = (         int  )0;
-      sqlstm.sqharm[2] = (unsigned int  )0;
+      sqlstm.sqharm[2] = (unsigned long )0;
       sqlstm.sqadto[2] = (unsigned short )0;
       sqlstm.sqtdso[2] = (unsigned short )0;
       sqlstm.sqphsv = sqlstm.sqhstv;
@@ -713,39 +887,39 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
       struct sqlexd sqlstm;
-      sqlstm.sqlvsn = 10;
-      sqlstm.arrsiz = 3;
+      sqlstm.sqlvsn = 12;
+      sqlstm.arrsiz = 12;
       sqlstm.sqladtp = &sqladt;
       sqlstm.sqltdsp = &sqltds;
       sqlstm.stmt = "";
       sqlstm.iters = (unsigned int  )1;
-      sqlstm.offset = (unsigned int  )150;
+      sqlstm.offset = (unsigned int  )216;
       sqlstm.cud = sqlcud0;
       sqlstm.sqlest = (unsigned char  *)&sqlca;
       sqlstm.sqlety = (unsigned short)256;
       sqlstm.occurs = (unsigned int  )0;
-      sqlstm.sqhstv[0] = (         void  *)&value;
-      sqlstm.sqhstl[0] = (unsigned int  )sizeof(double);
+      sqlstm.sqhstv[0] = (unsigned char  *)&value;
+      sqlstm.sqhstl[0] = (unsigned long )sizeof(double);
       sqlstm.sqhsts[0] = (         int  )0;
-      sqlstm.sqindv[0] = (         void  *)0;
+      sqlstm.sqindv[0] = (         short *)0;
       sqlstm.sqinds[0] = (         int  )0;
-      sqlstm.sqharm[0] = (unsigned int  )0;
+      sqlstm.sqharm[0] = (unsigned long )0;
       sqlstm.sqadto[0] = (unsigned short )0;
       sqlstm.sqtdso[0] = (unsigned short )0;
-      sqlstm.sqhstv[1] = (         void  *)&index1;
-      sqlstm.sqhstl[1] = (unsigned int  )sizeof(int);
+      sqlstm.sqhstv[1] = (unsigned char  *)&index1;
+      sqlstm.sqhstl[1] = (unsigned long )sizeof(int);
       sqlstm.sqhsts[1] = (         int  )0;
-      sqlstm.sqindv[1] = (         void  *)0;
+      sqlstm.sqindv[1] = (         short *)0;
       sqlstm.sqinds[1] = (         int  )0;
-      sqlstm.sqharm[1] = (unsigned int  )0;
+      sqlstm.sqharm[1] = (unsigned long )0;
       sqlstm.sqadto[1] = (unsigned short )0;
       sqlstm.sqtdso[1] = (unsigned short )0;
-      sqlstm.sqhstv[2] = (         void  *)&index2;
-      sqlstm.sqhstl[2] = (unsigned int  )sizeof(int);
+      sqlstm.sqhstv[2] = (unsigned char  *)&index2;
+      sqlstm.sqhstl[2] = (unsigned long )sizeof(int);
       sqlstm.sqhsts[2] = (         int  )0;
-      sqlstm.sqindv[2] = (         void  *)0;
+      sqlstm.sqindv[2] = (         short *)0;
       sqlstm.sqinds[2] = (         int  )0;
-      sqlstm.sqharm[2] = (unsigned int  )0;
+      sqlstm.sqharm[2] = (unsigned long )0;
       sqlstm.sqadto[2] = (unsigned short )0;
       sqlstm.sqtdso[2] = (unsigned short )0;
       sqlstm.sqphsv = sqlstm.sqhstv;
@@ -768,89 +942,36 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
        {
 	 if (!runControl.destIsRange)
 	   {
-	     if (!runControl.isStat)
-	       /* EXEC SQL EXECUTE insert_vals USING :date1, :date2, :value; */ 
-
-{
-        struct sqlexd sqlstm;
-        sqlstm.sqlvsn = 10;
-        sqlstm.arrsiz = 3;
-        sqlstm.sqladtp = &sqladt;
-        sqlstm.sqltdsp = &sqltds;
-        sqlstm.stmt = "";
-        sqlstm.iters = (unsigned int  )1;
-        sqlstm.offset = (unsigned int  )177;
-        sqlstm.cud = sqlcud0;
-        sqlstm.sqlest = (unsigned char  *)&sqlca;
-        sqlstm.sqlety = (unsigned short)256;
-        sqlstm.occurs = (unsigned int  )0;
-        sqlstm.sqhstv[0] = (         void  *)date1;
-        sqlstm.sqhstl[0] = (unsigned int  )21;
-        sqlstm.sqhsts[0] = (         int  )0;
-        sqlstm.sqindv[0] = (         void  *)0;
-        sqlstm.sqinds[0] = (         int  )0;
-        sqlstm.sqharm[0] = (unsigned int  )0;
-        sqlstm.sqadto[0] = (unsigned short )0;
-        sqlstm.sqtdso[0] = (unsigned short )0;
-        sqlstm.sqhstv[1] = (         void  *)date2;
-        sqlstm.sqhstl[1] = (unsigned int  )21;
-        sqlstm.sqhsts[1] = (         int  )0;
-        sqlstm.sqindv[1] = (         void  *)0;
-        sqlstm.sqinds[1] = (         int  )0;
-        sqlstm.sqharm[1] = (unsigned int  )0;
-        sqlstm.sqadto[1] = (unsigned short )0;
-        sqlstm.sqtdso[1] = (unsigned short )0;
-        sqlstm.sqhstv[2] = (         void  *)&value;
-        sqlstm.sqhstl[2] = (unsigned int  )sizeof(double);
-        sqlstm.sqhsts[2] = (         int  )0;
-        sqlstm.sqindv[2] = (         void  *)0;
-        sqlstm.sqinds[2] = (         int  )0;
-        sqlstm.sqharm[2] = (unsigned int  )0;
-        sqlstm.sqadto[2] = (unsigned short )0;
-        sqlstm.sqtdso[2] = (unsigned short )0;
-        sqlstm.sqphsv = sqlstm.sqhstv;
-        sqlstm.sqphsl = sqlstm.sqhstl;
-        sqlstm.sqphss = sqlstm.sqhsts;
-        sqlstm.sqpind = sqlstm.sqindv;
-        sqlstm.sqpins = sqlstm.sqinds;
-        sqlstm.sqparm = sqlstm.sqharm;
-        sqlstm.sqparc = sqlstm.sqharc;
-        sqlstm.sqpadto = sqlstm.sqadto;
-        sqlstm.sqptdso = sqlstm.sqtdso;
-        sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-	     else
+	     if (runControl.isStat)
 	       /* EXEC SQL EXECUTE insert_vals USING :index1, :value; */ 
 
 {
         struct sqlexd sqlstm;
-        sqlstm.sqlvsn = 10;
-        sqlstm.arrsiz = 3;
+        sqlstm.sqlvsn = 12;
+        sqlstm.arrsiz = 12;
         sqlstm.sqladtp = &sqladt;
         sqlstm.sqltdsp = &sqltds;
         sqlstm.stmt = "";
         sqlstm.iters = (unsigned int  )1;
-        sqlstm.offset = (unsigned int  )204;
+        sqlstm.offset = (unsigned int  )243;
         sqlstm.cud = sqlcud0;
         sqlstm.sqlest = (unsigned char  *)&sqlca;
         sqlstm.sqlety = (unsigned short)256;
         sqlstm.occurs = (unsigned int  )0;
-        sqlstm.sqhstv[0] = (         void  *)&index1;
-        sqlstm.sqhstl[0] = (unsigned int  )sizeof(int);
+        sqlstm.sqhstv[0] = (unsigned char  *)&index1;
+        sqlstm.sqhstl[0] = (unsigned long )sizeof(int);
         sqlstm.sqhsts[0] = (         int  )0;
-        sqlstm.sqindv[0] = (         void  *)0;
+        sqlstm.sqindv[0] = (         short *)0;
         sqlstm.sqinds[0] = (         int  )0;
-        sqlstm.sqharm[0] = (unsigned int  )0;
+        sqlstm.sqharm[0] = (unsigned long )0;
         sqlstm.sqadto[0] = (unsigned short )0;
         sqlstm.sqtdso[0] = (unsigned short )0;
-        sqlstm.sqhstv[1] = (         void  *)&value;
-        sqlstm.sqhstl[1] = (unsigned int  )sizeof(double);
+        sqlstm.sqhstv[1] = (unsigned char  *)&value;
+        sqlstm.sqhstl[1] = (unsigned long )sizeof(double);
         sqlstm.sqhsts[1] = (         int  )0;
-        sqlstm.sqindv[1] = (         void  *)0;
+        sqlstm.sqindv[1] = (         short *)0;
         sqlstm.sqinds[1] = (         int  )0;
-        sqlstm.sqharm[1] = (unsigned int  )0;
+        sqlstm.sqharm[1] = (unsigned long )0;
         sqlstm.sqadto[1] = (unsigned short )0;
         sqlstm.sqtdso[1] = (unsigned short )0;
         sqlstm.sqphsv = sqlstm.sqhstv;
@@ -874,39 +995,39 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
         struct sqlexd sqlstm;
-        sqlstm.sqlvsn = 10;
-        sqlstm.arrsiz = 3;
+        sqlstm.sqlvsn = 12;
+        sqlstm.arrsiz = 12;
         sqlstm.sqladtp = &sqladt;
         sqlstm.sqltdsp = &sqltds;
         sqlstm.stmt = "";
         sqlstm.iters = (unsigned int  )1;
-        sqlstm.offset = (unsigned int  )227;
+        sqlstm.offset = (unsigned int  )266;
         sqlstm.cud = sqlcud0;
         sqlstm.sqlest = (unsigned char  *)&sqlca;
         sqlstm.sqlety = (unsigned short)256;
         sqlstm.occurs = (unsigned int  )0;
-        sqlstm.sqhstv[0] = (         void  *)date1;
-        sqlstm.sqhstl[0] = (unsigned int  )21;
+        sqlstm.sqhstv[0] = (unsigned char  *)date1;
+        sqlstm.sqhstl[0] = (unsigned long )21;
         sqlstm.sqhsts[0] = (         int  )0;
-        sqlstm.sqindv[0] = (         void  *)0;
+        sqlstm.sqindv[0] = (         short *)0;
         sqlstm.sqinds[0] = (         int  )0;
-        sqlstm.sqharm[0] = (unsigned int  )0;
+        sqlstm.sqharm[0] = (unsigned long )0;
         sqlstm.sqadto[0] = (unsigned short )0;
         sqlstm.sqtdso[0] = (unsigned short )0;
-        sqlstm.sqhstv[1] = (         void  *)date2;
-        sqlstm.sqhstl[1] = (unsigned int  )21;
+        sqlstm.sqhstv[1] = (unsigned char  *)date2;
+        sqlstm.sqhstl[1] = (unsigned long )21;
         sqlstm.sqhsts[1] = (         int  )0;
-        sqlstm.sqindv[1] = (         void  *)0;
+        sqlstm.sqindv[1] = (         short *)0;
         sqlstm.sqinds[1] = (         int  )0;
-        sqlstm.sqharm[1] = (unsigned int  )0;
+        sqlstm.sqharm[1] = (unsigned long )0;
         sqlstm.sqadto[1] = (unsigned short )0;
         sqlstm.sqtdso[1] = (unsigned short )0;
-        sqlstm.sqhstv[2] = (         void  *)&value;
-        sqlstm.sqhstl[2] = (unsigned int  )sizeof(double);
+        sqlstm.sqhstv[2] = (unsigned char  *)&value;
+        sqlstm.sqhstl[2] = (unsigned long )sizeof(double);
         sqlstm.sqhsts[2] = (         int  )0;
-        sqlstm.sqindv[2] = (         void  *)0;
+        sqlstm.sqindv[2] = (         short *)0;
         sqlstm.sqinds[2] = (         int  )0;
-        sqlstm.sqharm[2] = (unsigned int  )0;
+        sqlstm.sqharm[2] = (unsigned long )0;
         sqlstm.sqadto[2] = (unsigned short )0;
         sqlstm.sqtdso[2] = (unsigned short )0;
         sqlstm.sqphsv = sqlstm.sqhstv;
@@ -927,39 +1048,39 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
         struct sqlexd sqlstm;
-        sqlstm.sqlvsn = 10;
-        sqlstm.arrsiz = 3;
+        sqlstm.sqlvsn = 12;
+        sqlstm.arrsiz = 12;
         sqlstm.sqladtp = &sqladt;
         sqlstm.sqltdsp = &sqltds;
         sqlstm.stmt = "";
         sqlstm.iters = (unsigned int  )1;
-        sqlstm.offset = (unsigned int  )254;
+        sqlstm.offset = (unsigned int  )293;
         sqlstm.cud = sqlcud0;
         sqlstm.sqlest = (unsigned char  *)&sqlca;
         sqlstm.sqlety = (unsigned short)256;
         sqlstm.occurs = (unsigned int  )0;
-        sqlstm.sqhstv[0] = (         void  *)&index1;
-        sqlstm.sqhstl[0] = (unsigned int  )sizeof(int);
+        sqlstm.sqhstv[0] = (unsigned char  *)&index1;
+        sqlstm.sqhstl[0] = (unsigned long )sizeof(int);
         sqlstm.sqhsts[0] = (         int  )0;
-        sqlstm.sqindv[0] = (         void  *)0;
+        sqlstm.sqindv[0] = (         short *)0;
         sqlstm.sqinds[0] = (         int  )0;
-        sqlstm.sqharm[0] = (unsigned int  )0;
+        sqlstm.sqharm[0] = (unsigned long )0;
         sqlstm.sqadto[0] = (unsigned short )0;
         sqlstm.sqtdso[0] = (unsigned short )0;
-        sqlstm.sqhstv[1] = (         void  *)&index2;
-        sqlstm.sqhstl[1] = (unsigned int  )sizeof(int);
+        sqlstm.sqhstv[1] = (unsigned char  *)&index2;
+        sqlstm.sqhstl[1] = (unsigned long )sizeof(int);
         sqlstm.sqhsts[1] = (         int  )0;
-        sqlstm.sqindv[1] = (         void  *)0;
+        sqlstm.sqindv[1] = (         short *)0;
         sqlstm.sqinds[1] = (         int  )0;
-        sqlstm.sqharm[1] = (unsigned int  )0;
+        sqlstm.sqharm[1] = (unsigned long )0;
         sqlstm.sqadto[1] = (unsigned short )0;
         sqlstm.sqtdso[1] = (unsigned short )0;
-        sqlstm.sqhstv[2] = (         void  *)&value;
-        sqlstm.sqhstl[2] = (unsigned int  )sizeof(double);
+        sqlstm.sqhstv[2] = (unsigned char  *)&value;
+        sqlstm.sqhstl[2] = (unsigned long )sizeof(double);
         sqlstm.sqhsts[2] = (         int  )0;
-        sqlstm.sqindv[2] = (         void  *)0;
+        sqlstm.sqindv[2] = (         short *)0;
         sqlstm.sqinds[2] = (         int  )0;
-        sqlstm.sqharm[2] = (unsigned int  )0;
+        sqlstm.sqharm[2] = (unsigned long )0;
         sqlstm.sqadto[2] = (unsigned short )0;
         sqlstm.sqtdso[2] = (unsigned short )0;
         sqlstm.sqphsv = sqlstm.sqhstv;
@@ -986,12 +1107,12 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
       struct sqlexd sqlstm;
-      sqlstm.sqlvsn = 10;
-      sqlstm.arrsiz = 3;
+      sqlstm.sqlvsn = 12;
+      sqlstm.arrsiz = 12;
       sqlstm.sqladtp = &sqladt;
       sqlstm.sqltdsp = &sqltds;
       sqlstm.iters = (unsigned int  )1;
-      sqlstm.offset = (unsigned int  )281;
+      sqlstm.offset = (unsigned int  )320;
       sqlstm.cud = sqlcud0;
       sqlstm.sqlest = (unsigned char  *)&sqlca;
       sqlstm.sqlety = (unsigned short)256;
@@ -1015,12 +1136,12 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
       struct sqlexd sqlstm;
-      sqlstm.sqlvsn = 10;
-      sqlstm.arrsiz = 3;
+      sqlstm.sqlvsn = 12;
+      sqlstm.arrsiz = 12;
       sqlstm.sqladtp = &sqladt;
       sqlstm.sqltdsp = &sqltds;
       sqlstm.iters = (unsigned int  )1;
-      sqlstm.offset = (unsigned int  )296;
+      sqlstm.offset = (unsigned int  )335;
       sqlstm.cud = sqlcud0;
       sqlstm.sqlest = (unsigned char  *)&sqlca;
       sqlstm.sqlety = (unsigned short)256;
@@ -1038,12 +1159,12 @@ int SqlWriteRealAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
   struct sqlexd sqlstm;
-  sqlstm.sqlvsn = 10;
-  sqlstm.arrsiz = 3;
+  sqlstm.sqlvsn = 12;
+  sqlstm.arrsiz = 12;
   sqlstm.sqladtp = &sqladt;
   sqlstm.sqltdsp = &sqltds;
   sqlstm.iters = (unsigned int  )1;
-  sqlstm.offset = (unsigned int  )311;
+  sqlstm.offset = (unsigned int  )350;
   sqlstm.cud = sqlcud0;
   sqlstm.sqlest = (unsigned char  *)&sqlca;
   sqlstm.sqlety = (unsigned short)256;
@@ -1071,7 +1192,11 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
     double        value;
     char          insertStatement[1000];
     char          updateStatement[1000];
-    ID            sdi;
+    ID            sdi,
+                  modelRunId;
+    /* varchar       interval[SQL_INTERVAL_LENGTH]; */ 
+struct { unsigned short len; unsigned char arr[33]; } interval;
+
  /* EXEC SQL END DECLARE SECTION; */ 
 
 
@@ -1080,7 +1205,159 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
   char        dateColumn[30],
               valuesStatement[200],
               whereStatement[200];
-  
+
+  /* Handle values that are written to m_ interval tables (not range
+     or statistics) by calling stored procedure;
+     don't need to construct insert and update statements */
+  if (!runControl.isStat && !runControl.destIsRange)
+  {
+     for (valueCount = 0; valueCount < numDisAggValues; valueCount++)
+     {
+	/* Write needed data to host variables */
+	sdi = siteDatatypeId;
+	modelRunId = runControl.modelOrSourceId;
+	strcpy (interval.arr, runControl.interval);
+	interval.len = strlen (interval.arr);
+	interval.arr[interval.len] = '\0';
+	strcpy (date1, disAggValueList[valueCount].dateStart);
+	strcpy (date2, disAggValueList[valueCount].dateEnd);
+	value = disAggValueList[valueCount].value;
+
+       /* EXEC SQL EXECUTE
+        BEGIN
+	  modify_m_table_raw (:modelRunId, :sdi, 
+			      :date1, :date2, :value, :interval, 'Y');
+        END;
+       END-EXEC; */ 
+
+{
+       struct sqlexd sqlstm;
+       sqlstm.sqlvsn = 12;
+       sqlstm.arrsiz = 12;
+       sqlstm.sqladtp = &sqladt;
+       sqlstm.sqltdsp = &sqltds;
+       sqlstm.stmt = "begin modify_m_table_raw ( :modelRunId , :sdi , :date1\
+ , :date2 , :value , :interval , 'Y' ) ; END ;";
+       sqlstm.iters = (unsigned int  )1;
+       sqlstm.offset = (unsigned int  )365;
+       sqlstm.cud = sqlcud0;
+       sqlstm.sqlest = (unsigned char  *)&sqlca;
+       sqlstm.sqlety = (unsigned short)256;
+       sqlstm.occurs = (unsigned int  )0;
+       sqlstm.sqhstv[0] = (unsigned char  *)&modelRunId;
+       sqlstm.sqhstl[0] = (unsigned long )sizeof(int);
+       sqlstm.sqhsts[0] = (         int  )0;
+       sqlstm.sqindv[0] = (         short *)0;
+       sqlstm.sqinds[0] = (         int  )0;
+       sqlstm.sqharm[0] = (unsigned long )0;
+       sqlstm.sqadto[0] = (unsigned short )0;
+       sqlstm.sqtdso[0] = (unsigned short )0;
+       sqlstm.sqhstv[1] = (unsigned char  *)&sdi;
+       sqlstm.sqhstl[1] = (unsigned long )sizeof(int);
+       sqlstm.sqhsts[1] = (         int  )0;
+       sqlstm.sqindv[1] = (         short *)0;
+       sqlstm.sqinds[1] = (         int  )0;
+       sqlstm.sqharm[1] = (unsigned long )0;
+       sqlstm.sqadto[1] = (unsigned short )0;
+       sqlstm.sqtdso[1] = (unsigned short )0;
+       sqlstm.sqhstv[2] = (unsigned char  *)date1;
+       sqlstm.sqhstl[2] = (unsigned long )21;
+       sqlstm.sqhsts[2] = (         int  )0;
+       sqlstm.sqindv[2] = (         short *)0;
+       sqlstm.sqinds[2] = (         int  )0;
+       sqlstm.sqharm[2] = (unsigned long )0;
+       sqlstm.sqadto[2] = (unsigned short )0;
+       sqlstm.sqtdso[2] = (unsigned short )0;
+       sqlstm.sqhstv[3] = (unsigned char  *)date2;
+       sqlstm.sqhstl[3] = (unsigned long )21;
+       sqlstm.sqhsts[3] = (         int  )0;
+       sqlstm.sqindv[3] = (         short *)0;
+       sqlstm.sqinds[3] = (         int  )0;
+       sqlstm.sqharm[3] = (unsigned long )0;
+       sqlstm.sqadto[3] = (unsigned short )0;
+       sqlstm.sqtdso[3] = (unsigned short )0;
+       sqlstm.sqhstv[4] = (unsigned char  *)&value;
+       sqlstm.sqhstl[4] = (unsigned long )sizeof(double);
+       sqlstm.sqhsts[4] = (         int  )0;
+       sqlstm.sqindv[4] = (         short *)0;
+       sqlstm.sqinds[4] = (         int  )0;
+       sqlstm.sqharm[4] = (unsigned long )0;
+       sqlstm.sqadto[4] = (unsigned short )0;
+       sqlstm.sqtdso[4] = (unsigned short )0;
+       sqlstm.sqhstv[5] = (unsigned char  *)&interval;
+       sqlstm.sqhstl[5] = (unsigned long )35;
+       sqlstm.sqhsts[5] = (         int  )0;
+       sqlstm.sqindv[5] = (         short *)0;
+       sqlstm.sqinds[5] = (         int  )0;
+       sqlstm.sqharm[5] = (unsigned long )0;
+       sqlstm.sqadto[5] = (unsigned short )0;
+       sqlstm.sqtdso[5] = (unsigned short )0;
+       sqlstm.sqphsv = sqlstm.sqhstv;
+       sqlstm.sqphsl = sqlstm.sqhstl;
+       sqlstm.sqphss = sqlstm.sqhsts;
+       sqlstm.sqpind = sqlstm.sqindv;
+       sqlstm.sqpins = sqlstm.sqinds;
+       sqlstm.sqparm = sqlstm.sqharm;
+       sqlstm.sqparc = sqlstm.sqharc;
+       sqlstm.sqpadto = sqlstm.sqadto;
+       sqlstm.sqptdso = sqlstm.sqtdso;
+       sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
+}
+
+
+
+       if ((result = SqlErrorHandler 
+	    (FUNC_NAME, FALSE,
+	     "Problem in modify_m_table_raw.")) != OK)
+       {
+	  /* EXEC SQL ROLLBACK; */ 
+
+{
+   struct sqlexd sqlstm;
+   sqlstm.sqlvsn = 12;
+   sqlstm.arrsiz = 12;
+   sqlstm.sqladtp = &sqladt;
+   sqlstm.sqltdsp = &sqltds;
+   sqlstm.iters = (unsigned int  )1;
+   sqlstm.offset = (unsigned int  )404;
+   sqlstm.cud = sqlcud0;
+   sqlstm.sqlest = (unsigned char  *)&sqlca;
+   sqlstm.sqlety = (unsigned short)256;
+   sqlstm.occurs = (unsigned int  )0;
+   sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
+}
+
+
+	  return (ERROR);
+       }
+
+     }
+   
+     /* Done with inserts/updates to m_ interval tables for this 
+	site_datatype_id; no need to proceed */
+     /* EXEC SQL COMMIT; */ 
+
+{
+     struct sqlexd sqlstm;
+     sqlstm.sqlvsn = 12;
+     sqlstm.arrsiz = 12;
+     sqlstm.sqladtp = &sqladt;
+     sqlstm.sqltdsp = &sqltds;
+     sqlstm.iters = (unsigned int  )1;
+     sqlstm.offset = (unsigned int  )419;
+     sqlstm.cud = sqlcud0;
+     sqlstm.sqlest = (unsigned char  *)&sqlca;
+     sqlstm.sqlety = (unsigned short)256;
+     sqlstm.occurs = (unsigned int  )0;
+     sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
+}
+
+
+     return (OK);
+  }
+
+  /* Now process values that go into m_ stat or range tables */
+
   /* Set date column based on destination interval. */
   if ((result = GetDateColumn (runControl.obsDest, runControl.isStat,
 			       runControl.destIsRange, dateColumn)) != OK)
@@ -1097,14 +1374,6 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 		  "VALUES (%d, %d, :a, :b)",
 		  runControl.modelOrSourceId, siteDatatypeId);
 	 sprintf (whereStatement, "%s = :d", dateColumn);
-      }
-      else
-      {
-	 sprintf (valuesStatement, 
-		  "VALUES (%d, %d, to_date (:a, 'dd-mon-yyyy hh24:mi:ss'), to_date (:b, 'dd-mon-yyyy hh24:mi:ss'), :c)",
-		  runControl.modelOrSourceId, siteDatatypeId);
-	 sprintf (whereStatement, "start_%s = to_date (:d, 'dd-mon-yyyy hh24:mi:ss') AND end_%s = to_date (:e, 'dd-mon-yyyy hh24:mi:ss')", 
-		  dateColumn, dateColumn);
       }
     }
   else
@@ -1142,23 +1411,23 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
  struct sqlexd sqlstm;
- sqlstm.sqlvsn = 10;
- sqlstm.arrsiz = 3;
+ sqlstm.sqlvsn = 12;
+ sqlstm.arrsiz = 12;
  sqlstm.sqladtp = &sqladt;
  sqlstm.sqltdsp = &sqltds;
  sqlstm.stmt = "";
  sqlstm.iters = (unsigned int  )1;
- sqlstm.offset = (unsigned int  )326;
+ sqlstm.offset = (unsigned int  )434;
  sqlstm.cud = sqlcud0;
  sqlstm.sqlest = (unsigned char  *)&sqlca;
  sqlstm.sqlety = (unsigned short)256;
  sqlstm.occurs = (unsigned int  )0;
- sqlstm.sqhstv[0] = (         void  *)insertStatement;
- sqlstm.sqhstl[0] = (unsigned int  )1000;
+ sqlstm.sqhstv[0] = (unsigned char  *)insertStatement;
+ sqlstm.sqhstl[0] = (unsigned long )1000;
  sqlstm.sqhsts[0] = (         int  )0;
- sqlstm.sqindv[0] = (         void  *)0;
+ sqlstm.sqindv[0] = (         short *)0;
  sqlstm.sqinds[0] = (         int  )0;
- sqlstm.sqharm[0] = (unsigned int  )0;
+ sqlstm.sqharm[0] = (unsigned long )0;
  sqlstm.sqadto[0] = (unsigned short )0;
  sqlstm.sqtdso[0] = (unsigned short )0;
  sqlstm.sqphsv = sqlstm.sqhstv;
@@ -1183,12 +1452,12 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
      struct sqlexd sqlstm;
-     sqlstm.sqlvsn = 10;
-     sqlstm.arrsiz = 3;
+     sqlstm.sqlvsn = 12;
+     sqlstm.arrsiz = 12;
      sqlstm.sqladtp = &sqladt;
      sqlstm.sqltdsp = &sqltds;
      sqlstm.iters = (unsigned int  )1;
-     sqlstm.offset = (unsigned int  )345;
+     sqlstm.offset = (unsigned int  )453;
      sqlstm.cud = sqlcud0;
      sqlstm.sqlest = (unsigned char  *)&sqlca;
      sqlstm.sqlety = (unsigned short)256;
@@ -1204,23 +1473,23 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
  struct sqlexd sqlstm;
- sqlstm.sqlvsn = 10;
- sqlstm.arrsiz = 3;
+ sqlstm.sqlvsn = 12;
+ sqlstm.arrsiz = 12;
  sqlstm.sqladtp = &sqladt;
  sqlstm.sqltdsp = &sqltds;
  sqlstm.stmt = "";
  sqlstm.iters = (unsigned int  )1;
- sqlstm.offset = (unsigned int  )360;
+ sqlstm.offset = (unsigned int  )468;
  sqlstm.cud = sqlcud0;
  sqlstm.sqlest = (unsigned char  *)&sqlca;
  sqlstm.sqlety = (unsigned short)256;
  sqlstm.occurs = (unsigned int  )0;
- sqlstm.sqhstv[0] = (         void  *)updateStatement;
- sqlstm.sqhstl[0] = (unsigned int  )1000;
+ sqlstm.sqhstv[0] = (unsigned char  *)updateStatement;
+ sqlstm.sqhstl[0] = (unsigned long )1000;
  sqlstm.sqhsts[0] = (         int  )0;
- sqlstm.sqindv[0] = (         void  *)0;
+ sqlstm.sqindv[0] = (         short *)0;
  sqlstm.sqinds[0] = (         int  )0;
- sqlstm.sqharm[0] = (unsigned int  )0;
+ sqlstm.sqharm[0] = (unsigned long )0;
  sqlstm.sqadto[0] = (unsigned short )0;
  sqlstm.sqtdso[0] = (unsigned short )0;
  sqlstm.sqphsv = sqlstm.sqhstv;
@@ -1245,12 +1514,12 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
      struct sqlexd sqlstm;
-     sqlstm.sqlvsn = 10;
-     sqlstm.arrsiz = 3;
+     sqlstm.sqlvsn = 12;
+     sqlstm.arrsiz = 12;
      sqlstm.sqladtp = &sqladt;
      sqlstm.sqltdsp = &sqltds;
      sqlstm.iters = (unsigned int  )1;
-     sqlstm.offset = (unsigned int  )379;
+     sqlstm.offset = (unsigned int  )487;
      sqlstm.cud = sqlcud0;
      sqlstm.sqlest = (unsigned char  *)&sqlca;
      sqlstm.sqlety = (unsigned short)256;
@@ -1269,65 +1538,7 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
      /* Try first to update an appropriate record */
      if (!runControl.destIsRange)
        {
-	  if (!runControl.isStat)
-	  {
-	     strcpy (date1, disAggValueList[valueCount].dateStart);
-	     strcpy (date2, disAggValueList[valueCount].dateEnd);
-	     /* EXEC SQL EXECUTE update_vals
-		USING :value, :date1, :date2; */ 
-
-{
-      struct sqlexd sqlstm;
-      sqlstm.sqlvsn = 10;
-      sqlstm.arrsiz = 3;
-      sqlstm.sqladtp = &sqladt;
-      sqlstm.sqltdsp = &sqltds;
-      sqlstm.stmt = "";
-      sqlstm.iters = (unsigned int  )1;
-      sqlstm.offset = (unsigned int  )394;
-      sqlstm.cud = sqlcud0;
-      sqlstm.sqlest = (unsigned char  *)&sqlca;
-      sqlstm.sqlety = (unsigned short)256;
-      sqlstm.occurs = (unsigned int  )0;
-      sqlstm.sqhstv[0] = (         void  *)&value;
-      sqlstm.sqhstl[0] = (unsigned int  )sizeof(double);
-      sqlstm.sqhsts[0] = (         int  )0;
-      sqlstm.sqindv[0] = (         void  *)0;
-      sqlstm.sqinds[0] = (         int  )0;
-      sqlstm.sqharm[0] = (unsigned int  )0;
-      sqlstm.sqadto[0] = (unsigned short )0;
-      sqlstm.sqtdso[0] = (unsigned short )0;
-      sqlstm.sqhstv[1] = (         void  *)date1;
-      sqlstm.sqhstl[1] = (unsigned int  )21;
-      sqlstm.sqhsts[1] = (         int  )0;
-      sqlstm.sqindv[1] = (         void  *)0;
-      sqlstm.sqinds[1] = (         int  )0;
-      sqlstm.sqharm[1] = (unsigned int  )0;
-      sqlstm.sqadto[1] = (unsigned short )0;
-      sqlstm.sqtdso[1] = (unsigned short )0;
-      sqlstm.sqhstv[2] = (         void  *)date2;
-      sqlstm.sqhstl[2] = (unsigned int  )21;
-      sqlstm.sqhsts[2] = (         int  )0;
-      sqlstm.sqindv[2] = (         void  *)0;
-      sqlstm.sqinds[2] = (         int  )0;
-      sqlstm.sqharm[2] = (unsigned int  )0;
-      sqlstm.sqadto[2] = (unsigned short )0;
-      sqlstm.sqtdso[2] = (unsigned short )0;
-      sqlstm.sqphsv = sqlstm.sqhstv;
-      sqlstm.sqphsl = sqlstm.sqhstl;
-      sqlstm.sqphss = sqlstm.sqhsts;
-      sqlstm.sqpind = sqlstm.sqindv;
-      sqlstm.sqpins = sqlstm.sqinds;
-      sqlstm.sqparm = sqlstm.sqharm;
-      sqlstm.sqparc = sqlstm.sqharc;
-      sqlstm.sqpadto = sqlstm.sqadto;
-      sqlstm.sqptdso = sqlstm.sqtdso;
-      sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-	  }
-	  else
+	  if (runControl.isStat)
 	  {
 	     index1 = disAggValueList[valueCount].timeIndexStart;
 	     /* EXEC SQL EXECUTE update_vals
@@ -1335,31 +1546,31 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
       struct sqlexd sqlstm;
-      sqlstm.sqlvsn = 10;
-      sqlstm.arrsiz = 3;
+      sqlstm.sqlvsn = 12;
+      sqlstm.arrsiz = 12;
       sqlstm.sqladtp = &sqladt;
       sqlstm.sqltdsp = &sqltds;
       sqlstm.stmt = "";
       sqlstm.iters = (unsigned int  )1;
-      sqlstm.offset = (unsigned int  )421;
+      sqlstm.offset = (unsigned int  )502;
       sqlstm.cud = sqlcud0;
       sqlstm.sqlest = (unsigned char  *)&sqlca;
       sqlstm.sqlety = (unsigned short)256;
       sqlstm.occurs = (unsigned int  )0;
-      sqlstm.sqhstv[0] = (         void  *)&value;
-      sqlstm.sqhstl[0] = (unsigned int  )sizeof(double);
+      sqlstm.sqhstv[0] = (unsigned char  *)&value;
+      sqlstm.sqhstl[0] = (unsigned long )sizeof(double);
       sqlstm.sqhsts[0] = (         int  )0;
-      sqlstm.sqindv[0] = (         void  *)0;
+      sqlstm.sqindv[0] = (         short *)0;
       sqlstm.sqinds[0] = (         int  )0;
-      sqlstm.sqharm[0] = (unsigned int  )0;
+      sqlstm.sqharm[0] = (unsigned long )0;
       sqlstm.sqadto[0] = (unsigned short )0;
       sqlstm.sqtdso[0] = (unsigned short )0;
-      sqlstm.sqhstv[1] = (         void  *)&index1;
-      sqlstm.sqhstl[1] = (unsigned int  )sizeof(int);
+      sqlstm.sqhstv[1] = (unsigned char  *)&index1;
+      sqlstm.sqhstl[1] = (unsigned long )sizeof(int);
       sqlstm.sqhsts[1] = (         int  )0;
-      sqlstm.sqindv[1] = (         void  *)0;
+      sqlstm.sqindv[1] = (         short *)0;
       sqlstm.sqinds[1] = (         int  )0;
-      sqlstm.sqharm[1] = (unsigned int  )0;
+      sqlstm.sqharm[1] = (unsigned long )0;
       sqlstm.sqadto[1] = (unsigned short )0;
       sqlstm.sqtdso[1] = (unsigned short )0;
       sqlstm.sqphsv = sqlstm.sqhstv;
@@ -1388,39 +1599,39 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
     struct sqlexd sqlstm;
-    sqlstm.sqlvsn = 10;
-    sqlstm.arrsiz = 3;
+    sqlstm.sqlvsn = 12;
+    sqlstm.arrsiz = 12;
     sqlstm.sqladtp = &sqladt;
     sqlstm.sqltdsp = &sqltds;
     sqlstm.stmt = "";
     sqlstm.iters = (unsigned int  )1;
-    sqlstm.offset = (unsigned int  )444;
+    sqlstm.offset = (unsigned int  )525;
     sqlstm.cud = sqlcud0;
     sqlstm.sqlest = (unsigned char  *)&sqlca;
     sqlstm.sqlety = (unsigned short)256;
     sqlstm.occurs = (unsigned int  )0;
-    sqlstm.sqhstv[0] = (         void  *)&value;
-    sqlstm.sqhstl[0] = (unsigned int  )sizeof(double);
+    sqlstm.sqhstv[0] = (unsigned char  *)&value;
+    sqlstm.sqhstl[0] = (unsigned long )sizeof(double);
     sqlstm.sqhsts[0] = (         int  )0;
-    sqlstm.sqindv[0] = (         void  *)0;
+    sqlstm.sqindv[0] = (         short *)0;
     sqlstm.sqinds[0] = (         int  )0;
-    sqlstm.sqharm[0] = (unsigned int  )0;
+    sqlstm.sqharm[0] = (unsigned long )0;
     sqlstm.sqadto[0] = (unsigned short )0;
     sqlstm.sqtdso[0] = (unsigned short )0;
-    sqlstm.sqhstv[1] = (         void  *)date1;
-    sqlstm.sqhstl[1] = (unsigned int  )21;
+    sqlstm.sqhstv[1] = (unsigned char  *)date1;
+    sqlstm.sqhstl[1] = (unsigned long )21;
     sqlstm.sqhsts[1] = (         int  )0;
-    sqlstm.sqindv[1] = (         void  *)0;
+    sqlstm.sqindv[1] = (         short *)0;
     sqlstm.sqinds[1] = (         int  )0;
-    sqlstm.sqharm[1] = (unsigned int  )0;
+    sqlstm.sqharm[1] = (unsigned long )0;
     sqlstm.sqadto[1] = (unsigned short )0;
     sqlstm.sqtdso[1] = (unsigned short )0;
-    sqlstm.sqhstv[2] = (         void  *)date2;
-    sqlstm.sqhstl[2] = (unsigned int  )21;
+    sqlstm.sqhstv[2] = (unsigned char  *)date2;
+    sqlstm.sqhstl[2] = (unsigned long )21;
     sqlstm.sqhsts[2] = (         int  )0;
-    sqlstm.sqindv[2] = (         void  *)0;
+    sqlstm.sqindv[2] = (         short *)0;
     sqlstm.sqinds[2] = (         int  )0;
-    sqlstm.sqharm[2] = (unsigned int  )0;
+    sqlstm.sqharm[2] = (unsigned long )0;
     sqlstm.sqadto[2] = (unsigned short )0;
     sqlstm.sqtdso[2] = (unsigned short )0;
     sqlstm.sqphsv = sqlstm.sqhstv;
@@ -1446,39 +1657,39 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
       struct sqlexd sqlstm;
-      sqlstm.sqlvsn = 10;
-      sqlstm.arrsiz = 3;
+      sqlstm.sqlvsn = 12;
+      sqlstm.arrsiz = 12;
       sqlstm.sqladtp = &sqladt;
       sqlstm.sqltdsp = &sqltds;
       sqlstm.stmt = "";
       sqlstm.iters = (unsigned int  )1;
-      sqlstm.offset = (unsigned int  )471;
+      sqlstm.offset = (unsigned int  )552;
       sqlstm.cud = sqlcud0;
       sqlstm.sqlest = (unsigned char  *)&sqlca;
       sqlstm.sqlety = (unsigned short)256;
       sqlstm.occurs = (unsigned int  )0;
-      sqlstm.sqhstv[0] = (         void  *)&value;
-      sqlstm.sqhstl[0] = (unsigned int  )sizeof(double);
+      sqlstm.sqhstv[0] = (unsigned char  *)&value;
+      sqlstm.sqhstl[0] = (unsigned long )sizeof(double);
       sqlstm.sqhsts[0] = (         int  )0;
-      sqlstm.sqindv[0] = (         void  *)0;
+      sqlstm.sqindv[0] = (         short *)0;
       sqlstm.sqinds[0] = (         int  )0;
-      sqlstm.sqharm[0] = (unsigned int  )0;
+      sqlstm.sqharm[0] = (unsigned long )0;
       sqlstm.sqadto[0] = (unsigned short )0;
       sqlstm.sqtdso[0] = (unsigned short )0;
-      sqlstm.sqhstv[1] = (         void  *)&index1;
-      sqlstm.sqhstl[1] = (unsigned int  )sizeof(int);
+      sqlstm.sqhstv[1] = (unsigned char  *)&index1;
+      sqlstm.sqhstl[1] = (unsigned long )sizeof(int);
       sqlstm.sqhsts[1] = (         int  )0;
-      sqlstm.sqindv[1] = (         void  *)0;
+      sqlstm.sqindv[1] = (         short *)0;
       sqlstm.sqinds[1] = (         int  )0;
-      sqlstm.sqharm[1] = (unsigned int  )0;
+      sqlstm.sqharm[1] = (unsigned long )0;
       sqlstm.sqadto[1] = (unsigned short )0;
       sqlstm.sqtdso[1] = (unsigned short )0;
-      sqlstm.sqhstv[2] = (         void  *)&index2;
-      sqlstm.sqhstl[2] = (unsigned int  )sizeof(int);
+      sqlstm.sqhstv[2] = (unsigned char  *)&index2;
+      sqlstm.sqhstl[2] = (unsigned long )sizeof(int);
       sqlstm.sqhsts[2] = (         int  )0;
-      sqlstm.sqindv[2] = (         void  *)0;
+      sqlstm.sqindv[2] = (         short *)0;
       sqlstm.sqinds[2] = (         int  )0;
-      sqlstm.sqharm[2] = (unsigned int  )0;
+      sqlstm.sqharm[2] = (unsigned long )0;
       sqlstm.sqadto[2] = (unsigned short )0;
       sqlstm.sqtdso[2] = (unsigned short )0;
       sqlstm.sqphsv = sqlstm.sqhstv;
@@ -1502,89 +1713,36 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
        {
 	 if (!runControl.destIsRange)
 	 {
-	    if (!runControl.isStat)	
-	       /* EXEC SQL EXECUTE insert_vals USING :date1, :date2, :value; */ 
-
-{
-        struct sqlexd sqlstm;
-        sqlstm.sqlvsn = 10;
-        sqlstm.arrsiz = 3;
-        sqlstm.sqladtp = &sqladt;
-        sqlstm.sqltdsp = &sqltds;
-        sqlstm.stmt = "";
-        sqlstm.iters = (unsigned int  )1;
-        sqlstm.offset = (unsigned int  )498;
-        sqlstm.cud = sqlcud0;
-        sqlstm.sqlest = (unsigned char  *)&sqlca;
-        sqlstm.sqlety = (unsigned short)256;
-        sqlstm.occurs = (unsigned int  )0;
-        sqlstm.sqhstv[0] = (         void  *)date1;
-        sqlstm.sqhstl[0] = (unsigned int  )21;
-        sqlstm.sqhsts[0] = (         int  )0;
-        sqlstm.sqindv[0] = (         void  *)0;
-        sqlstm.sqinds[0] = (         int  )0;
-        sqlstm.sqharm[0] = (unsigned int  )0;
-        sqlstm.sqadto[0] = (unsigned short )0;
-        sqlstm.sqtdso[0] = (unsigned short )0;
-        sqlstm.sqhstv[1] = (         void  *)date2;
-        sqlstm.sqhstl[1] = (unsigned int  )21;
-        sqlstm.sqhsts[1] = (         int  )0;
-        sqlstm.sqindv[1] = (         void  *)0;
-        sqlstm.sqinds[1] = (         int  )0;
-        sqlstm.sqharm[1] = (unsigned int  )0;
-        sqlstm.sqadto[1] = (unsigned short )0;
-        sqlstm.sqtdso[1] = (unsigned short )0;
-        sqlstm.sqhstv[2] = (         void  *)&value;
-        sqlstm.sqhstl[2] = (unsigned int  )sizeof(double);
-        sqlstm.sqhsts[2] = (         int  )0;
-        sqlstm.sqindv[2] = (         void  *)0;
-        sqlstm.sqinds[2] = (         int  )0;
-        sqlstm.sqharm[2] = (unsigned int  )0;
-        sqlstm.sqadto[2] = (unsigned short )0;
-        sqlstm.sqtdso[2] = (unsigned short )0;
-        sqlstm.sqphsv = sqlstm.sqhstv;
-        sqlstm.sqphsl = sqlstm.sqhstl;
-        sqlstm.sqphss = sqlstm.sqhsts;
-        sqlstm.sqpind = sqlstm.sqindv;
-        sqlstm.sqpins = sqlstm.sqinds;
-        sqlstm.sqparm = sqlstm.sqharm;
-        sqlstm.sqparc = sqlstm.sqharc;
-        sqlstm.sqpadto = sqlstm.sqadto;
-        sqlstm.sqptdso = sqlstm.sqtdso;
-        sqlcxt((void **)0, &sqlctx, &sqlstm, &sqlfpn);
-}
-
-
-	    else
+	    if (runControl.isStat)	
 	       /* EXEC SQL EXECUTE insert_vals USING :index1, :value; */ 
 
 {
         struct sqlexd sqlstm;
-        sqlstm.sqlvsn = 10;
-        sqlstm.arrsiz = 3;
+        sqlstm.sqlvsn = 12;
+        sqlstm.arrsiz = 12;
         sqlstm.sqladtp = &sqladt;
         sqlstm.sqltdsp = &sqltds;
         sqlstm.stmt = "";
         sqlstm.iters = (unsigned int  )1;
-        sqlstm.offset = (unsigned int  )525;
+        sqlstm.offset = (unsigned int  )579;
         sqlstm.cud = sqlcud0;
         sqlstm.sqlest = (unsigned char  *)&sqlca;
         sqlstm.sqlety = (unsigned short)256;
         sqlstm.occurs = (unsigned int  )0;
-        sqlstm.sqhstv[0] = (         void  *)&index1;
-        sqlstm.sqhstl[0] = (unsigned int  )sizeof(int);
+        sqlstm.sqhstv[0] = (unsigned char  *)&index1;
+        sqlstm.sqhstl[0] = (unsigned long )sizeof(int);
         sqlstm.sqhsts[0] = (         int  )0;
-        sqlstm.sqindv[0] = (         void  *)0;
+        sqlstm.sqindv[0] = (         short *)0;
         sqlstm.sqinds[0] = (         int  )0;
-        sqlstm.sqharm[0] = (unsigned int  )0;
+        sqlstm.sqharm[0] = (unsigned long )0;
         sqlstm.sqadto[0] = (unsigned short )0;
         sqlstm.sqtdso[0] = (unsigned short )0;
-        sqlstm.sqhstv[1] = (         void  *)&value;
-        sqlstm.sqhstl[1] = (unsigned int  )sizeof(double);
+        sqlstm.sqhstv[1] = (unsigned char  *)&value;
+        sqlstm.sqhstl[1] = (unsigned long )sizeof(double);
         sqlstm.sqhsts[1] = (         int  )0;
-        sqlstm.sqindv[1] = (         void  *)0;
+        sqlstm.sqindv[1] = (         short *)0;
         sqlstm.sqinds[1] = (         int  )0;
-        sqlstm.sqharm[1] = (unsigned int  )0;
+        sqlstm.sqharm[1] = (unsigned long )0;
         sqlstm.sqadto[1] = (unsigned short )0;
         sqlstm.sqtdso[1] = (unsigned short )0;
         sqlstm.sqphsv = sqlstm.sqhstv;
@@ -1608,39 +1766,39 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
         struct sqlexd sqlstm;
-        sqlstm.sqlvsn = 10;
-        sqlstm.arrsiz = 3;
+        sqlstm.sqlvsn = 12;
+        sqlstm.arrsiz = 12;
         sqlstm.sqladtp = &sqladt;
         sqlstm.sqltdsp = &sqltds;
         sqlstm.stmt = "";
         sqlstm.iters = (unsigned int  )1;
-        sqlstm.offset = (unsigned int  )548;
+        sqlstm.offset = (unsigned int  )602;
         sqlstm.cud = sqlcud0;
         sqlstm.sqlest = (unsigned char  *)&sqlca;
         sqlstm.sqlety = (unsigned short)256;
         sqlstm.occurs = (unsigned int  )0;
-        sqlstm.sqhstv[0] = (         void  *)date1;
-        sqlstm.sqhstl[0] = (unsigned int  )21;
+        sqlstm.sqhstv[0] = (unsigned char  *)date1;
+        sqlstm.sqhstl[0] = (unsigned long )21;
         sqlstm.sqhsts[0] = (         int  )0;
-        sqlstm.sqindv[0] = (         void  *)0;
+        sqlstm.sqindv[0] = (         short *)0;
         sqlstm.sqinds[0] = (         int  )0;
-        sqlstm.sqharm[0] = (unsigned int  )0;
+        sqlstm.sqharm[0] = (unsigned long )0;
         sqlstm.sqadto[0] = (unsigned short )0;
         sqlstm.sqtdso[0] = (unsigned short )0;
-        sqlstm.sqhstv[1] = (         void  *)date2;
-        sqlstm.sqhstl[1] = (unsigned int  )21;
+        sqlstm.sqhstv[1] = (unsigned char  *)date2;
+        sqlstm.sqhstl[1] = (unsigned long )21;
         sqlstm.sqhsts[1] = (         int  )0;
-        sqlstm.sqindv[1] = (         void  *)0;
+        sqlstm.sqindv[1] = (         short *)0;
         sqlstm.sqinds[1] = (         int  )0;
-        sqlstm.sqharm[1] = (unsigned int  )0;
+        sqlstm.sqharm[1] = (unsigned long )0;
         sqlstm.sqadto[1] = (unsigned short )0;
         sqlstm.sqtdso[1] = (unsigned short )0;
-        sqlstm.sqhstv[2] = (         void  *)&value;
-        sqlstm.sqhstl[2] = (unsigned int  )sizeof(double);
+        sqlstm.sqhstv[2] = (unsigned char  *)&value;
+        sqlstm.sqhstl[2] = (unsigned long )sizeof(double);
         sqlstm.sqhsts[2] = (         int  )0;
-        sqlstm.sqindv[2] = (         void  *)0;
+        sqlstm.sqindv[2] = (         short *)0;
         sqlstm.sqinds[2] = (         int  )0;
-        sqlstm.sqharm[2] = (unsigned int  )0;
+        sqlstm.sqharm[2] = (unsigned long )0;
         sqlstm.sqadto[2] = (unsigned short )0;
         sqlstm.sqtdso[2] = (unsigned short )0;
         sqlstm.sqphsv = sqlstm.sqhstv;
@@ -1661,39 +1819,39 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
         struct sqlexd sqlstm;
-        sqlstm.sqlvsn = 10;
-        sqlstm.arrsiz = 3;
+        sqlstm.sqlvsn = 12;
+        sqlstm.arrsiz = 12;
         sqlstm.sqladtp = &sqladt;
         sqlstm.sqltdsp = &sqltds;
         sqlstm.stmt = "";
         sqlstm.iters = (unsigned int  )1;
-        sqlstm.offset = (unsigned int  )575;
+        sqlstm.offset = (unsigned int  )629;
         sqlstm.cud = sqlcud0;
         sqlstm.sqlest = (unsigned char  *)&sqlca;
         sqlstm.sqlety = (unsigned short)256;
         sqlstm.occurs = (unsigned int  )0;
-        sqlstm.sqhstv[0] = (         void  *)&index1;
-        sqlstm.sqhstl[0] = (unsigned int  )sizeof(int);
+        sqlstm.sqhstv[0] = (unsigned char  *)&index1;
+        sqlstm.sqhstl[0] = (unsigned long )sizeof(int);
         sqlstm.sqhsts[0] = (         int  )0;
-        sqlstm.sqindv[0] = (         void  *)0;
+        sqlstm.sqindv[0] = (         short *)0;
         sqlstm.sqinds[0] = (         int  )0;
-        sqlstm.sqharm[0] = (unsigned int  )0;
+        sqlstm.sqharm[0] = (unsigned long )0;
         sqlstm.sqadto[0] = (unsigned short )0;
         sqlstm.sqtdso[0] = (unsigned short )0;
-        sqlstm.sqhstv[1] = (         void  *)&index2;
-        sqlstm.sqhstl[1] = (unsigned int  )sizeof(int);
+        sqlstm.sqhstv[1] = (unsigned char  *)&index2;
+        sqlstm.sqhstl[1] = (unsigned long )sizeof(int);
         sqlstm.sqhsts[1] = (         int  )0;
-        sqlstm.sqindv[1] = (         void  *)0;
+        sqlstm.sqindv[1] = (         short *)0;
         sqlstm.sqinds[1] = (         int  )0;
-        sqlstm.sqharm[1] = (unsigned int  )0;
+        sqlstm.sqharm[1] = (unsigned long )0;
         sqlstm.sqadto[1] = (unsigned short )0;
         sqlstm.sqtdso[1] = (unsigned short )0;
-        sqlstm.sqhstv[2] = (         void  *)&value;
-        sqlstm.sqhstl[2] = (unsigned int  )sizeof(double);
+        sqlstm.sqhstv[2] = (unsigned char  *)&value;
+        sqlstm.sqhstl[2] = (unsigned long )sizeof(double);
         sqlstm.sqhsts[2] = (         int  )0;
-        sqlstm.sqindv[2] = (         void  *)0;
+        sqlstm.sqindv[2] = (         short *)0;
         sqlstm.sqinds[2] = (         int  )0;
-        sqlstm.sqharm[2] = (unsigned int  )0;
+        sqlstm.sqharm[2] = (unsigned long )0;
         sqlstm.sqadto[2] = (unsigned short )0;
         sqlstm.sqtdso[2] = (unsigned short )0;
         sqlstm.sqphsv = sqlstm.sqhstv;
@@ -1721,12 +1879,12 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
       struct sqlexd sqlstm;
-      sqlstm.sqlvsn = 10;
-      sqlstm.arrsiz = 3;
+      sqlstm.sqlvsn = 12;
+      sqlstm.arrsiz = 12;
       sqlstm.sqladtp = &sqladt;
       sqlstm.sqltdsp = &sqltds;
       sqlstm.iters = (unsigned int  )1;
-      sqlstm.offset = (unsigned int  )602;
+      sqlstm.offset = (unsigned int  )656;
       sqlstm.cud = sqlcud0;
       sqlstm.sqlest = (unsigned char  *)&sqlca;
       sqlstm.sqlety = (unsigned short)256;
@@ -1750,12 +1908,12 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
       struct sqlexd sqlstm;
-      sqlstm.sqlvsn = 10;
-      sqlstm.arrsiz = 3;
+      sqlstm.sqlvsn = 12;
+      sqlstm.arrsiz = 12;
       sqlstm.sqladtp = &sqladt;
       sqlstm.sqltdsp = &sqltds;
       sqlstm.iters = (unsigned int  )1;
-      sqlstm.offset = (unsigned int  )617;
+      sqlstm.offset = (unsigned int  )671;
       sqlstm.cud = sqlcud0;
       sqlstm.sqlest = (unsigned char  *)&sqlca;
       sqlstm.sqlety = (unsigned short)256;
@@ -1773,12 +1931,12 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 
 {
   struct sqlexd sqlstm;
-  sqlstm.sqlvsn = 10;
-  sqlstm.arrsiz = 3;
+  sqlstm.sqlvsn = 12;
+  sqlstm.arrsiz = 12;
   sqlstm.sqladtp = &sqladt;
   sqlstm.sqltdsp = &sqltds;
   sqlstm.iters = (unsigned int  )1;
-  sqlstm.offset = (unsigned int  )632;
+  sqlstm.offset = (unsigned int  )686;
   sqlstm.cud = sqlcud0;
   sqlstm.sqlest = (unsigned char  *)&sqlca;
   sqlstm.sqlety = (unsigned short)256;
@@ -1789,11 +1947,3 @@ int SqlWriteModelAggDisagg (RUN_CONTROL runControl, ID siteDatatypeId,
 	
   return (OK);
 }
-
-
-
-
-
-
-
-

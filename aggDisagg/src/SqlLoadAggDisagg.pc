@@ -74,7 +74,7 @@ int SqlLoadAggDisagg (RUN_CONTROL *runControl, int aggDisaggId)
       :functionName:functionInd
     FROM ref_agg_disagg a, hdb_method b
     WHERE a.agg_disagg_id = :sqlAggDisaggId
-      AND a.method_id = b.method_id;
+      AND a.method_id = b.method_id(+);
 
   if ((result = SqlErrorHandler (FUNC_NAME, FALSE, "Problem selecting driver data from ref_agg_disagg\n\tfor agg_disagg_id = %d.\n\tExiting.", 
 				 sqlAggDisaggId)) != OK)

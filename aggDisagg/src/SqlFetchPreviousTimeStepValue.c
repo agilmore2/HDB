@@ -7,7 +7,7 @@
     unsigned int curocn;
     void *ptr1;
     void *ptr2;
-    unsigned long magic;
+    unsigned int magic;
   };
   typedef struct sql_cursor sql_cursor;
   typedef struct sql_cursor SQL_CURSOR;
@@ -69,11 +69,11 @@ static const struct sqlcxp sqlfpn =
 };
 
 
-static unsigned long sqlctx = 894451667;
+static unsigned int sqlctx = 894451667;
 
 
 static struct sqlexd {
-   unsigned int   sqlvsn;
+   unsigned long  sqlvsn;
    unsigned int   arrsiz;
    unsigned int   iters;
    unsigned int   offset;
@@ -85,34 +85,42 @@ static struct sqlexd {
       const char  *stmt;
    sqladts *sqladtp;
    sqltdss *sqltdsp;
-            void  **sqphsv;
-   unsigned int   *sqphsl;
+   unsigned char  **sqphsv;
+   unsigned long  *sqphsl;
             int   *sqphss;
-            void  **sqpind;
+            short **sqpind;
             int   *sqpins;
-   unsigned int   *sqparm;
-   unsigned int   **sqparc;
+   unsigned long  *sqparm;
+   unsigned long  **sqparc;
    unsigned short  *sqpadto;
    unsigned short  *sqptdso;
-            void  *sqhstv[2];
-   unsigned int   sqhstl[2];
+   unsigned int   sqlcmax;
+   unsigned int   sqlcmin;
+   unsigned int   sqlcincr;
+   unsigned int   sqlctimeout;
+   unsigned int   sqlcnowait;
+            int   sqfoff;
+   unsigned int   sqcmod;
+   unsigned int   sqfmod;
+   unsigned char  *sqhstv[2];
+   unsigned long  sqhstl[2];
             int   sqhsts[2];
-            void  *sqindv[2];
+            short *sqindv[2];
             int   sqinds[2];
-   unsigned int   sqharm[2];
-   unsigned int   *sqharc[2];
+   unsigned long  sqharm[2];
+   unsigned long  *sqharc[2];
    unsigned short  sqadto[2];
    unsigned short  sqtdso[2];
-} sqlstm = {10,2};
+} sqlstm = {12,2};
 
 /* SQLLIB Prototypes */
-extern void sqlcxt (void **, unsigned long *,
+extern void sqlcxt (void **, unsigned int *,
                     struct sqlexd *, const struct sqlcxp *);
-extern void sqlcx2t(void **, unsigned long *,
+extern void sqlcx2t(void **, unsigned int *,
                     struct sqlexd *, const struct sqlcxp *);
 extern void sqlbuft(void **, char *);
 extern void sqlgs2t(void **, char *);
-extern void sqlorat(void **, unsigned long *, void *);
+extern void sqlorat(void **, unsigned int *, void *);
 
 /* Forms Interface */
 static const int IAPSUCC = 0;
@@ -125,11 +133,11 @@ typedef struct { unsigned short len; unsigned char arr[1]; } varchar;
 
 /* cud (compilation unit data) array */
 static const short sqlcud0[] =
-{10,4130,0,0,0,
-5,0,0,1,0,0,1041,53,0,0,1,1,0,0,128,1,97,0,0,1,97,0,0,
-28,0,0,1,0,0,1069,66,0,0,0,0,0,0,128,1,97,0,0,
-47,0,0,1,0,0,1037,73,0,0,1,0,0,0,128,2,4,0,0,1,97,0,0,
-70,0,0,1,0,0,1039,79,0,0,0,0,0,0,128,1,97,0,0,
+{12,4130,1,0,0,
+5,0,0,1,0,0,1041,78,0,0,1,1,0,0,128,1,97,0,0,1,97,0,0,
+28,0,0,1,0,0,1069,91,0,0,0,0,0,0,128,1,97,0,0,
+47,0,0,1,0,0,1037,98,0,0,1,0,0,0,128,2,4,0,0,1,97,0,0,
+70,0,0,1,0,0,1039,104,0,0,0,0,0,0,128,1,97,0,0,
 };
 
 
@@ -145,6 +153,7 @@ static const short sqlcud0[] =
 *
 * Julien Chastang
 * March, 1999
+* Modified March, 2004 to allow for real source data
 ****************************************************************************/
 #include <stdio.h>
 #include <string.h>
@@ -263,7 +272,12 @@ SQLCA_STORAGE_CLASS struct sqlca sqlca
 
 #define FUNC_NAME "SqlFetchPreviousTimeStepValue"
 
-int SqlFetchPreviousTimeStepValue (OBJECTTYPE_NAME tableSource, TIME_INTERVAL_TYPES obsSource, int model_run_id_src, ID siteDatatypeId, SQL_DATE dateLow, double *previous_timestep_value)
+int SqlFetchPreviousTimeStepValue (OBJECTTYPE_NAME tableSource, 
+				   TIME_INTERVAL_TYPES obsSource, 
+				   ID siteDatatypeId, SQL_DATE dateLow, 
+				   double *previous_timestep_value, 
+				   int sourceIsRange, int sourceIsReal,
+				   int model_run_id_src)
 {
      /* EXEC SQL BEGIN DECLARE SECTION; */ 
 
@@ -276,6 +290,22 @@ int SqlFetchPreviousTimeStepValue (OBJECTTYPE_NAME tableSource, TIME_INTERVAL_TY
      /* EXEC SQL END DECLARE SECTION; */ 
 
 
+     char dateColName[32];
+     char tempDateColName[32];
+
+     /* Set date column based on source interval; if this is not range
+	data, must prepend "start_" to the tempDateColName. */
+     if ((result = GetDateColumn (obsSource, FALSE, sourceIsRange, tempDateColName)) != OK)
+       {
+	 PrintError ("Error in %s....\n", FUNC_NAME);
+	 return (ERROR);
+       }
+
+     if (!sourceIsRange)
+       sprintf (dateColName, "start_%s", tempDateColName);
+     else
+       strcpy (dateColName, tempDateColName);
+
      success = SqlDateMath(SUBTRACTION,dateLow,start_date,1,MONTH);
 
      if (success == ERROR)
@@ -284,7 +314,10 @@ int SqlFetchPreviousTimeStepValue (OBJECTTYPE_NAME tableSource, TIME_INTERVAL_TY
          exit(ERROR);
      }
 
-     sprintf(sql_statement,"SELECT value from %s WHERE site_datatype_id = %d and model_run_id = %d AND date%s = to_date('%s','dd-mon-yyyy hh24:mi:ss')", tableSource, siteDatatypeId, model_run_id_src, strstr (tableSource, "_"), start_date); 
+     if (sourceIsReal)
+       sprintf(sql_statement,"SELECT value from %s WHERE site_datatype_id = %d and %s = to_date('%s','dd-mon-yyyy hh24:mi:ss')", tableSource, siteDatatypeId, dateColName, start_date); 
+     else
+       sprintf(sql_statement,"SELECT value from %s WHERE site_datatype_id = %d and model_run_id = %d AND %s = to_date('%s','dd-mon-yyyy hh24:mi:ss')", tableSource, siteDatatypeId, model_run_id_src, dateColName, start_date); 
 
     /* EXEC SQL AT :current_dbsite DECLARE sel STATEMENT; */ 
 
@@ -293,7 +326,7 @@ int SqlFetchPreviousTimeStepValue (OBJECTTYPE_NAME tableSource, TIME_INTERVAL_TY
 
 {
     struct sqlexd sqlstm;
-    sqlstm.sqlvsn = 10;
+    sqlstm.sqlvsn = 12;
     sqlstm.arrsiz = 2;
     sqlstm.sqladtp = &sqladt;
     sqlstm.sqltdsp = &sqltds;
@@ -304,20 +337,20 @@ int SqlFetchPreviousTimeStepValue (OBJECTTYPE_NAME tableSource, TIME_INTERVAL_TY
     sqlstm.sqlest = (unsigned char  *)&sqlca;
     sqlstm.sqlety = (unsigned short)256;
     sqlstm.occurs = (unsigned int  )0;
-    sqlstm.sqhstv[0] = (         void  *)sql_statement;
-    sqlstm.sqhstl[0] = (unsigned int  )600;
+    sqlstm.sqhstv[0] = (unsigned char  *)sql_statement;
+    sqlstm.sqhstl[0] = (unsigned long )600;
     sqlstm.sqhsts[0] = (         int  )0;
-    sqlstm.sqindv[0] = (         void  *)0;
+    sqlstm.sqindv[0] = (         short *)0;
     sqlstm.sqinds[0] = (         int  )0;
-    sqlstm.sqharm[0] = (unsigned int  )0;
+    sqlstm.sqharm[0] = (unsigned long )0;
     sqlstm.sqadto[0] = (unsigned short )0;
     sqlstm.sqtdso[0] = (unsigned short )0;
-    sqlstm.sqhstv[1] = (         void  *)current_dbsite;
-    sqlstm.sqhstl[1] = (unsigned int  )10;
+    sqlstm.sqhstv[1] = (unsigned char  *)current_dbsite;
+    sqlstm.sqhstl[1] = (unsigned long )10;
     sqlstm.sqhsts[1] = (         int  )0;
-    sqlstm.sqindv[1] = (         void  *)0;
+    sqlstm.sqindv[1] = (         short *)0;
     sqlstm.sqinds[1] = (         int  )0;
-    sqlstm.sqharm[1] = (unsigned int  )0;
+    sqlstm.sqharm[1] = (unsigned long )0;
     sqlstm.sqadto[1] = (unsigned short )0;
     sqlstm.sqtdso[1] = (unsigned short )0;
     sqlstm.sqphsv = sqlstm.sqhstv;
@@ -350,7 +383,7 @@ int SqlFetchPreviousTimeStepValue (OBJECTTYPE_NAME tableSource, TIME_INTERVAL_TY
 
 {
     struct sqlexd sqlstm;
-    sqlstm.sqlvsn = 10;
+    sqlstm.sqlvsn = 12;
     sqlstm.arrsiz = 2;
     sqlstm.sqladtp = &sqladt;
     sqlstm.sqltdsp = &sqltds;
@@ -362,12 +395,13 @@ int SqlFetchPreviousTimeStepValue (OBJECTTYPE_NAME tableSource, TIME_INTERVAL_TY
     sqlstm.sqlest = (unsigned char  *)&sqlca;
     sqlstm.sqlety = (unsigned short)256;
     sqlstm.occurs = (unsigned int  )0;
-    sqlstm.sqhstv[0] = (         void  *)current_dbsite;
-    sqlstm.sqhstl[0] = (unsigned int  )10;
+    sqlstm.sqcmod = (unsigned int )0;
+    sqlstm.sqhstv[0] = (unsigned char  *)current_dbsite;
+    sqlstm.sqhstl[0] = (unsigned long )10;
     sqlstm.sqhsts[0] = (         int  )0;
-    sqlstm.sqindv[0] = (         void  *)0;
+    sqlstm.sqindv[0] = (         short *)0;
     sqlstm.sqinds[0] = (         int  )0;
-    sqlstm.sqharm[0] = (unsigned int  )0;
+    sqlstm.sqharm[0] = (unsigned long )0;
     sqlstm.sqadto[0] = (unsigned short )0;
     sqlstm.sqtdso[0] = (unsigned short )0;
     sqlstm.sqphsv = sqlstm.sqhstv;
@@ -393,30 +427,33 @@ int SqlFetchPreviousTimeStepValue (OBJECTTYPE_NAME tableSource, TIME_INTERVAL_TY
 
 {
     struct sqlexd sqlstm;
-    sqlstm.sqlvsn = 10;
+    sqlstm.sqlvsn = 12;
     sqlstm.arrsiz = 2;
     sqlstm.sqladtp = &sqladt;
     sqlstm.sqltdsp = &sqltds;
     sqlstm.iters = (unsigned int  )1;
     sqlstm.offset = (unsigned int  )47;
+    sqlstm.selerr = (unsigned short)1;
     sqlstm.cud = sqlcud0;
     sqlstm.sqlest = (unsigned char  *)&sqlca;
     sqlstm.sqlety = (unsigned short)256;
     sqlstm.occurs = (unsigned int  )0;
-    sqlstm.sqhstv[0] = (         void  *)&return_val;
-    sqlstm.sqhstl[0] = (unsigned int  )sizeof(float);
+    sqlstm.sqfoff = (         int )0;
+    sqlstm.sqfmod = (unsigned int )2;
+    sqlstm.sqhstv[0] = (unsigned char  *)&return_val;
+    sqlstm.sqhstl[0] = (unsigned long )sizeof(float);
     sqlstm.sqhsts[0] = (         int  )0;
-    sqlstm.sqindv[0] = (         void  *)&return_ind;
+    sqlstm.sqindv[0] = (         short *)&return_ind;
     sqlstm.sqinds[0] = (         int  )0;
-    sqlstm.sqharm[0] = (unsigned int  )0;
+    sqlstm.sqharm[0] = (unsigned long )0;
     sqlstm.sqadto[0] = (unsigned short )0;
     sqlstm.sqtdso[0] = (unsigned short )0;
-    sqlstm.sqhstv[1] = (         void  *)current_dbsite;
-    sqlstm.sqhstl[1] = (unsigned int  )10;
+    sqlstm.sqhstv[1] = (unsigned char  *)current_dbsite;
+    sqlstm.sqhstl[1] = (unsigned long )10;
     sqlstm.sqhsts[1] = (         int  )0;
-    sqlstm.sqindv[1] = (         void  *)0;
+    sqlstm.sqindv[1] = (         short *)0;
     sqlstm.sqinds[1] = (         int  )0;
-    sqlstm.sqharm[1] = (unsigned int  )0;
+    sqlstm.sqharm[1] = (unsigned long )0;
     sqlstm.sqadto[1] = (unsigned short )0;
     sqlstm.sqtdso[1] = (unsigned short )0;
     sqlstm.sqphsv = sqlstm.sqhstv;
@@ -441,7 +478,7 @@ int SqlFetchPreviousTimeStepValue (OBJECTTYPE_NAME tableSource, TIME_INTERVAL_TY
 
 {
     struct sqlexd sqlstm;
-    sqlstm.sqlvsn = 10;
+    sqlstm.sqlvsn = 12;
     sqlstm.arrsiz = 2;
     sqlstm.sqladtp = &sqladt;
     sqlstm.sqltdsp = &sqltds;
@@ -451,12 +488,12 @@ int SqlFetchPreviousTimeStepValue (OBJECTTYPE_NAME tableSource, TIME_INTERVAL_TY
     sqlstm.sqlest = (unsigned char  *)&sqlca;
     sqlstm.sqlety = (unsigned short)256;
     sqlstm.occurs = (unsigned int  )0;
-    sqlstm.sqhstv[0] = (         void  *)current_dbsite;
-    sqlstm.sqhstl[0] = (unsigned int  )10;
+    sqlstm.sqhstv[0] = (unsigned char  *)current_dbsite;
+    sqlstm.sqhstl[0] = (unsigned long )10;
     sqlstm.sqhsts[0] = (         int  )0;
-    sqlstm.sqindv[0] = (         void  *)0;
+    sqlstm.sqindv[0] = (         short *)0;
     sqlstm.sqinds[0] = (         int  )0;
-    sqlstm.sqharm[0] = (unsigned int  )0;
+    sqlstm.sqharm[0] = (unsigned long )0;
     sqlstm.sqadto[0] = (unsigned short )0;
     sqlstm.sqtdso[0] = (unsigned short )0;
     sqlstm.sqphsv = sqlstm.sqhstv;

@@ -304,8 +304,11 @@ int lin (RUN_CONTROL runControl, double sourceValue,
   int    result;
   int count;
 
-  result = SqlFetchPreviousTimeStepValue(runControl.tableSource, runControl.obsSource,
-                                runControl.model_run_id_src, siteDatatypeId, dateLow, &previous_timestep_value);
+  result = 
+    SqlFetchPreviousTimeStepValue(runControl.tableSource, runControl.obsSource,
+				  siteDatatypeId, dateLow, &previous_timestep_value, 
+				  runControl.sourceIsRange, runControl.sourceIsReal,
+				  runControl.model_run_id_src);
 
   if (result != OK)
   {
