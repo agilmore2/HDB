@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/local/bin/perl -wd
 
 use Date::Calc qw(:all);
 use DBI;
@@ -30,6 +30,9 @@ sub passdie {
 		  "precip total", 5, "total wy precip", 72);
 
 %site_datatype_hash = ("max temp", undef, "ave temp", undef, "min temp", undef,
+		       "precip total", undef, "total wy precip", undef);
+
+%value_hash = ("max temp", undef, "ave temp", undef, "min temp", undef,
 		       "precip total", undef, "total wy precip", undef);
 
 #check to see command line usage.
@@ -90,41 +93,43 @@ READ: while ($line = <INFILE>)
 #chop out the pieces of the line that are interesting, date, precip,
 # and 3 temperatures, max, min, and average
   $monthdaystr = substr $line, 22, 5;
-  $cum_precip = substr $line, 45, 5;
-  $max_temp = substr $line, 61, 6;
-  $min_temp = substr $line, 67, 6;
-  $ave_temp = substr $line, 73, 6;
+  $value_hash{"total wy precip"} = substr $line, 45, 5;
+  $value_hash{"max temp"}        = substr $line, 61, 6;
+  $value_hash{"min temp"}        = substr $line, 67, 6;
+  $value_hash{"ave temp"}        = substr $line, 73, 6;
 
-  $cum_precip =~ s/\s//g;
-  $max_temp =~ s/\s//g;
-  $min_temp =~ s/\s//g;
-  $ave_temp =~ s/\s//g;
+  $value_hash{"total wy precip"} =~ s/\s//g;
+  $value_hash{"max temp"} =~ s/\s//g;
+  $value_hash{"min temp"} =~ s/\s//g;
+  $value_hash{"ave temp"} =~ s/\s//g;
 
   $value_date[1] = substr $monthdaystr, 0, 2;
   $value_date[2] = substr $monthdaystr, 3, 2;
 
+#handle finding year value, if value is for a month after the date on the
+#file, the year for the value is the previous year
   if ($value_date[1] > $data_date[1]) {
     $value_date[0] = $data_date[0] - 1;
   }
   else {
-    $value_date[0] = $data_date[0]; 
+    $value_date[0] = $data_date[0];
   }
 
 # fix the fact that the data is reported for the next day!
   @value_date = Add_Delta_Days(@value_date, -1);
 
-  if ($max_temp == -99.9 ) {
-    $max_temp = undef;
+  if ($value_hash{"max temp"} == -99.9 ) {
+    $value_hash{"max temp"} = undef;
   }
-  if ($min_temp == -99.9 ) {
-    $min_temp = undef;
+  if ($value_hash{"min temp"} == -99.9 ) {
+    $value_hash{"min temp"} = undef;
   }
-  if ($ave_temp == -99.9 ) {
-    $ave_temp = undef;
+  if ($value_hash{"ave temp"} == -99.9 ) {
+    $value_hash{"ave temp"} = undef;
   }
 
   if ($site_id) {
-    insert_values(@value_date, $cum_precip, $max_temp, $min_temp, $ave_temp);
+    insert_values(@value_date);
   }
 }
 
@@ -155,8 +160,7 @@ sub check_value
 sub insert_values
   {
     my(@value_date) = @_[0,1,2];
-    my(@cur_values) = @_[3,4,5,6];
-    my($cum_precip) = $cur_values[0];    
+    my($cum_precip) = $value_hash{"total wy precip"};
 
     my($insth, $upsth);
     my($day_precip) = undef;
@@ -191,17 +195,14 @@ sub insert_values
       }
       # add one more value to the end of the values array to represent the
       # day's precip
-      $cur_values[4] = $day_precip;
+      $value_hash{"precip total"} = $day_precip;
 
-      $i = -1;
 # insert data;
-      foreach $datatype ("total wy precip", "max temp", "min temp", "ave temp",
-			 "precip total") 
+      foreach $datatype ( keys %site_datatype_hash )
 	{
-	  $i++;
 	  undef $old_val;
 	  $old_val = check_value($datestr, $site_datatype_hash{$datatype});
-	  if (!defined $cur_values[$i]) {
+	  if (!defined $value_hash{$datatype}) {
 	    #delete data if data is -99.9, otherwise do nothing.
 	    if ($old_val && $old_val == -99.9) {
 	      print "deleting bad data for $site_datatype_hash{$datatype}, date $datestr, value undefined, old_val = $old_val\n";
@@ -209,20 +210,20 @@ sub insert_values
 	    }
 	  }
 	  elsif (!defined($old_val)) {
-	    print "inserting for $site_datatype_hash{$datatype}, date $datestr, value $cur_values[$i], old_val = undefined\n";
+	    print "inserting for $site_datatype_hash{$datatype}, date $datestr, value $value_hash{$datatype}, old_val = undefined\n";
 	    
 	    $insth->bind_param(1,$site_datatype_hash{$datatype});
 	    $insth->bind_param(2,$datestr);
-	    $insth->bind_param(3,$cur_values[$i]);
+	    $insth->bind_param(3,$value_hash{$datatype});
 	    $insth->execute|| mydie $insth->errstr;
 	  }
-	  elsif ($old_val == $cur_values[$i]) {
+	  elsif ($old_val == $value_hash{$datatype}) {
 	    next;
 	  }
-	  elsif ($old_val != $cur_values[$i]) {
-	    print "updating for $site_datatype_hash{$datatype}, date $datestr, value $cur_values[$i], old_val = $old_val\n";
+	  elsif ($old_val != $value_hash{$datatype}) {
+	    print "updating for $site_datatype_hash{$datatype}, date $datestr, value $value_hash{$datatype}, old_val = $old_val\n";
 	    #update instead of insert
-	    $upsth->bind_param(1,$cur_values[$i]);
+	    $upsth->bind_param(1,$value_hash{$datatype});
 	    $upsth->bind_param(2,$site_datatype_hash{$datatype});
 	    $upsth->bind_param(3,$datestr);
 	    $upsth->execute|| mydie $upsth->errstr;
