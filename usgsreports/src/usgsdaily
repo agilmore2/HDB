@@ -1,6 +1,7 @@
 #!/bin/sh
 # usgsdaily.sh file checks number of arguments, then
 # executes sql script
+# $Revision$
 myprog=`basename $0`
 mydir=`dirname $0`
 
