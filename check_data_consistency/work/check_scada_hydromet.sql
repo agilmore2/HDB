@@ -18,7 +18,7 @@ a.interval = 'day' and
 a.collection_system_id = 3 and
 a.site_datatype_id = b.site_datatype_id and
 a.start_date_time = b.start_date_time and
-((abs(a.value - b.value) > .5 and
+((abs(a.value - b.value) > .3 and
   c.datatype_id in (39,46,1197)) or
  (abs(a.value - b.value) > .009 and
   c.datatype_id = 49)) and
@@ -31,7 +31,7 @@ set termout on
 column site format A25
 column datatype format A15
 select a.start_date_time "Day",
-round(a.value,3) "Hydromet", round(b.value,3) "r_day", round(abs(a.value -b.value),3) "Diff",
+round(a.value,3) "r_base from ARCHIVE", round(b.value,3) "r_day", round(abs(a.value -b.value),3) "Diff",
 d.site_common_name site, e.datatype_common_name datatype, a.site_datatype_id sdi
 from r_base a, r_day b, hdb_site_datatype c, hdb_site d, hdb_datatype e where
 a.interval = 'day' and
