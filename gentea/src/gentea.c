@@ -5,6 +5,7 @@
 #include <time.h>
 #include "gd.h"
 #include "gdfonts.h"
+#include "gdfontmb.h"
 #include "dbutils.h"
 #include "utils.h"
 
@@ -24,7 +25,7 @@ extern int foreground,background,foregroundtext;
 float readone(int,int,char*);
 
 /* defined in teacup.c */
-void teacup(gdImagePtr,gdPoint,int,double,double,char *);
+void teacup(gdImagePtr,gdPoint,int,double,double,char *,char*);
 void lineprint(gdImagePtr,gdPoint,float,char *,char *);
 void lineprint2(gdImagePtr,gdPoint,float,char *,char *);
 
@@ -34,8 +35,10 @@ int main(int argc,char **argv)
    FILE *ofs,*ifs,*cfs;	
    int retval,row,col,size,red,white,blue,green,sofar,i,j;
    time_t t;
-   char timestring[50],drawitem[30],description[100],line[100],units[30];
-   char maxdate[25];
+   char datelabel[50],drawitem[30],description[100],line[100],units[30];
+   char label[25];
+   char datestr[25];
+   char datadate[25];
    float value,capacity;
    int site, datatype;
    gdPoint base;
@@ -71,7 +74,7 @@ int main(int argc,char **argv)
    green = gdImageColorAllocate(im,0,220,0);
    foreground=blue;
    background=white;
-   foregroundtext=red;
+   foregroundtext=green;
 
    /* connect to the database */
    char *dbName;
@@ -100,9 +103,15 @@ int main(int argc,char **argv)
    dt.dy = timep->tm_mday;
    dt.hr=0;dt.mi=0;dt.sc=0;
 
-   sprintf(timestring,"%02d/%02d/%4d",dt.mn,dt.dy,dt.yr);
+   sprintf(datestr,"%02d/%02d",dt.mn,dt.dy);
+   sprintf(label,"Data Current as of:");
+   sprintf(datelabel,"%s/%04d",datestr,dt.yr);
+
    gdImageFilledRectangle(im,0,0,100,14,background);    
-   gdImageString(im,gdFontSmall,0,0,(unsigned char *)timestring,foreground);
+   gdImageString(im,gdFontMediumBold,0,0,(unsigned char *)label,foreground);
+   
+   gdImageFilledRectangle(im,0,14,100,14,background);    
+   gdImageString(im,gdFontMediumBold,0,14,(unsigned char *)datelabel,foreground);
 	
 
    /* read the config file, get the data, put it on the image per line */
@@ -120,8 +129,17 @@ int main(int argc,char **argv)
       {
          base.x=row;
          base.y=col;
-         value = readone(site,datatype,maxdate);
-         teacup(im,base,size,capacity,value,description);
+         value = readone(site,datatype,datadate);
+         if (strncmp(datestr,datadate,25) !=0) {
+            printf ("'%s' '%s'\n",datestr,datadate);
+            
+            foregroundtext=red;
+            teacup(im,base,size,capacity,value,description,datadate);
+            foregroundtext=green;
+         }
+         else {
+            teacup(im,base,size,capacity,value,description,0);
+         }
       }
 
       else
@@ -139,7 +157,7 @@ int main(int argc,char **argv)
          {
             base.x=row;
             base.y=col;
-            value = readone(site,datatype,maxdate);
+            value = readone(site,datatype,datadate);
             lineprint2(im,base,value,description,units);
          }
          else
