@@ -42,6 +42,14 @@
 #
 05 * * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/derivation/src; derivation app_user uchdb2 >$HDB_ENV/log/derivation.err 2>&1
 #
+# Move old SCADA crsp_ files into old_files directory
+#
+01 02 25 * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/scadaTransfer/work; ./backup_files
+#
+# Compress last year's SCADA crsp_ files on October 1
+#
+03 02 01 10 * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/scadaTransfer/work/old_files; ./compress_files
+#
 # Email about automated processes
 #
 57 10 * * *  . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/check_automated_processes/work; ../src/check_processes.pl
