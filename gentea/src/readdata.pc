@@ -28,13 +28,13 @@ float readone(int site,int datatype, char *date)
    site_id = site;
    datatype_id = datatype;
 
-   EXEC SQL SELECT value, trim(to_char(date_day,'MM/DD'))
+   EXEC SQL SELECT value, trim(to_char(START_DATE_TIME,'MM/DD'))
       INTO :value, :oradate
       FROM HDB_SITE_DATATYPE a, R_DAY b
       WHERE SITE_ID = :site_id
       AND DATATYPE_ID = :datatype_id
       AND B.SITE_DATATYPE_ID = A.SITE_DATATYPE_ID
-      AND B.DATE_DAY = (SELECT MAX(DATE_DAY) FROM
+      AND B.START_DATE_TIME = (SELECT MAX(START_DATE_TIME) FROM
                         HDB_SITE_DATATYPE A, R_DAY B
                         WHERE SITE_ID = :site_id
                         AND DATATYPE_ID = :datatype_id
