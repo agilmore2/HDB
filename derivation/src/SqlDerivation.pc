@@ -246,16 +246,9 @@ int SqlDerivationControl(int* baseUpdateTotal, char * sdilist)
       {
          FilePrintError(LOGFILE,
                    "Problem querying row count in ref_derivation_source\n");
+         EXEC SQL ROLLBACK;
          return (ERROR);
       }
-
-   if ((result = SqlFilePrintErrorHandler(LOGFILE, FUNC_NAME, FALSE, 
-                 "Problem querying row count in ref_derivation_source\n"))
-                  != OK)
-   {
-      EXEC SQL ROLLBACK;
-      return (ERROR);
-   }
 
    /* Create array of structures to hold ref_derivation_source data */
    if (sqlSourceCount)

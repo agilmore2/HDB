@@ -156,7 +156,7 @@ int main (int argc, char **argv)
            DATETIMELOADED);
 
    /* Call to process any changed overwrite values */
-   if ((result = SqlCopyOverwrite(&baseUpdateTotal)) != OK)
+   if ((result = SqlCopyOverwrite(&baseUpdateTotal, sdilist)) != OK)
    {
       SqlDropTable();
       SqlDisconnect();

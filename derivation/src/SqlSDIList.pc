@@ -44,7 +44,7 @@ EXEC SQL INCLUDE sqlca;
 int SqlVerifySDIList(char * sdilist)
 {
    EXEC SQL BEGIN DECLARE SECTION;
-      char sdiCountStatement[1500];
+      char sdiCountStatement[1200];
       int sdiCount;
    EXEC SQL END DECLARE SECTION;
 
@@ -57,7 +57,12 @@ int SqlVerifySDIList(char * sdilist)
       numbers, commas and spaces.
       Also count number of commas
    */
-   
+   if (strlen(sdilist) > 1100)
+   {       
+     fprintf(stderr, "site_datatype_id list is too long! Blame Andrew!\n");
+     return (ERROR);
+   }
+
    for (i=0; i<strlen(sdilist); i++)
    {
       if (!isdigit(sdilist[i]) && sdilist[i] != ',' && !isspace(sdilist[i]))

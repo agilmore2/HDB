@@ -253,7 +253,7 @@ DATA_RECORD*
 #endif
 );
 
-int SqlCopyOverwrite(int*);
+int SqlCopyOverwrite(int*, char*);
 
 int SqlDeleteOverwrite();
 

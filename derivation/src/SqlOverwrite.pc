@@ -68,9 +68,11 @@ EXEC SQL INCLUDE sqlca;
 
 #define FUNC_NAME "SqlCopyOverwrite"
 
-int SqlCopyOverwrite(int* baseUpdateTotal)
+int SqlCopyOverwrite(int* baseUpdateTotal, char * sdilist)
 {
    EXEC SQL BEGIN DECLARE SECTION;
+      char sdiCountStatement[1200];
+      char sdiCursorStatement[1200];
       char sqlAddTruncateStatement[600];
       char sqlDeleteStatement[600];
       char sqlInsertStatement[600];
@@ -106,18 +108,26 @@ int SqlCopyOverwrite(int* baseUpdateTotal)
    SQL_INTERVAL previousInterval;
    UPDATE_RECORD* overwriteDataList;
 
+   /* Handle possible limitation on sdis to process
+      by creating an SQL where clause to limit the sdis returned*/
+   if (sdilist)
+   {
+      sprintf(sdiCountStatement, "SELECT COUNT(*) "
+      "FROM r_base_update WHERE overwrite_flag IN ('O', 'o') "
+      "and site_datatype_id IN ( %s )", sdilist);
+   } else
+   {
+      sprintf(sdiCountStatement, "SELECT COUNT(*) FROM r_base_update "
+                                  "WHERE overwrite_flag IN ('O', 'o')");
+   }
+   
    /* Load rows from r_base_update marked as overwrites */
    /* Find out how many applicable rows in r_base_update */
-   EXEC SQL
-      SELECT COUNT(*) INTO :sqlCountOverwrite
-      FROM r_base_update 
-      WHERE overwrite_flag IN ('O', 'o');
-
-      if ((result = SqlFilePrintErrorHandler(LOGFILE, FUNC_NAME, FALSE, 
-           "Problem querying for count of overwrite data in r_base_update\n"))
-           != OK)
+   if ((result = SqlSelectCount(sdiCountStatement, &sqlCountOverwrite)) != OK)
       {
          EXEC SQL ROLLBACK;
+         FilePrintError(LOGFILE,
+                   "Problem querying for count of overwrite data in r_base_update\n");
          return (ERROR);
       }
 
@@ -138,19 +148,44 @@ int SqlCopyOverwrite(int* baseUpdateTotal)
        return (ERROR);
    }
 
-   /* Declare overwrite_cursor for selecting overwrite data */
-      EXEC SQL DECLARE overwrite_cursor CURSOR FOR
-         SELECT site_datatype_id,
-                TO_CHAR (start_date_time, 'DD-MON-YYYY HH24:MI:SS'),
-                TO_CHAR (end_date_time, 'DD-MON-YYYY HH24:MI:SS'),
-                interval
-         FROM r_base_update
-         WHERE overwrite_flag IN ('O', 'o');
-      if ((result = SqlFilePrintErrorHandler(LOGFILE, FUNC_NAME, FALSE, 
-                    "Problem declaring overwrite_cursor\n")) != OK)
-      {
+   /* Handle possible limitation on sdis to process
+      by creating an SQL where clause to limit the sdis returned*/
+   if (sdilist)
+   {
+      sprintf(sdiCursorStatement, "SELECT site_datatype_id, "
+                "TO_CHAR (start_date_time, 'DD-MON-YYYY HH24:MI:SS'), "
+                "TO_CHAR (end_date_time, 'DD-MON-YYYY HH24:MI:SS'), "
+                "interval "
+        "FROM r_base_update "
+        "WHERE overwrite_flag IN ('O', 'o') "
+        "AND site_datatype_id IN ( %s )", sdilist);
+   } else
+   {
+      sprintf(sdiCursorStatement, "SELECT site_datatype_id, "
+                "TO_CHAR (start_date_time, 'DD-MON-YYYY HH24:MI:SS'), "
+                "TO_CHAR (end_date_time, 'DD-MON-YYYY HH24:MI:SS'), "
+                "interval "
+        "FROM r_base_update "
+        "WHERE overwrite_flag IN ('O', 'o') ");
+   }
+   
+   /* prepare the source selection statement */
+   EXEC SQL PREPARE overwrite_sel FROM :sdiCursorStatement;
+   
+   if ((result = SqlFilePrintErrorHandler(LOGFILE, FUNC_NAME, FALSE,
+      "Problem preparing overwrite cursor\n")) != OK)
+   {
          return (ERROR);
-      }
+   }
+
+   /* Declare overwrite_cursor for selecting overwrite data */
+   EXEC SQL DECLARE overwrite_cursor CURSOR FOR
+        overwrite_sel;
+   if ((result = SqlFilePrintErrorHandler(LOGFILE, FUNC_NAME, FALSE, 
+                 "Problem declaring overwrite cursor\n")) != OK)
+   {
+      return (ERROR);
+   }
 
    /* Open overwrite_cursor */
    EXEC SQL OPEN overwrite_cursor;
