@@ -1,38 +1,37 @@
-#!/bin/csh -f
+#!/bin/sh
 #
-# first line lets shell know that this is a C script
-# the -f tells the shell not to source the .cshrc file
-# thus none of the aliases in that file will be valid
-# the -x causes an echo of commands to standard output
+# script takes a single argument: the date to transfer
+if [ $# -ne 1 ]
+then
+    echo "$0 called with incorrect number of command line arguments!"
+    exit 2
+fi
+
+FTP_FILE=glen_$1.dat
 #
-# go out on the internet and get the latest snotel data
+# create the glen file from the crsp_file
+head -33 crsp_$1.dat > $FTP_FILE
+stat=$?
+if [ $stat -ne 0 ]
+then
+    echo "$0 failed to make the $FTP_FILE file!"
+    exit $stat
+fi
 #
-echo ' ' 
+
 echo '     Attempting to log on to orca in Flagstaff'
-echo ' '
-umask 022
-set nonomatch
 
-set FTP_HOST    = ftpflag.wr.usgs.gov
-set FTP_USER    = gcq
-set FTP_PASSWD  = gcmrcgcd
-set FTP_FILE    = `cat glen.script`
+#the username/password and hostname are stored in the file
+# referenced by the -f option in the ncftpput line
+# Edit the file to change the details of the transfer
+ncftpput -f gcqaccount.dat / $FTP_FILE
 
-set noglob
-unset noglob
+stat=$?
 
-unset noclobber
+\rm -f $FTP_FILE
 
-# Unfortunate long echo for shell variable expansion -- "here document" no good.
-echo "open $FTP_HOST \
-user $FTP_USER $FTP_PASSWD \
-hash \
-put $FTP_FILE \
-quit" \
-| ftp -n -i -v -d
-echo ' '
 echo '     FTP Processing complete'
-echo ' '
+exit $stat
 
 
 
