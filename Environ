@@ -20,13 +20,10 @@ HDB_APP_LIB = $(HDB_ENV)/lib
 HDB_APP_INCLUDE = $(HDB_ENV)/include
 
 # directory which holds TCL/TK include files
-TK_INCLUDES = /usr/local/tcl-tk
+TK_INCLUDES = $(HDB_ENV)/include 
 
 # TCL/TK library files
-TK_LIBS = -L/usr/local/tcl-tk/lib -ltk8.3 -ltcl8.3 -lm
-
-# directory which holds TCL/TK header files
-TK_HEADER = /usr/local/include
+TK_LIBS = -L$(HDB_ENV)/lib -ltk8.3 -ltcl8.3 -lm
 
 # Oracle library files
 # Other installations may need to use lib, not lib32, and add references:
