@@ -53,7 +53,7 @@ where a.site_id = b.site_id and
 b.datatype_id = c.datatype_id and
 b.datatype_id = 18 and
 a.usgs_id is not null and
-a.usgs_id like '09119000%' and
+/*a.usgs_id like '09119000%' and*/
 b.site_datatype_id = d.site_datatype_id and
 d.hourly = 'Y'";
 
