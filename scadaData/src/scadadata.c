@@ -80,32 +80,7 @@ int main(int argc, char **argv)
    strcat(&hydro[0],&date[0]);
    strcat(&hydro[0],".dat");
 
-   for (j=0;j<strlen(hydro);j++)
-   {
-      lchydro[j] = tolower(hydro[j]);
-   }
-        
-   lchydro[j] = '\0';
-   
    printf("%s\n", &hydro[0]);
-
-   if ((out = fopen("./hydro_file","w+")) == NULL)
-   {
-      fprintf(stderr, "can't open output for hydro_file\n");
-      exit(1);
-   }
-   fprintf(out, "%s\n", &hydro[0]);
-
-   fclose(out);
-
-   if ((out = fopen("./LChydro_file","w+")) == NULL)
-   {
-      fprintf(stderr, "can't open output for LChydro_file\n");
-      exit(1);
-   }
-   fprintf(out, "%s\n", &lchydro[0]);
-
-   fclose(out);
 
    if ((out = fopen(&hydro[0],"w+")) == NULL)
    {
@@ -155,6 +130,8 @@ int main(int argc, char **argv)
    }
 
    fclose(out);
+
+   exit(0);
 
 } /* end of main */
 
