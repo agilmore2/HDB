@@ -10,14 +10,14 @@ Rem LC:  Data: 400   Index: 600
 Rem Update sizes and max sizes for UC and LC on index and data
 *******************************************************************/
 set echo on
-spool /u01/ora/oracle/admin/9idb/create/createALBHDB.log
+spool $ORACLE_BASE/admin/9idb/create/create9idb.log
 
 Rem              
 Rem To start up the Oracle instance defined in initNEWHDB.ora file: 
 Rem             
 Rem connect internal
-Rem startup pfile=/usr/local/oracle/admin/9idb/create/initNEWHDB.ora nomount
-Rem @$ORACLE_HOME/dbs/createALBHDB.sql
+Rem startup pfile=/usr/local/oracle/admin/9idb/pfile/init9idb.ora nomount
+Rem @$ORACLE_HOME/dbs/create9idb.sql
 Rem
 Rem After creating the db -> create system dictionaries:
 Rem
@@ -37,14 +37,14 @@ Rem
         noarchivelog
  datafile '/u02/oradata/9idb/9idb_sys/9idb_sys.dbf'  size 250m
  undo tablespace UNDOTS
-datafile '/oradata/oradata/9idb/9idb_undots/undots_ts_1.dbf' size 500M
+datafile '/u02/oradata/9idb/9idb_undots/9idb_undots_1.dbf' size 500M
 autoextend off
 logfile group 1('/u02/oradata/9idb/9idb_redoa/9idb_redo1a.dbf',
              '/u02/oradata/9idb/9idb_redob/9idb_redo1b.dbf',
              '/u02/oradata/9idb/9idb_redoc/9idb_redo1c.dbf') size 1M,
-     group 2('/oradata/oradata/9idb/9idb_redoa/9idb_redo2a.dbf',
-             '/oradata/oradata/9idb/9idb_redob/9idb_redo2b.dbf', 
-             '/oradata/oradata/9idb/9idb_redoc/9idb_redo2c.dbf') size 1M;
+     group 2('/u02/oradata/9idb/9idb_redoa/9idb_redo2a.dbf',
+             '/u02/oradata/9idb/9idb_redob/9idb_redo2b.dbf', 
+             '/u02/oradata/9idb/9idb_redoc/9idb_redo2c.dbf') size 1M;
 
 
 Rem 
@@ -63,7 +63,7 @@ Rem  Create tablespace for HDB_data
 Rem
 
 create tablespace HDB_data
-datafile '/ora/pnhdbII/data_datafile/pnhdbII_data_1.dbf' size 5000M
+datafile '/u02/oradata/9idb/9idb_data/9idb_data_1.dbf' size 5000M
 EXTENT MANAGEMENT LOCAL uniform size 256K;
 
  
@@ -72,7 +72,7 @@ Rem  Create index tablespace HDB_idx
 Rem
  
 create tablespace HDB_idx
-datafile '/ora/pnhdbII/index_datafile/pnhdbII_idx_1.dbf' size 3000M
+datafile '/u02/oradata/9idb/9idb_index/9idb_index_1.dbf' size 3000M
 EXTENT MANAGEMENT LOCAL uniform size 256K;
 
 Rem  Assign user sys and system to HDB tablespace 
@@ -92,7 +92,7 @@ Rem shutdown
 
 spool off
 
-spool /u01/ora/oracle/admin/9idb/create/sql_scripts.log
+spool $ORACLE_BASE/admin/9idb/create/sql_scripts.log
 
 --  Create the system dictionaries (from Diep Le Tran's script)
 @$ORACLE_HOME/rdbms/admin/catalog.sql

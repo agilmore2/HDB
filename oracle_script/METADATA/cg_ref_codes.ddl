@@ -10,7 +10,7 @@ tablespace HDB_data
 /
 CREATE INDEX X_CG_REF_CODES_1 ON CG_REF_CODES
   (RV_DOMAIN
-  ,RV_LOW_VALUE)
+  ,RV_LOW_VALUE) tablespace hdb_idx
 /
 PROMPT Allowable Value Script
 PROMPT

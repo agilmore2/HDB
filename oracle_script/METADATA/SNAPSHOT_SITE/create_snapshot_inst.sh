@@ -62,17 +62,18 @@ if test $answer != y; then
   exit
 fi
 
-echo Running v_grant.sql
-sqlplus '$dba_name/$psswd as sysdba' < v_grant.sql > v_grant.out
+# removed as per Marra comments  16 DEC 2004
+#echo Running v_grant.sql
+#sqlplus '$dba_name/$psswd as sysdba' < v_grant.sql > v_grant.out
 
-echo "**********************"
-echo "Check output in v_grant.out; ok to continue? (y or n)"
-read answer
-if test $answer != y; then
-  echo Fix problems as necessary, then re-run.
-  echo Exiting...
-  exit
-fi
+#echo "**********************"
+#echo "Check output in v_grant.out; ok to continue? (y or n)"
+#read answer
+#if test $answer != y; then
+#  echo Fix problems as necessary, then re-run.
+#  echo Exiting...
+#  exit
+#fi
 
 echo Running ref_refresh_monitor.sql
 sqlplus $dba_name/$psswd @ref_refresh_monitor.sql $db_name > ref_refresh_monitor.out

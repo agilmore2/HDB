@@ -60,6 +60,9 @@ mv temp ./SCHEMA/userpriv.ddl
 sed 's/DBA/'$dba_name'/g' ./SCHEMA/userprivsys.ddl > temp
 mv temp ./SCHEMA/userprivsys.ddl
 
+sed 's/hdb_dba_owner/'$dba_name'/g' ./SCHEMA/set_dba_roles.ddl > temp
+mv temp ./SCHEMA/set_dba_roles.ddl
+
 # Making the permissions script executable.
 
 chmod +x ./PERMISSIONS/permissions.sh
@@ -68,6 +71,8 @@ chmod +x ./PERMISSIONS/permissions.sh
 
 sqlplus '$dba_name/$passwd as sysdba'    < ./SCHEMA/user.ddl        > out1
 grep ERROR out1
+sqlplus '$dba_name/$passwd as sysdba'    < ./SCHEMA/set_dba_roles.ddl > out1.01
+grep ERROR out1.01
 sqlplus $dba_name/$passwd  < ./SCHEMA/tbl.ddl         > out2
 grep ERROR out2
 sqlplus $dba_name/$passwd  < ./SCHEMA/timeSeries.ddl  > out3

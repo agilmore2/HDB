@@ -201,10 +201,13 @@ storage (initial 100k
          next    100k
          pctincrease 0)
 ;                       
-alter table r_base add constraint
+
+alter table r_base add (constraint
     r_base_pk
     primary key (site_datatype_id, interval,
-                 start_date_time,end_date_time);
+                 start_date_time,end_date_time)
+using index storage(initial 70k next 70k pctincrease 0) tablespace HDB_idx);
+
 
 create index r_base_date_idx
 on r_base(start_date_time)
@@ -252,10 +255,13 @@ create table r_base_update
     ready_for_delete             varchar2(1)
    );
 
-alter table r_base_update add constraint
+
+alter table r_base_update add (constraint
     r_base_update_pk
     primary key (site_datatype_id, interval,
-                 start_date_time,end_date_time);
+                 start_date_time,end_date_time)
+using index storage(initial 70k next 70k pctincrease 0) tablespace HDB_idx);
+
 
 create table r_day (                           
 site_datatype_id               number(11) NOT NULL,

@@ -12,10 +12,11 @@ storage (initial 500k
          next     50k
          pctincrease 25);
 
-ALTER TABLE role_psswd
-      ADD ( CONSTRAINT role_psswd_pk
-            PRIMARY KEY (role));
-
+alter table role_psswd add (constraint
+    role_psswd_pk
+    primary key (role)
+using index storage(initial 70k next 70k pctincrease 0) tablespace HDB_idx);
+	
 
 /* Insert needed rows */
 insert into role_psswd values ('app_role', 'hdb_app_');
