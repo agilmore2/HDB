@@ -136,7 +136,7 @@ int main(int argc,char **argv)
             
             foregroundtext=red;
             teacup(im,base,size,capacity,value,description,datadate);
-            foregroundtext=green;
+            foregroundtext=nblue;
          }
          else {
             teacup(im,base,size,capacity,value,description,0);
