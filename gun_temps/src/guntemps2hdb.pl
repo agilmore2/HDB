@@ -35,8 +35,10 @@ sub passdie {
 #check to see command line usage.
 if (scalar(@ARGV) <3)
   {
-    print "$0 -- program to put gunnison climate data into HDB.\n";
-    print "Usage: $0 <filename> <hdbusername> <hdbpassword>\n";
+    my $progname = `basename $0`;
+    chop $progname;
+    print "$progname -- program to put gunnison climate data into HDB.\n";
+    print "Usage: $progname <filename> <hdbusername> <hdbpassword>\n";
     exit (1);
 
   }
@@ -153,12 +155,11 @@ sub check_value
 sub insert_values
   {
     my(@value_date) = @_[0,1,2];
-    my($cum_precip) = $_[3];    
-    my($max_precip) = $_[4];    
-    my($min_precip) = $_[5];    
-    my($ave_precip) = $_[6];    
-    my($insth, $upsth);
+    my(@cur_values) = @_[3,4,5,6];
+    my($cum_precip) = $cur_values[0];    
 
+    my($insth, $upsth);
+    my($day_precip) = undef;
 #    print @_;
 
     $datestr = sprintf("%02d-%.3s-%4d",$value_date[2],
@@ -168,33 +169,60 @@ sub insert_values
       $insth = $dbh->prepare($insert_data_statement) || mydie $insth->errstr;
       $upsth = $dbh->prepare($update_data_statement) || mydie $upsth->errstr;
       
-      $i = 3;
-      foreach $datatype ("max temp", "min temp", "ave temp") 
+# do precip, if the data are listed from 10/01 ( cumulative till midnight of 9/30), the cumulative counter resets.
+      if ($value_date[1] == 9 && $value_date[2] == 30) {
+	$day_precip = $cum_precip;
+      }
+      else {
+	my @prev_date =  Add_Delta_Days(@value_date, -1);
+	my $prevdatestr = sprintf("%02d-%.3s-%4d",$prev_date[2],
+			   Month_to_Text($prev_date[1]), $prev_date[0]); 
+	my $prev_cum_precip = check_value($prevdatestr,
+				       $site_datatype_hash{"total wy precip"});
+	#assume data is coming in order of date, earlier first.
+	#if prev data is not there, set day's to undef, won't insert
+	if (!defined($prev_cum_precip)) {
+	  $day_precip = undef;
+	}
+	else {
+	  $day_precip = sprintf("%.1f",$cum_precip - $prev_cum_precip);
+	  $day_precip = 0 if $day_precip < 0 ;
+	}
+      }
+      # add one more value to the end of the values array to represent the
+      # day's precip
+      $cur_values[4] = $day_precip;
+
+      $i = -1;
+# insert data;
+      foreach $datatype ("total wy precip", "max temp", "min temp", "ave temp",
+			 "precip total") 
 	{
-	  $i++; undef $cur_val;
-	  $cur_val = check_value($datestr, $site_datatype_hash{$datatype});
-	  if (!defined($cur_val)) {
-	    print "inserting for $site_datatype_hash{$datatype}, date $datestr, value $_[$i], cur_val = undefined\n";
-	    
-	    $insth->bind_param(1,$site_datatype_hash{$datatype});
-	    $insth->bind_param(2,$datestr);
-	    $insth->bind_param(3,$_[$i]);
-	    $insth->execute|| mydie $insth->errstr;
-	  }
-	  elsif (!defined $_[$i]) {
+	  $i++;
+	  undef $old_val;
+	  $old_val = check_value($datestr, $site_datatype_hash{$datatype});
+	  if (!defined $cur_values[$i]) {
 	    #delete data if data is -99.9, otherwise do nothing.
-	    if ($cur_val == -99.9) {
-	      print "deleting bad data for $site_datatype_hash{$datatype}, date $datestr, value undefined, cur_val = $cur_val\n";
+	    if ($old_val && $old_val == -99.9) {
+	      print "deleting bad data for $site_datatype_hash{$datatype}, date $datestr, value undefined, old_val = $old_val\n";
 	      $dbh->do("delete from r_day where site_datatype_id = $site_datatype_hash{$datatype} and date_day = '$datestr'")|| mydie DBI::errstr;
 	    }
 	  }
-	  elsif ($cur_val == $_[$i]) {
+	  elsif (!defined($old_val)) {
+	    print "inserting for $site_datatype_hash{$datatype}, date $datestr, value $cur_values[$i], old_val = undefined\n";
+	    
+	    $insth->bind_param(1,$site_datatype_hash{$datatype});
+	    $insth->bind_param(2,$datestr);
+	    $insth->bind_param(3,$cur_values[$i]);
+	    $insth->execute|| mydie $insth->errstr;
+	  }
+	  elsif ($old_val == $cur_values[$i]) {
 	    next;
 	  }
-	  elsif ($cur_val != $_[$i]) {
-	    print "updating for $site_datatype_hash{$datatype}, date $datestr, value $_[$i], cur_val = $cur_val\n";
+	  elsif ($old_val != $cur_values[$i]) {
+	    print "updating for $site_datatype_hash{$datatype}, date $datestr, value $cur_values[$i], old_val = $old_val\n";
 	    #update instead of insert
-	    $upsth->bind_param(1,$_[$i]);
+	    $upsth->bind_param(1,$cur_values[$i]);
 	    $upsth->bind_param(2,$site_datatype_hash{$datatype});
 	    $upsth->bind_param(3,$datestr);
 	    $upsth->execute|| mydie $upsth->errstr;
@@ -206,8 +234,8 @@ sub insert_values
     };
     if ($@) {
       $dbh->rollback;
-      print "$DBI::errstr\n";
-      mydie "Errors occurred during insert/update/deletion of data.";
+      print "$DBI::errstr, $@\n";
+      mydie "Errors occurred during insert/update/deletion of data. Rolled back any database manipulation.";
     }
     else {
       $dbh->commit;
@@ -226,6 +254,7 @@ sub get_SDI
 	$sth->bind_param(2,$datatype_hash{$datatype});
 	$sth->execute|| mydie $sth->errstr;
 	$sth->bind_col(1,\$site_datatype_hash{$datatype});
+#should check here if there are any rows. if not, no SDI exists for this combo.
 	$sth->fetch;
       }
     
