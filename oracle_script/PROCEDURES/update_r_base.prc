@@ -51,6 +51,5 @@ grant execute on update_r_base to app_role;
 
 show errors;
 /
-create public synonym update_r_base for update_r_base;
 grant execute on update_r_base to app_role;
 /
