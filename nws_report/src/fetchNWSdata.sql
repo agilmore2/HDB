@@ -19,7 +19,8 @@ spool nwsdata.dat
  * "FLAMING GORGE","release","2004-08-30",999.67
  */
 
-prompt # Daily data -- this just puts this text in the file
+-- this just puts this text in the file
+prompt # Daily data
 
 select  '"'||b.site_common_name||'"'||','||'"'||c.datatype_common_name||'"'||','
 ||'"'||to_char(d.start_date_time,'YYYY-MM-DD')||'"'||','||round(d.value,2) data
@@ -56,7 +57,7 @@ order by b.site_id, c.datatype_id, d.start_date_time
 prompt # Monthly end of period storage data
 
 select  '"'||b.site_common_name||'"'||','||'"'||c.datatype_common_name||'"'||','
-||'"'||to_char(d.end_date_time,'YYYY-MM-DD')||'"'||','||round(d.value,2) data
+||'"'||to_char(d.end_date_time-1,'YYYY-MM-DD')||'"'||','||round(d.value,2) data
 from hdb_site_datatype a, hdb_site b, hdb_datatype c, r_month d
 where 
 -- join section
