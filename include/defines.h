@@ -81,6 +81,7 @@
 #define NULL_DATE "01-JAN-1800 00:00:00"
 #define NULL_VALUE 998877
 #define NA -1
+#define OVERWRITE_FLAG "O"
 #define BOGUS_VALUE 1
 #define EMPTY_STRING ""
 

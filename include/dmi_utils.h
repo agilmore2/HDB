@@ -73,6 +73,7 @@ typedef struct dmi_header {
    int hist_source;  /* indicates "r_" table or modelRunId; input DMI only */
    int model_source;                   /* modelRunId; input DMI only */
    int destination;  /* output data to r_ or m_tables */
+   int is_overwrite; /* write data as an overwrite */
    int model_destination; /* model_run_id ffor output of data */
 
    /* not used -- for future enhancements */
