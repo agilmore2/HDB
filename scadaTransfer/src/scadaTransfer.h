@@ -1,5 +1,5 @@
 #define NUM_SITES 6
-#define NUM_DATATYPES 5
+#define NUM_DATATYPES 7
 #define NUM_HOURS 24
 #define BUFFER_LENGTH 132
 static char *reservoirName[NUM_SITES] = {"GLEN",
@@ -12,7 +12,9 @@ static char *datatypeName[NUM_DATATYPES] = {"water_surface_elev",
 					      "head",
 					      "generation",
 					      "pwr_releases",
-					      "combined_releases"};
+					      "combined_releases",
+					      "bypass",
+					      "spill"};
 
 ID agen_id,collection_system_id,loading_application_id,method_id,computation_id;
 

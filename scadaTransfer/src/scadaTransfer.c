@@ -35,7 +35,7 @@ int main( int argc, char** argv )
   SQL_DATE updateTime;
     
   float  values[NUM_SITES][NUM_DATATYPES][NUM_HOURS], tail[NUM_SITES][NUM_HOURS], vals_array[NUM_HOURS];
-  float  spill[NUM_SITES][NUM_HOURS], bypass[NUM_SITES][NUM_HOURS], hour[NUM_SITES][NUM_HOURS];
+  float  hour[NUM_SITES][NUM_HOURS];
 
   FILE   *in;
 
@@ -47,31 +47,43 @@ int main( int argc, char** argv )
   sd[0][2]=1981; /* Glen Canyon - Lake Powell generation */                  
   sd[0][3]=1862; /* Glen Canyon - Lake Powell power releases */              
   sd[0][4]=1872; /* Glen Canyon - Lake Powell power and non power releases */
+  sd[0][5]=4167; /* Glen Canyon - Lake Powell bypass releases */
+  sd[0][6]=4166; /* Glen Canyon - Lake Powell spill */
   sd[1][0]=1924; /* Morrow Point wse */                         
   sd[1][1]=1971; /* Morrow Point head */                        
   sd[1][2]=1977; /* Morrow Point generation */                  
   sd[1][3]=1858; /* Morrow Point power releases */              
   sd[1][4]=1868; /* Morrow Point power and non power releases */
+  sd[1][5]=4153; /* Morrow Point bypass releases */
+  sd[1][6]=4151; /* Morrow Point spill */
   sd[2][0]=1923; /* Blue Mesa wse */                         
   sd[2][1]=1970; /* Blue Mesa head */                        
   sd[2][2]=1976; /* Blue Mesa generation */                  
   sd[2][3]=1857; /* Blue Mesa power releases */              
   sd[2][4]=1867; /* Blue Mesa Power and non power releases */
+  sd[2][5]=4149; /* Blue Mesa bypass releases */
+  sd[2][6]=4147; /* Blue Mesa spill */
   sd[3][0]=1925; /* Crystal wse */                         
   sd[3][1]=1972; /* Crystal head */                        
   sd[3][2]=1978; /* Crystal generation */                  
   sd[3][3]=1859; /* Crystal power releases */              
   sd[3][4]=1869; /* Crystal power and non power releases */
+  sd[3][5]=4157; /* Crystal bypass releases */
+  sd[3][6]=4155; /* Crystal spill */
   sd[4][0]=1927; /* Flaming Gorge wse */                         
   sd[4][1]=1974; /* Flaming Gorge head */                        
   sd[4][2]=1980; /* Flaming Gorge generation */                  
   sd[4][3]=1861; /* Flaming Gorge power releases */              
   sd[4][4]=1871; /* Flaming Gorge power and non power releases */
+  sd[4][5]=4164; /* Flaming Gorge bypass releases */
+  sd[4][6]=2416; /* Flaming Gorge spill */
   sd[5][0]=1926; /* Fontenelle wse */                         
   sd[5][1]=1973; /* Fontenelle head */                        
   sd[5][2]=1979; /* Fontenelle generation */                  
   sd[5][3]=1860; /* Fontenelle power releases */              
   sd[5][4]=1870; /* Fontenelle power and non power releases */
+  sd[5][5]=4161; /* Fontenelle bypass releases */
+  sd[5][6]=4159; /* Fontenelle spill */
   
   if (argc != 4)
     {
@@ -192,7 +204,7 @@ int main( int argc, char** argv )
 	{
 	  fscanf(in,"%f%f%f%f%f%f%f%f%f",
 		 &hour[index][i],&values[index][0][i],&tail[index][i],&values[index][1][i],
-		 &values[index][2][i],&values[index][3][i],&spill[index][i],&bypass[index][i],
+		 &values[index][2][i],&values[index][3][i],&values[index][6][i],&values[index][5][i],
 		 &values[index][4][i]);
 	}
 
@@ -221,7 +233,7 @@ int main( int argc, char** argv )
 	      temp[9] = '\0';
 	      strcpy (&(dater[11]), temp);
 	      dater[20] = '\0';
-	      printf ("Calling SqlFormatDate\n\n");
+/*	      printf ("Calling SqlFormatDate\n\n"); */
 	      if (result = SqlFormatDate (dater, formattedDates[i]) != OK)
 		{
 		  PrintError ("Error formatting date %s\n\t Exiting.", dater);
