@@ -78,11 +78,11 @@
 #
 # Transfer NIIP diversion data to ftp site for Keller Blisner
 #
-06 10 * * * csh -c "source /wrg/home/uchdba/.cshrc; cd /wrg/hdb/HDB2_applications/xferftp/src; ./xferftp_kellerblisner.sh" >> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_kellerblisner.out 2> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_kellerblisner.err
+09 10 * * * csh -c "source /wrg/home/uchdba/.cshrc; cd /wrg/hdb/HDB2_applications/xferftp/src; ./xferftp_kellerblisner.sh" >> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_kellerblisner.out 2> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_kellerblisner.err
 #
 # Transfer data about Lake Powell to ftp site for general consumption
 #
-05 10 * * 1 csh -c "source /wrg/home/uchdba/.cshrc; cd /wrg/hdb/HDB2_applications/xferftp/src; ./xferftp_lakepowelldata.sh" >> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_lakepowelldata.out 2> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_lakepowelldata.err
+09 10 * * 1 csh -c "source /wrg/home/uchdba/.cshrc; cd /wrg/hdb/HDB2_applications/xferftp/src; ./xferftp_lakepowelldata.sh" >> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_lakepowelldata.out 2> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_lakepowelldata.err
 #
 # Transfer two files for Corps of Engineers in Sacramento about 
 # Starvation and Jordanelle (and a BUNCH more sites)
@@ -96,17 +96,17 @@
 # Tea cup diagrams (used to be in Amy Thatcher's crontab)
 # 
 # Wasatch Front
-00 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea wasatch_input.png /wrg/exec/pub/AOP/wasatch_teacup.png wasatch.cfg > wasatch_teacup.out 2> wasatch_teacup.err
+10 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea wasatch_input.png /wrg/exec/pub/AOP/wasatch_teacup.png wasatch.cfg > wasatch_teacup.out 2> wasatch_teacup.err
 # Gunnison Basin
-00 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea gunnison_input.png /wrg/exec/pub/AOP/gunnison_teacup.png gunnison.cfg > gunnison_teacup.out 2> gunnison_teacup.err
+10 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea gunnison_input.png /wrg/exec/pub/AOP/gunnison_teacup.png gunnison.cfg > gunnison_teacup.out 2> gunnison_teacup.err
 # CRSP Reservoirs
-01 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea crsp_input.png /wrg/exec/pub/AOP/crsp_teacup.png crsp.cfg > crsp_teacup.out 2> crsp_teacup.err
+11 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea crsp_input.png /wrg/exec/pub/AOP/crsp_teacup.png crsp.cfg > crsp_teacup.out 2> crsp_teacup.err
 # San Juan
-01 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea sanjuan_input.png /wrg/exec/pub/AOP/sanjuan_teacup.png sanjuan.cfg > sanjuan_teacup.out 2> sanjuan_teacup.err
+11 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea sanjuan_input.png /wrg/exec/pub/AOP/sanjuan_teacup.png sanjuan.cfg > sanjuan_teacup.out 2> sanjuan_teacup.err
 # Green River
-02 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea green_input.png /wrg/exec/pub/AOP/green_teacup.png green.cfg > green_teacup.out 2> green_teacup.err
+12 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea green_input.png /wrg/exec/pub/AOP/green_teacup.png green.cfg > green_teacup.out 2> green_teacup.err
 # Pecos/Rio Grande
-02 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea pecosrio_input.png /wrg/exec/pub/AOP/pecosrio_teacup.png pecosrio.cfg > pecosrio_teacup.out 2> pecosrio_teacup.err
+12 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea pecosrio_input.png /wrg/exec/pub/AOP/pecosrio_teacup.png pecosrio.cfg > pecosrio_teacup.out 2> pecosrio_teacup.err
 #
 # Site information scripts for output to website (used to be in Rick Clayton's crontab)
 #
