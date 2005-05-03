@@ -5,6 +5,8 @@
 #
 # Read snotel data from NRCS website
 #
+30 06 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/basins/work;. get_load_snotel.sh >> $HDB_ENV/basins/work/get_load_snotel.log 2> $HDB_ENV/basins/work/get_load_snotel.err
+#
 40 09 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/basins/work;. get_load_snotel.sh >> $HDB_ENV/basins/work/get_load_snotel.log 2> $HDB_ENV/basins/work/get_load_snotel.err
 # Read historical snotel data for past 40 days
 45 09 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/basins/work/snotel_hist; ./run_hist_snotel.pl 40 >> $HDB_ENV/basins/work/snotel_hist/run_40day_snotel.log 2> $HDB_ENV/basins/work/snotel_hist/run_40day_snotel.err
