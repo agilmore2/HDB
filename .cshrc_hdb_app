@@ -1,20 +1,34 @@
 #ORACLE SPECIFIC - required for all Oracle applications
-setenv ORACLE_HOME       /usr/local/oracle/product/816
-setenv ORACLE_BASE       /usr/local/oracle
-setenv ORACLE_DOC        $ORACLE_HOME/doc
-setenv ORACLE_NLS32      $ORACLE_HOME/ocommon/nls/admin/data
-setenv TNS_ADMIN         $ORACLE_HOME/network/admin
-setenv ORACLE_LPPROG     /usr/ucb/lpr
-setenv ORACLE_LPSTAT     /usr/ucb/lpq
-setenv ORACLE_PAGER      /usr/ucb/more
-setenv ORACLE_TERM       xsun
-setenv ORACLE_SID        hdb2 
+# Oracle settings also contained in /etc/profile.d/oracle.{sh|csh}
+# settings there are ORACLE_SID, ORACLE_HOME, ORA_NLS33, TNS_ADMIN, ORACLE_BASE
+# ORACLE_TERM, NLS_LANG, ORACLE_DOC
+# also set are LD_LIBRARY_PATH, PATH, and CLASSPATH
+setenv ORACLE_LPPROG     /usr/bin/lpr
+setenv ORACLE_LPSTAT     /usr/bin/lpq
+setenv ORACLE_PAGER      /usr/bin/less
 
 # HDB - required for all HDB interactions (should be set in users' .cshrc)
-setenv HDB_LOCAL         hdb2 
-setenv HDB_ENV           /projects/hdb/hdb2/builds
+setenv HDB_LOCAL         uchdbdev 
+setenv HDB_ENV           /home/hdb/HDB_app
+setenv HDB_BIN           $HDB_ENV/bin
 
-# ORACLE Permissions - required for all Oracle applications
+# SITE SPECIFIC - required for RiverWare 24 MO Study DMI's
+setenv INPUT_DMI_PATH $HDB_BIN
+setenv OUTPUT_DMI_PATH $HDB_BIN
+
+# Additional settings which may not be in user's .cshrc
+setenv PATH "$PATH":$HDB_BIN
+
+# add to CLASSPATH if it exists, set a new value if it doesn't
+if ($?CLASSPATH) then
+    setenv CLASSPATH "$CLASSPATH":"$ORACLE_HOME/jdbc/lib/classes12.zip:$HDB_ENV/lib/dataloader.jar:$HDB_ENV/lib/jdbcpool-0.99.jar"
+
+else
+    setenv CLASSPATH "$ORACLE_HOME/jdbc/lib/classes12.zip:$HDB_ENV/lib/dataloader.jar:$HDB_ENV/lib/jdbcpool-0.99.jar"
+
+endif
+
+# STATIC - ORACLE Permissions - required for all HDB applications
 setenv PSSWD_USER        psswd_user
 setenv APP_USER          app_user
 setenv APP_ROLE          app_role
@@ -23,21 +37,22 @@ setenv REF_META_ROLE     ref_meta_role
 setenv MODEL_ROLE        model_role
 setenv DERIVATION_ROLE   derivation_role
 
-# HYDROMET DATA LOADING - required for hydromet applications
-setenv ARCHIVE_DIR $HDB_ENV/hydromet/archiveFiles
-setenv DAYFILE_DIR $HDB_ENV/hydromet/dayfiles
-setenv ROOTDO_ADM  $HDB_ENV/rootdo/local/adm
-setenv CUTOFF_HOUR 5
-setenv CUTOFF_MINUTE 14
-setenv NUM_DELETE_DAYS 45
-setenv NUM_CRSP_VALUES 5
+# SITE SPECIFIC: email of person responsible for data transfers
+setenv HDB_XFER_EMAIL agilmore@uc.usbr.gov
+setenv HDB_NOTIFY_EMAIL agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov,tryan@uc.usbr.gov,ccutler@uc.usbr.gov,athatcher@uc.usbr.gov,emanseau@uc.usbr.gov
 
-# HYDROMET HDB/VAX - required for crossmount and shell scripts
-setenv DAYDATA_DIR $HDB_ENV/appCode/hydromet/dayfiles 
-setenv ARCDATA_DIR $HDB_ENV/appCode/hydromet/archiveFiles 
-setenv MOUNTDIR "" 
-setenv HYD_HOST cadswes 
-setenv HYD_USER marra 
-setenv COMFILE_DIR ""
+# SITE SPECIFIC - for hydromet applications
+setenv ARCHIVE_DIR $HDB_ENV/dataloader/work/archives
+setenv DAYFILE_DIR $HDB_ENV/dataloader/work/dayfiles
+setenv LOG_DIR log
 
+# SITE SPECIFIC - required for hydromet shell scripts (bogus at CADSWES)
+# For new ALPHA
+setenv DAYDATA_DIR '/custom$/archives'
+setenv ARCDATA_DIR '/custom$/dayfiles'
+setenv MOUNTDIR "/zipdata" 
+setenv HYD_HOST zippy
+setenv HYD_USER hydromet
+setenv ARC_COMFILE_DIR 'sutron_archives:'
+setenv DAY_COMFILE_DIR 'sutron_dayfiles:'
 
