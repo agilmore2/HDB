@@ -51,8 +51,8 @@ BEGIN
     end;
     
     begin /* get the old foreign keys and priorities */
-        SELECT nvl(priority_rank,0), a.value, a.overwrite_flag,
-               a.validation, a.collection_system_id, a.loading_application_id,
+        SELECT nvl(priority_rank,0), a.value, nvl(a.overwrite_flag,'N'),
+               nvl(a.validation,'x'), a.collection_system_id, a.loading_application_id,
                a.method_id, a.computation_id
     	  INTO old_priority, old_value, old_overwrite_flag,
     	       old_validation, old_collection_system_id, old_loading_application_id,
@@ -67,7 +67,7 @@ BEGIN
     end;
 
     begin /* Find if the old loading_application was manual */
-    select manual_edit_app
+    select nvl(manual_edit_app,'N')
       into old_manual_edit
       from hdb_loading_application
       where loading_application_id = old_loading_application_id;
@@ -77,13 +77,13 @@ BEGIN
 
 /* DO THE UPDATE IF:*/
     IF (manual_edit = 'Y') 
-        OR (old_manual_edit is null          -- this is a manual edit, or the old data was not a manual edit
-	    and (overwrite_flag_in = 'O' or old_overwrite_flag is null) -- it is now an overwrite, or the old was not
+        OR (old_manual_edit = 'N'          -- this is a manual edit, or the old data was not a manual edit
+	    and (nvl(overwrite_flag_in,'N') = 'O' or old_overwrite_flag = 'N') -- it is now an overwrite, or the old was not
 	    and (new_priority < old_priority                   -- and the new priority is higher (closer to 0) than the old
                  or (new_priority = old_priority                -- or agencies have same priority
                      AND (abs(old_value - value_in) > epsilon    -- and value is different (difference larger than epsilon!
-                          OR overwrite_flag_in != old_overwrite_flag  -- or one of the foreign keys (except agen_id) is different
-                          OR validation_in != old_validation
+                          OR nvl(overwrite_flag_in,'N') != old_overwrite_flag  -- or one of the foreign keys (except agen_id) is different
+                          OR nvl(validation_in,'x') != old_validation
                           or collection_system_id_in != old_collection_system_id
                           OR loading_application_id_in != old_loading_application_id
                           or method_id_in != old_method_id

@@ -27,4 +27,3 @@ show errors;
 
 grant execute on lookup_sdi to public;
 create public synonym lookup_sdi for lookup_sdi;
-

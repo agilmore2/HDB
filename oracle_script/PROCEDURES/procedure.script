@@ -20,6 +20,7 @@ start ./PROCEDURES/lookup_application.prc;
 start ./PROCEDURES/lookup_hydromet_sdi.prc;
 start ./PROCEDURES/lookup_sdi.prc;
 start ./PROCEDURES/modify_r_base_raw.prc;
+start ./PROCEDURES/modify_r_base.prc;
 start ./PROCEDURES/delete_m_table.prc;
 start ./PROCEDURES/insert_m_table.prc;
 start ./PROCEDURES/update_m_table_raw.prc;

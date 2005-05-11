@@ -83,4 +83,3 @@ show errors;
 
 grant execute on lookup_application to public;
 create public synonym lookup_application for lookup_application;
-

@@ -28,4 +28,3 @@ show errors;
 
 grant execute on lookup_hydromet_sdi to public;
 create public synonym lookup_hydromet_sdi for lookup_hydromet_sdi;
-

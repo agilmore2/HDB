@@ -45,11 +45,7 @@ BEGIN
 END;
 /
 
+show errors;
+
 create or replace public synonym update_r_base for update_r_base;
 grant execute on update_r_base to app_role;
-/
-
-show errors;
-/
-grant execute on update_r_base to app_role;
-/
