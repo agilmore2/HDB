@@ -2,6 +2,8 @@
 -- notifies derivation application of data to process
 -- 10/02/01  
 --
+-- Modified 10-AUG-04 by M. Bogner to fix derivation  and overwrite bug discovered by A. Gilmore at U.C.
+
 create or replace trigger r_base_before_insert_update
 before insert or update 
 on r_base
@@ -60,8 +62,10 @@ begin
     :new.start_date_time=start_date_time and
     :new.end_date_time=end_date_time;
 -- if there is a record then set ready fordelete to null for derivation app
+-- decode statement added to update statement to address A. Gilmore discovered bug July 2004
   if v_count!=0 then
-       update r_base_update set ready_for_delete = null
+       update r_base_update set ready_for_delete = null,
+       overwrite_flag = decode(:old.overwrite_flag,'O','O',:new.overwrite_flag)
        where :old.site_datatype_id=site_datatype_id and
        :old.interval=interval and
        :old.start_date_time=start_date_time and
@@ -80,6 +84,18 @@ begin
       values
         (:new.site_datatype_id, :new.interval, :new.start_date_time,
          :new.end_date_time, :new.overwrite_flag, null);
+    end if;
+--
+-- only if there's not a derivation spec or it's a previously forced 'O'verwrite and the overwrite flag is
+-- being set to null
+-- bug discovered by A. Gilmore July 2004
+    if v_count=0 and :old.overwrite_flag='O' and :new.overwrite_flag is null then
+      insert into r_base_update
+        (site_datatype_id, interval, start_date_time, end_date_time,
+         overwrite_flag, ready_for_delete)
+      values
+        (:new.site_datatype_id, :new.interval, :new.start_date_time,
+         :new.end_date_time, :old.overwrite_flag, null);
     end if;
   end if;
 
