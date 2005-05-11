@@ -5,7 +5,8 @@ include ../../Environ
 
 OBJDIR = $(HDB_ENV)/riverwareDMI/obj
 INCLUDES = -I$(HDB_APP_INCLUDE) -I$(TK_INCLUDES) -I/usr/local/X11R5/include
-LIBS = $(HDB_LIBS) -ldl -lX11 -lm $(TK_LIBS) -lsocket -lnsl
+#May need -lsocket for Solaris compile
+LIBS = $(HDB_LIBS) -ldl -lm $(TK_LIBS) -lnsl
 CFLAGS = -ansi -Wall -g -DANSIPROTO $(INCLUDES)
 
 TARGET = $(HDB_APP_BIN)/riverwareDMI.Out
@@ -19,6 +20,10 @@ LOCAL_INCS = dmiOut.h
 
 GLOBAL_INCS = $(HDB_APP_INCLUDE)/dmi_utils.h \
               $(HDB_APP_INCLUDE)/dmiGlobals.h
+
+INTERMED_PROC_FILES = \
+	DmiSaveRealData.c \
+	DmiSaveModelData.c
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(LIBS)
@@ -50,12 +55,14 @@ $(TARGET): $(OBJS)
 
 clean: 
 	rm -f $(OBJS) ; \
-        rm -f $(TARGET) ; \
-        rm -f $(HDB_APP_BIN)/RW.BHOPS.OutputDMI.sh ; \
-        rm -f $(HDB_APP_BIN)/RW.24m.OutputDMI.sh ; \
-        rm -f $(HDB_APP_BIN)/RW.UC.24m.OutputDMI.sh ; \
-        rm -f $(HDB_APP_BIN)/RW.LC.24m.OutputDMI.sh ; \
-        rm -f $(HDB_APP_BIN)/riverwareDMI.Out.GUI.tk ;
+	rm -f $(TARGET) ; \
+	rm -f $(HDB_APP_BIN)/RW.BHOPS.OutputDMI.sh ; \
+	rm -f $(HDB_APP_BIN)/RW.24m.OutputDMI.sh ; \
+	rm -f $(HDB_APP_BIN)/RW.UC.24m.OutputDMI.sh ; \
+	rm -f $(HDB_APP_BIN)/RW.LC.24m.OutputDMI.sh ; \
+	rm -f $(HDB_APP_BIN)/riverwareDMI.Out.GUI.tk ; \
+	rm -f $(INTERMED_PROC_FILES) ; \
+	rm -f *.lis
 
 ######################
 # TARGET DEFINITIONS #
