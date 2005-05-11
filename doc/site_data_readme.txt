@@ -27,5 +27,11 @@ To start the import process:
 4.  execute the loading shell script: ./sitedata.sh <HDB2DBA account> <password> 
 5.  review the siteDataImp.log file and insure the import operation performed without any problems.
 
+-NOTE:
+
+-For Aggdissagg work under the HDB2 paradigm,  the table structure of ref_agg_dissagg was modified to allow a reference to
+-the hdb_method table therefore  data entries in the old table must be carried over to the new database
+-via other options besides export/import.  Use the supplied sql fixaggdissagg.sql for this.
+
 
 

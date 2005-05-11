@@ -265,6 +265,7 @@ public class DBAccess
           try {
             rset.close();
             stmt.close();
+
           }
           catch ( SQLException e ) {}
 
@@ -272,7 +273,150 @@ public class DBAccess
 
      } // end of performQuery method
 
-     
+
+/** 
+
+    Public method get_arraylist_query takes the supplied input variable String
+    query and executes this query against the database.  The results of this 
+    query are the placed into the dataobject do1 as a key value pair for each row.
+    An Arraylist is then generated and returned for all rows gathered.
+
+    @author  Mark A. Bogner
+    @version 1.0
+    @param query the Actual sql formatted query that is to be performed.
+    @param db_object the object that will contain the info necessary to query the database
+    @param do_list   The arraylist the query results rows/dataobject will be placed into.  
+    Date:   06-May-2004
+*/ 
+    public ArrayList get_arraylist_query(String query, DataObject do1)
+    {
+
+       Statement stmt = null;
+       ResultSet rset = null;
+       ArrayList records = new ArrayList();
+
+       try
+       {
+          /*  performQuery 
+            ---------------------------
+             Execute query
+             Get Meta data for column names, column numbers
+             For each row:
+              create an DataObject of string values for all columns in the row
+              add that row to the records input parameter arraylist 
+              increment row count
+
+            ---------------------------
+          */
+            stmt = getConnection(do1).createStatement();
+            rset = stmt.executeQuery(query);
+
+            ResultSetMetaData rsmd = rset.getMetaData();
+            int cols = rsmd.getColumnCount();
+            ArrayList columns = new ArrayList();
+
+            for (int i = 0; i < cols; i++)
+            { 
+               String temp = rsmd.getColumnName(i+1);
+               if (temp == null) temp = "";
+               columns.add(i,temp);
+            }
+
+            int rowCount = 0;
+ 
+            // for every row that is returned from the query
+            while (rset.next())
+            {
+               // create an dataobject for each row , get all the column values
+               // and add each value to the row 
+               DataObject row = new DataObject();
+               for (int i = 0; i < cols; i++)
+               { 
+                 String temp = rset.getString(i+1);
+                 if (temp == null) temp = "";
+                 //if (temp == null) temp = "<<NULL>>";
+                 row.put((String)columns.get(i),temp);
+               }
+               // now add that row to the arrayList of records and increment the
+               // record count after the row has been inserted
+               records.add(rowCount,row);
+               rowCount ++;
+            }
+            // we are done with the query and the result set so close both
+            rset.close();
+            stmt.close();
+
+        }
+        catch ( SQLException e )
+        {
+         System.out.println("ERROR executing: " + query + "  Message: " +  e.getMessage());
+        }
+        finally
+        {
+          try {
+            if (rset != null) rset.close();
+            if (stmt != null) stmt.close();
+          }
+          catch ( SQLException e ) {}
+
+        }  //end of finally
+
+      return records;
+     } // end of get_arraylist_query method
+
+    public void get_col(DataObject do1, String table_names, String table_columns, String where_clause)
+     // method used to get any columns from any tables
+     // with a possible supplied where clause
+    {
+
+       String query = null;
+       String result = null;
+       String error_message = null;
+
+       // get the  values
+       query = "select " + table_columns+ " from " + table_names +  " where "  + where_clause;
+       //System.out.println(query);
+       result = performQuery(query,do1);
+       if (result.startsWith("ERROR"))
+       {
+         error_message = "GET Columns Method FAILED" + result;
+         log.debug( this,"  " + query + "  :" + error_message);
+       }
+
+    } // end of get_col method
+
+
+    public boolean tbl_insert( String table_name, String table_columns, String value_clause)
+     // method used to insert rows of data into passed in table
+    {
+
+       String dml = null;
+       String result = null;
+       String error_message = null;
+       DataObject _do = null;
+
+       // get the  values
+       dml = "insert into " + table_name + " (" + table_columns +  ") values ( "  + value_clause + ")";
+       //System.out.println(dml);
+       result = performDML(dml,_do);
+       if (result.startsWith("ERROR"))
+       {
+         error_message = "TBL_INSERT Method FAILED" + result;
+         log.debug( this,"  " + dml + "  :" + error_message);
+         return false;
+       }
+
+       return true;
+
+    } // end of tbl_insert method
+
+
+
+
+
+
+
+
 /**  Public method closeConnection closes the database connection if the 
      instance variable conn is not null.
 

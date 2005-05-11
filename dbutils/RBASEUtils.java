@@ -239,4 +239,59 @@ public class RBASEUtils
 
 
 
+    public String  get_DSS_Date(int minutes)  // method used to get the 
+    {
+
+       String query = null;
+       String result = null;
+ 
+       conn = db.getConnection(do2);
+
+       Integer t_int = new Integer(minutes);
+       query = "select to_char(trunc(to_date('31-DEC-1899')) + "
+             + t_int.toString()
+             + "/(60*24),'YYYYMONDD HH24:MI') dss_date from dual";
+
+       result = db.performQuery(query,do2);
+
+       if (debug) log.debug( this,"  " + query + "  :" + " PASSED DSS_DATE GET");
+
+
+      return (String)do2.get("dss_date");
+    } // end of get_DSS_Date method
+
+
+    public Integer  get_DMI_SDI(int modelId, String objectName, String dataName)  // method used to get the
+    // observation date from dss that is in minutes since 1900 to a formatted date
+    //  that the observation class can handle
+    {
+
+       String query = null;
+       String result = null;
+
+       conn = db.getConnection(do2);
+
+       Integer t_int = new Integer(modelId);
+       Integer ret_sdi = new Integer(-9999);
+
+       query = "select  site_datatype_id site_datatype_id from ref_dmi_data_map where "
+             + "model_id = " + t_int.toString()
+             + " and object_name = '" + objectName + "'"
+             + " and data_name = '" + dataName + "'"  ;
+
+
+       result = db.performQuery(query,do2);
+
+       if (debug) log.debug( this,"  " + query + "  :" + " PASSED DMI_SDI GET");
+
+      if ((String)do2.get("site_datatype_id") != null && ((String)do2.get("site_datatype_id")).length() != 0) ret_sdi = new Integer ((String )do2.get("site_datatype_id")); 
+
+       return ret_sdi;
+ 
+    } // end of get_DMI_SDI method
+
+
+
+
+
 }  // end of RBASEUtils class

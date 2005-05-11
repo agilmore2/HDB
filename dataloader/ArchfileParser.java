@@ -20,6 +20,9 @@ public class ArchfileParser {
   private Logger log = null;
   private String location = "OTHER";
   private DataObject dobj = new DataObject();
+  private DataObject site_codes = new DataObject();
+  private boolean specified_codes = false;
+  private boolean parameter_override = false;
 
   public ArchfileParser( String _file_name)
   {
@@ -36,6 +39,11 @@ public class ArchfileParser {
             dobj.put("connections","5");
             dobj.put("reuse","2000");
             dobj.put("data_source_name",file_name); // add the filename to the data object
+            if (System.getProperty("start.property") == null)
+            {
+              System.out.println("ERROR: Unable to identify property file.  Please identify the Property File");
+              System.exit(-1);
+            }
             dobj.addPropertyFile(System.getProperty("start.property"));
             dobj.put("def_noninstant","day");  // allows for any noninstant data to default to daily data
             dobj.put("file_type","A"); // set filetype to  archive file
@@ -56,6 +64,10 @@ public class ArchfileParser {
             dobj.put("password",temp_password);
             db.closeConnection();
 
+            //  now set up the dataobject for a user specified site_codes
+            //  if there are specific site_codes and it already hasn't been
+            //  overwritten by a run time parameter and  there are some specified 
+            if (!parameter_override && dobj.get("site_codes") != null) this.site_codes_setup((String) dobj.get("site_codes"));
 
             if (((String)dobj.get("URL")).indexOf(".yak.") > -1||((String)dobj.get("LOCATION")).equals("YAKIMA")) location = "YAKIMA"; 
             else location = "OTHER";
@@ -121,6 +133,7 @@ public void process()
    // read the file int by int
    int i = 0;
    int reads = 0; 
+   int recs_processed = 0; 
    char[] buffer = new char[20]; 
    String old_site_code = "xxxxxx";
    String site_code = null;
@@ -163,10 +176,10 @@ public void process()
 
        for (i = 0; i< 2; i++)  input.read();
        for (i = 0; i< 12; i++) buffer[i] = (char) input.read();
-       site_code  = new String(buffer,0,8);
+       site_code  = new String(buffer,0,8).trim();
 
        for (int j  = 0; j< 9; j++) buffer[j] = (char) input.read();
-       pcode = new String(buffer,0,7);
+       pcode = new String(buffer,0,7).trim();
 
        for (i = 0; i< 4; i++) buffer[i] = (char) input.read(); // read in  time
        time  = new String(buffer,0,2) + ":" + new String(buffer,2,2);
@@ -200,50 +213,59 @@ public void process()
 
       // we are done with the record so read to the beginning of the next record
       for (i = 0; i< 4; i++) b_in = input.read();  //temporarily read and dissmiss
-      reads++;
+      reads ++;
 
-      String inputLine;	
-      for (i=0; i<npairs; i++) 
+      //  now see if the site_code is a site that the user may have specified to process 
+      //  if there are values in the site_codes dataObject (hash table) then the program should process only those
+      //  otherwise process them all
+
+if (!specified_codes || (specified_codes && (site_codes.get(site_code) != null || site_codes.get(site_code+"/"+pcode) != null)))
       {
+         String inputLine;	
+         for (i=0; i<npairs; i++) 
+         {
   
-        inputLine = dt_str[i] + " " + time + " " + site_code  + " " + pcode + "         " + value[i];
-        //System.out.println(reads + "   " + inputLine);
+           inputLine = dt_str[i] + " " + time + " " + site_code  + " " + pcode + "         " + value[i];
+           // the following line is for online debugging only it should be commented out for production
+           //System.out.println(reads + "   " + inputLine);
        
-          try
-          {
-           if (!value[i].equals("998877.00"))   //  null value assigned to unfilled values
-           {
-             //System.out.println(inputLine);
-             Connection conn = DriverManager.getConnection(ConnectionPoolManager.URL_PREFIX + "myalias", null, null);
-
-             // this could be a new connection so make sure role is set
-             String query,status = null;
-             DBAccess db = new DBAccess(conn);
-             query = "set role app_role identified by " + dobj.get("role_password");
-             status = db.performDML(query,dobj);
-             if (!(site_code.equals(old_site_code)) || !(pcode.equals(old_pcode)))
+             try
              {
-               dobj.put("STATION",site_code.trim());
-               dobj.put("PCODE",pcode.trim());
-               RBASEUtils rb = new RBASEUtils(dobj,conn);
-               process = rb.get_sdi();
-             }
- 
-             old_site_code = site_code;
-             old_pcode = pcode;
-             hash = new Hashtable(dobj.getTable());
-             if (process) new ObservationThread(inputLine,hash,conn).start();
-             if (!process) db.closeConnection();
-           }
-          reads++; 
-          }
-          catch (SQLException e) 
-          {
-            log.debug(this,e.getMessage()); 
-            System.exit(-1);
-          }
+              if (!value[i].equals("998877.00"))   //  null value assigned to unfilled values
+              {
+                //System.out.println(inputLine);
+                Connection conn = DriverManager.getConnection(ConnectionPoolManager.URL_PREFIX + "myalias", null, null);
 
-      }
+                // this could be a new connection so make sure role is set
+                String query,status = null;
+                DBAccess db = new DBAccess(conn);
+                query = "set role app_role identified by " + dobj.get("role_password");
+                status = db.performDML(query,dobj);
+                if (!(site_code.equals(old_site_code)) || !(pcode.equals(old_pcode)))
+                {
+                  dobj.put("STATION",site_code.trim());
+                  dobj.put("PCODE",pcode.trim());
+                  RBASEUtils rb = new RBASEUtils(dobj,conn);
+                  process = rb.get_sdi();
+                }
+ 
+                old_site_code = site_code;
+                old_pcode = pcode;
+                hash = new Hashtable(dobj.getTable());
+                if (process) new ObservationThread(inputLine,hash,conn).start();
+                if (process) recs_processed ++;
+                if (!process) db.closeConnection();
+              }
+             }
+             catch (SQLException e) 
+             {
+               log.debug(this,e.getMessage()); 
+               System.exit(-1);
+             }
+
+         }  // end of for loop
+
+      } // end of if to see if we will process this sitecode
 
 
 
@@ -254,7 +276,7 @@ public void process()
      }  /// end of big loop to read the whole file	
 
         input.close();
-        log.debug(this,"RECORDS Processed: " + reads);
+        log.debug(this,"RECORDS Processed: " + recs_processed);
 
      } // end of big try
      catch (IOException e) 
@@ -265,5 +287,32 @@ public void process()
 
     }  // end of process method
 
+
+ public void site_codes_setup (String codes_in)
+ {
+     //  just make sure the starting status of this Process indicating boolean
+     specified_codes = false;
+     parameter_override = true;  //  indicates tha this method has now been invoked
+     // if lenght of codes_in > 0 then we have some so  parse the site_codes
+     if (!(codes_in == null) && codes_in.length() > 0 && !codes_in.equals("*") )
+     {
+        specified_codes = true;
+        String field = null;
+        int tcount = 0;
+
+        StringTokenizer st = new StringTokenizer(codes_in,",");
+        while (st.hasMoreTokens()) {
+          field = st.nextToken();
+          tcount ++;
+          //  put the site_codes in the dataobject for the list of site_codes we want to extract
+          site_codes.put(field,new Integer(tcount));
+          // following line for debugging only..  comment out for production
+          //System.out.println("code=  " + field + "  token= " + tcount);
+
+        } //  end tokenizer while loop
+     }
+
+
+ }  //   end of method site_codes_setup
 
 }

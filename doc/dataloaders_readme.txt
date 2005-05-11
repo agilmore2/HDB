@@ -48,9 +48,13 @@ done either via a  cron job or run at the command level.  Be sure to set the loa
 the name of the loading application in your database. "Hydromet Archive File Loader"  and any other defaults information 
 so that your data is  The comments in the standard property file should suffice to answer any questions.
 
-the  command: java -Dstart.property=/local/archfile.property dataloader.ProcessArchfile wy2003.seq   
-will process archive file wy2003.seq   optionally you can add a log file name as the second parameter if you do not wish 
-to have the log file name as a standard wy2003.log
+the  command: java -Dstart.property=/local/archfile.property dataloader.ProcessArchfile filename=wy2003.seq   
+will process archive file wy2003.seq   
+
+optionally you can add a log file name as an additional  parameter if you do not wish to have the log file name as a standard wy2003.log  (ie logname=xxxx.log)
+
+optionally to can add an additional parameter to specify wherether you want a particular set of site codes processed or only a subset of site_codes/pcodes.  THe sitecode/pcode combinations are user specified, comma separated.
+(ie. site_codes=GLDA,FGRU/FB)
 
 
 REAL Time Dataloader
