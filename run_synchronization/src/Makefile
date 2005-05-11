@@ -4,8 +4,8 @@
 include ../../Environ
 
 OBJDIR = $(HDB_ENV)/run_synchronization/obj
-INCLUDES = -I$(HDB_APP_INCLUDE) -I/usr/local/X11R5/include
-LIBS = $(HDB_LIBS) -ldl -lX11 -lm 
+INCLUDES = -I$(HDB_APP_INCLUDE) 
+LIBS = $(HDB_LIBS) -ldl -lm 
 CFLAGS = -ansi -Wall -g -DANSIPROTO $(INCLUDES)
 
 TARGET = $(HDB_APP_BIN)/SYNC
@@ -17,6 +17,7 @@ $(TARGET): $(OBJS)
 
 clean:
 	rm -f $(OBJS)	
+	rm -f $(TARGET)
 
 #        TARGET DEFINITIONS
 

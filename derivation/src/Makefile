@@ -20,6 +20,12 @@ OBJS = \
 	$(OBJDIR)/SqlOverwrite.o \
 	$(OBJDIR)/SqlSDIList.o \
 
+INTERMED_PROC_FILES = \
+	SqlDerivation.c \
+	SqlMethods.c \
+	SqlOverwrite.c \
+	SqlSDIList.c
+
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(LIBS)
 
@@ -27,6 +33,9 @@ $(TARGET): $(OBJS)
 
 clean: 
 	rm -f $(OBJS)
+	rm -f $(TARGET)
+	rm -f $(INTERMED_PROC_FILES)
+	rm -f *.lis
 
 #        TARGET DEFINITIONS
 

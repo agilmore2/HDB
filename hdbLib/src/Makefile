@@ -33,6 +33,23 @@ GLOBAL_INCLUDE = \
 	$(HDB_APP_INCLUDE)/defines.h \
 	$(HDB_APP_INCLUDE)/typedefs.h
 
+INTERMED_PROC_FILES = \
+	SqlBaseKeys.c \
+	SqlChkModelRunID.c \
+	SqlConnect.c \
+	SqlCount.c \
+	SqlDataSource.c \
+	SqlDate.c \
+	SqlError.c \
+	SqlGetDBName.c \
+	SqlGetSiteDataTypeIdWithName.c \
+	SqlInterval.c \
+	SqlLookup.c \
+	SqlModel.c \
+	SqlObjects.c \
+	SqlUnits.c \
+	SqlValidation.c
+
 $(TARGET) : $(OBJS)
 	rm -f $(HDB_APP_LIB)/libhdb.a
 	ar rv $(HDB_APP_LIB)/libhdb.a $(OBJS)
@@ -40,6 +57,9 @@ $(TARGET) : $(OBJS)
 
 clean:
 	rm -f $(OBJS)
+	rm -f $(TARGET)
+	rm -f $(INTERMED_PROC_FILES)
+	rm -f *.lis
 
 $(OBJDIR)/SqlError.o : \
 	$(GLOBAL_INCLUDE) \

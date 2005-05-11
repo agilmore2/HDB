@@ -14,11 +14,18 @@ OBJS = \
 	$(OBJDIR)/FlowDuration.o \
 	$(OBJDIR)/SqlGetFlowDuration.o
 
+INTERMED_PROC_FILES = \
+	SqlGetFlowDuration.c
+
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(LIBS)
 
 clean: 
 	rm -f $(OBJS)
+	rm -f $(TARGET)
+	rm -f $(INTERMED_PROC_FILES)
+	rm -f *.lis
+
 
 $(OBJDIR)/FlowDuration.o: \
 	$(LOCAL_INCLUDE) \

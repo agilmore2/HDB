@@ -19,11 +19,19 @@ OBJS = \
 	$(OBJDIR)/UpdateBasins.o \
 	$(OBJDIR)/SqlUpdateBasins.o
 
+INTERMED_PROC_FILES = \
+	SqlFetchSiteNames.c \
+	SqlUpdateBasins.c \
+	SqlUpdateSnotel.c
+
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(LIBS)
 
 clean: 
 	rm -f $(OBJS)
+	rm -f $(TARGET)
+	rm -f $(INTERMED_PROC_FILES)
+	rm -f *.lis
 
 #        TARGET DEFINITIONS
 

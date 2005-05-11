@@ -18,11 +18,18 @@ OBJS = \
 LOCAL_INCLUDE = \
         pearson.h
 
+INTERMED_PROC_FILES = \
+	SqlProcessValues.c \
+	SqlSelects.c
+
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(LIBS)
 
 clean: 
 	rm -f $(OBJS)
+	rm -f $(TARGET)
+	rm -f $(INTERMED_PROC_FILES)
+	rm -f *.lis
 
 $(OBJDIR)/CreateLogPearsonFile.o: \
 	$(LOCAL_INCLUDE) \

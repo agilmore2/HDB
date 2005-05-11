@@ -33,6 +33,16 @@ GLOBAL_INCLUDE = \
 	$(HDB_APP_INCLUDE)/defines.h \
 	$(HDB_APP_INCLUDE)/typedefs.h
 
+INTERMED_PROC_FILES = \
+	DmiDateConversion.c \
+	DmiLoadMappings.c \
+	DmiUnits.c \
+	HDBTkFiles.c \
+	SqlCreateModelRunId.c \
+	SqlCreateModelMap.c \
+	SqlSyncModelRuns.c \
+	SqlUpdateSys_date.c
+
 $(TARGET) : $(OBJS)
 	rm -f $(HDB_APP_LIB)/libdmi.a
 	ar rv $(HDB_APP_LIB)/libdmi.a $(OBJS)
@@ -40,6 +50,9 @@ $(TARGET) : $(OBJS)
 
 clean:
 	rm -f $(OBJS)
+	rm -f $(TARGET)
+	rm -f $(INTERMED_PROC_FILES)
+	rm -f *.lis
 
 $(OBJDIR)/DmiDateConversion.o : \
 	DmiDateConversion.pc \

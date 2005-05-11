@@ -18,8 +18,8 @@ OBJS =  $(OBJDIR)/Error.o \
         $(OBJDIR)/Convert.o \
         $(OBJDIR)/Interval.o \
 	$(OBJDIR)/Schema.o \
-    	$(OBJDIR)/signalHandler.o \
-    	$(OBJDIR)/Misc.o
+	$(OBJDIR)/signalHandler.o \
+	$(OBJDIR)/Misc.o
 
 GLOBAL_INCLUDE = \
 	$(HDB_APP_INCLUDE)/utils.h \
@@ -33,6 +33,7 @@ $(TARGET) : $(OBJS)
 
 clean:
 	rm -f $(OBJS)
+	rm -f $(TARGET)
 
 $(OBJDIR)/Error.o: \
 	Error.c \

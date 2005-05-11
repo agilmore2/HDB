@@ -5,7 +5,7 @@ include ../../Environ
 
 OBJDIR = $(HDB_ENV)/tomorrow/obj
 INCLUDES = -I$(HDB_APP_INCLUDE)
-LIBS = $(HDB_LIBS) -ldl -lX11 -lm 
+LIBS = $(HDB_LIBS) -ldl -lm 
 CFLAGS = -ansi -Wall -g -DANSIPROTO $(INCLUDES)
 
 TARGET = $(HDB_APP_BIN)/tomorrow
@@ -17,6 +17,7 @@ $(TARGET): $(OBJS)
 
 clean:
 	rm -f $(OBJS)	
+	rm -f $(TARGET)
 
 #        TARGET DEFINITIONS
 

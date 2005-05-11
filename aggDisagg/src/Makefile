@@ -24,11 +24,21 @@ OBJS = \
 	$(OBJDIR)/WriteValues.o \
 	$(OBJDIR)/SqlWriteAggDisagg.o
 
+INTERMED_PROC_FILES = \
+	SqlBoundaryDates.c \
+	SqlFetchPreviousTimeStepValue.c \
+	SqlLoadAggDisagg.c \
+	SqlRetrieveSourceValues.c \
+	SqlWriteAggDisagg.c
+
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(LIBS)
 
 clean: 
 	rm -f $(OBJS)
+	rm -f $(TARGET)
+	rm -f $(INTERMED_PROC_FILES)
+	rm -f *.lis
 
 #        TARGET DEFINITIONS
 
