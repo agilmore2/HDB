@@ -4,7 +4,7 @@
 # needed to implement new HDB permissions scheme.
 
 sqlplus 'DBA/PASSWD as sysdba' @./PERMISSIONS/create_psswd_user.sql $HDB_LOCAL > create_psswd_user.out;
-sqlplus 'DBA/PASSWD as sysdba' ./PERMISSIONS/set_role_passwords.sql > set_role_passwords.out;
+sqlplus 'DBA/PASSWD as sysdba' < ./PERMISSIONS/set_role_passwords.sql > set_role_passwords.out;
 sqlplus psswd_user/$HDB_LOCAL < ./PERMISSIONS/create_role_psswd.sql > create_role_psswd.out;
 sqlplus psswd_user/$HDB_LOCAL < ./PERMISSIONS/check_valid_role_name.prc > check_valid_role_name.out;
 sqlplus psswd_user/$HDB_LOCAL < ./PERMISSIONS/role_psswd_fk.trg > role_psswd_fk.out;
