@@ -50,7 +50,7 @@ grant insert, update, delete on r_day to derivation_role;
 grant insert, update, delete on r_month to derivation_role;
 grant insert, update, delete on r_year to derivation_role;
 grant insert, update, delete on r_wy to derivation_role;
-grant update, delete on r_base_update to derivation_role;
+grant insert, update, delete on r_base_update to derivation_role;
 
 /***********************************************************************/
 /*  grant privileges to ref_meta_role                                   */
@@ -63,7 +63,6 @@ grant  insert, delete, update on ref_interval_redefinition to ref_meta_role;
 grant  insert, delete, update on ref_res  to  ref_meta_role;       
 grant  insert, delete, update on ref_str  to  ref_meta_role;          
 grant  insert, delete, update on ref_source_priority  to  ref_meta_role;        
-grant  insert, delete, update on ref_source_priority_archive to ref_meta_role;
 grant  insert, delete, update on ref_res_flowlu  to  ref_meta_role;
 grant  insert, delete, update on ref_res_wselu  to  ref_meta_role;     
 grant  insert, delete, update on ref_site_coef  to  ref_meta_role; 

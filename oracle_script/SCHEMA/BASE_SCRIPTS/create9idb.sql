@@ -16,7 +16,7 @@ Rem
 Rem To start up the Oracle instance defined in initNEWHDB.ora file: 
 Rem             
 Rem connect internal
-Rem startup pfile=/usr/local/oracle/admin/9idb/pfile/init9idb.ora nomount
+Rem startup pfile=$ORACLE_BASE/admin/9idb/create/init9idb.ora nomount
 Rem @$ORACLE_HOME/dbs/create9idb.sql
 Rem
 Rem After creating the db -> create system dictionaries:
