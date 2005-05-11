@@ -262,8 +262,11 @@ int main(int argc, char *argv[])
 	 setting is enough. */
       if ((result = SqlSetDateFormatAt ("DD-MON-YYYY HH24:MI:SS")) != OK)
 	{
-	  PrintError ("%s: Problem setting date format. Exiting.\n", FUNC_NAME);
-	  return (ERROR);
+	  PrintError ("%s: Problem setting date format.\n", FUNC_NAME);
+	  if (i==0) {
+	    PrintError ("%s: Error is at local database, exiting!\n",FUNC_NAME);
+	      return (ERROR);
+	    }
 	  } 
       
 	  }  /* end for loop */
