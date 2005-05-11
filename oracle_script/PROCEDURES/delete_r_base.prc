@@ -31,7 +31,7 @@ BEGIN
                                                                                 
     IF manual_edit = 'N' then                                                   
     begin                                                                       
-	select priority_rank                                                           
+	select nvl(priority_rank,0)
           into new_priority                                                     
 	  from ref_source_priority                                                     
 	 where site_datatype_id = SITE_DATATYPE_ID_IN                                  
