@@ -176,10 +176,10 @@ public void process()
 
        for (i = 0; i< 2; i++)  input.read();
        for (i = 0; i< 12; i++) buffer[i] = (char) input.read();
-       site_code  = new String(buffer,0,8).trim();
+       site_code  = new String(buffer,0,8);
 
        for (int j  = 0; j< 9; j++) buffer[j] = (char) input.read();
-       pcode = new String(buffer,0,7).trim();
+       pcode = new String(buffer,0,7);
 
        for (i = 0; i< 4; i++) buffer[i] = (char) input.read(); // read in  time
        time  = new String(buffer,0,2) + ":" + new String(buffer,2,2);
@@ -219,15 +219,19 @@ public void process()
       //  if there are values in the site_codes dataObject (hash table) then the program should process only those
       //  otherwise process them all
 
-if (!specified_codes || (specified_codes && (site_codes.get(site_code) != null || site_codes.get(site_code+"/"+pcode) != null)))
+     
+if (!specified_codes || (specified_codes && (site_codes.get(site_code.trim()) != null || site_codes.get(site_code.trim()+"/"+pcode.trim()) != null)))
       {
          String inputLine;	
          for (i=0; i<npairs; i++) 
          {
   
            inputLine = dt_str[i] + " " + time + " " + site_code  + " " + pcode + "         " + value[i];
-           // the following line is for online debugging only it should be commented out for production
+           // the following lines are for online debugging only it should be commented out for production
            //System.out.println(reads + "   " + inputLine);
+           //System.out.println("S=" +inputLine.substring(16,24).trim() + " P="+ inputLine.substring(25,33).trim()+
+           //" V=" + inputLine.substring(36).trim());
+
        
              try
              {
@@ -291,6 +295,7 @@ if (!specified_codes || (specified_codes && (site_codes.get(site_code) != null |
  public void site_codes_setup (String codes_in)
  {
      //  just make sure the starting status of this Process indicating boolean
+     //  System.out.println("codes in =  " + codes_in);
      specified_codes = false;
      parameter_override = true;  //  indicates tha this method has now been invoked
      // if lenght of codes_in > 0 then we have some so  parse the site_codes
