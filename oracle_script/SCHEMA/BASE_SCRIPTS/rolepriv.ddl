@@ -62,7 +62,7 @@ grant  insert, delete, update on ref_div  to  ref_meta_role;
 grant  insert, delete, update on ref_interval_redefinition to ref_meta_role;
 grant  insert, delete, update on ref_res  to  ref_meta_role;       
 grant  insert, delete, update on ref_str  to  ref_meta_role;          
-grant  insert, delete, update on ref_source_priority  to  ref_meta_role;        
+grant  insert, delete, update on ref_source_priority  to  ref_meta_role;          
 grant  insert, delete, update on ref_res_flowlu  to  ref_meta_role;
 grant  insert, delete, update on ref_res_wselu  to  ref_meta_role;     
 grant  insert, delete, update on ref_site_coef  to  ref_meta_role; 
