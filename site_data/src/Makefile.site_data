@@ -11,6 +11,9 @@ OBJS = \
 
 main: $(TARGET)
 
+clean:
+	rm -f $(TARGET)  $(OBJS)
+
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) $(LIBS) -o $(TARGET)
 
