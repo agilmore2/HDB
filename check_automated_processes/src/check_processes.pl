@@ -71,7 +71,7 @@ while (<INFILE>)
 }
 
 if ($status && !$DEBUG) {
-  open MAIL, "|mail -t $ENV{HDB_XFER_EMAIL}";
+  open MAIL, "|mail -t $ENV{HDB_NOTIFY_EMAIL}";
   print MAIL $subject, $output;
 
   close MAIL;
