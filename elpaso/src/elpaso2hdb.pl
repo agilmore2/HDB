@@ -58,7 +58,7 @@ open (INFILE, "$ARGV[0]") || die "Error: couldn't open input file $ARGV[0]";
 
 my ($i, $line);
 # skip past opening junk
-for ($i = 0; $i < 49; $i++)
+for ($i = 0; $i < 48; $i++)
   { $line = <INFILE>; }
 
 # get date of data
@@ -126,6 +126,10 @@ READ: while ($line = <INFILE>)
   $value_hash{"STORAGE"} =~ s/\,//g;
   $value_hash{"COMPUTED INFLOW"} =~ s/\s//g;
   $value_hash{"COMPUTED INFLOW"} =~ s/\,//g;
+
+# Handle negative values reported as (200)
+  $value_hash{"COMPUTED INFLOW"} =~ s/\)//g;
+  $value_hash{"COMPUTED INFLOW"} =~ s/\(/-/g;
 
   if ($value_hash{"COMPUTED INFLOW"}) {
     $value_hash{"COMPUTED INFLOW"} = sprintf("%.1f",$value_hash{"COMPUTED INFLOW"}/1.98347);
