@@ -306,7 +306,8 @@ sub build_url
 		  "DOVCANCO", "DISCHRG1",
 		  "MVIDIVCO", "DISCHRG3",
 		  "UCANALCO", "DISCHRG2",
-		  "RIFRGRCO", "DISCHRG");
+		  "RIFRGRCO", "DISCHRG",
+		  "AZOTUNNM", "DISCHRG");
 
   die "Site id $_[0] not recognized, no datacode known!\n" 
       unless (defined ($datacode{$_[0]}));
@@ -346,8 +347,8 @@ sub get_codwr_sites
   my $id_limit_clause = '';
 
   if (@_) {
-    my $commalist = join (',',@_);
-    $id_limit_clause = "a.scs_id in ( $commalist ) and";
+    my $commalist = join ('\',\'',@_);
+    $id_limit_clause = "a.scs_id in ( '$commalist' ) and";
   }
 
   my $get_codwr_no_statement = "select a.scs_id, a.site_id, b.site_datatype_id
@@ -355,8 +356,8 @@ from hdb_site a, hdb_site_datatype b
 where a.site_id = b.site_id and
 b.datatype_id = 18 and
 a.scs_id is not null and $id_limit_clause
-a.scs_id like '______CO'
-order by scs_id";
+( a.scs_id like '______CO' or a.scs_id like '______NM')
+order by scs_id ";
 
   $hdb->dbh->{FetchHashKeyName} = 'NAME_lc';
 
