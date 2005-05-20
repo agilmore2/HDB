@@ -1,4 +1,5 @@
 get_load_snotel=$HDB_ENV/basins/work/get_load_snotel.err
+run_hist_snotel=$HDB_ENV/basins/work/snotel_hist/run_40day_snotel.err
 dataloader=$HDB_ENV/dataloader/work/archives/dataloader.err
 derivation=$HDB_ENV/log/derivation.err
 usgs2hdb=$HDB_ENV/usgs2hdb/src/usgs2hdb.err
