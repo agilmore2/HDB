@@ -263,9 +263,12 @@ public class DBAccess
         finally
         {
           try {
-            rset.close();
-            stmt.close();
-
+            if (rset!=null) {
+                rset.close();
+            }
+            if (stmt!=null) {
+                stmt.close();
+            }
           }
           catch ( SQLException e ) {}
 
