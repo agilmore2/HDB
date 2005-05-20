@@ -232,8 +232,8 @@ sub insert_values
     my $modify_data_statement = "
     BEGIN
         modify_r_base_raw(?,'day',?,?,?, /* sdi, interval, start_date_time, end_date_time (in/out, not used), value */
-                          null,'Z',              /* overwrite, validation */
-                          $agen_id,$collect_id,$load_app_id,$method_id,$unk_computation_id,
+                          $agen_id,null,'Z', /* overwrite, validation */
+                          $collect_id,$load_app_id,$method_id,$unk_computation_id,
                           'Y');                 /*do update? */
     END;";
 
