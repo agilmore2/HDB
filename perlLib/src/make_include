@@ -1,0 +1,3 @@
+APPDIR = $(HDB_ENV)/perlLib
+SRCDIR = $(APPDIR)/src
+
