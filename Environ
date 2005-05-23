@@ -28,6 +28,17 @@ TK_LIBS = -ltk8.4 -ltcl8.4 -lm
 # Oracle library files
 ORACLE_LIB = -L$(ORACLE_HOME)/lib -lagent10 -lclient10 -lclntsh -lcommon10 -lcore10 -lgeneric10 -lmm -lpsa10 -lserver10 -lslax10 -lsql10 -lsqlplus -lvsn10
 
+### ORACLE 9, Solaris Code below
+
+# directory which holds TCL/TK include files
+#TK_INCLUDES = /usr/sfw/include
+
+# TCL/TK library files
+#TK_LIBS = -L/usr/sfw/lib -ltk8.3 -ltcl8.3 -lm
+
+# Oracle library files
+#ORACLE_LIB = -L$(ORACLE_HOME)/lib32 -lagent9 -lclient9 -lclntsh -lcommon9 -lcore9 -lgeneric9 -lmm -lslax9 -lsql9 -lwtc9 -lvsn9
+
 # all libraries required by HDB applications
 HDB_LIBS = -L$(HDB_APP_LIB) -ldmi -lhdb -lutils $(ORACLE_LIB) -lhdb
 
