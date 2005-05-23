@@ -297,91 +297,59 @@ main()
    */   
 
    date[0] = '\0';
+   strcat(&date[0],&yr[0]);
 
    if (strcmp(&mon[0], "11") == 0)
    {
-      strcat(&date[0],&yr[0]);
-      strcat(&date[0],"NOV");  
-      strcat(&date[0],&day[0]);
+      strcat(&date[0],"NOV");
    }
-
-
    if (strcmp(&mon[0], "12") == 0)
    {
-      strcat(&date[0],&yr[0]);
       strcat(&date[0],"DEC");  
-      strcat(&date[0],&day[0]);
    }
-
    if (strcmp(&mon[0], "01") == 0)
    {
-      strcat(&date[0],&yr[0]);
       strcat(&date[0],"JAN");  
-      strcat(&date[0],&day[0]);
    }
-
    if (strcmp(&mon[0], "02") == 0)
    {
-      strcat(&date[0],&yr[0]);
       strcat(&date[0],"FEB");  
-      strcat(&date[0],&day[0]);
    }
-
    if (strcmp(&mon[0], "03") == 0)
    {
-      strcat(&date[0],&yr[0]);
       strcat(&date[0],"MAR");  
-      strcat(&date[0],&day[0]);
    }
-
    if (strcmp(&mon[0], "04") == 0)
    {
-      strcat(&date[0],&yr[0]);
       strcat(&date[0],"APR");  
-      strcat(&date[0],&day[0]);
    }
-
    if (strcmp(&mon[0], "05") == 0)
    {
-      strcat(&date[0],&yr[0]);
       strcat(&date[0],"MAY");  
-      strcat(&date[0],&day[0]);
    }
-
    if (strcmp(&mon[0], "06") == 0)
    {
-      strcat(&date[0],&yr[0]);
       strcat(&date[0],"JUN");  
-      strcat(&date[0],&day[0]);
    }
-
    if (strcmp(&mon[0], "07") == 0)
    {
-      strcat(&date[0],&yr[0]);
       strcat(&date[0],"JUL");  
-      strcat(&date[0],&day[0]);
    }
-
    if (strcmp(&mon[0], "08") == 0)
    {
-      strcat(&date[0],&yr[0]);
       strcat(&date[0],"AUG");  
-      strcat(&date[0],&day[0]);
    }
-
    if (strcmp(&mon[0], "09") == 0)
    {
-      strcat(&date[0],&yr[0]);
       strcat(&date[0],"SEP");  
-      strcat(&date[0],&day[0]);
    }
-
    if (strcmp(&mon[0], "10") == 0)
    {
-      strcat(&date[0],&yr[0]);
       strcat(&date[0],"OCT");  
-      strcat(&date[0],&day[0]);
    }
+   
+   strcat(&date[0],&day[0]);
+   
 
    crsp[0] = '\0';
 
