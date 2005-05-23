@@ -1,13 +1,9 @@
-#ORACLE SPECIFIC - required for all Oracle applications
-# Oracle settings also contained in /etc/profile.d/oracle.{sh|csh}
-# settings there are ORACLE_SID, ORACLE_HOME, ORA_NLS33, TNS_ADMIN, ORACLE_BASE
-# ORACLE_TERM, NLS_LANG, ORACLE_DOC
-# also set are LD_LIBRARY_PATH, PATH, and CLASSPATH
-setenv ORACLE_LPPROG     /usr/bin/lpr
-setenv ORACLE_LPSTAT     /usr/bin/lpq
-setenv ORACLE_PAGER      /usr/bin/less
+# SITE SPECIFIC: email of person responsible for data transfers
+setenv HDB_XFER_EMAIL agilmore@uc.usbr.gov
+setenv HDB_NOTIFY_EMAIL agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov,tryan@uc.usbr.gov,ccutler@uc.usbr.gov,athatcher@uc.usbr.gov,emanseau@uc.usbr.gov
 
 # HDB - required for all HDB interactions (should be set in users' .cshrc)
+# These probably need editting for a new system
 setenv HDB_LOCAL         uchdbdev 
 setenv HDB_ENV           /home/hdb/HDB_app
 setenv HDB_BIN           $HDB_ENV/bin
@@ -18,6 +14,69 @@ setenv OUTPUT_DMI_PATH $HDB_BIN
 
 # Additional settings which may not be in user's .cshrc
 setenv PATH "$PATH":$HDB_BIN
+
+# SITE SPECIFIC - for hydromet applications
+setenv ARCHIVE_DIR $HDB_ENV/dataloader/work/archives
+setenv DAYFILE_DIR $HDB_ENV/dataloader/work/dayfiles
+setenv LOG_DIR log
+
+# SITE SPECIFIC - required for hydromet shell scripts (bogus at CADSWES)
+# For new ALPHA
+setenv DAYDATA_DIR '/custom$/archives'
+setenv ARCDATA_DIR '/custom$/dayfiles'
+setenv MOUNTDIR "/zipdata" 
+setenv HYD_HOST zippy
+setenv HYD_USER hydromet
+setenv ARC_COMFILE_DIR 'sutron_archives:'
+setenv DAY_COMFILE_DIR 'sutron_dayfiles:'
+
+# Probably don't have to edit items below this line
+# EXCEPTION: ORACLE_SID set below for solaris
+
+#### BEGIN OS SPECIFIC SETTINGS ####
+
+if (`uname` == 'SunOS') then # assume Oracle 9, and need all Oracle settings here
+
+#ORACLE SPECIFIC - required for all Oracle applications
+setenv ORACLE_HOME       /ora/oracle/product/9.2.0
+setenv ORACLE_BASE       /ora/oracle
+setenv ORACLE_DOC        $ORACLE_HOME/doc
+setenv ORACLE_NLS32      $ORACLE_HOME/ocommon/nls/admin/data
+setenv TNS_ADMIN         $ORACLE_HOME/network/admin
+setenv ORACLE_LPPROG     /usr/ucb/lpr
+setenv ORACLE_LPSTAT     /usr/ucb/lpq
+setenv ORACLE_PAGER      /usr/bin/less
+setenv ORACLE_TERM       xterm
+setenv ORACLE_SID        uchdb2 
+
+# add to LD_LIBRARY_PATH if it exists, set a new value if it doesn't
+#Linux systems don't need
+if ($?LD_LIBRARY_PATH) then #relying on user to have sane stuff in var
+    setenv LD_LIBRARY_PATH "$LD_LIBRARY_PATH":$ORACLE_HOME/lib32:/usr/sfw/lib 
+else 
+    setenv LD_LIBRARY_PATH /usr/lib:/lib:/usr/local/lib:$ORACLE_HOME/lib32:/usr/sfw/lib
+endif
+
+#Insert MAGICK_HOME so that Image Magick works on Solaris, is system lib on Linux
+setenv MAGICK_HOME /usr/local/ImageMagick-6.0.3
+setenv LD_LIBRARY_PATH "$LD_LIBRARY_PATH":$MAGICK_HOME/lib
+
+setenv PATH "$ORACLE_HOME/bin":/usr/java/bin:"$PATH":/usr/sfw/bin
+
+else if ( `uname` == `Linux` ) then
+
+#ORACLE SPECIFIC - required for all Oracle applications
+# Oracle settings also contained in /etc/profile.d/oracle.{sh|csh}
+# settings there are ORACLE_SID, ORACLE_HOME, ORA_NLS33, TNS_ADMIN, ORACLE_BASE
+# ORACLE_TERM, NLS_LANG, ORACLE_DOC
+# also set are LD_LIBRARY_PATH, PATH, and CLASSPATH
+setenv ORACLE_LPPROG     /usr/bin/lpr
+setenv ORACLE_LPSTAT     /usr/bin/lpq
+setenv ORACLE_PAGER      /usr/bin/less
+
+endif
+
+#### END OF OS SPECIFIC SETTINGS ####
 
 # add to CLASSPATH if it exists, set a new value if it doesn't
 if ($?CLASSPATH) then
@@ -36,23 +95,3 @@ setenv HDB_META_ROLE     hdb_meta_role
 setenv REF_META_ROLE     ref_meta_role
 setenv MODEL_ROLE        model_role
 setenv DERIVATION_ROLE   derivation_role
-
-# SITE SPECIFIC: email of person responsible for data transfers
-setenv HDB_XFER_EMAIL agilmore@uc.usbr.gov
-setenv HDB_NOTIFY_EMAIL agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov,tryan@uc.usbr.gov,ccutler@uc.usbr.gov,athatcher@uc.usbr.gov,emanseau@uc.usbr.gov
-
-# SITE SPECIFIC - for hydromet applications
-setenv ARCHIVE_DIR $HDB_ENV/dataloader/work/archives
-setenv DAYFILE_DIR $HDB_ENV/dataloader/work/dayfiles
-setenv LOG_DIR log
-
-# SITE SPECIFIC - required for hydromet shell scripts (bogus at CADSWES)
-# For new ALPHA
-setenv DAYDATA_DIR '/custom$/archives'
-setenv ARCDATA_DIR '/custom$/dayfiles'
-setenv MOUNTDIR "/zipdata" 
-setenv HYD_HOST zippy
-setenv HYD_USER hydromet
-setenv ARC_COMFILE_DIR 'sutron_archives:'
-setenv DAY_COMFILE_DIR 'sutron_dayfiles:'
-
