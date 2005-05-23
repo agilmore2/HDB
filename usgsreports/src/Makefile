@@ -17,6 +17,10 @@ GENERALSCRIPTS = $(SRCDIR)/checkforsdi.sql $(SRCDIR)/reportsdi.sql
 
 main: $(TARGETS)
 
+clean:
+	rm -f $(TARGETS)
+
+
 $(HDB_APP_BIN)/usgsdaily: $(SRCDIR)/usgsdaily\
 		$(DAILYSCRIPT) $(GENERALSCRIPTS)
 	cd $(HDB_APP_BIN) ; \
