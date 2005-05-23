@@ -2,10 +2,10 @@
 setenv HDB_XFER_EMAIL agilmore@uc.usbr.gov
 setenv HDB_NOTIFY_EMAIL agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov,tryan@uc.usbr.gov,ccutler@uc.usbr.gov,athatcher@uc.usbr.gov,emanseau@uc.usbr.gov
 
-# HDB - required for all HDB interactions (should be set in users' .cshrc)
+# HDB - required for all HDB interactions
 # These probably need editting for a new system
 setenv HDB_LOCAL         uchdbdev 
-setenv HDB_ENV           /home/hdb/HDB_app
+setenv HDB_ENV           /wrg/hdb/HDB
 setenv HDB_BIN           $HDB_ENV/bin
 
 # SITE SPECIFIC - required for RiverWare 24 MO Study DMI's

@@ -2,16 +2,12 @@
 # must be done after setting it. Not necessary for bash, but needed for
 # the cron in Solaris under /bin/sh
 
-#Oracle SPECIFIC - required for all Oracle applications
-# Oracle settings also contained in /etc/profile.d/oracle.{sh|csh}
-# settings there are ORACLE_SID, ORACLE_HOME, ORA_NLS33, TNS_ADMIN, ORACLE_BASE
-# ORACLE_TERM, NLS_LANG, ORACLE_DOC
-# also set are LD_LIBRARY_PATH, PATH, and CLASSPATH
-ORACLE_LPPROG=/usr/bin/lpr; export ORACLE_LPPROG
-ORACLE_LPSTAT=/usr/bin/lpq; export ORACLE_LPSTAT
-ORACLE_PAGER=/usr/bin/less; export ORACLE_PAGER
+# SITE SPECIFIC: email of person responsible for data transfers
+HDB_XFER_EMAIL=agilmore@uc.usbr.gov; export HDB_XFER_EMAIL
+HDB_NOTIFY_EMAIL=agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov,tryan@uc.usbr.gov,ccutler@uc.usbr.gov,athatcher@uc.usbr.gov,emanseau@uc.usbr.gov; export HDB_NOTIFY_EMAIL
 
-# HDB - required for all HDB interactions (should be set in users' .bashrc)
+# HDB - required for all HDB interactions 
+# These must be editted for a new system
 HDB_LOCAL=uchdb2; export HDB_LOCAL
 HDB_ENV=/wrg/hdb/HDB; export HDB_ENV
 HDB_BIN=$HDB_ENV/bin; export HDB_BIN
@@ -22,6 +18,74 @@ OUTPUT_DMI_PATH=$HDB_BIN; export OUTPUT_DMI_PATH
 
 # Additional settings which may not be in user's .cshrc
 PATH="$PATH":$HDB_BIN; export PATH
+
+# SITE SPECIFIC - required for hydromet applications
+ARCHIVE_DIR=$HDB_ENV/dataloader/work/archives; export ARCHIVE_DIR
+DAYFILE_DIR=$HDB_ENV/dataloader/work/dayfiles; export DAYFILE_DIR
+LOG_DIR=log; export LOG_DIR
+
+# SITE SPECIFIC - required for hydromet shell scripts (bogus at CADSWES)
+# For new ALPHA
+DAYFILES='/custom$/dayfiles'; export DAYFILES
+ARCHIVES='/custom$/archives'; export ARCHIVES
+MOUNTDIR=/zipdata; export MOUNTDIR
+HYD_HOST=zippy; export HYD_HOST
+HYD_USER=hydromet; export HYD_USER
+ARC_COMFILE_DIR='sutron_archives:'; export ARC_COMFILE_DIR
+DAY_COMFILE_DIR='sutron_dayfiles:'; export DAY_COMFILE_DIR
+
+# Probably don't have to edit items below this line
+# EXCEPTION: ORACLE_SID set below for solaris
+
+#### BEGIN OS SPECIFIC SETTINGS ####
+
+if [ `uname` == 'SunOS' ] ; then {
+
+#SITE SPECIFIC - required for all Oracle applications
+ORACLE_HOME=/ora/oracle/product/9.2.0; export ORACLE_HOME
+ORACLE_BASE=/ora/oracle; export ORACLE_BASE
+ORACLE_DOC=$ORACLE_HOME/doc; export ORACLE_DOC
+ORACLE_NLS32=$ORACLE_HOME/ocommon/nls/admin/data; export ORACLE_NLS32
+TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+ORACLE_LPPROG=/usr/ucb/lpr; export ORACLE_LPPROG
+ORACLE_LPSTAT=/usr/ucb/lpq; export ORACLE_LPSTAT
+ORACLE_PAGER=/usr/bin/less; export ORACLE_PAGER
+ORACLE_TERM=xterm; export ORACLE_TERM
+ORACLE_SID=uchdb2; export ORACLE_SID
+
+# add to LD_LIBRARY_PATH if it exists, set a new value if it doesn't
+# Linux systems don't need
+if [ -n "$LD_LIBRARY_PATH" ] ; then { #relying on user to have sane stuff in var
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH":$ORACLE_HOME/lib32:/usr/sfw/lib; export LD_LIBRARY_PATH
+}
+else { 
+    LD_LIBRARY_PATH=/usr/lib:/lib:/usr/local/lib:$ORACLE_HOME/lib32:/usr/sfw/lib; export LD_LIBRARY_PATH
+}
+fi
+
+#Insert MAGICK_HOME so that Image Magick works
+MAGICK_HOME=/usr/local/ImageMagick-6.0.3; export MAGICK_HOME
+
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH":$MAGICK_HOME/lib; export LD_LIBRARY_PATH
+
+PATH="$HDB_BIN":"$ORACLE_HOME/bin":/usr/java/bin/:/usr/local/bin:"$PATH":/usr/sfw/bin; export PATH
+
+}
+elif [ `uname` == 'Linux' ] ; then {
+
+#Oracle SPECIFIC - required for all Oracle applications
+# Oracle settings also contained in /etc/profile.d/oracle.{sh|csh}
+# settings there are ORACLE_SID, ORACLE_HOME, ORA_NLS33, TNS_ADMIN, ORACLE_BASE
+# ORACLE_TERM, NLS_LANG, ORACLE_DOC
+# also set are LD_LIBRARY_PATH, PATH, and CLASSPATH
+ORACLE_LPPROG=/usr/bin/lpr; export ORACLE_LPPROG
+ORACLE_LPSTAT=/usr/bin/lpq; export ORACLE_LPSTAT
+ORACLE_PAGER=/usr/bin/less; export ORACLE_PAGER
+
+}
+fi
+
+#### END OF OS SPECIFIC SETTINGS ####
 
 # add to CLASSPATH if it exists, set a new valueif it doesn't
 if [ -n "$CLASSPATH" ] ; then {
@@ -41,21 +105,3 @@ REF_META_ROLE=ref_meta_role; export REF_META_ROLE
 MODEL_ROLE=model_role; export MODEL_ROLE
 DERIVATION_ROLE=derivation_role; export DERIVATION_ROLE
 
-# SITE SPECIFIC: email of person responsible for data transfers
-HDB_XFER_EMAIL=agilmore@uc.usbr.gov; export HDB_XFER_EMAIL
-HDB_NOTIFY_EMAIL=agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov,tryan@uc.usbr.gov,ccutler@uc.usbr.gov,athatcher@uc.usbr.gov,emanseau@uc.usbr.gov; export HDB_NOTIFY_EMAIL
-
-# SITE SPECIFIC - required for hydromet applications
-ARCHIVE_DIR=$HDB_ENV/dataloader/work/archives; export ARCHIVE_DIR
-DAYFILE_DIR=$HDB_ENV/dataloader/work/dayfiles; export DAYFILE_DIR
-LOG_DIR=log; export LOG_DIR
-
-# SITE SPECIFIC - required for hydromet shell scripts (bogus at CADSWES)
-# For new ALPHA
-DAYFILES='/custom$/dayfiles'; export DAYFILES
-ARCHIVES='/custom$/archives'; export ARCHIVES
-MOUNTDIR=/zipdata; export MOUNTDIR
-HYD_HOST=zippy; export HYD_HOST
-HYD_USER=hydromet; export HYD_USER
-ARC_COMFILE_DIR='sutron_archives:'; export ARC_COMFILE_DIR
-DAY_COMFILE_DIR='sutron_dayfiles:'; export DAY_COMFILE_DIR
