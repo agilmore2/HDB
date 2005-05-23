@@ -1,0 +1,83 @@
+                               inflow_24mo
+                                     
+Inflow_24mo is an embedded C program which develops monthly
+inflows for the 24 month study.  Forecast data is pulled from
+HDB.  Inflows are then generated and stored back into HDB for the
+upcoming 24 month period.  The application will develop inflow
+data sets for most probable, maximum probable and minimum
+probable model runs.  
+
+The application is able to incorporate various algorithms for
+determining monthly inflow values.  There are algorithms for the
+development of flows based on: (1) Actual monthly forecasted
+flows, (2) April through July forecasts, (3) Historical
+statistics, (4) Use of a nearby forecast point (neighbor) that
+gets radioed to the historical averages of both the sites, and
+(5) Interpolation between forecasts and historical averages.  The
+behavior of the program is determined by the configuration in the
+inflow_24mo.h file.  To modify the number of sites processed or
+the behavior of the program in processing each of the sites, this
+.h file must be edited.  Instructions for doing so are included
+in the program comments within the .h file itself.
+
+The application has 4 command line arguments.  The usage is shown
+here.
+
+usage: inflow_24mo < run_date > < P | M | F > < Most | Max | Min>
+<app_role_password>
+
+The first argument is the run date.  Any valid ingres date format
+will work (i.e. 10/1/96 or 01-oct-1996).  Hydromet date formats
+will not work.  For 24 month studies from final or preliminary
+forecasts the day within this date must be the first of the
+month.  For 24 month studies from mid month forecasts, the day
+must be the 15th of the month.  
+
+The second argument, lets the application know what type of
+forecast is being used.  It must be either P M or F depending on
+whether the forecast being used is preliminary, mid month or
+final.  
+
+The third argument is the probability type, either most, max or
+min.
+
+The final argument is the application role password.  This
+application run using the application role.
+
+Run the program by typing inflow_24mo along with valid arguments. 
+Error checking for invalid arguments has been incorporated
+whereby the user will receive messages telling why the program
+can not run with the given arguments.
+
+When run with valid arguments as shown below
+
+% inflow_24mo 12/1/96 F Most *****
+
+The application will load the inflow data into the m_month table
+in HDB.  As it processes it will display to the user what method
+was used on a month by month basis develop the inflow number.
+
+The source code is located on slcdg1 and has been compiled to run
+on ucsun1.  The source code is located on slcdg1 in the path
+/apps/uchdba/HDB_applications/appCode/24mo/src. The compiled
+executable is located on ucsun1 in
+/export/home/uchdba/HDB_applications/bin.  The application
+consists of 10 functions.  Five of these use embedded
+programming.  To compile the program.  Log on to ucsun1 as
+uchdba.  Use the automounter to cd to the slcdg1 disk.
+
+% cd /net/slcdg1/apps/uchdba/HDB_applications/appCode/24mo/src
+% make -f Makefile.SUN1.inflow
+
+If the inflow_24mo.h file has been edited the application must be
+recompiled.  
+
+As of December 96 the application is processing 8 sites
+(Fontenelle, Flaming Gorge, Taylor Park, Blue Mesa, Morrow Point,
+Crystal, Navajo, and Glen Canyon).
+
+Tom Ryan 12/96
+
+
+
+

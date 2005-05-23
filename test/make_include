@@ -1,0 +1,8 @@
+CC = gcc
+
+APPDIR = $(HDB_ENV)/test
+OBJDIR = $(APPDIR)
+SRCDIR = $(APPDIR)
+INCLUDES = -I$(HDB_APP_INCLUDE)
+LIBS = $(HDB_LIBS) -ldl -lX11 -lm 
+CFLAGS = -ansi -Wall -g -DANSIPROTO $(INCLUDES)

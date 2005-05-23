@@ -1,0 +1,23 @@
+#  The version for use with C and INGRES follows:
+
+include ../../Environ
+include make_include
+
+######################### Directives ###############################
+
+TARGET = $(HDB_APP_BIN)/mindata
+OBJS = \
+		$(OBJDIR)/mindata.o
+
+main: $(TARGET)
+
+clean: 
+	rm -f  $(TARGET)  $(OBJS)
+
+$(TARGET): $(OBJS)
+	$(CC) $(OBJS) $(LIBS) -o $(TARGET)
+
+$(OBJDIR)/mindata.o: \
+					mindata.pc 
+	proc iname=mindata.pc include=$(HDB_APP_INCLUDE)
+	$(CC) $(CFLAGS) -c mindata.c -o $@

@@ -1,0 +1,7 @@
+CC = gcc
+APPDIR = $(HDB_ENV)/24MoReport/
+OBJDIR = $(APPDIR)/obj
+SRCDIR = $(APPDIR)/src
+INCLUDES =  -I$(HDB_APP_INCLUDE)
+LIBS = $(HDB_LIBS) -lm -lnsl
+CFLAGS = -ansi -Wall -g -DANSIPROTO $(INCLUDES)

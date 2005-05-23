@@ -1,0 +1,7 @@
+CC = gcc
+APPDIR = $(HDB_ENV)/gentea_hist/work
+OBJDIR = $(HDB_ENV)/gentea_hist/obj
+INCLUDES = -I$(HDB_APP_INCLUDE)
+LIBS = $(HDB_LIBS) -lm -ldl -lgd -lpng -ljpeg -lz -liconv
+CFLAGS = -ansi -Wall -g -DANSIPROTO -DDEBUG $(INCLUDES)
+

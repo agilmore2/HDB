@@ -1,0 +1,4 @@
+#!/bin/sh
+/usr/ge/gefrx/GEFRXD start
+
+

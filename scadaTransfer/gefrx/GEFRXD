@@ -1,0 +1,102 @@
+#!/sbin/sh
+
+# The base GE Application Directory
+GEDIR=/wrg/hdb/HDB2_applications/scadaTransfer; export GEDIR
+
+# The output log file name and directory
+LOGFILE=/tmp/gefrx.log; export LOGFILE
+
+# The directory to place the received files
+OUTDIR=/tmp; export OUTDIR
+
+# The serial port to use for file transfer, i.e. Solaris /dev/ttya Linux /dev/ttyS0
+DEVICE=/dev/ttyb; export DEVICE
+
+
+# User modification should not be required below this line.
+#------------------------------------------------------------------------------
+
+
+getPID()
+{
+	# Get the process ID of any running gefrx process
+	pid=`ps -e | awk '/gefrx/ && !/awk/ {print $1}' `
+
+	# Verify that a pid was found if not make the process ID 0
+	if [ "$pid" = "" ]; then
+		pid=0
+	fi
+
+}
+
+APPDIR=$GEDIR/gefrx; export APPDIR
+APP=$APPDIR/gefrx; export APP
+
+# Get the current process ID for gefrx if the process is running
+getPID
+
+
+case "$1" in
+	
+'start')
+	# Make sure the application is installed.
+	if [ ! -x $APP ]; then
+		echo "$0: The GEFRX application is not installed correctly"
+		exit 1
+	fi
+
+	# Make sure the application is not running
+    if [ $pid -gt 0 ]; then
+		echo "$0: The GEFRX application is currently executing."
+		exit 1
+	fi
+
+	# Start the application
+	echo Starting the GEFRX Application
+	$APP -d $DEVICE -o $OUTDIR >> $LOGFILE 2>&1 &
+
+	# Get the new PID
+	getPID
+
+	# Verify that the application started
+    if [ $pid -eq 0 ]; then
+        echo "$0: Error starting the GEFRX application."
+        exit 1
+    fi
+
+
+	exit 0
+
+	;;
+
+'stop')
+	# Determine if the application is running
+    if [ $pid -eq 0 ]; then
+        echo "$0: The GEFRX application is not running."
+        exit 1
+    fi
+
+
+	# Kill the determined process ID
+	echo Stopping the GEFRX Application, PID $pid
+	kill $pid
+
+	# Get the PID again then we will check to see if the process still exists
+	getPID
+
+	# Verify that the application exited
+    if [ $pid -gt 0 ]; then
+        echo "$0: Error stopping the GEFRX application."
+        exit 1
+    fi
+	;;
+
+
+*)
+        echo "Usage: $0 { start | stop }"
+        exit 1
+        ;;
+
+esac
+
+exit 0

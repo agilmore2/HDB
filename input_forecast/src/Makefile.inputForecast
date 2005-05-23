@@ -1,0 +1,41 @@
+#  The version for use with C and Oracle follows:
+
+include ../../Environ
+include make_include
+
+######################### Directives ###############################
+
+TARGET = $(HDB_APP_BIN)/inputForecast
+OBJS = \
+		$(OBJDIR)/insertModeldata.o \
+		$(OBJDIR)/checkforModelrunid.o \
+		$(OBJDIR)/inputForecast.o
+
+main: $(TARGET)
+
+clean: 
+	rm -f  $(TARGET) $(OBJS)
+
+$(TARGET): $(OBJS)
+	$(CC) $(OBJS) $(LIBS) -o $(TARGET)
+
+$(OBJDIR)/insertModeldata.o: \
+					insertModeldata.pc \
+					$(HDB_APP_LIB)/libhdb.a \
+					$(HDB_APP_LIB)/libutils.a
+	proc iname=insertModeldata.pc include=$(HDB_APP_INCLUDE)
+	$(CC) $(CFLAGS) -c insertModeldata.c -o $@
+
+$(OBJDIR)/checkforModelrunid.o: \
+					checkforModelrunid.pc \
+					$(HDB_APP_LIB)/libhdb.a \
+					$(HDB_APP_LIB)/libutils.a
+	proc iname=checkforModelrunid.pc include=$(HDB_APP_INCLUDE)
+	$(CC) $(CFLAGS) -c checkforModelrunid.c -o $@
+
+$(OBJDIR)/inputForecast.o: \
+					inputForecast.c \
+					inputForecast.h \
+					$(HDB_APP_LIB)/libhdb.a \
+					$(HDB_APP_LIB)/libutils.a
+	$(CC) $(CFLAGS) -c inputForecast.c -o $@

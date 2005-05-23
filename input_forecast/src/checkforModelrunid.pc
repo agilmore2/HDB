@@ -1,0 +1,105 @@
+/* insertModeldata.sc
+* 
+* Purpose: Insert or update NWS-NRCS forecast data into m_month or m_range
+* function is passed 6 arguments model_run_id, site_datatype_id, beginning
+* date, ending date, value and a interval indicator.  The interval indicator
+* tells the function which table to put the data into.  It is a char.  If
+* it is 'R' it puts the data into the range table.  If it is 'M' it puts it
+* into the month table.  If it is 'D', it puts it into the day column.  The
+* ending data argument is used only when the interval indicator is 'R'.
+
+*
+* Return
+* OK or ERROR
+*
+* COMMENTS
+*
+* AUTHOR - EDITORS
+* Tom Ryan May 1996
+*****************************************************************************/
+#include <stdio.h>
+#include <string.h>
+#include <stropts.h>
+#include "dbutils.h"
+#include "utils.h"
+#include "defines.h"
+#include "nwsForecast.h"
+
+
+EXEC SQL INCLUDE sqlca;
+
+#define FUNC_NAME "checkforModelrunid"
+
+int checkforModelrunid (ID model_id, SQL_DATE run_date, int prob, char *type,int *run_id)
+
+/* an important consideration here is to make sure that the size of SLQ variables  is consistent 
+   with the database.  Nearly all data (if not all) values in the database are 16 byte floats.  
+   If one declares the vals arrary below as a float, it will create an array of 8 byte floats not
+   16 byte floats.  This could get one into trouble.  Thus always use the data type VALUE which 
+   has been defined as a 16 byte float */
+	
+{
+ EXEC SQL BEGIN DECLARE SECTION;
+ SQL_DATE      r_date;
+ ID            mri,mi,pr;
+ char          typ[20];
+ int           ct;
+
+ EXEC SQL END DECLARE SECTION;
+
+ int         result;
+
+ char        tableName[25];
+
+ mi=model_id;
+ pr = prob;
+ strcpy(typ,type);
+ strcpy(r_date,run_date);
+
+ SqlFormatDate(r_date,r_date);	
+
+ strcpy(tableName,"ref_model_run");
+
+     EXEC SQL SELECT COUNT(*) into :ct
+       FROM REF_MODEL_RUN
+	 WHERE 
+	   MODEL_ID = :mi
+	     AND to_char(RUN_DATE,'dd-mon-yyyy hh24:mi:ss') = lower(:r_date)
+	       AND PROBABILITY = :pr
+		 AND MODELTYPE = :typ;
+
+ if ((result = SqlErrorHandler 
+      (FUNC_NAME, FALSE,
+       "Problem selecting a model run id from %s\n",tableName)) != OK)
+   {
+     EXEC SQL ROLLBACK;
+     return (ERROR);
+   }
+
+ EXEC SQL COMMIT;
+
+ if (ct == 0)
+   {
+     *run_id = 998877;
+     return (0);
+   }
+ else if (ct == 1)
+   {
+     EXEC SQL SELECT MODEL_RUN_ID into :mri
+       FROM REF_MODEL_RUN
+	 WHERE 
+	   MODEL_ID = :mi
+	     AND to_char(RUN_DATE,'dd-mon-yyyy hh24:mi:ss') = lower(:r_date)
+               AND PROBABILITY = :pr
+		 AND MODELTYPE = :typ;
+     printf("\nModel Run Id exists!\n");
+     printf("model_run_id is %d\n",mri);
+     printf("     for model_id %d  run_date %s  probability %d  and model type %s\n\n",mi,r_date,pr, type);
+     *run_id = mri;
+     return (1);
+   }
+ else
+   {  
+     return(2);
+   }
+}

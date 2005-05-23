@@ -1,0 +1,61 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <time.h>
+#include "dbutils.h"
+#include "utils.h"
+#include "defines.h"
+#include "typedefs.h"
+
+float readone(int site,int datatype, char *date)
+{
+   EXEC SQL INCLUDE SQLCA;
+  
+   EXEC SQL BEGIN DECLARE SECTION;
+
+   char     oradate[6];
+   ID	        site_id, datatype_id;
+   float         value;
+   /*   char 		Site_Name[65]; */
+  
+   EXEC SQL END DECLARE SECTION;
+
+   int result;
+   
+   EXEC SQL WHENEVER SQLERROR GOTO errrpt;
+  
+   site_id = site;
+   datatype_id = datatype;
+
+   EXEC SQL SELECT value, trim(to_char(START_DATE_TIME,'MM/DD'))
+      INTO :value, :oradate
+      FROM HDB_SITE_DATATYPE a, R_DAY b
+      WHERE SITE_ID = :site_id
+      AND DATATYPE_ID = :datatype_id
+      AND B.SITE_DATATYPE_ID = A.SITE_DATATYPE_ID
+      AND B.START_DATE_TIME = TO_DATE('15-AUG-2004');
+
+   if (sqlca.sqlcode > 0)
+   {		
+      fprintf(stderr,"Error retrieving data for site id %d, datatype id %d\n",
+              site_id, datatype_id);
+      exit(ERROR);
+   }
+  
+   strcpy(date,oradate);
+  
+   return value;
+
+   /*All that is below this line is just error handling stuff*/
+
+ errrpt:
+  
+   EXEC SQL WHENEVER SQLERROR CONTINUE;
+   fprintf (stderr, "\n %.70s \n",sqlca.sqlerrm.sqlerrmc);
+   if ((result = SqlDisconnect ()) == ERROR)
+      exit (ERROR);
+   exit (1); 
+  
+}
+

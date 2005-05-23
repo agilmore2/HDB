@@ -1,0 +1,55 @@
+#include <stdio.h>
+
+
+int main(int argc, char *argv[])
+{
+   EXEC SQL INCLUDE SQLCA;
+ 
+   char result_data[40] = "\n";
+   char command[40] = "SELECT * FROM dual";
+   char user1[10] = "lchdba";      /* insert your user1 name */
+   char password1[10] = "";  /* insert your user1 password */
+   char user2[10] = "uchdba";      /* insert your user2 name */
+   char password2[10] = ""; /* insert your user2 password */
+   char db_string1[10] = "lchdb";  /* insert your database 1 name */
+   char db_string2[10] = "uchdb";  /* insert your database 2 name */
+
+   EXEC SQL DECLARE DB_NAME1 DATABASE;
+     if(sqlca.sqlcode != 0)
+       printf("DECLARE DB_NAME1 - %s \n", sqlca.sqlerrm.sqlerrmc);
+   EXEC SQL DECLARE DB_NAME2 DATABASE;
+     if(sqlca.sqlcode != 0)
+       printf("DECLARE DB_NAME2 - %s \n", sqlca.sqlerrm.sqlerrmc);
+   EXEC SQL CONNECT :user1 IDENTIFIED BY :password1 AT DB_NAME1 USING
+:db_string1;
+     if(sqlca.sqlcode != 0)
+       printf("CONNECT DB_NAME1 - %s \n", sqlca.sqlerrm.sqlerrmc);
+   EXEC SQL CONNECT :user2 IDENTIFIED BY :password2 AT DB_NAME2 USING :db_string2;
+     if(sqlca.sqlcode != 0)
+       printf("CONNECT DB_NAME2 - %s \n", sqlca.sqlerrm.sqlerrmc);
+   EXEC SQL AT DB_NAME1 DECLARE sql_stmt STATEMENT;
+     if(sqlca.sqlcode != 0)
+       printf("DECLARE sql_stmt -  %s \n", sqlca.sqlerrm.sqlerrmc);
+   EXEC SQL PREPARE sql_stmt FROM :command;
+     if(sqlca.sqlcode != 0)
+       printf("PREPARE sql_stmt - %s \n", sqlca.sqlerrm.sqlerrmc);
+   EXEC SQL DECLARE cur_test CURSOR for sql_stmt;
+     if(sqlca.sqlcode != 0)
+       printf("DECLARE cur_test - %s \n", sqlca.sqlerrm.sqlerrmc); 
+   EXEC SQL OPEN cur_test;
+     if(sqlca.sqlcode != 0)
+       printf("OPEN cur_test - %s \n", sqlca.sqlerrm.sqlerrmc);
+   EXEC SQL FETCH cur_test INTO :result_data;
+     if(sqlca.sqlcode != 0)
+       printf("FETCH cur_test - %s \n", sqlca.sqlerrm.sqlerrmc);
+   EXEC SQL CLOSE cur_test;
+     if(sqlca.sqlcode != 0)
+       printf("CLODE cur_test - %s \n", sqlca.sqlerrm.sqlerrmc);
+
+   printf("result_data = %s", result_data); 
+
+   return 0;
+
+}
+
+          

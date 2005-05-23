@@ -12,8 +12,8 @@ ORACLE_LPSTAT=/usr/bin/lpq; export ORACLE_LPSTAT
 ORACLE_PAGER=/usr/bin/less; export ORACLE_PAGER
 
 # HDB - required for all HDB interactions (should be set in users' .bashrc)
-HDB_LOCAL=uchdbdev; export HDB_LOCAL
-HDB_ENV=/home/hdb/HDB_app; export HDB_ENV
+HDB_LOCAL=uchdb2; export HDB_LOCAL
+HDB_ENV=/wrg/hdb/HDB; export HDB_ENV
 HDB_BIN=$HDB_ENV/bin; export HDB_BIN
 
 # SITE SPECIFIC - required for RiverWare 24 MO Study DMI's

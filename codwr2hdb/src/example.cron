@@ -1,0 +1,1 @@
+00 12 * * * csh -c "source /export/home/uchdba/.cshrc; cd /wrg/hdb/HDB_applications/codwr2hdb/src; ./codwr2hdb.pl -u app_user -p <PASSWORD> -a" > /wrg/hdb/HDB_applications/codwr2hdb/src/codwr2hdb.out 2> /wrg/hdb/HDB_applications/codwr2hdb/src/codwr2hdb.err

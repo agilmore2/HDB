@@ -1,0 +1,127 @@
+
+------------- Begin Forwarded Message -------------
+
+Received: from ibr4uchub (uc.usbr.gov [XXX.XXX.XX.2]) by ucsun5.uc.usbr.gov 
+(8.9.1b+Sun/8.9.1) with SMTP id NAA09795 for <pdavidso@ucsun5.uc.usbr.gov>; Fri, 
+3 Mar 2000 13:59:20 -0700 (MST)
+Received: from ibr4dm10-Message_Server by ibr4uchub with Novell_GroupWise; Fri, 
+03 Mar 2000 14:04:54 -0700
+Message-Id: <s8bfc686.098@ibr4uchub>
+X-Mailer: Novell GroupWise 5.5.3
+Date: Fri, 03 Mar 2000 14:04:21 -0700
+From: "Paul Davidson" <PDAVIDSON.4UCRMD@uc.usbr.gov>
+Sender: Postmaster@uc.usbr.gov
+Reply-To: PDAVIDSON.4UCRMD@uc.usbr.gov
+Errors-To: Postmaster@uc.usbr.gov
+To: <pdavidso@ucsun5.uc.usbr.gov>
+Subject: River Forecast Center ESPSLR forecast ( -Forwarded)
+Content-Length: 4552
+
+Received: from rocky.cbrfc.noaa.gov
+	by ibr4uchub; Fri, 03 Mar 2000 14:04:11 -0700
+Received: (from oper@localhost) by rocky.cbrfc.noaa.gov (8.7.1/8.7.3) id 
+VAA24560; Fri, 3 Mar 2000 21:03:56 GMT
+Date: Fri, 3 Mar 2000 21:03:56 GMT
+From: oper on hp <oper@rocky.cbrfc.noaa.gov>
+Message-Id: <200003032103.VAA24560@rocky.cbrfc.noaa.gov>
+To: bdodd@uc.usbr.gov, btracy@spl.usace.army.mil,
+        bwilliam@ultraman.lc.usbr.gov, coroneos@lcriver2.lc.usbr.gov,
+        corps.cbrfc@spk-wc.usace.army.mil, csm@rocky.cbrfc.noaa.gov,
+        cstanton@uc.usbr.gov, dlv@rocky.cbrfc.noaa.gov, evidmar@uc.usbr.gov,
+        ewarner@uc.usbr.gov, gpeacock@spl.usace.army.mil,
+        hesfahani@mwd.dst.ca.us, jbs@rocky.cbrfc.noaa.gov,
+        jevelyn@spl.usace.army.mil, jjsmith@lc.usbr.gov, jozga@uc.usbr.gov,
+        jscott@mwd.dst.ca.us, mkim@spl.usace.army.mil,
+        mmeneses@spl.usace.army.mil, pdavidson@uc.usbr.gov,
+        radams-ibr3op@ibr5nds.usbr.gov, rclayton@ucsun3.uc.usbr.gov,
+        rks@rocky.cbrfc.noaa.gov, rleach@uc.usbr.gov, rpeterson@uc.usbr.gov,
+        rspringer@uc.usbr.gov, rswickard@uc.usbr.gov, tom.zickus@noaa.gov,
+        tperkins@wcc.nrcs.usda.gov, tryan@uc.usbr.gov,
+        wbr@rocky.cbrfc.noaa.gov, wcook@uc.usbr.gov
+Subject: River Forecast Center ESPSLR forecast
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+ZCZC SLCESPSLR CSW
+TTAA00 KSLR DDHHMM
+:National Weather Service
+:Colorado Basin River Forecast Center
+:Salt Lake City Utah
+
+:March Final Forecast          March 3, 2000
+:
+:**  FINAL FORECASTS APPEAR APPROXIMATELY 7 DAYS AFTER PRELIMINARY FORECASTS **
+:
+.B SLC 000801 M DH24/DC0003031800/DVM05/QCVFEZ5/QCVFEZF/QCVFEZT
+"product_issuance=final"
+
+:FLOOD CONTROL RESERVOIR UNREGULATED INFLOW FORECASTS
+:1 MARCH THROUGH 31 JULY 2000 (units::  1000's  ACRE-FEET)
+
+:RESERVOIR                MOST
+:ID  NAME              PROBABLE  MAXIMUM   MINIMUM
+HODA3:LAKE MEAD       :   6750/     10350/     3790
+GLDA3:LAKE POWELL     :   6550/      9840/     3760
+NVRN5:NAVAJO RES      :    440/       795/      190
+BMDC2:BLUE MESA RES   :    583/       903/      348
+GRNU1:FLAMING GORGE   :   1095/      1705/      535
+:
+.END
+.B SLC 000331 M DH24 /DC0003031800/
+.B1 DY000331 /QCMFEZ5/DRE+1/QCMFEZ5/DRE+2/QCMFEZ5
+.B1 DY000801 /DVM04/QCVFEZ5
+:
+:                    MONTHLY DISTRIBUTION OF FLOW (1000's   A-F)
+:
+:                       OBS                        FORECAST       OUTLOOK
+:                        Nov  Dec  Jan  Feb%AVG   Mar  Apr  May Ap-Ju%AVG
+GLDA3 :LAKE POWELL       453  390  335  373  90%: 550/ 750/1800/ 6000 : 78%
+SAPC2 :BLUE MESA          29   26   27   26 118%:  33/  60/ 170/  550 : 79%
+MPSC2 :MORROW POINT                             :    /    /    /  610 : 79%
+CLSC2 :CRYSTAL UNREG**    34   32   33   33 110%:  40/  80/ 220/  700 : 78%
+GBRW4 :FONTENELLE         46   34   32   34 116%:  40/  80/ 160/  725 : 85%
+GRNU1 :FLAMING GORGE      55   35   44   53 108%:  95/ 140/ 250/ 1000 : 84%
+VCRC2 :VALLECITO         5.3  3.8  3.5  3.3  79%:   5/  13/  40/  125 : 64%
+NVRN5 :NAVAJO UNREG       15   10 13.5   15  52%:  50/  85/ 140/  390 : 51%
+VCRC2 :vallecito chg st    3    2  1.5    1     :   5/  12/  15/     
+CHUN5 :Azotea tunnel fl    0    0    0    0     :   1/  10/  20/     
+.END
+: Navajo Regulated Forecast
+.B SLC 000331 M DH24 /DC0003031800/
+.B1 DY000331 /QCMFAZ5/DRE+1/QCMFAZ5/DRE+2/QCMFAZ5
+.B1 DY000801 /DVM04/QCVFAZ5
+NVRN5 :NAVAJO REGLTD *    12    8   12   14     :  44/  63/ 105/     
+.END
+:   * REGULATED FORECASTS ARE DERIVED FROM ANALYZING THE RECORD
+:     AND COMPARING IT TO AVERAGES.  THESE FORECASTS HAVE AN
+:     ADDITIONAL SOURCE OF ERROR BECAUSE THE RESERVOIR AND TUNNEL
+:     OPERATORS MAY SUBSTANTIALLY DEVIATE FROM THE ESTIMATED
+:     REGULATION.
+: ** UNREGULATED CRYSTAL INFLOW COMBINES BLUE MESA UNREGULATED
+:     INFLOW PLUS THE SIDE INFLOW TO BOTH MORROW POINT AND CRYSTAL
+
+                       PRECIPITATION SUMMARY - % OF AVERAGE BY MONTH - WY 2000
+RIVER BASIN:                 OCT  NOV  DEC  JAN   FEB
+GREEN
+   ABV FLAMING GORGE         20   35   70   155   170
+   ABV GRN RVR,UT(TOTAL)     20   30   70   130   170
+COLORADO
+   ABV  GRAND JUNCTION       40   35   70   140   130
+   GUNNISON BASIN            30   20   60   130   120
+   DOLORES BASIN              5   15   40   155   140
+   ABV CISCO (TOTAL)         25   25   60   140   130
+SAN JUAN
+   ABV BLUFF (TOTAL)          5    5   15   100   100
+
+For questions regarding reservoir forecasts, contact:
+                       Fontenelle, Flaming Gorge     - Jeff Smith
+                       Blue Mesa, Morrow Pt, Crystal - Bill Reed
+                       Vallecito, Navajo             - Diana Van Cor
+                       Powell                        - Cara McCarthy
+CBRFC (801) 524-5130
+NNNN
+
+------------- End Forwarded Message -------------
+
+

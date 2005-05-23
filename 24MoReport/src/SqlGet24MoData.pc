@@ -1,0 +1,451 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#include <typedefs.h>
+#include <defines.h>
+
+#include <dbutils.h>
+#include <utils.h>
+#include <lc_apps.h>
+#include "24MoReport.h"
+
+EXEC SQL INCLUDE sqlca;
+
+#define FUNC_NAME "SqlCheckModelRunId"
+int SqlCheckModelRunId(int model_run)
+{
+  int result;
+
+  EXEC SQL BEGIN DECLARE SECTION;
+   int mrid = model_run;
+   int test;
+  EXEC SQL END DECLARE SECTION;
+ 
+  EXEC SQL At :current_dbsite SELECT model_run_id INTO
+   :test FROM ref_model_run WHERE model_run_id = :mrid;
+
+  if (test!=mrid) return(ERROR); 
+  return (OK);
+}
+
+#define FUNC_NAME "SqlGetSystemRunDate"
+int SqlGetSystemRunDate(int model_run, char * sysDate)
+{
+  int result;
+
+  EXEC SQL BEGIN DECLARE SECTION;
+    char date[25];
+    int mrid = model_run;
+  EXEC SQL END DECLARE SECTION;
+
+  SwitchSession("UC"); /*set session to uchdb */
+  if (( result = SqlErrorHandler (FUNC_NAME, TRUE,
+          "Problem setting session to uchdb.\n")) != OK)
+     {
+       PrintError("Error occurred in session 2\n");
+       return(ERROR);;
+     }
+
+  EXEC SQL AT :current_dbsite SELECT to_char(sys_date, 
+      'dd-mon-yyyy hh24:mi:ss') INTO :date FROM ref_model_run
+       where model_run_id = :mrid;
+
+if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
+                "Problem getting date.\n")) != OK)
+  {
+        return (ERROR);
+  }
+
+strcpy (sysDate, date);
+
+return(OK);
+
+}
+
+
+#define FUNC_NAME "SqlGetModelRunDate"
+int SqlGetModelRunDate(int model_run,int * mon,int * yr, char * runDate, int * prob)
+{
+  int result;
+
+  EXEC SQL BEGIN DECLARE SECTION;
+    int  mrid = model_run;
+    char Rdate[50];
+  EXEC SQL END DECLARE SECTION;
+
+  EXEC SQL AT :current_dbsite SELECT to_char(run_date, 
+      'dd-mon-yyyy hh24:mi:ss') INTO :Rdate FROM ref_model_run 
+      WHERE model_run_id = :mrid;
+
+if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
+		"Problem getting model run date.\n")) != OK)
+  {
+	return (ERROR);
+  }
+
+if ((result = SqlExtractDatePart(Rdate, MONTH, mon)) !=OK)
+  {
+    PrintError("Error in extracting the date\n");
+  }
+
+if ((result = SqlExtractDatePart(Rdate, YEAR, yr)) !=OK)
+  {
+    PrintError("Error in extracting the date\n");
+  }
+
+
+strcpy (runDate,Rdate);
+
+   EXEC SQL AT :current_dbsite SELECT probability INTO :prob from
+      ref_model_run WHERE model_run_id = :mrid;
+
+return(OK);
+
+}
+
+#define FUNC_NAME "SqlGetSDI"
+int SqlGetSDI(int x, int y, int * sdi)
+{
+int  result;
+EXEC SQL BEGIN DECLARE SECTION;
+	int sdid, did = x, sid = y;
+EXEC SQL END DECLARE SECTION;
+
+if ( did==0)
+    sdid = 0;
+else  {   
+EXEC SQL AT :current_dbsite SELECT site_datatype_id INTO :sdid 
+  FROM hdb_site_datatype
+  WHERE site_id = :sid and datatype_id = :did;
+
+if ((result = SqlErrorHandler (FUNC_NAME, TRUE, 
+			"Problem selecting site_datatype_id.\n")) != OK)
+  {
+	return(ERROR);
+  }
+}
+
+*sdi = sdid;
+
+return(OK);
+
+}
+
+
+#define FUNC_NAME "SqlGet24HisData"
+float SqlGet24HisData(int sid, int sdi, int mon, int yr, float *values)
+{
+int result, success, ind,i,j,mo;
+int month[24], year[24];
+float tmpval[30];
+
+EXEC SQL BEGIN DECLARE SECTION;
+   int sdid = sdi, n, m;
+   float temp;
+   char begdate[50], moddate[50];
+EXEC SQL END DECLARE SECTION;
+
+EXEC SQL INCLUDE sqlca;
+
+sprintf(moddate,"%d/1/%d", mon, yr);
+success = SqlFormatDate(moddate, moddate);
+if (success != OK)
+    {
+        PrintError("Failed to format date correctly... exiting\n");
+        exit (ERROR);
+    }
+
+if (sdid==0) return(OK);
+
+/*if (sdid==2078) sdid = 2074;*/
+/*if (sdid==2079) sdid = 2075;*/
+/*if (sdid==2080) sdid = 2076;*/
+
+success = SqlDateMath(SUBTRACTION, moddate, begdate, 1, "year");
+if (success != OK)
+{
+  PrintError("Error doing the date math\n");
+  exit(ERROR);
+}
+
+
+if ((sid <= 920 || (sid <= 970&& sid>=965) || sid==933 || sid==1065) && sid != 700 
+    && sid !=692 && sid !=699) {
+  SwitchSession("UC"); /*set session to uchdb */
+  if (( result = SqlErrorHandler (FUNC_NAME, TRUE,
+          "Problem setting session to uchdb.\n")) != OK)
+     {
+       PrintError("Error occurred in session 2\n");
+       return(ERROR);;
+     }
+}
+else  {
+  SwitchSession("LC");   /* set session to lchdb */ 
+  if (( result = SqlErrorHandler (FUNC_NAME, TRUE,
+          "Problem setting session to lchdb.\n")) != OK) 
+     {
+       PrintError("Error occurred in session 1\n"); 
+       return(ERROR);;
+     }
+}
+
+
+EXEC SQL AT :current_dbsite DECLARE acursor CURSOR FOR
+SELECT value, to_number(to_char(start_date_time,'mm')), 
+to_number(to_char(start_date_time,'yy')) 
+FROM r_month WHERE site_datatype_id=:sdid and start_date_time
+>= to_date(:begdate,'dd-mon-yyyy hh24:mi:ss') and start_date_time< 
+to_date(:moddate,'dd-mon-yyyy hh24:mi:ss');
+
+EXEC SQL WHENEVER NOT FOUND GOTO close_cursor;
+
+EXEC SQL OPEN acursor;
+
+ind = 0;
+while(++ind)
+{
+  EXEC SQL FETCH acursor INTO :temp, :n, :m; 
+if (( result = SqlErrorHandler (FUNC_NAME, TRUE,
+         "Fetch failed\n"))  !=OK)
+   {
+     return (ERROR);
+   }
+   values[ind] = temp;
+   month[ind] = n;
+   year[ind] = m;
+}
+
+close_cursor: EXEC SQL CLOSE acursor;
+
+
+if (ind < 13)  {
+mo = mon;
+j = mo;
+for (i=1; i<ind; ++i)  {
+   while (month[i] != mo)
+     {
+      tmpval[j] = 0.0;
+      j = j + 1;
+      mo = mo + 1; 
+      if (mo==13) mo = 1;  }
+   tmpval[j] = values[i];
+   mo = mo + 1;
+   j = j + 1;
+   if ( mo==13 ) mo = 1; 
+}
+
+if (j!=mon+12) {
+  for (i=j; i<(mon+24); ++i)
+   tmpval[i] = 0.0;  }
+
+j = mon;
+for (i=1;i<13; ++i)  {
+   values[i] = tmpval[j];
+   j=j+1; }
+
+}
+
+return(OK);
+
+}
+
+
+
+#define FUNC_NAME "SqlGet24ModData"
+float SqlGet24ModData(int sid, int mrid, int sdi, int mon, int yr, float *values)
+{
+int result, success, ind;
+
+EXEC SQL BEGIN DECLARE SECTION;
+   int sdid = sdi;
+   int rid = mrid;
+   float temp;
+   char enddate[50], moddate[50];
+EXEC SQL END DECLARE SECTION;
+
+EXEC SQL INCLUDE sqlca;
+
+sprintf(moddate,"%d/1/%d", mon, yr);
+success = SqlFormatDate(moddate, moddate);
+if (success != OK)
+    {
+        PrintError("Failed to format date correctly... exiting\n");
+        exit (ERROR);
+    }
+
+if (sdid==0) return(OK);
+
+if (sdid==2078) sdid = 2074;
+if (sdid==2079) sdid = 2075;
+if (sdid==2080) sdid = 2076;
+
+success = SqlDateMath(ADDITION, moddate, enddate, 2, "year");
+if (success != OK)
+{
+  PrintError("Error doing the date math\n");
+  exit(ERROR);
+}
+
+
+if ((sid <= 920 || (sid>=965 && sid <=970) || sid == 933 || sid==1065) && sid !=700 
+      && sid !=692 && sid!=699) {
+  SwitchSession("UC");   /* set session to uchdb */
+  if (( result = SqlErrorHandler (FUNC_NAME, TRUE,
+          "Problem setting session to uchdb.\n")) != OK)
+     {
+       PrintError("Error occurred in session 2\n");
+       return(ERROR);;
+     }
+}
+else  {
+  SwitchSession("LC");   /* set session to lchdb */ 
+  if (( result = SqlErrorHandler (FUNC_NAME, TRUE,
+          "Problem setting session to lchdb.\n")) != OK) 
+     {
+       PrintError("Error occurred in session 1\n"); 
+       return(ERROR);;
+     }
+}
+
+if (sdid == 2319) sdid = 1721;
+if (sdid == 2098) sdid = 2086;
+if (sdid == 2099) sdid = 2087;
+
+EXEC SQL AT :current_dbsite DECLARE bcursor CURSOR FOR
+SELECT value FROM m_month WHERE site_datatype_id=:sdid and start_date_time
+BETWEEN to_date(:moddate,'dd-mon-yyyy hh24:mi:ss') and 
+to_date(:enddate,'dd-mon-yyyy hh24:mi:ss') and model_run_id=:rid;
+
+EXEC SQL WHENEVER NOT FOUND GOTO close_cursor;
+
+EXEC SQL OPEN bcursor;
+
+ind = 12;
+while(++ind)
+{
+  EXEC SQL FETCH bcursor INTO :temp; 
+  values[ind] = temp;
+}
+
+close_cursor: EXEC SQL CLOSE bcursor;
+
+return(OK);
+
+}
+
+
+
+#define FUNC_NAME "SqlWYdata"
+int SqlWYdata(int sdi, int sid, char * WYdate, char * date, float * values) 
+{
+  int ind, success,result,i,j,mo, diff;
+  int month[20], year[20],tmpval[20];
+  double x; 
+
+  EXEC SQL BEGIN DECLARE SECTION;
+    float temp;
+    int   begmo,num_mo,sdid = sdi,n,m;
+    char  begWY[50], begyear[50];
+  EXEC SQL END DECLARE SECTION;
+
+  EXEC SQL INCLUDE sqlca;
+strcpy(begyear, date);
+strcpy(begWY, WYdate);
+
+success = SqlFormatDate(begyear, begyear);
+if (success != OK)
+    {
+        PrintError("Failed to format date correctly... exiting\n");
+        exit (ERROR);
+    }
+
+success = SqlFormatDate(begWY, begWY);
+if (success != OK) 
+    { 
+        PrintError("Failed to format date correctly... exiting\n"); 
+        exit (ERROR);
+    }
+
+result = SqlNumIntervalsBetweenDates(begWY,begyear,MONTH,&x);
+if (result != OK)
+    {
+	PrintError("Failed to get interval... exiting\n");
+	exit (ERROR);
+    }
+num_mo = (int) x;
+
+SqlExtractDatePart (begyear, MONTH, &begmo);
+if (begmo<10) num_mo=num_mo+1;
+  if ((sid <= 920 || (sid>=965 && sid <=970 || sid==1065 || sid==933))
+	&& sid !=700 && sid!=692 && sid!=699)  {
+    SwitchSession("UC");
+    if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
+		"Problem settin session to uchdb.\n")) !=OK)
+       {
+        PrintError("error occured in session 2.\n");
+        return(ERROR);;
+       }
+  }
+  else  {
+    SwitchSession("LC");
+    if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
+		"Problem settin session to lchdb.\n")) !=OK)
+       {
+        PrintError("error occured in session 1.\n");
+        return(ERROR);;
+       }
+  }
+
+EXEC SQL AT :current_dbsite DECLARE mycursor CURSOR FOR
+SELECT value, to_number(to_char(start_date_time,'mm')), 
+to_number(to_char(start_date_time,'yy'))
+ FROM r_month WHERE site_datatype_id = :sdid and 
+start_date_time>= to_date(:begWY,'dd-mon-yyyy hh24:mi:ss') and start_date_time<
+to_date(:begyear,'dd-mon-yyyy hh24:mi:ss');
+
+EXEC SQL WHENEVER NOT FOUND GOTO close_cursor;
+
+EXEC SQL OPEN mycursor;
+
+ind = 0;
+while (++ind)
+{
+   EXEC SQL FETCH mycursor INTO :temp, :n, :m;
+   values[ind] = temp;
+/*if(ind==1) i=n;*/
+   month[ind] = n;
+   year[ind] = m;
+}
+close_cursor: EXEC SQL CLOSE mycursor;
+/*month[1]=i;*/
+
+if(ind < (num_mo+1))  {
+  mo=10;
+  j=mo;
+  for (i=1; i<ind; ++i)  {
+    while (month[i] != mo)
+      {
+        tmpval[j]=0.0;
+        j = j+1;
+        mo = mo+1;
+        if (mo==13) mo=1;}
+    tmpval[j] = values[i];
+    mo = mo+1;
+    j = j+1;
+    if (mo==13) mo=1; }
+  diff = num_mo - ind;
+  if (diff != 0)  {
+   for (i=1; i<=diff; ++i) {
+    tmpval[j] = 0.0;
+    j = j + 1;  }}
+  j = 10;
+  for ( i=1; i<num_mo+1; ++i) {
+   values[i] = tmpval[j];
+   j = j+1;}
+}
+
+return(OK);
+
+}

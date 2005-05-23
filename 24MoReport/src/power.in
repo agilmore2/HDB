@@ -1,0 +1,36 @@
+921 39 1000 1 Power Release 1000 Ac-Ft
+921 39 1000 2 Power Release 1000 CFS
+921 49 1 4 EOM Reservoir Elevation Feet
+921 17 1000 1 EOM Storage 1000 Ac-Ft
+921 47 1000 1 Change_In Storage 1000 Ac-Ft
+971 13 1000 4 Hoover Static Head Feet
+971 86 1000 4 Hoover Generator Capacity MW
+971 74 1000 15 Hoover Gross Energy MKWH
+971 77 100 4 Percent Of Units Available
+971 0  1000 15 KWH/AF
+922 39 1000 1 Power Release 1000 Ac-Ft
+922 39 1000 2 Power Release 1000 CFS
+922 49 1 4 EOM Reservoir Elevation Feet
+922 17 1000 1 EOM Storage 1000 Ac-Ft
+922 47 1000 1 Change_In Storage 1000 Ac-Ft
+972 13 1000 4 Davis Static Head Feet
+972 86 1000 4 Davis Generator Capacity MW
+972 104 1000 15 Davis Gross Energy MKWH
+972 77 100 4 Percent Of Units Available
+972 0  1000 15 KWH/AF
+923 105 1000 1 Power Release 1000 Ac-Ft
+923 105 1000 2 Power Release 1000 CFS
+923 49 1 4 EOM Reservoir Elevation Feet
+923 17 1000 1 EOM Storage 1000 Ac-Ft
+923 47 1000 1 Change_In Storage 1000 Ac-Ft
+973 13 1000 4 Parker Static Head Feet
+973 86 1000 4 Parker Generator Capacity MW
+973 104 1000 15 Parker Gross Energy MKWH
+973 77 100 4 Percent Of Units Available
+973 0 1000 15 KWH/AF
+970 74 1000 15 Glen Canyon 1000 MWHR
+969 74 1000 15 Flam Gorge 1000 MWHR
+965 74 1000 15 Blue Mesa 1000 MWHR
+966 74 1000 15 Morrow Point 1000 MWHR
+967 74 1000 15 Crystal Res 1000 MWHR
+968 74 1000 15 Font Res 1000 MWHR

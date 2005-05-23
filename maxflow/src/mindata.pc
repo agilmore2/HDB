@@ -1,0 +1,270 @@
+
+/***************************************************************************
+  
+  maxflow (sid,water year)
+  
+  ***************************************************************************/
+
+/*   Embeded SQL C program.  Accesses the CRDB and retrieves the maximum
+     daily flow for the station and water year input from the command line */
+
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include "dbutils.h"
+#include "utils.h"
+#include "defines.h"
+#include "typedefs.h"
+
+
+main (int argc,char **argv )
+     
+     /* note the declaration of argc and argv
+	argc is the number of arguments and
+	argv is an array of pointers to the 
+	individual string themselves (argv[1] is
+	the first argument argv[2] the second etc
+	argv[0] is the program name  note that 
+	argv is declared as an address (*argv[] */
+     
+     
+{
+  
+  EXEC SQL INCLUDE SQLCA;
+  
+  EXEC SQL BEGIN DECLARE SECTION;
+  char 		data_base[10],
+    desc[71],
+    dater[12];
+  SQL_DATE
+    date1,
+    date2;
+  short 	year,
+    month,
+    value_null_indicator;
+  ID    sid,
+    model_run_id,
+    datatype_id,
+    stat_id;
+    float         flow;
+  
+  EXEC SQL END DECLARE SECTION;
+  
+  int wyear,count,counter,int_array[366],i;
+  float vals[366],minv,hold;
+  char date_out[366][12];
+  int pwyear;
+  char *dbName;
+  int result;
+  
+  /* the next block test to see that there are two arguments to
+     the function (the function itself accounts for one - this is
+     why one tests for 3 not 2).  Note the use of the exit function
+     by which the whole program quits with an exit code of 2.  Note
+     also that an exit code of 0 (false) means no error and any other
+     exit code means that the error status was true. */
+  
+  if (argc != 5)
+    {
+      printf("\nusage: maxflow site_id datatype_id model_run_id water_year\n");
+      printf("For real data use 0 for model_run_id\n");
+      exit(2);
+    }
+  /* use the atoi function to convert
+     the sid argv[1] to an integer
+     note that the library stdlib.h must be
+     included to use this function */
+  
+  sid = atoi(argv[1]);
+  datatype_id = atoi(argv[2]);
+  model_run_id = atoi(argv[3]);
+  
+  
+  /* use the atoi function to convert
+     the water year argv[4] to an integer
+     note that the library stdlib.h must be
+     included to use this function */
+  
+  wyear = atoi(argv[4]);
+  
+  pwyear = wyear-1;
+  
+  
+  /* sprintf puts the expression in quotes
+     into the string that is the first argument */
+  
+  sprintf(date1,"01-OCT-%4d 00:00:00",pwyear);
+  /*printf("\nDate one is %s\n",date1); */
+  sprintf(date2,"30-SEP-%s 00:00:00",argv[4]);
+  /*printf("\nDate two is %s\n",date2); */
+  
+  EXEC SQL WHENEVER SQLERROR GOTO errrpt;
+  
+  
+  /* set the name of the database */
+  
+  dbName = NULL; 
+  dbName = getenv("HDB_LOCAL");
+  
+  if (dbName == NULL)
+    {
+      PrintError("Environment variable HDB_LOCAL not set...\n");
+      return(ERROR);
+    }
+  
+  if ((result = SqlConnect (dbName, "app_user", dbName)) == ERROR)
+    exit (ERROR);
+  
+  fprintf(stdout, "Connected to ORACLE.\n");
+  
+  /* retrive the station name */
+  
+  EXEC SQL SELECT SITE_NAME
+    INTO :desc
+    FROM HDB_SITE
+    WHERE SITE_ID = :sid;
+  
+  EXEC SQL COMMIT;
+  
+  if(model_run_id == 0)
+    {
+      /*   declare the cursor named AA.  */
+      
+      EXEC SQL DECLARE AA CURSOR FOR 
+	SELECT START_DATE_TIME,VALUE
+	FROM R_DAY A, HDB_SITE_DATATYPE B
+	WHERE B.SITE_ID = :sid
+	AND B.DATATYPE_ID = :datatype_id
+	AND A.SITE_DATATYPE_ID = B.SITE_DATATYPE_ID
+	AND DATE_DAY BETWEEN to_date(:date1,'dd-mon-yyyy hh24:mi:ss') AND to_date(:date2,'dd-mon-yyyy hh24:mi:ss');
+      
+      /*   open the cursor AA  */
+      
+      EXEC SQL OPEN AA;
+      
+      /*   begin a loop using the sqlca.sqlcode variable.  This variable 
+	   will be part of the program if "EXEC SQL INCLUDE SQLCA;" has 
+	   been put into the program.  So long as the variable sqlca.sqlcode
+	   is non positive the program is retriving data.  It beomes a
+	   positive number when there is no more data */
+      
+      minv = 998877;
+      count = 0;
+      while (sqlca.sqlcode <= 0)
+	{
+	  EXEC SQL FETCH AA
+	    INTO :dater,:flow:value_null_indicator;
+	  if (sqlca.sqlcode <= 0)
+	    {
+	      strcpy(date_out[count],dater);
+	      vals[count] = flow;
+	      count = count+1;
+	      if(flow < minv)	
+		minv = flow;
+	    }
+	}
+
+      if (count == 0)
+	  printf("\n In water year %4d, no data was found for %s\n\n",wyear,desc);
+      else
+	printf ("\nStation Name is %s\n",desc);
+	  
+      counter=0;
+      for(i=0;i < count; i++)
+	{
+	  if (vals[i] < (minv + 0.1))
+	    {
+	      int_array[counter]=i;
+	      counter++;
+	      
+	    }
+	}
+      for(i=0;i < counter; i++)
+	printf ("Minimum flow for water year %s occurred on %s at %6.0f cfs\n",argv[4],date_out[int_array[i]],vals[int_array[i]]);
+      
+      /*   close the cursor AA */
+      EXEC SQL CLOSE AA;
+      
+      EXEC SQL COMMIT;
+    }
+  else
+    {
+      /*   declare the cursor named BB.  */
+      
+      EXEC SQL DECLARE BB CURSOR FOR 
+	SELECT START_DATE_TIME, VALUE
+	FROM M_DAY A, HDB_SITE_DATATYPE B
+	WHERE A.MODEL_RUN_ID = :model_run_id
+	AND B.SITE_ID = :sid
+	AND B.DATATYPE_ID = :datatype_id
+	AND A.SITE_DATATYPE_ID = B.SITE_DATATYPE_ID
+	AND DATE_DAY BETWEEN to_date(:date1,'dd-mon-yyyy hh24:mi:ss') AND to_date(:date2,'dd-mon-yyyy hh24:mi:ss');
+      
+      /*   open the cursor BB  */      
+      
+      EXEC SQL OPEN BB;
+      
+      /*   begin a loop using the sqlca.sqlcode variable.  This variable 
+	   will be part of the program if "EXEC SQL INCLUDE SQLCA;" has 
+	   been put into the program.  So long as the variable sqlca.sqlcode
+	   is non positive the program is retriving data.  It beomes a 
+	   positive number when there is no more data */
+      
+      minv = 998877;
+      count = 0;
+      while (sqlca.sqlcode <= 0)
+	{
+	  EXEC SQL FETCH BB
+	    INTO :dater,:flow:value_null_indicator;
+	  if (sqlca.sqlcode <= 0)
+	    {
+	      strcpy(date_out[count],dater);
+	      vals[count] = flow;
+	      count = count+1;
+	      if(flow < minv)	
+		minv = flow;
+	    }
+	}
+
+      if (count == 0)
+	printf("\n In water year %4d, no data was found for %s\n\n",wyear,desc);
+      else
+	printf ("\nStation Name is %s\n",desc);
+      
+      counter=0;
+      for(i=0;i < count; i++)
+	{
+	  if (vals[i] < (minv + 0.1))
+	    {
+	      int_array[counter]=i;
+	      counter++;
+	      
+	    }
+	}
+      
+      for(i=0;i < counter; i++)
+	printf ("Minimum flow for water year %s occurred on %s at %6.0f cfs\n",argv[4],date_out[int_array[i]],vals[int_array[i]]);
+      
+      /*   close the cursor BB */
+      EXEC SQL CLOSE BB;
+      
+      EXEC SQL COMMIT;
+    }
+  
+  
+  if ((result = SqlDisconnect ()) == ERROR)
+    exit (ERROR);
+  
+  
+  exit (0);
+  
+errrpt:
+  EXEC SQL WHENEVER SQLERROR CONTINUE;
+  printf ("\n %.70s \n",sqlca.sqlerrm.sqlerrmc);
+  if ((result = SqlDisconnect ()) == ERROR)
+    exit (ERROR);
+  
+  exit (1); 
+  
+}
