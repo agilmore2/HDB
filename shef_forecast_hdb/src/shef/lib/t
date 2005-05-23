@@ -1,0 +1,4 @@
+rm *.a
+make
+./make_lib
+
