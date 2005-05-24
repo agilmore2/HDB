@@ -21,6 +21,17 @@ fi
 
 cd `dirname $0`
 
+# Temporarily delete YAO from ref_db_list
+# gotta be dba or someone with ref_meta_role
+#
+
+sqlplus -S uchdba/<PASSWORD>@uchdb2 <<EOF
+alter table hdb_site disable constraint HDB_SITE_FK7;
+delete from ref_db_list where db_site_code = 'YAO';
+commit;
+quit;
+EOF
+
 # Call the SYNC. Check exit status
 
 SYNC
@@ -39,6 +50,15 @@ echo Calling riverwareDMI.In $1 $2 $3 $4 $5 $6 $7 $8
 riverwareDMI.In $1 $2 $3 $4 $5 $6 $7 $8
 
 dmi_result=$?
+
+#now insert YAO back into the db.
+sqlplus -S uchdba/<PASSWORD>@uchdb2 <<EOF
+insert into ref_db_list values(3,'yaohdb','YAO',null,null);
+alter table hdb_site enable constraint HDB_SITE_FK7;
+commit;
+quit;
+EOF
+
 if test $dmi_result != 0
 then
   echo Input DMI exited with status $dmi_result error
