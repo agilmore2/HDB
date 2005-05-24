@@ -1,0 +1,72 @@
+#  this file is the standard property file used for communication to various java dataloader applications
+#  the general use of this file is to communicate and define variables to the code similar to the way Unix
+#  environmental variables were utilized in the past.  Deletions or erroneous entries in this file could lead to
+#  program termination, unpredictable program operation or unpredictable database results
+#
+#  any line that begins with the pound sign (#) is considered a comment and with have no effect on
+#  the performance of the java programs
+#
+#  the following line defines the driver code that the java routines will utilize
+# generally this line should not be modified 
+DRIVER=oracle.jdbc.driver.OracleDriver
+
+# The url is the important entry that tells the java jdbc code where to connect to the oracle database
+#be sure to enter the correct server name : port : sid 
+# typical examples in our community:
+#URL=jdbc:oracle:thin:@ganges:1521:MS_CUHDB
+#URL=jdbc:oracle:thin:@sun1.yak.pn.usbr.gov:1521:pnhdb
+#URL=jdbc:oracle:thin:@hvrwater.lc.usbr.gov:1521:lctest
+URL=jdbc:oracle:thin:@athena.uc.usbr.gov:1521:uchdb2
+
+
+# The username is the oracle username that will be used to connect to the system
+# for HDB2  generally this will be the owner of the datatables
+# enter the DBNAMEDBA here ie
+#USERNAME=LCHDBA
+USERNAME=app_user
+
+#  enter the oracle password for this account  ie
+#PASSWORD=master
+PASSWORD=uchdb2
+
+#  NOTE:  an alternative to entering each of these names correctly is to enter the associated id
+# for each respective lookup table.  In general either method will produce the same results
+# ie... collection_system_id=5  
+
+#  the collection system name will be the same as the name for where the data comes from
+# valid collection_system_names can be found in oracle table hdb_collection_system  ie
+collection_system_name=Hydromet Archive File
+#collection_system_name=
+
+#  The computation_name is the name for how this data was computed
+# Valid entries for this field can be found in oracle table hdb_computed_datatypes
+computation_name=N/A
+#computation_name=
+
+#  The agen_name is the agency that this data ultimately belongs to. 
+#  Valid entries for this  field can be found in oracle table hdb_agen 
+agen_name=Bureau of Reclamation
+#agen_name=Multiple Agencies
+
+#  The method name would be the data collection technique used in the acquisition of this data
+#  Valid entries for this field can be found in oracle table hdb_method
+method_name=unknown
+#method_name=
+
+# The loading_application_name is the name of the application that is currently running and is loading data
+# into the database
+# Valid entries for this field can be found in oracle table hdb_loading_application
+loading_application_name=Hydromet Archive File Loader
+
+
+# variable location is utilized for site specific applications
+# site files have been found to differ and the programs must know at what site they are being utilized
+#location=YAKIMA
+#location=LC
+location=UC
+#location=
+
+
+debug=N
+LOG_ALL=N
+INTERVAL=day
