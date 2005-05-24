@@ -30,7 +30,7 @@ scp $HYD_USER@$HYD_HOST:$SRC $DESTDIR
 #setup java commandline
 #HDB_XFER_EMAIL is the email of the person (NOT uchdba) that is responsible
 # for the HDB data loading applications
-JAVA_ARGS="-Demailaddr=$HDB_XFER_EMAIL -Dstart.property=$HDB_ENV/dataloader/archiveloader.property"
+JAVA_ARGS="-Demailaddr=$HDB_XFER_EMAIL -Dstart.property=$HDB_ENV/dataloader/work/dayfiles/dayfileloader.property"
 
 #Make sure file has been successfully copied to $DESTDIR
 if [ $? -eq 0 ]; then
