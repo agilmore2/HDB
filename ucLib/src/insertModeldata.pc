@@ -1,0 +1,190 @@
+/* insertModeldata.sc
+ * 
+ * Purpose: Insert or update NWS-NRCS forecast data into m_month or m_range
+ * function is passed 6 arguments model_run_id, site_datatype_id, beginning
+ * date, ending date, value and a interval indicator.  The interval indicator
+ * tells the function which table to put the data into.  It is a char.  If
+ * it is 'R' it puts the data into the range table.  If it is 'M' it puts it
+ * into the month table.  If it is 'D', it puts it into the day column.  The
+ * ending data argument is used only when the interval indicator is 'R'.
+ 
+ *
+ * Return
+ * OK or ERROR
+ *
+ * COMMENTS
+ *
+ * AUTHOR - EDITORS
+ * Tom Ryan May 1996
+ *****************************************************************************/
+#include <stdio.h>
+#include <string.h>
+#include <stropts.h>
+#include "dbutils.h"
+#include "utils.h"
+#include "defines.h"
+#include "ucutils.h"
+
+EXEC SQL INCLUDE sqlca;
+
+#define FUNC_NAME "insertModeldata"
+
+int insertModeldata (int run_id, int site_datatype_id, char *beg_date, char *end_date,float val, char interval_indicator)
+     
+     /* an important consideration here is to make sure that the size of SLQ variables  is consistent 
+	with the database.  Nearly all data (if not all) values in the database are 16 byte floats.  
+	If one declares the vals arrary below as a float, it will create an array of 8 byte floats not
+	16 byte floats.  This could get one into trouble.  Thus always use the data type VALUE which 
+	has been defined as a 16 byte float */
+     
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+  SQL_DATE      b_date,e_date;
+  VALUE         value;
+  ID            sdi,mri;
+  
+  EXEC SQL END DECLARE SECTION;
+  
+  int         result;
+  
+  char        tableName[25];
+  
+  sdi = site_datatype_id;
+  strcpy(e_date,end_date);
+  strcpy(b_date,beg_date);
+  value=val;
+  mri=run_id;
+  
+  
+  switch (interval_indicator)
+    {	
+    case 'r':
+      
+      strcpy(tableName,"m_monthrange");
+      
+      SqlFormatDate(b_date,b_date);
+      SqlFormatDate(e_date,e_date);
+      
+      EXEC SQL UPDATE m_monthrange
+	SET value = :value
+	where site_datatype_id = :sdi
+	and to_char(start_date_month,'dd-mon-yyyy hh24:mi:ss') = lower(:b_date)
+	and to_char(end_date_month,'dd-mon-yyyy hh24:mi:ss') = lower(:e_date)
+	and model_run_id = :mri;
+      
+      if (sqlca.sqlcode == 0)
+	{
+	  printf("Warning - Data for sdi %d on start date %s and end date %s and model_run_id of %d with a value of %7.0f\n",sdi,b_date,e_date,mri,value);
+	  printf("          was updated not inserted into table %s\n",tableName);
+	}
+      
+      /*   if the update failed the sqlca.sqlcode gets set to 100  */
+      /*   then do an insert  */
+      
+      /* see if a record was updated; if not, then insert the record */
+      
+
+      if (sqlca.sqlcode > 0)
+	{
+	  EXEC SQL INSERT INTO m_monthrange(model_run_id,site_datatype_id,start_date_month,end_date_month, value)
+	    VALUES
+	    (:mri,:sdi,to_date(:b_date,'dd-mon-yyyy hh24:mi:ss'), to_date(:e_date,'dd-mon-yyyy hh24:mi:ss'), :value);
+	  
+	  if ((result = SqlErrorHandler 
+	       (FUNC_NAME, FALSE,
+		"Problem inserting value for SDI: %d model_run_id %d DATE: %s into %s.\n\tExiting.", sdi, mri, b_date, tableName)) != OK)
+	    {
+	      EXEC SQL ROLLBACK;
+	      return (ERROR);
+	      
+	    }
+	}
+      /* Make sure there is not an error on the update */
+      else
+	
+	{
+	  if ((result = SqlErrorHandler 
+	       (FUNC_NAME, FALSE,
+		"Problem updating value for SDI: %d model_run_id %d DATE: %s into %s.\n\tExiting.", sdi, mri, b_date, tableName)) != OK)
+	    {
+	      EXEC SQL ROLLBACK;
+	      return (ERROR);
+	    }
+	}
+      EXEC SQL COMMIT;
+      
+      break;
+      
+    case 'm':
+      strcpy(tableName,"m_month");
+      SqlFormatDate(b_date,b_date);
+      EXEC SQL UPDATE m_month
+	SET value = :value
+	where site_datatype_id = :sdi
+	and model_run_id = :mri
+	and to_char(start_date_time,'dd-mon-yyyy hh24:mi:ss') = lower(:b_date);
+      if (sqlca.sqlcode == 0)
+	{
+	  printf("Warning - Data for sdi %d on date %s with model_run_id %d with a value of %7.0f\n",sdi,b_date,mri,value);
+	  printf("          was updated not inserted into table %s\n",tableName);
+	}
+      
+      /*   if the update failed the sqlca.sqlcode gets set to 100  */
+      /*   then do an insert  */
+      
+      /* see if a record was updated; if not, then insert the record */
+
+      if (sqlca.sqlcode > 0)
+	{
+          SqlDateMath(ADDITION,b_date,e_date,1,MONTH); /* use this function to get an sql date of one month later */
+
+	  EXEC SQL INSERT INTO m_month(model_run_id,site_datatype_id,start_date_time,end_date_time, value)
+	    VALUES
+	    (:mri,:sdi, to_date(:b_date,'dd-mon-yyyy hh24:mi:ss'), to_date(:e_date,'dd-mon-yyyy hh24:mi:ss'), :value);
+	  
+	  if ((result = SqlErrorHandler 
+	       (FUNC_NAME, FALSE,
+		"Problem inserting value for SDI: %d model_run_id %d DATE: %s into %s.\n\tExiting.", sdi, mri, b_date, tableName)) != OK)
+	    {
+	      EXEC SQL ROLLBACK;
+	      return (ERROR);
+	      
+	    }
+	}
+      /* Make sure there is not an error on the update */
+      else
+	
+	{
+	  if ((result = SqlErrorHandler 
+	       (FUNC_NAME, FALSE,
+		"Problem updating value for SDI: %d model_run_id %d DATE: %s into %s.\n\tExiting.", sdi, mri, b_date, tableName)) != OK)
+	    {
+	      EXEC SQL ROLLBACK;
+	      return (ERROR);
+	    }
+	}
+      EXEC SQL COMMIT;
+      
+      break;
+      
+    case 'd':
+      
+      break;
+    default:
+      break;
+    }
+
+  return (OK);
+  
+}
+
+
+
+
+
+
+
+
+
+
+
