@@ -11,6 +11,13 @@ main: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET) $(LIBS)
+	cd $(HDB_APP_BIN) ; \
+	rm -f power.in ; \
+	rm -f res_file.in ; \
+	ln -s $(APPDIR)/src/power.in; \
+	ln -s $(APPDIR)/src/res_file.in
+	cd $(APPDIR)/src
+
 
 obj: $(OBJS)
 

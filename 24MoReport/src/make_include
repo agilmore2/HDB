@@ -1,5 +1,5 @@
 CC = gcc
-APPDIR = $(HDB_ENV)/24MoReport/
+APPDIR = $(HDB_ENV)/24MoReport
 OBJDIR = $(APPDIR)/obj
 SRCDIR = $(APPDIR)/src
 INCLUDES =  -I$(HDB_APP_INCLUDE)
