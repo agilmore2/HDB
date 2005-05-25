@@ -546,16 +546,6 @@ int
 #endif
 );
 
-int checkforModelrunid(
-#ifdef ANSIPROTO
-ID,
-SQL_DATE,
-int,
-char *,
-int *
-#endif
-);
-
 void modify_to_lower(
 #ifdef ANSIPROTO
 char *

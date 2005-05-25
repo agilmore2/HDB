@@ -7,28 +7,12 @@ include make_include
 
 TARGET = $(HDB_APP_BIN)/shef_forecast_hdb
 OBJS = \
-		$(OBJDIR)/insertModeldata.o \
-		$(OBJDIR)/checkforModelrunid.o \
 		$(OBJDIR)/shef_forecast_hdb.o
 
 main: $(TARGET) links
 
 $(TARGET): $(OBJS)
-	$(CC) $(OBJS) $(LIBS) -o $(TARGET)
-
-$(OBJDIR)/insertModeldata.o: \
-					insertModeldata.pc \
-					$(HDB_APP_LIB)/libhdb.a \
-					$(HDB_APP_LIB)/libutils.a
-	proc iname=insertModeldata.pc include=$(HDB_APP_INCLUDE)
-	$(CC) $(CFLAGS) -c insertModeldata.c -o $@
-
-$(OBJDIR)/checkforModelrunid.o: \
-					checkforModelrunid.pc \
-					$(HDB_APP_LIB)/libhdb.a \
-					$(HDB_APP_LIB)/libutils.a
-	proc iname=checkforModelrunid.pc include=$(HDB_APP_INCLUDE)
-	$(CC) $(CFLAGS) -c checkforModelrunid.c -o $@
+	$(CC) $(OBJS) $(LIBS) -luc -o $(TARGET)
 
 $(OBJDIR)/shef_forecast_hdb.o: \
 					shef_forecast_hdb.c \
@@ -48,3 +32,6 @@ links:
 	rm -f shef_decode ; \
 	ln -s ../shef_forecast_hdb/src/shef/shef_decode shef_decode ; \
 	cd ../shef_forecast_hdb/src/
+
+clean:
+	rm -f $(OBJS) $(TARGET)

@@ -7,8 +7,6 @@ include make_include
 
 TARGET = $(HDB_APP_BIN)/nwsForecast
 OBJS = \
-		$(OBJDIR)/insertModeldata.o \
-		$(OBJDIR)/checkforModelrunid.o \
 		$(OBJDIR)/nwsForecast.o
 
 main: $(TARGET)
@@ -16,26 +14,12 @@ main: $(TARGET)
 clean: 
 	rm -f  $(TARGET) $(OBJS)
 
-$(TARGET): $(OBJS)
-	$(CC) $(OBJS) $(LIBS) -o $(TARGET)
-
-$(OBJDIR)/insertModeldata.o: \
-					insertModeldata.pc \
+$(TARGET): $(OBJS) \
 					$(HDB_APP_LIB)/libhdb.a \
 					$(HDB_APP_LIB)/libutils.a
-	proc iname=insertModeldata.pc include=$(HDB_APP_INCLUDE)
-	$(CC) $(CFLAGS) -c insertModeldata.c -o $@
-
-$(OBJDIR)/checkforModelrunid.o: \
-					checkforModelrunid.pc \
-					$(HDB_APP_LIB)/libhdb.a \
-					$(HDB_APP_LIB)/libutils.a
-	proc iname=checkforModelrunid.pc include=$(HDB_APP_INCLUDE)
-	$(CC) $(CFLAGS) -c checkforModelrunid.c -o $@
+	$(CC) $(OBJS) $(LIBS) -luc -o $(TARGET)
 
 $(OBJDIR)/nwsForecast.o: \
 					nwsForecast.c \
-					nwsForecast.h \
-					$(HDB_APP_LIB)/libhdb.a \
-					$(HDB_APP_LIB)/libutils.a
+					$(HDB_APP_INCLUDE)/ucutils.h
 	$(CC) $(CFLAGS) -c nwsForecast.c -o $@

@@ -18,27 +18,6 @@ static ID datatype_id_tot[] = {34,34,34,34,30,34,30,124,30};
 
 /* declare functions; support ANSI or K and R C. */
 
-int checkforModelrunid(
-#ifdef ANSIPROTO
-ID,
-SQL_DATE,
-int,
-char *,
-int *
-#endif
-);
-
-int insertModeldata(
-#ifdef ANSIPROTO
-int,
-int,
-char *,
-char *,
-float,
-char
-#endif
-);
-
 int NumDaysMonth(
 #ifdef ANSIPROTO
 SQL_DATE,

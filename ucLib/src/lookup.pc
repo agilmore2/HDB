@@ -12,7 +12,7 @@ EXEC SQL INCLUDE SQLCA;
 #include <typedefs.h>
 #include <dbutils.h>
 #include <utils.h>
-#include "Lookup.h"
+#include "ucutils.h"
 
 #define FUNC_NAME    "SqlLookupIds"
 

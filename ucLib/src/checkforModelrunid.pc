@@ -23,7 +23,7 @@
 #include "dbutils.h"
 #include "utils.h"
 #include "defines.h"
-#include "shef_forecast_hdb.h"
+#include "ucutils.h"
 
 
 EXEC SQL INCLUDE sqlca;

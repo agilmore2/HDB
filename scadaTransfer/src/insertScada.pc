@@ -23,7 +23,7 @@
 #include "defines.h"
 #include "scadaTransfer.h"
 #include "typedefs.h"
-#include "Lookup.h"
+#include "ucutils.h"
 
 
 EXEC SQL INCLUDE sqlca;

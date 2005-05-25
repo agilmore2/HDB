@@ -29,6 +29,7 @@
 #include "defines.h"
 #include "shef_forecast_hdb.h"
 #include "shefLocations.h"
+#include "ucutils.h"
 
 void modify_to_lower(char *);
 
