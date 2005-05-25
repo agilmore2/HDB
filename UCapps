@@ -1,3 +1,4 @@
+ucLib
 24moFld
 24MoReport
 check_automated_processes
@@ -21,8 +22,6 @@ scadaData
 scadaTransfer
 shef_forecast_hdb
 site_data
-test
-ucLib
 usgs2hdb
 usgsreports
 wcao_data
