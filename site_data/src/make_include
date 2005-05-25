@@ -1,5 +1,5 @@
 CC = gcc
-APPDIR = $(HDB_APP_CODE)/site_data
+APPDIR = $(HDB_ENV)/site_data
 OBJDIR = $(APPDIR)/obj
 INCLUDES = -I$(HDB_APP_INCLUDE)
 LIBS = $(HDB_LIBS) -lm -ldl
