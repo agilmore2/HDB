@@ -1,0 +1,3 @@
+#!/bin/sh
+echo "Derivation application has been temporarily disabled."
+exit 1
