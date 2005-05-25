@@ -1,5 +1,5 @@
 CC = gcc
-APPDIR = $(HDB_ENV)/teacup
+APPDIR = $(HDB_ENV)/gentea
 OBJDIR = $(APPDIR)/obj
 INCLUDES = -I$(HDB_APP_INCLUDE)
 LIBS = $(HDB_LIBS) -lm -ldl -lgd -lpng -ljpeg -lz -liconv
