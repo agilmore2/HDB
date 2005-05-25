@@ -20,4 +20,4 @@ $(OBJDIR)/green_data.o: \
 	$(CC) $(CFLAGS) -c green_data.c -o $@
 
 clean:
-	rm $(OBJDIR)/green_data.o
+	rm -f $(OBJDIR)/green_data.o
