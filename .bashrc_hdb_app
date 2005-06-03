@@ -39,7 +39,7 @@ DAY_COMFILE_DIR='sutron_dayfiles:'; export DAY_COMFILE_DIR
 
 #### BEGIN OS SPECIFIC SETTINGS ####
 
-if [ `uname` == 'SunOS' ] ; then {
+if [ `uname` = 'SunOS' ] ; then {
 
 #SITE SPECIFIC - required for all Oracle applications
 ORACLE_HOME=/ora/oracle/product/9.2.0; export ORACLE_HOME
@@ -71,7 +71,7 @@ LD_LIBRARY_PATH="$LD_LIBRARY_PATH":$MAGICK_HOME/lib; export LD_LIBRARY_PATH
 PATH="$HDB_BIN":"$ORACLE_HOME/bin":/usr/java/bin/:/usr/local/bin:"$PATH":/usr/sfw/bin; export PATH
 
 }
-elif [ `uname` == 'Linux' ] ; then {
+elif [ `uname` = 'Linux' ] ; then {
 
 #Oracle SPECIFIC - required for all Oracle applications
 # Oracle settings also contained in /etc/profile.d/oracle.{sh|csh}
