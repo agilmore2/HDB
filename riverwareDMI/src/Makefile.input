@@ -4,7 +4,7 @@
 include ../../Environ
 
 OBJDIR = $(HDB_ENV)/riverwareDMI/obj
-INCLUDES = -I$(HDB_APP_INCLUDE) -I$(TK_INCLUDES) -I/usr/local/X11R5/include
+INCLUDES = -I$(HDB_APP_INCLUDE) -I$(TK_INCLUDES)
 #May need -lsocket for Solaris compile
 LIBS = $(HDB_LIBS) -ldl -lm $(TK_LIBS) -lnsl
 CFLAGS = -ansi -Wall -g -DANSIPROTO $(INCLUDES)
