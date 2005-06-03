@@ -1,1 +1,5 @@
+crsp_[1-4]*.png
+Thumbs.db
+*.out
+sqlnet.log
 gentea_hist
