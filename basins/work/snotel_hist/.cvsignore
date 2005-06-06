@@ -19,3 +19,8 @@ hist98.sh
 hist03.sh
 hist99.sh
 historical_backload.sh
+ut*.txt
+nm*.txt
+rg*.txt
+cl*.txt
+co*.txt
