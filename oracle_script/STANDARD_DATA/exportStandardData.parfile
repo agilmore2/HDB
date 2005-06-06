@@ -2,7 +2,6 @@ userid = standard/standard
 file = standardData.dmp
 grants = N
 indexes = N
-triggers = N
 rows = Y
 constraints = N
 owner = standard
