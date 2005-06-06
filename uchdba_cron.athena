@@ -8,8 +8,8 @@
 30 06 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/basins/work;. get_load_snotel.sh >> $HDB_ENV/basins/work/get_load_snotel.log 2> $HDB_ENV/basins/work/get_load_snotel.err
 #
 40 09 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/basins/work;. get_load_snotel.sh >> $HDB_ENV/basins/work/get_load_snotel.log 2> $HDB_ENV/basins/work/get_load_snotel.err
-# Read historical snotel data for past 3 days, need better source!
-45 09 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/basins/work/snotel_hist; ./run_hist_snotel.pl 3 >> $HDB_ENV/basins/work/snotel_hist/run_40day_snotel.log 2> $HDB_ENV/basins/work/snotel_hist/run_40day_snotel.err
+# Read historical snotel data for past 40 days, need better source!
+45 09 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/basins/work/snotel_hist; ./run_hist_snotel.pl 40 >> $HDB_ENV/basins/work/snotel_hist/run_40day_snotel.log 2> $HDB_ENV/basins/work/snotel_hist/run_40day_snotel.err
 #
 # Read data from NRCS ftp site for Gunnison MMS
 #
@@ -17,7 +17,7 @@
 #
 # Read data from NWS ftp site for Gunnison MMS
 #
-24 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/nws_data/src;./get_load_nwsdata >> $HDB_ENV/nws_data/src/get_load_nwsdata.log 2> $HDB_ENV/nws_data/src/get_load_nwsdata.err
+24 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/nws_data/src;./get_load_nwsdata.sh >> $HDB_ENV/nws_data/src/get_load_nwsdata.log 2> $HDB_ENV/nws_data/src/get_load_nwsdata.err
 #
 # Read data from El Paso's daily report
 #
