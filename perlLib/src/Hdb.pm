@@ -1,5 +1,36 @@
 # package to generically interface with HDB
 
+=head1 NAME
+
+HDB Generic PERL interface
+
+=head1 VERSION
+
+Documentation for Hdb.pm $ID: $
+
+=head1 SYNOPSIS
+
+To create a DBI handle to HDB as app_user, must have the proper environmental
+variables set:
+
+ use Hdb;
+
+ my $hdb = Hdb->new;
+
+ $hdb->connect_to_db($dbname, $user, $pass);
+
+To allow editting of values:
+
+ $hdb->set_approle();
+
+=head1 DESCRIPTION
+
+The Hdb module encapsulates some of the common functionality needed by perl
+progams which interact with the database.
+
+=cut
+
+
 package Hdb;
 use Exporter ();
 @ISA = qw(Exporter);
@@ -48,7 +79,7 @@ sub hdbdie {
 # app_user has the permission to insert into the database, but only
 # if the app_role is enabled, which is not by default
 # the applications get around this by connecting to the database as 
-# psswd_user (from the environment) anset_approled getting the password to 
+# psswd_user (from the environment) and getting the password to 
 # turn on this role, and then enabling this role.
 
 sub set_approle {
@@ -102,8 +133,6 @@ sub set_approle {
 
 
 #this function connects to the database as the specified user
-# and assumes the database name as the password
-# and g
 sub connect_to_db {
   my $self = shift;
   $self->{dbname} = $_[0];
