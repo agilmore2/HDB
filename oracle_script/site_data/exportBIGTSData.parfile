@@ -1,0 +1,9 @@
+file=BIGTSData.dmp
+grants=N
+indexes=N
+rows=Y
+compress=Y
+direct=Y
+constraints=N
+log=BIGTSDataExp.log
+tables=(R_BASE,R_DAY,R_HOUR,R_INSTANT)
