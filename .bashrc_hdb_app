@@ -4,12 +4,12 @@
 
 # SITE SPECIFIC: email of person responsible for data transfers
 HDB_XFER_EMAIL=agilmore@uc.usbr.gov; export HDB_XFER_EMAIL
-HDB_NOTIFY_EMAIL=agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov,tryan@uc.usbr.gov,ccutler@uc.usbr.gov,athatcher@uc.usbr.gov,emanseau@uc.usbr.gov; export HDB_NOTIFY_EMAIL
+HDB_NOTIFY_EMAIL=agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov,tryan@uc.usbr.gov,ccutler@uc.usbr.gov,bbilly@uc.usbr.gov,emanseau@uc.usbr.gov; export HDB_NOTIFY_EMAIL
 
 # HDB - required for all HDB interactions 
 # These must be editted for a new system
 HDB_LOCAL=uchdb2; export HDB_LOCAL
-HDB_ENV=/wrg/hdb/HDB; export HDB_ENV
+HDB_ENV=/wrg/hdb/teamlead/HDB; export HDB_ENV
 HDB_BIN=$HDB_ENV/bin; export HDB_BIN
 
 # SITE SPECIFIC - required for RiverWare 24 MO Study DMI's
