@@ -4,8 +4,8 @@ setenv HDB_NOTIFY_EMAIL agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.u
 
 # HDB - required for all HDB interactions
 # These probably need editting for a new system
-setenv HDB_LOCAL         uchdbdev 
-setenv HDB_ENV           /wrg/hdb/HDB
+setenv HDB_LOCAL         uchdb2 
+setenv HDB_ENV           /wrg/hdb/HDB2_applications
 setenv HDB_BIN           $HDB_ENV/bin
 
 # SITE SPECIFIC - required for RiverWare 24 MO Study DMI's
@@ -22,8 +22,8 @@ setenv LOG_DIR log
 
 # SITE SPECIFIC - required for hydromet shell scripts (bogus at CADSWES)
 # For new ALPHA
-setenv DAYDATA_DIR '/custom$/archives'
-setenv ARCDATA_DIR '/custom$/dayfiles'
+setenv DAYFILES='/custom$/dayfiles'
+setenv ARCHIVES='/custom$/archives'
 setenv MOUNTDIR "/zipdata" 
 setenv HYD_HOST zippy
 setenv HYD_USER hydromet
