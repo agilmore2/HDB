@@ -22,8 +22,8 @@ setenv LOG_DIR log
 
 # SITE SPECIFIC - required for hydromet shell scripts (bogus at CADSWES)
 # For new ALPHA
-setenv DAYFILES='/custom$/dayfiles'
-setenv ARCHIVES='/custom$/archives'
+setenv DAYFILES '/custom$/dayfiles'
+setenv ARCHIVES '/custom$/archives'
 setenv MOUNTDIR "/zipdata" 
 setenv HYD_HOST zippy
 setenv HYD_USER hydromet
