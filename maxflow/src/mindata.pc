@@ -67,7 +67,7 @@ main (int argc,char **argv )
   
   if (argc != 5)
     {
-      printf("\nusage: maxflow site_id datatype_id model_run_id water_year\n");
+      printf("\nusage: mindata site_id datatype_id model_run_id water_year\n");
       printf("For real data use 0 for model_run_id\n");
       exit(2);
     }
@@ -137,7 +137,7 @@ main (int argc,char **argv )
 	WHERE B.SITE_ID = :sid
 	AND B.DATATYPE_ID = :datatype_id
 	AND A.SITE_DATATYPE_ID = B.SITE_DATATYPE_ID
-	AND DATE_DAY BETWEEN to_date(:date1,'dd-mon-yyyy hh24:mi:ss') AND to_date(:date2,'dd-mon-yyyy hh24:mi:ss');
+	AND START_DATE_TIME BETWEEN to_date(:date1,'dd-mon-yyyy hh24:mi:ss') AND to_date(:date2,'dd-mon-yyyy hh24:mi:ss');
       
       /*   open the cursor AA  */
       
@@ -199,7 +199,7 @@ main (int argc,char **argv )
 	AND B.SITE_ID = :sid
 	AND B.DATATYPE_ID = :datatype_id
 	AND A.SITE_DATATYPE_ID = B.SITE_DATATYPE_ID
-	AND DATE_DAY BETWEEN to_date(:date1,'dd-mon-yyyy hh24:mi:ss') AND to_date(:date2,'dd-mon-yyyy hh24:mi:ss');
+	AND START_DATE_TIME BETWEEN to_date(:date1,'dd-mon-yyyy hh24:mi:ss') AND to_date(:date2,'dd-mon-yyyy hh24:mi:ss');
       
       /*   open the cursor BB  */      
       
