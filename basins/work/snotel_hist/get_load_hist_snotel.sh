@@ -3,11 +3,11 @@ touch junk
 $HDB_ENV/basins/work/snotel_hist/get_hist_snotel.sh $1 $2
 
 stat=$?
-if [ $stat -ne 0 ] 
-  then
-  echo "Exiting get_load_hist_snotel due to ftp failure." >&2
-  exit $stat
-fi
+#if [ $stat -ne 0 ] 
+#  then #DO NOTHING, TOO LOUD!
+#  echo "Exiting get_load_hist_snotel due to ftp failure." >&2
+#  exit $stat
+#fi
 
 newest=`ls -t |head -1`
 if [ $newest != 'junk' ]

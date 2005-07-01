@@ -61,7 +61,7 @@ touch colo.report
 \rm -f nm$junk.txt
 \rm -f co$junk.txt
 
-ncftpget -p $FTP_PASSWD $FTP_HOST . \
+ncftpget -e snotel_hist.err -p $FTP_PASSWD $FTP_HOST . \
 $FTP_DIR/colorado/wy$1/cl$junk.txt \
 $FTP_DIR/riogrande/wy$1/rg$junk.txt \
 $FTP_DIR/ut/wy$1/ut$junk.txt \
@@ -72,8 +72,9 @@ $FTP_DIR/co/wy$1/co$junk.txt
 stat=$?
 if [ $stat -ne 0 ] 
 then
-   echo "FTP transaction failed with NRCS" >&2
-   exit $stat
+# Do nothing, this is too LOUD!
+#   echo "FTP transaction failed with NRCS" >&2
+#   exit $stat
 fi
 
 mv cl$junk.txt colorado.report
