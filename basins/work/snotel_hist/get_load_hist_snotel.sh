@@ -30,7 +30,7 @@ cat colo.report >> snotel.dat
 echo ' ' 
 echo '     Checking file, snotel.dat, for consistency of dates'
 echo ' ' 
-if [ -z snotel.dat ]
+if [ ! -s snotel.dat ]
 then
   echo "Yuck! snotel.dat is completely empty, exiting."
   exit 1
