@@ -70,12 +70,12 @@ $FTP_DIR/nm/wy$1/nm$junk.txt \
 $FTP_DIR/co/wy$1/co$junk.txt
 
 stat=$?
-if [ $stat -ne 0 ] 
-then
+#if [ $stat -ne 0 ] 
+#then
 # Do nothing, this is too LOUD!
 #   echo "FTP transaction failed with NRCS" >&2
 #   exit $stat
-fi
+#fi
 
 mv cl$junk.txt colorado.report
 mv rg$junk.txt riogrand.report
