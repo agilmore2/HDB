@@ -53,7 +53,7 @@ int SqlSelectUnitName (ID unit_id, char *unit_name)
 {
    EXEC SQL BEGIN DECLARE SECTION;
     ID sq_unit_id = unit_id;
-    varchar sq_unit_name[33];
+    varchar sq_unit_name[240];
    EXEC SQL END DECLARE SECTION;
    
    int           result;
