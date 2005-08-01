@@ -209,7 +209,7 @@ int SqlDerivationControl(int* baseUpdateTotal, char * sdilist)
    SQL_INTERVAL updateIntName;
    SQL_INTERVAL updateIntSource;
    UPDATE_RECORD* compUpdateList;
-   UPDATE_RECORD* intUpdateDataList;
+   UPDATE_RECORD* intUpdateDataList = NULL;
    UPDATE_RECORD* updateDataList;
 
 
@@ -384,6 +384,9 @@ int SqlDerivationControl(int* baseUpdateTotal, char * sdilist)
    /* Loop for each ref_derivation_source entry */
    for (sourceIndex = 0; sourceIndex < sqlSourceCount; sourceIndex++)
    {
+      /* For test, print to log file that we are starting to process this SDI */
+      /* fprintf(LOGFILE, " Started processing of  SDI = %d.\n", sourceSpecList[sourceIndex].siteDatatypeId); */
+
       /* Mark the rows with this SDI in r_base_update to tag ones we are going
          to process - if one gets updated while we are processing, the tag 
          gets removed by the update trigger so we don't later delete that row.
@@ -683,29 +686,52 @@ int SqlDerivationControl(int* baseUpdateTotal, char * sdilist)
                return (ERROR);               
             }
 
-            /* Select the desired data from r_interval_update */
-            if ((result = SqlUpdateSelect(
-                             destSpecList[destIndex].destSDI,
-                             updateIntSource,
-                             &intUpdateCount,
-                             &intUpdateDataList)) != OK)
+            if (!strncmp(firstDestName, "ye", 2))
             {
-               FilePrintError(LOGFILE, "Problem selecting data from r_interval_update for SDI %d and interval %s./n", destSpecList[destIndex].destSDI, updateIntSource);
-               return (ERROR);
+               /* The first destination interval derivation was to year. 
+                  In this case the base interval for derivation to wy will 
+                  be the same as for year so the source data will be from 
+                  table r_base_update */ 
+               if ((result = DeriveList(
+                               updateIntName,
+                               updateDataList,
+                               baseUpdateCount,
+                               &sourceSpecList[sourceIndex],
+                               &destSpecList[destIndex])) != OK)
+               {
+                  FilePrintError(LOGFILE, "Problem deriving r_base data to interval %s.\n", updateIntName);
+                  return (ERROR);
+               }
             }
+            else
+            {
 
-            /* Derive r_interval_update data to the interval based
-               on the ref_derivation_destination spec */
-            if ((result = DeriveList(
-                             updateIntName,
-                             intUpdateDataList,
-                             intUpdateCount,
-                             &sourceSpecList[sourceIndex],
-                             &destSpecList[destIndex])) != OK)
-            {
-               FilePrintError(LOGFILE, "Problem deriving interval values upward\n");
-               return (ERROR);
-            }
+               /* Source data will be from r_interval_update */
+
+               /* Select the desired data from r_interval_update */
+               if ((result = SqlUpdateSelect(
+                                destSpecList[destIndex].destSDI,
+                                updateIntSource,
+                                &intUpdateCount,
+                                &intUpdateDataList)) != OK)
+               {
+                  FilePrintError(LOGFILE, "Problem selecting data from r_interval_update for SDI %d and interval %s./n", destSpecList[destIndex].destSDI, updateIntSource);
+                  return (ERROR);
+               }
+
+               /* Derive r_interval_update data to the interval based
+                  on the ref_derivation_destination spec */
+               if ((result = DeriveList(
+                                updateIntName,
+                                intUpdateDataList,
+                                intUpdateCount,
+                                &sourceSpecList[sourceIndex],
+                                &destSpecList[destIndex])) != OK)
+               {
+                  FilePrintError(LOGFILE, "Problem deriving interval values upward\n");
+                  return (ERROR);
+               }
+            } 
 
             /* Free the memory for the intUpdateDataList */
             if (intUpdateDataList != NULL)
@@ -960,6 +986,9 @@ int SqlDerivationControl(int* baseUpdateTotal, char * sdilist)
          free(updateDataList);
          updateDataList = NULL; 
       }
+
+      /* For test, print to log file that we completed processing this SDI */
+      /* fprintf(LOGFILE, " Completed processing of  SDI = %d.\n", sourceSpecList[sourceIndex].siteDatatypeId); */
    }
 
    /* Free the memory for the sourceSpecList */
