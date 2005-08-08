@@ -1,5 +1,3 @@
-get_load_snotel=$HDB_ENV/basins/work/get_load_snotel.err
-run_hist_snotel=$HDB_ENV/basins/work/snotel_hist/run_40day_snotel.err
 dataloader=$HDB_ENV/dataloader/work/archives/dataloader.err
 derivation=$HDB_ENV/log/derivation.err
 usgs2hdb=$HDB_ENV/usgs2hdb/src/usgs2hdb.err
@@ -7,3 +5,5 @@ guntemps=$HDB_ENV/gun_temps/src/get_load_guntemps.err
 nwsdata=$HDB_ENV/nws_data/src/get_load_nwsdata.err
 codwr2hdb=$HDB_ENV/codwr2hdb/src/codwr2hdb.err
 elpaso=$HDB_ENV/elpaso/src/get_load_elpaso.err
+get_load_snotel=$HDB_ENV/basins/work/get_load_snotel.err
+#run_hist_snotel=$HDB_ENV/basins/work/snotel_hist/run_40day_snotel.err
