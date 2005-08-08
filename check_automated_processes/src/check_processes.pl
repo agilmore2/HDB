@@ -4,16 +4,18 @@ use strict;
 use English;
 
 # check on all the crontab applications
-open INFILE, 'automatedapps';
+open INFILE, 'automatedapps' or die "can't open input file: $!";
 
 my ($app,$errfile,$expectfile,$cmdname,$ps,$line,@dirent,$HDB_ENV);
-my $DEBUG = 0;
+my $DEBUG = 1;
 my $status = 0;
 my $subject = "Subject: Failure Detected in Automated uchdb2 Process\n";
 my ($output, $result);
 
 while (<INFILE>)
 {
+  next if (~/^#/);
+
   chomp;
   ($app,$errfile) = split '=';
 
@@ -58,9 +60,11 @@ while (<INFILE>)
 close INFILE;
 
 # check on the realtime applications
-open INFILE, 'realtimeapps';
+open INFILE, 'realtimeapps' or die "can't open input file: $!";
 while (<INFILE>)
 {
+  next if (~/^#/);
+
   chomp;
   ($app,$cmdname) = split '=';
   $ps = `ps -fuuchdba|grep $cmdname|grep -v grep`;
