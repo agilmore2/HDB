@@ -940,12 +940,12 @@ int SqlDerivationControl(int* baseUpdateTotal, char * sdilist)
       /* Delete r_base_update records for the current SDI */
       if (baseUpdateCount)
       {
-         /* Unmark as ready for delete the most recent loaded record for
+         /* Mark as a seed record the most recent loaded record for
             this SDI  - keeping this one will ensure completion of partial
             calcs next time the app runs */
          sqlUpdateRecord = &updateDataList[baseUpdateCount - 1];
          EXEC SQL UPDATE r_base_update
-            SET ready_for_delete = NULL
+            SET ready_for_delete = 'S'
             WHERE site_datatype_id = :sqlUpdateRecord->siteDatatypeId
               AND start_date_time = TO_DATE (:sqlUpdateRecord->startDateTime,
                                         'DD-MON-YYYY HH24:MI:SS')
@@ -954,7 +954,7 @@ int SqlDerivationControl(int* baseUpdateTotal, char * sdilist)
               AND interval = :sqlUpdateRecord->interval
               AND overwrite_flag IS NULL;
          if ((result = SqlFilePrintErrorHandler(LOGFILE, FUNC_NAME, FALSE,
-                       "Problem unmarking record as ready for delete in r_base_update\n")) != OK)
+                       "Problem marking seed record in r_base_update\n")) != OK)
          {
             EXEC SQL ROLLBACK;
             return (ERROR);
@@ -1377,6 +1377,23 @@ int SqlCopyBase(UPDATE_RECORD* updateList, int updateCount,
             /* Initialize the derivation flag to an empty string */
             strcpy (sqlDataRecord.derivationFlag, EMPTY_STRING);
 
+            /* Assign beginning of interval time to startDateTime member */
+            strcpy (sqlDataRecord.startDateTime,
+                    sqlIntervalTime.begInterval);
+
+            /* Assign end of interval time to endDateTime member */
+            strcpy (sqlDataRecord.endDateTime,
+                    sqlIntervalTime.endInterval);
+
+            /* Assign the dateTimeLoaded member */
+            strcpy (sqlDataRecord.dateTimeLoaded, DATETIMELOADED);
+
+            /* Assign the method_id for copy to the method member */
+            sqlDataRecord.methodId = 6;
+
+            /* Assign equivalent of NULL to the overwrite member */
+            sqlDataRecord.overwrite = EMPTY_CHAR;    
+
             /* Is record valid for updating or inserting */
             if ((result = CheckCopy(&sqlDataRecord, refSource, &valid))
                  != OK)
@@ -1385,37 +1402,17 @@ int SqlCopyBase(UPDATE_RECORD* updateList, int updateCount,
                return (ERROR);
             }
 
-            /* If valid, fill in other members of the data record */
-            if (valid != 0)
+            /* Assign indicator variable for the derivation flag
+               for future writing to the database */
+            if (!strcmp(sqlDataRecord.derivationFlag, EMPTY_STRING))
             {
-               /* Assign beginning of interval time to startDateTime member */
-               strcpy (sqlDataRecord.startDateTime,
-                       sqlIntervalTime.begInterval);
-
-               /* Assign end of interval time to endDateTime member */
-               strcpy (sqlDataRecord.endDateTime,
-                       sqlIntervalTime.endInterval);
-
-               /* Assign the dateTimeLoaded member */
-               strcpy (sqlDataRecord.dateTimeLoaded, DATETIMELOADED);
-
-               /* Assign the method_id for copy to the method member */
-               sqlDataRecord.methodId = 6;
-
-               /* Assign equivalent of NULL to the overwrite member */
-               sqlDataRecord.overwrite = EMPTY_CHAR;    
-
-               /* Assign indicator variable for the derivation flag
-                  for future writing to the database */
-               if (!strcmp(sqlDataRecord.derivationFlag, EMPTY_STRING))
-               {
-                  sqlDerFlag_ind = -1;
-               }
-               else
-               {
-                  sqlDerFlag_ind = 0;
-               }
+               sqlDerFlag_ind = -1;
             }
+            else
+            {
+               sqlDerFlag_ind = 0;
+            }
+
 
             /* Check to see if there is a value in the destination slot */   
             sprintf(selectStatement, "SELECT COUNT(*) FROM %s WHERE site_datatype_id = %d AND start_date_time = TO_DATE ('%s', 'DD-MON-YYYY HH24:MI:SS') AND end_date_time = TO_DATE ('%s', 'DD-MON-YYYY HH24:MI:SS')", intervalTable, sqlDataRecord.siteDatatypeId, sqlDataRecord.startDateTime, sqlDataRecord.endDateTime);
@@ -2405,7 +2402,7 @@ int SqlUpdateSelect(int siteDatatypeId,
 
 int SqlRemoveOldUpdates()
 {
-   /* This function removes entries from r_base_update that are over
+   /* This function removes seed records from r_base_update that are over
       one year old. These could no longer function as the one latest residual
       value to keep to make sure a partial calc at the longest interval (year) 
       eventually is made final. At this point they would represent an SDI that
@@ -2429,9 +2426,10 @@ int SqlRemoveOldUpdates()
       return (ERROR);
    }
 
-   /* Delete old values from r_base_update */
+   /* Delete old seed reocrds from r_base_update */
    EXEC SQL DELETE FROM r_base_update
-      WHERE end_date_time < TO_DATE (:sqlLastYear, 'DD-MON-YYYY HH24:MI:SS');
+      WHERE end_date_time < TO_DATE (:sqlLastYear, 'DD-MON-YYYY HH24:MI:SS')
+      AND ready_for_delete = 'S';
 
    /* TRUE used in second argument to SqlFilePrintErrorHandler because it
       is OK if no rows were processed above - means there are no 

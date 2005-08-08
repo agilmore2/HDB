@@ -9,7 +9,7 @@
 * Neil Wilson
 * September, 2001
 *****************************************************************************/
-#define VERSION "1.2"
+#define VERSION "1.3"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -181,7 +181,7 @@ int main (int argc, char **argv)
       exit (ERROR);
    }
 
-   /* Delete any residual values in r_base_update that are over one year
+   /* Delete any seed records in r_base_update that are over one year
       old - this cleans up for any saved SDIs that no longer have data
       coming in */
    if ((result = SqlRemoveOldUpdates()) != OK)
