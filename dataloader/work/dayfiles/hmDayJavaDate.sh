@@ -8,6 +8,9 @@ if [ $1 ]; then
       echo Version 1.0 #3.2
       exit 0
    fi
+else
+  echo "Usage $0 <date, eg 2005AUG17>"
+  exit 1
 fi
 
 DESTDIR=$DAYFILE_DIR
