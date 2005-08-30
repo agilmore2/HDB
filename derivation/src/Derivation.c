@@ -9,7 +9,7 @@
 * Neil Wilson
 * September, 2001
 *****************************************************************************/
-#define VERSION "1.3"
+#define VERSION "1.4"
 
 #include <stdio.h>
 #include <stdlib.h>

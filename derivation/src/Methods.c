@@ -2722,7 +2722,6 @@ int InterpCalc(DATA_RECORD* firstRecord,
    double timeDenominator;
    int result;
    
-
    /* Find the difference in time between the startDateTime of the last
       record and the endDateTime of the first record */
    if ((result = SqlDateSubtract(lastRecord->startDateTime,
@@ -2733,7 +2732,17 @@ int InterpCalc(DATA_RECORD* firstRecord,
       return (ERROR);
    } 
 
-   /* Find the difference in time between the startDateTime of the
+   /* If denominator is zero, means first record and last record are
+      adjacent intervals and the interpolated time is actually the last
+      instant in the first interval. In this case, the interpolated value
+      should be equal to the first record's value. */
+   if (timeDenominator == 0)
+   {
+      interpRecord->value = firstRecord->value;
+      return (OK);
+   }
+
+  /* Find the difference in time between the startDateTime of the
       interpolated record and the endDateTime of the first record */
    if ((result = SqlDateSubtract(interpRecord->startDateTime,
                                  firstRecord->endDateTime,
