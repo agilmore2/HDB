@@ -7,14 +7,14 @@ use English;
 open INFILE, 'automatedapps' or die "can't open input file: $!";
 
 my ($app,$errfile,$expectfile,$cmdname,$ps,$line,@dirent,$HDB_ENV);
-my $DEBUG = 1;
+my $DEBUG = 0;
 my $status = 0;
 my $subject = "Subject: Failure Detected in Automated uchdb2 Process\n";
 my ($output, $result);
 
 while (<INFILE>)
 {
-  next if (~/^#/);
+  next if (/^#/);
 
   chomp;
   ($app,$errfile) = split '=';
@@ -63,7 +63,7 @@ close INFILE;
 open INFILE, 'realtimeapps' or die "can't open input file: $!";
 while (<INFILE>)
 {
-  next if (~/^#/);
+  next if (/^#/);
 
   chomp;
   ($app,$cmdname) = split '=';
