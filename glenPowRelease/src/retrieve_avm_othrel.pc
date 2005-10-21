@@ -1,0 +1,148 @@
+/*************************************************************************************************************
+ *  Function:  retrieve data from HDB2 for use in determining GC releases
+ *
+ *  Author:    Andrew Gilmore
+ *
+ *
+ **************************************************************************************************************/
+
+
+#include <stdio.h>
+#include <string.h>
+#include "dbutils.h"
+#include "utils.h"
+#include "defines.h"
+#include "typedefs.h"
+#include "glenpowrelease.h"
+
+extern double curve_rel[HOURS],avm_rel[HOURS],spill[HOURS],bypass[HOURS];
+
+int SqlGetAVMData(char *appUser, char *appPass, char *date)
+{
+   EXEC SQL INCLUDE SQLCA;
+  
+   EXEC SQL BEGIN DECLARE SECTION;
+
+   char      day[11];
+   ID	        site_datatype_id;
+   short        value_null_indicator;
+   double       val;
+  
+   EXEC SQL END DECLARE SECTION;
+
+   char  newDateFormat[] = "RRMONDD HH24\0";
+   char   *dbName;
+   char   hour[7];
+   int    result, i,j;
+   int    site_datatype[NUMDATATYPES];
+   
+   EXEC SQL WHENEVER SQLERROR GOTO errrpt;
+
+   printf ("%s ",date);
+   
+/* set the name of the database */
+  
+  dbName = NULL; 
+  dbName = getenv("HDB_LOCAL");
+  
+  if (dbName == NULL)
+    {
+      PrintError("Environment variable HDB_LOCAL not set...\n");
+      return(ERROR);
+    }
+  
+  if  ((result = SqlConnect (dbName, appUser, appPass)) == ERROR)
+    exit (ERROR);
+  
+  fprintf(stdout, "Connected to ORACLE.\n");
+
+  if ((result = SqlSetDateFormat (newDateFormat)) != OK)
+    {
+      PrintError ("Problem setting default date format.\n\tExiting.");
+      SqlDisconnect();
+      exit(1);
+    }
+
+  site_datatype[0] = 5034; /* Glen Canyon Power Plant, power curve release */
+  site_datatype[1] = 5035; /* Glen Canyon Power Plant, avm release */
+  site_datatype[2] = 4166; /* Glen Canyon - Lake Powell spill */
+  site_datatype[3] = 4167; /* Glen Canyon - Lake Powell bypass releases */
+
+  for (i=0; i<HOURS; i++)
+  {
+     strcpy(day,date);
+     snprintf(hour,6," %d",i);
+     strcat(day,hour);
+     
+     for (j=0; j<NUMDATATYPES; j++)
+     {
+         site_datatype_id = site_datatype[j];
+         value_null_indicator=0;
+         
+         /*         printf("%s ",day);*/
+         
+	 EXEC SQL SELECT A.VALUE into val:value_null_indicator
+            FROM R_HOUR A
+            WHERE A.SITE_DATATYPE_ID = :site_datatype_id
+            AND START_DATE_TIME = :day;
+
+         if (sqlca.sqlcode == 0 || sqlca.sqlcode == 1403 )
+         {
+            switch (j) {
+                case 0:
+                   if (sqlca.sqlcode == 1403) {
+                      curve_rel[i] = 998877;
+                   }
+                   else {
+                      curve_rel[i] = val;
+                   }
+                   break;
+                case 1:
+                   if (sqlca.sqlcode == 1403) {
+                      printf ("ERROR, NO DATA FOR GC AVM RELEASE, SITE DATATYPE %d, HOUR %d!\n",
+                              site_datatype_id, i);
+                      exit(1);
+
+                   }
+                   else {
+                      avm_rel[i] = val;
+                   }
+                   break;
+                case 2:
+                   if (sqlca.sqlcode == 1403) {
+                      printf ("ERROR, NO DATA FOR GC SPILL, SITE DATATYPE %d, HOUR %d!\n",
+                              site_datatype_id, i);
+                      exit(1);
+                   }
+                   else {
+                      spill[i] = val;
+                   }
+                   break;
+                case 3:
+                   if (sqlca.sqlcode == 1403) {
+                      printf ("ERROR, NO DATA FOR GC BYPASS, SITE DATATYPE %d!, HOUR %d\n",
+                              site_datatype_id, i);
+                      exit(1);
+                   }
+                   else {
+                      bypass[i] = val;
+                   }
+                   break;
+                default:
+                   printf("YIKES!\n");
+                   exit(1);
+            }
+         }
+      }
+   }
+   return 0;
+
+errrpt:
+  EXEC SQL WHENEVER SQLERROR CONTINUE;
+  printf ("\n %.70s \n",sqlca.sqlerrm.sqlerrmc);
+  if ((result = SqlDisconnect ()) == ERROR)
+    exit (ERROR);
+  
+
+} 
+
