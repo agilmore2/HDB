@@ -15,8 +15,6 @@
  *
  **************************************************************************************************************/
 
-
-
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -43,17 +41,63 @@ int main(int argc, char **argv)
    int    i,j, missing_data=0;
    char   val_flag[] = "Z";
    
-   double  tot_rel[HOURS];
+   double  tot_rel[HOURS]; 
 
-   SQL_DATE formattedDates[HOURS];
+   char *formattedDates[HOURS];
 
-   strncat(date,argv[3],11);
+   char  newDateFormat[] = "RRMONDD HH24\0";
+   char   *dbName, *appRole;
+   int    result;
 
+   printf ("%s ",argv[3]);
+   
+/* set the name of the database */
+
+   dbName = NULL; 
+   dbName = getenv("HDB_LOCAL");
+  
+   if (dbName == NULL)
+   {
+      PrintError("Environment variable HDB_LOCAL not set...\n");
+      return(ERROR);
+   }
+   /* get the appRole information */
+
+  appRole = NULL;
+  appRole = getenv ("APP_ROLE");
+
+  if (appRole == NULL)
+    {
+      PrintError("Environment variable APP_ROLE not set...\n");
+      return(ERROR);
+    }
+
+  /* run  the signal handler function which will disconnect from the
+     database and free up tables if things go wierd */
+
+  RegisterSignalHandler();
+  
+ 
+   if  ((result = SqlConnectRole (dbName, argv[1], argv[2], appRole)) == ERROR)
+      exit (ERROR);
+   
+   printf("Connected to ORACLE.\n");
+
+   if ((result = SqlSetDateFormat (newDateFormat)) != OK)
+   {
+      PrintError ("Problem setting default date format.\n\tExiting.");
+      SqlDisconnect();
+      exit(1);
+   }
+   
    for (i=0; i<HOURS; i++)
    {
-      strcpy(formattedDates[i],date);
+      date[0] = '\0';
+      strncat(date,argv[3],11);
       snprintf(hour,6," %d",i);
-      strcat(formattedDates[i],hour);
+      strncat(date,hour,6);
+
+      formattedDates[i] = strndup(date,18);
    }
 
    if (argc != 4) 
@@ -62,7 +106,8 @@ int main(int argc, char **argv)
      exit(1);
    }
 
-   SqlGetAVMData(argv[1], argv[2], argv[3]);
+   
+   SqlGetAVMData(argv[3]);
    /*
      Now, we must determine where the holes in the data are, and
      whether or not to fill in the AVM data with the SCADA data
@@ -76,26 +121,23 @@ int main(int argc, char **argv)
       tot_rel[j] = spill[j] + bypass[j] + avm_rel[j];
    }
 
-   date[0] = '\0';
-
-
    /* Now, write data to database. Perhaps we should allow the new
       power release data to run through the derivation application
       before calculating total releases based on it?
    */
-
+   /*
    for (j=0; j<HOURS; j++)
    {
       printf("%s %d: %s %.0f %s %.0f %s %.0f %s %.0f %s %.0f\n", date, j,
              "curve", curve_rel[j],"AVM",avm_rel[j], "total", tot_rel[j],
              "spill", spill[j], "bypass", bypass[j]);
    }
+   */
    
    insertAVM(formattedDates, 1862,avm_rel,val_flag);
    insertAVM(formattedDates, 1872,tot_rel,val_flag);   
 
-   exit(0);
-
-
+   SqlDisconnect();
+   return(0);
 } /* end of main */
 

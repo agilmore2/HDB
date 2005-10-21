@@ -34,7 +34,7 @@ static lookup=1;
 
 #define FUNC_NAME "insertAVM"
 
-int insertAVM (SQL_DATE *formattedDates,int site_datatype_id, float *vals_array,char *validationFlag)
+int insertAVM (char **formattedDates,int site_datatype_id, double *vals_array,char *validationFlag)
 
 /* an important consideration here is to make sure that the size of SLQ variables  is consistent 
    with the database.  Nearly all data (if not all) values in the database are 16 byte floats.  
@@ -43,10 +43,13 @@ int insertAVM (SQL_DATE *formattedDates,int site_datatype_id, float *vals_array,
    has been defined as a 16 byte float */
 	
 {
+ EXEC SQL WHENEVER SQLERROR DO sql_error();
+ EXEC SQL WHENEVER NOT FOUND DO sql_error();
+
  EXEC SQL BEGIN DECLARE SECTION;
  SQL_DATE      date_time;
  SQL_DATE      end_date_time;
- VALUE         vals;
+ double         vals;
  ID            sdi,s_id;
  char          val_Flag[2];
 
@@ -55,26 +58,26 @@ int insertAVM (SQL_DATE *formattedDates,int site_datatype_id, float *vals_array,
  int         i,
              result;
  short       NULL_INDICATOR;
- char        tableName[25];
 
  if(lookup)
  {
-   SqlLookupIds("Bureau of Reclamation","see loading application","glenPowRelease","N/A","N/A");
+   SqlLookupIds("Bureau of Reclamation","See loading application","glenPowRelease","unknown","N/A");
    /*agen_name,collection_system_name,
      loading_application_name,method_name,computation_name);*/
    lookup = 0;
  }
-
+ 
  strncpy(val_Flag,validationFlag,1);
- val_Flag[1]='\0';
+ val_Flag[0]='\0';
  sdi = site_datatype_id;
- strcpy(tableName,"r_hour");
 
+ if(site_datatype_id == 1872) {computation_id = 1;}
+ 
  for (i=0; i < HOURS; i++)
    { 
-     vals=vals_array[i];
-     strcpy(date_time,formattedDates[i]);
-     NULL_INDICATOR=-1;
+      vals=vals_array[i];
+      strcpy(date_time,formattedDates[i]);
+      NULL_INDICATOR=-1;
 
      /* 
 	modify_r_base_raw  ( SITE_DATATYPE_ID NUMBER,
@@ -95,14 +98,18 @@ int insertAVM (SQL_DATE *formattedDates,int site_datatype_id, float *vals_array,
 
 /* placing the null_indicator after the end_date_time will pass a null in that position
    it will get overwritten with something else every invocation, so we set it to -1 every time*/
+      
      EXEC SQL EXECUTE
        begin
-       uchdba.modify_r_base_raw(:sdi,'hour',:date_time,:end_date_time:NULL_INDICATOR, :vals ,:agen_id,
-				null,:val_Flag,:collection_system_id,
-				:loading_application_id,:method_id,
-				:computation_id,'Y');
-       end;
-       END-EXEC;
+        uchdba.modify_r_base_raw(:sdi,'hour',:date_time,
+                                 :end_date_time:NULL_INDICATOR,
+                                 :vals ,:agen_id,
+                                 null,:val_Flag,:collection_system_id,
+                                 :loading_application_id,:method_id,
+                                 :computation_id,'Y');
+     end;
+     
+     END-EXEC;
 
    }
 
@@ -131,3 +138,25 @@ int insertAVM (SQL_DATE *formattedDates,int site_datatype_id, float *vals_array,
 
 /*   return (OK); */
 /* } */
+
+/* Handle errors. Exit on any error. */
+void
+sql_error()
+{
+   char msg[512];
+   int buf_len, msg_len;
+
+
+   EXEC SQL WHENEVER SQLERROR CONTINUE;
+
+   buf_len = sizeof(msg);
+   sqlglm(msg, &buf_len, &msg_len);
+
+   printf("\nORACLE error detected:");
+   printf("\n%.*s \n", msg_len, msg);
+
+   EXEC SQL ROLLBACK WORK RELEASE;
+   exit(1);
+}
+
+

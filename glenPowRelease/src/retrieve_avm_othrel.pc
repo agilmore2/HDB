@@ -17,7 +17,7 @@
 
 extern double curve_rel[HOURS],avm_rel[HOURS],spill[HOURS],bypass[HOURS];
 
-int SqlGetAVMData(char *appUser, char *appPass, char *date)
+int SqlGetAVMData(char *date)
 {
    EXEC SQL INCLUDE SQLCA;
   
@@ -30,38 +30,11 @@ int SqlGetAVMData(char *appUser, char *appPass, char *date)
   
    EXEC SQL END DECLARE SECTION;
 
-   char  newDateFormat[] = "RRMONDD HH24\0";
-   char   *dbName;
    char   hour[7];
    int    result, i,j;
    int    site_datatype[NUMDATATYPES];
    
    EXEC SQL WHENEVER SQLERROR GOTO errrpt;
-
-   printf ("%s ",date);
-   
-/* set the name of the database */
-  
-  dbName = NULL; 
-  dbName = getenv("HDB_LOCAL");
-  
-  if (dbName == NULL)
-    {
-      PrintError("Environment variable HDB_LOCAL not set...\n");
-      return(ERROR);
-    }
-  
-  if  ((result = SqlConnect (dbName, appUser, appPass)) == ERROR)
-    exit (ERROR);
-  
-  fprintf(stdout, "Connected to ORACLE.\n");
-
-  if ((result = SqlSetDateFormat (newDateFormat)) != OK)
-    {
-      PrintError ("Problem setting default date format.\n\tExiting.");
-      SqlDisconnect();
-      exit(1);
-    }
 
   site_datatype[0] = 5034; /* Glen Canyon Power Plant, power curve release */
   site_datatype[1] = 5035; /* Glen Canyon Power Plant, avm release */

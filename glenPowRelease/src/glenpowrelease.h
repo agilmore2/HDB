@@ -6,17 +6,15 @@ ID agen_id,collection_system_id,loading_application_id,method_id,computation_id;
 
 int insertAVM(
 #ifdef ANSIPROTO
-SQL_DATE *,
+char **,
 int,
-float *,
+double *,
 char *
 #endif
 );
 
 int SqlGetAVMData(
 #ifdef ANSIPROTO
-        char*,
-        char*,
         char*
 #endif
 );
