@@ -209,7 +209,7 @@ int SqlConnectRole(char *dbName, char* userName, char* id, char *roleName)
 {
    /*Database host variables*/
    EXEC SQL BEGIN DECLARE SECTION;
-   char dbSite[3];
+   char dbSite[4];
    char *user;
    char *uid;
    char *dbstring;
@@ -226,7 +226,7 @@ int SqlConnectRole(char *dbName, char* userName, char* id, char *roleName)
 
    /* set the name of the database and get the password user*/
    dbstring = dbName;
-   strcpy (dbSite, DB);
+   strncpy (dbSite, DB,3);
 
    psswdUser = NULL;
    psswdUser = getenv("PSSWD_USER");
