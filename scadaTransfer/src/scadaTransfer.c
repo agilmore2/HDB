@@ -45,7 +45,7 @@ int main( int argc, char** argv )
   sd[0][0]=1928; /* Glen Canyon - Lake Powell wse */                         
   sd[0][1]=1975; /* Glen Canyon - Lake Powell head */                        
   sd[0][2]=1981; /* Glen Canyon - Lake Powell generation */                  
-  sd[0][3]=1862; /* Glen Canyon - Lake Powell power releases */              
+  sd[0][3]=5034; /* Glen Canyon - Lake Powell power releases */              
   sd[0][4]=1872; /* Glen Canyon - Lake Powell power and non power releases */
   sd[0][5]=4167; /* Glen Canyon - Lake Powell bypass releases */
   sd[0][6]=4166; /* Glen Canyon - Lake Powell spill */
@@ -219,6 +219,7 @@ int main( int argc, char** argv )
 	  dater[6]='-';
 	  /* Kludge, but works for Y2K */
 	  strncpy (charYear, &date1[0],2);
+          charYear[2]= '\0';
 	  year = atoi (charYear);
 	  if (year > 90)
 	    strncpy(&dater[7], "19",2);
@@ -249,7 +250,12 @@ int main( int argc, char** argv )
 
 	  site_datatype_id = sd[index][k];
 
-	  if ((result = SqlGetValidationFlag 
+          /* do not process Powell total release,
+             since we generate that in a different way. */
+          if (site_datatype_id == 1872)
+             continue;
+
+          if ((result = SqlGetValidationFlag 
 	       (site_datatype_id, validationFlag)) != OK)
 	    {
 	      SqlDisconnect();
@@ -262,6 +268,7 @@ int main( int argc, char** argv )
 	      vals_array[i]=values[index][k][i];
 	    }
 
+          
 	  if((result = insertScada (formattedDates, site_datatype_id,vals_array,sourceId,
 				    validationFlag)) != OK)
 	     {
