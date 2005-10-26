@@ -121,7 +121,7 @@ pid=$!
 for date in `cat current_dates`
 do
     echo '       Transferring data to Flagstaff'
-    ./ftp_orca $date
+#    ./ftp_orca $date
     stat=$?
     if [ $stat -ne 0 ] 
     then
@@ -132,7 +132,7 @@ do
     fi
 
     echo '       Mailing data to WAPA'
-    ./mail_wapa $date
+#    ./mail_wapa $date
     stat=$?
     if [ $stat -ne 0 ] 
     then
@@ -163,10 +163,40 @@ then
     exit 1
 fi
 
-echo '       Derivation application done, creating and transferring hydromet input file'
+
+echo '       Derivation application done, creating Glen Canyon Power and Total Release, '
+echo 'and transferring hydromet input file'
 # now run the application to generate the hydromet input file
 for date in `cat current_dates`
 do
+    glenPowRelease app_user uchdb2 $date
+    if [ $? -ne 0 ]
+    then
+        echo "Glen Power Release failed, exiting!"
+        exit
+    fi
+
+    ./derive_pwr
+    if [ $? -ne 0 ]
+    then
+        echo "derivation for Power Release failed, exiting!"
+        exit
+    fi
+
+    glenTotRelease app_user uchdb2 $date
+    if [ $? -ne 0 ]
+    then
+        echo "Glen Total Release failed, exiting!"
+        exit
+    fi
+
+    ./derive_tot
+    if [ $? -ne 0 ]
+    then
+        echo "derivation for Total Release failed, exiting!"
+        exit
+    fi
+
     scadaData app_user uchdb2 $date 
     if [ $? -ne 0 ]
     then

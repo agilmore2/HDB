@@ -3,6 +3,15 @@
 beg_date=$1
 end_date=$2
 
+#Need GNU date:
+if [ `uname` = 'SunOS' ] ; then {
+  date=/usr/local/bin/date
+}
+elif [ `uname` = 'Linux' ] ; then {
+  date=/bin/date
+}
+fi
+
 #the following
 beg_year=${beg_date:0:2}
 beg_mon=${beg_date:2:3}
@@ -11,8 +20,8 @@ end_year=${end_date:0:2}
 end_mon=${end_date:2:3}
 end_day=${end_date:5:2}
 
-beg_sec=`/usr/local/bin/date -d"$beg_day-$beg_mon-$beg_year" +%s`
-end_sec=`/usr/local/bin/date -d"$end_day-$end_mon-$end_year" +%s`
+beg_sec=`$date -d"$beg_day-$beg_mon-$beg_year" +%s`
+end_sec=`$date -d"$end_day-$end_mon-$end_year" +%s`
 
 if [ $beg_sec -gt $end_sec ]
 then
@@ -45,7 +54,7 @@ done
 # reads from this file, and prints out one date per line
 # in the format DDMonYY which we then tr into all uppercase, DDMONYY
 
-/usr/local/bin/date -f junk$$ +%y%h%d |tr '[:lower:]' '[:upper:]'
+$date -f junk$$ +%y%h%d |tr '[:lower:]' '[:upper:]'
 
 # delete the junk file. $$ is variable for current processes PID, which
 #makes the file have a unique name.

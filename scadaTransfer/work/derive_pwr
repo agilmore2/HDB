@@ -1,0 +1,5 @@
+#!/bin/bash
+# derive data that comes from GC_avm_curve application
+# GC total release and GC power release
+
+derivation $APP_USER $HDB_LOCAL 1862
