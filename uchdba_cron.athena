@@ -37,7 +37,7 @@
 #
 # Run Archive Loader for current water year
 #
-35 06,07,08,09,10,11,16 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/dataloader/work/archives; ./hmArchiveJava.sh >> $HDB_ENV/dataloader/work/archives/dataloader.log 2>$HDB_ENV/dataloader/work/archives/dataloader.err
+35 06,07,08,09,10,11,12,13,14,16 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/dataloader/work/archives; ./hmArchiveJava.sh >> $HDB_ENV/dataloader/work/archives/dataloader.log 2>$HDB_ENV/dataloader/work/archives/dataloader.err
 #
 # Run Archive Loader for previous water year, need to run it
 # every day in October, November, December
@@ -109,6 +109,10 @@
 12 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea green_input.png /wrg/exec/pub/AOP/green_teacup.png green.cfg > green_teacup.out 2> green_teacup.err
 # Pecos/Rio Grande
 12 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea pecosrio_input.png /wrg/exec/pub/AOP/pecosrio_teacup.png pecosrio.cfg > pecosrio_teacup.out 2> pecosrio_teacup.err
+#Duchesne
+12 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea duchesne_input.png /wrg/exec/pub/AOP/duchesne_teacup.png duchesne.cfg > duchesne_teacup.out 2> duchesne_teacup.err
+#Price San Rafael
+12 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/gentea/work; gentea pricesanrafael_input.png /wrg/exec/pub/AOP/pricesanrafael_teacup.png pricesanrafael.cfg > pricesanrafael_teacup.out 2> pricesanrafael_teacup.err
 #
 # Site information scripts for output to website (used to be in Rick Clayton's crontab)
 #
