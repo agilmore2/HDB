@@ -226,7 +226,7 @@ int SqlConnectRole(char *dbName, char* userName, char* id, char *roleName)
 
    /* set the name of the database and get the password user*/
    dbstring = dbName;
-   strncpy (dbSite, DB,3);
+   strncpy (dbSite, DB,4);
 
    psswdUser = NULL;
    psswdUser = getenv("PSSWD_USER");
