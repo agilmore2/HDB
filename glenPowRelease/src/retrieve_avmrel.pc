@@ -15,7 +15,7 @@
 #include "typedefs.h"
 #include "glenpowrelease.h"
 
-extern double curve_rel[HOURS],avm_rel[HOURS],spill[HOURS],bypass[HOURS];
+extern double avm_rel[HOURS];
 
 int SqlGetAVMData(char *date)
 {
@@ -36,10 +36,7 @@ int SqlGetAVMData(char *date)
    
    EXEC SQL WHENEVER SQLERROR GOTO errrpt;
 
-  site_datatype[0] = 5034; /* Glen Canyon Power Plant, power curve release */
-  site_datatype[1] = 5035; /* Glen Canyon Power Plant, avm release */
-  site_datatype[2] = 4166; /* Glen Canyon - Lake Powell spill */
-  site_datatype[3] = 4167; /* Glen Canyon - Lake Powell bypass releases */
+  site_datatype[0] = 5035; /* Glen Canyon Power Plant, avm release */
 
   for (i=0; i<HOURS; i++)
   {
@@ -64,14 +61,6 @@ int SqlGetAVMData(char *date)
             switch (j) {
                 case 0:
                    if (sqlca.sqlcode == 1403) {
-                      curve_rel[i] = 998877;
-                   }
-                   else {
-                      curve_rel[i] = val;
-                   }
-                   break;
-                case 1:
-                   if (sqlca.sqlcode == 1403) {
                       printf ("ERROR, NO DATA FOR GC AVM RELEASE, SITE DATATYPE %d, HOUR %d!\n",
                               site_datatype_id, i);
                       exit(1);
@@ -79,26 +68,6 @@ int SqlGetAVMData(char *date)
                    }
                    else {
                       avm_rel[i] = val;
-                   }
-                   break;
-                case 2:
-                   if (sqlca.sqlcode == 1403) {
-                      printf ("ERROR, NO DATA FOR GC SPILL, SITE DATATYPE %d, HOUR %d!\n",
-                              site_datatype_id, i);
-                      exit(1);
-                   }
-                   else {
-                      spill[i] = val;
-                   }
-                   break;
-                case 3:
-                   if (sqlca.sqlcode == 1403) {
-                      printf ("ERROR, NO DATA FOR GC BYPASS, SITE DATATYPE %d!, HOUR %d\n",
-                              site_datatype_id, i);
-                      exit(1);
-                   }
-                   else {
-                      bypass[i] = val;
                    }
                    break;
                 default:

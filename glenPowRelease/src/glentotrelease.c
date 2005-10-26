@@ -32,7 +32,7 @@
 #include "defines.h"
 #include "glenpowrelease.h"
 
-double avm_rel[HOURS];
+double pow_rel[HOURS], spill[HOURS], bypass[HOURS];
 
 int main(int argc, char **argv)
 {
@@ -41,6 +41,8 @@ int main(int argc, char **argv)
    int    i,j, missing_data=0;
    char   val_flag[] = "Z";
    
+   double  tot_rel[HOURS]; 
+
    char *formattedDates[HOURS];
 
    char  newDateFormat[] = "RRMONDD HH24\0";
@@ -49,7 +51,7 @@ int main(int argc, char **argv)
 
    if (argc != 4)
     {
-      printf("\nusage: glenPowRelease <user name> <password> YYMONDD\n\n");
+      printf("\nusage: glenTotRelease <user name> <password> YYMONDD\n\n");
       exit(2);
     }
 
@@ -111,13 +113,19 @@ int main(int argc, char **argv)
    }
 
    
-   SqlGetAVMData(argv[3]);
+   SqlGetTotData(argv[3]);
    /*
      Now, we must determine where the holes in the data are, and
      whether or not to fill in the AVM data with the SCADA data
 
      for now, assume avm data is fine
    */
+
+   /* calculate Total Release*/
+   for (j=0; j<HOURS; j++)
+   {
+      tot_rel[j] = spill[j] + bypass[j] + pow_rel[j];
+   }
 
    /* Now, write data to database. Perhaps we should allow the new
       power release data to run through the derivation application
@@ -132,7 +140,7 @@ int main(int argc, char **argv)
    }
    */
    
-   insertAVM(formattedDates, 1862,avm_rel,val_flag);
+   insertAVM(formattedDates, 1872,tot_rel,val_flag);   
 
    SqlDisconnect();
    return(0);

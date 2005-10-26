@@ -1,0 +1,112 @@
+/*************************************************************************************************************
+ *  Function:  retrieve data from HDB2 for use in determining GC releases
+ *
+ *  Author:    Andrew Gilmore
+ *
+ *
+ **************************************************************************************************************/
+
+
+#include <stdio.h>
+#include <string.h>
+#include "dbutils.h"
+#include "utils.h"
+#include "defines.h"
+#include "typedefs.h"
+#include "glentotrelease.h"
+
+extern double pow_rel[HOURS],spill[HOURS],bypass[HOURS];
+
+int SqlGetTotData(char *date)
+{
+   EXEC SQL INCLUDE SQLCA;
+  
+   EXEC SQL BEGIN DECLARE SECTION;
+
+   char      day[11];
+   ID	        site_datatype_id;
+   short        value_null_indicator;
+   double       val;
+  
+   EXEC SQL END DECLARE SECTION;
+
+   char   hour[7];
+   int    result, i,j;
+   int    site_datatype[NUMDATATYPES];
+   
+   EXEC SQL WHENEVER SQLERROR GOTO errrpt;
+
+  site_datatype[0] = 1862; /* Glen Canyon - power release */
+  site_datatype[1] = 4166; /* Glen Canyon - Lake Powell spill */
+  site_datatype[2] = 4167; /* Glen Canyon - Lake Powell bypass releases */
+
+  for (i=0; i<HOURS; i++)
+  {
+     strcpy(day,date);
+     snprintf(hour,6," %d",i);
+     strcat(day,hour);
+     
+     for (j=0; j<NUMDATATYPES; j++)
+     {
+         site_datatype_id = site_datatype[j];
+         value_null_indicator=0;
+         
+         /*         printf("%s ",day);*/
+         
+	 EXEC SQL SELECT A.VALUE into val:value_null_indicator
+            FROM R_HOUR A
+            WHERE A.SITE_DATATYPE_ID = :site_datatype_id
+            AND START_DATE_TIME = :day;
+
+         if (sqlca.sqlcode == 0 || sqlca.sqlcode == 1403 )
+         {
+            switch (j) {
+                case 0:
+                   if (sqlca.sqlcode == 1403) {
+                      printf ("ERROR, NO DATA FOR GC PWR RELEASE, SITE DATATYPE %d, HOUR %d!\n",
+                              site_datatype_id, i);
+                      exit(1);
+
+                   }
+                   else {
+                      pow_rel[i] = val;
+                   }
+                   break;
+                case 1:
+                   if (sqlca.sqlcode == 1403) {
+                      printf ("ERROR, NO DATA FOR GC SPILL, SITE DATATYPE %d, HOUR %d!\n",
+                              site_datatype_id, i);
+                      exit(1);
+                   }
+                   else {
+                      spill[i] = val;
+                   }
+                   break;
+                case 2:
+                   if (sqlca.sqlcode == 1403) {
+                      printf ("ERROR, NO DATA FOR GC BYPASS, SITE DATATYPE %d!, HOUR %d\n",
+                              site_datatype_id, i);
+                      exit(1);
+                   }
+                   else {
+                      bypass[i] = val;
+                   }
+                   break;
+                default:
+                   printf("YIKES!\n");
+                   exit(1);
+            }
+         }
+      }
+   }
+   return 0;
+
+errrpt:
+  EXEC SQL WHENEVER SQLERROR CONTINUE;
+  printf ("\n %.70s \n",sqlca.sqlerrm.sqlerrmc);
+  if ((result = SqlDisconnect ()) == ERROR)
+    exit (ERROR);
+  
+
+} 
+

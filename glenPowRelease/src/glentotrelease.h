@@ -1,4 +1,4 @@
-#define NUMDATATYPES 1
+#define NUMDATATYPES 3
 #define HOURS 24
 ID agen_id,collection_system_id,loading_application_id,method_id,computation_id;
 
@@ -13,7 +13,7 @@ char *
 #endif
 );
 
-int SqlGetAVMData(
+int SqlGetTotData(
 #ifdef ANSIPROTO
         char*
 #endif
