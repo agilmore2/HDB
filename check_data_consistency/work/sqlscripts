@@ -1,1 +1,2 @@
 SCADA/Hydromet Comparison=check_scada_hydromet.sql
+SCADA/GOES Blue Mesa Elevation=check_bmdc_elevation.sql
