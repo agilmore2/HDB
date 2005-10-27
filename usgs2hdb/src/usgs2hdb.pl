@@ -284,43 +284,21 @@ my $computation_id;
 sub get_app_ids
 {
 # Get ids to describe where data came from
-  my $agen_name = 'United States Geological Survey';
-  my $collect_name = '(see agency)';
-  my $load_app_name = 'usgs2hdb.pl';
-  my $method_name = 'unknown';
-  my $computation_name = 'unknown';
+  my $nameid;
 
-  my $max_len = 11;
+  $nameid->{agen}->{name} = 'United States Geological Survey';
+  $nameid->{collect}->{name} = '(see agency)';
+  $nameid->{load_app}->{name} = 'usgs2hdb.pl';
+  $nameid->{method}->{name} = 'unknown';
+  $nameid->{computation}->{name} = 'unknown';
 
-  my $sth;
+  $hdb->get_app_ids($nameid);
 
-  $sth = $hdb->dbh->prepare(q{
-     BEGIN
-           lookup_application(?,?,?,?,?,  /* agen, collect, load_app, method, computation names*/
-                                     ?,?,?,?,?); /* agen, collect, load_app, method, computation ids */
-     END;
-   });
-
-  $sth->bind_param(1,$agen_name);
-  $sth->bind_param(2,$collect_name);
-  $sth->bind_param(3,$load_app_name);
-  $sth->bind_param(4,$method_name);
-  $sth->bind_param(5,$computation_name);
-  $sth->bind_param_inout(6, \$agen_id, $max_len);
-  $sth->bind_param_inout(7, \$collect_id, $max_len);
-  $sth->bind_param_inout(8, \$load_app_id, $max_len);
-  $sth->bind_param_inout(9, \$method_id, $max_len);
-  $sth->bind_param_inout(10, \$computation_id, $max_len);
-
-  eval {
-    $sth->execute;
-  };
-
-
-  if ($@) { # something screwed up
-    print $hdb->dbh->errstr, " $@\n";
-    die "Errors occurred during selection of ids for application.\n";
-  }
+  $agen_id = $nameid->{agen}->{id};
+  $collect_id = $nameid->{collect}->{id};
+  $load_app_id = $nameid->{load_app}->{id};
+  $method_id = $nameid->{method}->{id};
+  $computation_id = $nameid->{computation}->{id};
 
 }
 

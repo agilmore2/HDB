@@ -170,53 +170,27 @@ my $agen_id;
 my $collect_id;
 my $load_app_id;
 my $method_id;
-my $unk_computation_id;
+my $computation_id;
 
 
 sub get_app_ids
 {
 # Get ids to describe where data came from
-  my $agen_name = 'National Weather Service';
-  my $collect_name = '(see agency)';
-  my $load_app_name = 'nwstemps2hdb.pl';
-  my $method_name = 'unknown';
-  my $computation_name = 'unknown';
+  my $nameid;
 
-  my $max_len = 11;
+  $nameid->{agen}->{name} = 'National Weather Service';
+  $nameid->{collect}->{name} = '(see agency)';
+  $nameid->{load_app}->{name} = 'nwstemps2hdb.pl';
+  $nameid->{method}->{name} = 'unknown';
+  $nameid->{computation}->{name} = 'unknown';
 
-  my $sth;
+  $hdb->get_app_ids($nameid);
 
-  $sth = $hdb->dbh->prepare(q{
-     BEGIN
-           lookup_application(?,?,?,?,?,  /* agen, collect, load_app, method, computation names*/
-                                     ?,?,?,?,?); /* agen, collect, load_app, method, computation ids */
-     END;
-   });
-
-  $sth->bind_param(1,$agen_name);
-  $sth->bind_param(2,$collect_name);
-  $sth->bind_param(3,$load_app_name);
-  $sth->bind_param(4,$method_name);
-  $sth->bind_param(5,$computation_name);
-  $sth->bind_param_inout(6, \$agen_id, $max_len);
-  $sth->bind_param_inout(7, \$collect_id, $max_len);
-  $sth->bind_param_inout(8, \$load_app_id, $max_len);
-  $sth->bind_param_inout(9, \$method_id, $max_len);
-  $sth->bind_param_inout(10, \$unk_computation_id, $max_len);
-
-  eval {
-    $sth->execute;
-  };
-
-  if ($@ or
-      !defined($unk_computation_id) or
-      !defined($agen_id) or
-      !defined($collect_id) or
-      !defined($load_app_id) or
-      !defined($method_id)) { # something screwed up
-    print $hdb->dbh->errstr, " $@\n";
-    die "Errors occurred during selection of ids for application.\n";
-  }
+  $agen_id = $nameid->{agen}->{id};
+  $collect_id = $nameid->{collect}->{id};
+  $load_app_id = $nameid->{load_app}->{id};
+  $method_id = $nameid->{method}->{id};
+  $computation_id = $nameid->{computation}->{id};
 }
 
 sub insert_values
@@ -233,7 +207,7 @@ sub insert_values
     BEGIN
         modify_r_base_raw(?,'day',?,?,?, /* sdi, interval, start_date_time, end_date_time (in/out, not used), value */
                           $agen_id,null,'Z', /* overwrite, validation */
-                          $collect_id,$load_app_id,$method_id,$unk_computation_id,
+                          $collect_id,$load_app_id,$method_id,$computation_id,
                           'Y');                 /*do update? */
     END;";
 
@@ -278,21 +252,12 @@ sub insert_values
 
 
 sub get_SDI
+{
+  my $cur_site= $_[0];
+  my $datatype;
+
+  foreach $datatype (keys %datatype_hash)
   {
-    my $cur_site= $_[0];
-    my ($sth,$datatype);
-    my $get_site_datatype_statement = "select site_datatype_id from hdb_site_datatype where site_id = ? and datatype_id = ? ";
-
-    $sth = $hdb->dbh->prepare($get_site_datatype_statement) || die $sth->errstr;
-    $sth->bind_param(1,$cur_site);
-
-    foreach $datatype (keys %datatype_hash) 
-      {
-	$sth->bind_param(2,$datatype_hash{$datatype});
-	$sth->execute|| die $sth->errstr;
-	$sth->bind_col(1,\$site_datatype_hash{$datatype});
-#should check here if there are any rows. if not, no SDI exists for this combo.
-	$sth->fetch;
-      }
-    $sth->finish;
+    $site_datatype_hash{$datatype} = $hdb->get_SDI($cur_site,$datatype);
   }
+}
