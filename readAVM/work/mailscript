@@ -1,4 +1,4 @@
 #!/bin/bash
-./mimeexplode
+./mimeexplode >test 
 echo ../src/readAVM msg0/REPORT1.PRN $APP_USER $HDB_LOCAL
-rm -rf msg0
+#rm -rf msg0
