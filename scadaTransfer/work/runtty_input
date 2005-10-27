@@ -121,7 +121,7 @@ pid=$!
 for date in `cat current_dates`
 do
     echo '       Transferring data to Flagstaff'
-#    ./ftp_orca $date
+    ./ftp_orca $date
     stat=$?
     if [ $stat -ne 0 ] 
     then
@@ -132,7 +132,7 @@ do
     fi
 
     echo '       Mailing data to WAPA'
-#    ./mail_wapa $date
+    ./mail_wapa $date
     stat=$?
     if [ $stat -ne 0 ] 
     then
