@@ -63,8 +63,7 @@ int SqlGetAVMData(char *date)
                    if (sqlca.sqlcode == 1403) {
                       printf ("ERROR, NO DATA FOR GC AVM RELEASE, SITE DATATYPE %d, HOUR %d!\n",
                               site_datatype_id, i);
-                      exit(1);
-
+                      avm_rel[i] = 998877;
                    }
                    else {
                       avm_rel[i] = val;

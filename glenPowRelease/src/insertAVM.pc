@@ -76,6 +76,9 @@ int insertAVM (char **formattedDates,int site_datatype_id, double *vals_array,ch
  for (i=0; i < HOURS; i++)
    { 
       vals=vals_array[i];
+
+      if (vals == 998877) continue; /*if missing data, skip*/
+
       strcpy(date_time,formattedDates[i]);
       NULL_INDICATOR=-1;
 
