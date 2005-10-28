@@ -71,9 +71,10 @@ open (INFILE, "$ARGV[0]") || die "Error: couldn't open input file $ARGV[0]";
 my $cur_site_name = "none";
 my ($line, @fields, $date, $time, $value, $site_datatype_id);
 
+$INPUT_RECORD_SEPARATOR="\r\n";
+
 READ: while ($line = <INFILE>)
 {
-  $INPUT_RECORD_SEPARATOR="\r\n";
   chomp($line);
 
 #next line if is really short, or is junk
@@ -110,9 +111,9 @@ READ: while ($line = <INFILE>)
     
   } else {
     $value = $fields[3];
-  }
-  if ($value == -9999 or $fields[2] eq 'bad') {
-    $value = undef;
+    if ($fields[2] eq 'bad)') {
+      $value = undef;
+    }
   }
     
 #one of these calls per value, which is inefficent, but quick to code. 
@@ -180,7 +181,7 @@ sub get_app_ids
 sub insert_values
   {
     my(@value_date) = @_[0..5];
-    my($sdi) = $_[6];    
+    my($sdi) = $_[6];
     my($value) = $_[7];
 
     my $end_date_time = undef;
@@ -202,7 +203,7 @@ sub insert_values
     eval {
 #only use these once per prepare/finish, could do better
       $modsth = $hdb->dbh->prepare($modify_data_statement) || die $modsth->errstr;
-      
+
 # insert data;
       my  $old_val = undef;
       $old_val = check_value($datestr, $sdi);
