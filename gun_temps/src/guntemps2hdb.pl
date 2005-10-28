@@ -217,7 +217,7 @@ sub get_app_ids
   $method_id = $nameid->{method}->{id};
   $unk_computation_id = $nameid->{computation}->{id};
 
-  $sth = $hdb->dbh->prepare("select computation_id from hdb_computed_datatype where computation_name = 'difference'");
+  my $sth = $hdb->dbh->prepare("select computation_id from hdb_computed_datatype where computation_name = 'difference'");
   eval {
     $sth->execute;
     $sth->bind_col(1,\$diff_computation_id);
@@ -227,7 +227,7 @@ sub get_app_ids
 
   if ($@ or !defined($diff_computation_id)) { # something screwed up
     print $hdb->dbh->errstr, " $@\n";
-    $hdb->hdbdie "Errors occurred during selection of difference computation ids for r_base.\n";
+    hdbdie "Errors occurred during selection of difference computation ids for r_base.\n";
   }
 }
 
