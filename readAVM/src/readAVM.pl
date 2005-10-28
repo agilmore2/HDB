@@ -268,10 +268,10 @@ sub insert_values
     if (!defined $value) {
       #delete data if data is -99.9, otherwise do nothing.
     } elsif (defined($old_val) and $old_val == $value) {
-      print "data is identical, skipping!\n";
+#      print "data is identical, skipping!\n";
     } elsif (!defined($old_val) or $old_val != $value) {
       if (!defined($old_val)) {
-#        print "modifying for $sdi, date $datestr, value $value, old_val = undef\n";
+        print "modifying for $sdi, date $datestr, value $value, old_val = undef\n";
       } else {
         print "modifying for $sdi, date $datestr, value $value, old_val = $old_val\n";
       }
