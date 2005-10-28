@@ -58,7 +58,7 @@ open (INFILE, "$ARGV[0]") || die "Error: couldn't open input file $ARGV[0]";
 
 my ($i, $line);
 # skip past opening junk
-for ($i = 0; $i < 48; $i++)
+for ($i = 0; $i < 53; $i++)
   { $line = <INFILE>; }
 
 # get date of data
@@ -77,7 +77,7 @@ my $datestr = substr $line, 0, 9;
 print "$datestr\n";
 
 #skip past header
-for ($i = 0; $i < 179-51; $i++)
+for ($i = 0; $i < 151-55; $i++)
   { $line = <INFILE>; }
 
 my ($cur_site_name, $site_id);
@@ -140,7 +140,7 @@ READ: while ($line = <INFILE>)
   if ($site_id) {
     insert_values($datestr);
   }
-  for ($i = 0; $i < 8; $i++)
+  for ($i = 0; $i < 6; $i++)
   { $line = <INFILE>; }
 }
 
