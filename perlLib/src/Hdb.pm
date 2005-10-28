@@ -43,7 +43,7 @@ progams which interact with the database.
 package Hdb;
 use Exporter ();
 @ISA = qw(Exporter);
-@EXPORT = qw(hdbdie connect_to_db set_approle);
+@EXPORT = qw();
 
 use DBI;
 
@@ -135,7 +135,7 @@ sub set_approle {
   $psswd_dbh->disconnect;
 
   $self->{dbh}->do("set role $approle identified by $approlepass")
-                 or hdbdie($DBI::errstr);
+                 or $self->hdbdie($DBI::errstr);
 
   return $self->{dbh};
 }
@@ -150,7 +150,7 @@ sub connect_to_db {
 
   $self->{dbh} = DBI->connect("dbi:Oracle:$self->{dbname}", $user, $pass,
 			     {RaiseError => 1, AutoCommit => 0 })
-                     or hdbdie($DBI::errstr);
+                     or $self->hdbdie($DBI::errstr);
 
   return $self->{dbh};
 }
@@ -195,7 +195,7 @@ sub get_app_ids
       !defined($nameid->{method}->{id}) or
       !defined($nameid->{computation}->{id})) { # something screwed up
     print $self->dbh->errstr, " $@\n";
-    hdbdie("Errors occurred during selection of ids for application.\n");
+    $self->hdbdie("Errors occurred during selection of ids for application.\n");
   }
 
   return $nameid;
@@ -212,13 +212,13 @@ sub get_SDI
   $sth = $self->dbh->prepare($get_site_datatype_statement) || die $sth->errstr;
   $sth->bind_param(1,$cur_site);
   $sth->bind_param(2,$datatype);
-  $sth->execute || hdbdie($sth->errstr);
+  $sth->execute || $self->hdbdie($sth->errstr);
   $sth->bind_col(1,\$site_datatype);
 #should check here if there are any rows. if not, no SDI exists for this combo.
   $sth->fetch;
 
   if (!defined($site_datatype)) {
-   hdbdie("site datatype id not found for site: $cur_site datatype: $datatype");
+   $self->hdbdie("site datatype id not found for site: $cur_site datatype: $datatype");
   }
 
   $sth->finish;
