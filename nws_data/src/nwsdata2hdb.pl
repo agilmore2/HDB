@@ -258,6 +258,6 @@ sub get_SDI
 
   foreach $datatype (keys %datatype_hash)
   {
-    $site_datatype_hash{$datatype} = $hdb->get_SDI($cur_site,$datatype);
+    $site_datatype_hash{$datatype} = $hdb->get_SDI($cur_site,$datatype_hash{$datatype});
   }
 }
