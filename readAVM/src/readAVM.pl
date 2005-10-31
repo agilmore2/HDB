@@ -279,7 +279,7 @@ sub insert_values
       $modsth->bind_param(2,$datestr);
       $modsth->bind_param_inout(3,\$end_date_time, 50);
       $modsth->bind_param(4,$value);
-#      $modsth->execute|| die $modsth->errstr;
+      $modsth->execute|| die $modsth->errstr;
     }
   };
   if ($@) {
