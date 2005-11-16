@@ -107,7 +107,7 @@ if (! ($flowtype =~ /^[rop]$/)) {
 }
 
 #do not have table set up to specify which official data to automatically get
-if (($flowtype eq "o" or $flowtype eq "p") and ! defined($site_num_list)) {
+if (($flowtype eq "o") and ! defined($site_num_list)) {
   print "Lookout! You have specified loading all sites in HDB!\n";
   print "Are you sure you want to do this? (y/n) \n";
   my $yn;
