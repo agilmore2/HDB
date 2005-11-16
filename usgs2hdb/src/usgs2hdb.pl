@@ -1,4 +1,4 @@
-#!/usr/bin/perl -wd
+#!/usr/bin/perl -w
 
 #insert HDB library
 
@@ -56,7 +56,7 @@ while (@ARGV)
   } elsif ($arg =~ /-d/) {	# get debug flag
     $debug=1;
   } elsif ($arg =~ /-o/) {	# get overwrite flag
-    $overwrite="O";
+    $overwrite="'O'";
   } elsif ($arg =~ /-i/) {	# get usgs id
     $site_num_list .= shift(@ARGV) . ',';
   } elsif ($arg =~ /-n/) {	# get number of days
@@ -108,10 +108,19 @@ if (! ($flowtype =~ /^[rop]$/)) {
 
 #do not have table set up to specify which official data to automatically get
 if (($flowtype eq "o" or $flowtype eq "p") and ! defined($site_num_list)) {
-  print "Error, loading all defined sites for official or provisional\n";
-  print "is not currently allowed. Blame Andrew.\n";
-  print "Specify usgs site numbers on command line.\n";
-  usage();
+  print "Lookout! You have specified loading all sites in HDB!\n";
+  print "Are you sure you want to do this? (y/n) \n";
+  my $yn;
+  read STDIN, $yn,2;
+  chomp $yn;
+  if ($yn eq 'n') {
+    exit 0;
+  } elsif ( $yn eq 'y') {
+    ; # do nothing
+  } else {
+    print "I'm sorry, I can't do that, Dave.\n";
+    exit 1;
+  }
 }
 
 
@@ -327,6 +336,11 @@ until (!defined($data[0])) {
   # shift away extra header line (has field sizes and definitions, ignored)
   my $field_defs = shift @data;
 
+  #check to see if no data at all
+  if (substr ($data[0], 0, 1) eq '#') {
+    next STATION;
+  }
+
   # now we have data, mark data as found in USGS ID
   # assume that the format holds, and the id is in second column
   my (@firstrow) = split /\t/, $data[0];
@@ -468,7 +482,12 @@ hdb_loading_application where loading_application_name = '$load_app_name'";
     $hdb->hdbdie("Errors occurred during selection of data source info for $title{$flowtype}.\n");
   }
 
-
+  if (!defined($validation)) {
+    $validation = 'null';
+  }
+  else {
+    $validation = "'" . $validation . "'";
+  }
 }
 
 sub build_url
@@ -530,6 +549,7 @@ sub build_web_request
   my $ua = LWP::UserAgent->new;
   $ua->agent('USGS Streamflow -> US Bureau of Reclamation HDB dataloader: ' . $ua->agent);
   $ua->from('agilmore@uc.usbr.gov');
+  $ua->timeout(600);
   my $request = HTTP::Request->new();
   $request->method('GET');
   return ($ua, $request);
@@ -676,7 +696,7 @@ sub insert_values
                       ?,/* start_date_time */
                       ?,/* end_date_time (in/out, not used) */
                       ?,/* value */
-                      $agen_id,'$overwrite','$validation',
+                      $agen_id,$overwrite,$validation,
                       $collect_id,$load_app_id,
                       $usgs_site->{meth_id},$usgs_site->{comp_id},
                       'Y');/*do update? */
@@ -714,7 +734,7 @@ sub insert_values
 	print "data corrupted: $usgs_site->{sdi}, date $value_date: $value\n";
 	next;
       } elsif (defined($old_val) and $old_val == $value) {
-        print "no changes: $usgs_site->{sdi}, date $value_date, value $value, old_val = $old_val\n";
+#        print "no changes: $usgs_site->{sdi}, date $value_date, value $value, old_val = $old_val\n";
 	next; # source and database are same, do nothing
       } elsif (!defined($old_val) or $old_val != $value) {
 	# update or insert, source and database differ (or database value does not exist)
@@ -728,7 +748,7 @@ sub insert_values
 	$modsth->bind_param(1,$value_date);
 	$modsth->bind_param_inout(2,\$end_date_time,50);
 	$modsth->bind_param(3,$value);
-#	$modsth->execute;
+	$modsth->execute;
 	
 	$end_date_time = undef;
 	if (!defined($first_date)) { # mark that data has changed
