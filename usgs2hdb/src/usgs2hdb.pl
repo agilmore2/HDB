@@ -783,10 +783,10 @@ Example: $progname -u app_user -p <hdbpassword> -n 2 -i 09260000 -a -r i
   -p <hdbpassword> : HDB password (REQUIRED)
   -i <usgs_id>     : USGS gage id to look for. Must be in HDB. More than one
                      may be specified with -i id1,id2 or -i id1 -i id2
-                     If none specified, will load all gages set up in HDB.
+                     IF NONE SPECIFIED, WILL LOAD ALL GAGES SET UP IN HDB.
   -t               : Test retrieval, but do not insert data into DB
   -f <filename>    : Filename instead of live web
-  -n <numdays>     : Days ending now for retrieval (max 31 for realtime)
+  -n <numdays>     : Days for retrieval (max 31 for realtime)
   -b <YYYY-MM-DD>  : Begin date for data retrieval
   -e <YYYY-MM-DD>  : End date for data retrieval
   -o               : Use overwrite flag, otherwise null
