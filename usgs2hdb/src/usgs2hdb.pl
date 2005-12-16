@@ -58,7 +58,7 @@ while (@ARGV)
   } elsif ($arg =~ /-o/) {	# get overwrite flag
     $overwrite="'O'";
   } elsif ($arg =~ /-i/) {	# get usgs id
-    $site_num_list .= "'" . shift(@ARGV). "'" . ','
+    $site_num_list .= shift(@ARGV) . ','
   } elsif ($arg =~ /-n/) {	# get number of days
     $numdays=shift(@ARGV);
   } elsif ($arg =~ /-b/) {	# get begin date
@@ -89,7 +89,7 @@ while (@ARGV)
 # if user specified usgs gage ids, chop off last comma
 if (defined($site_num_list)) {
   chop $site_num_list;
-  if ($site_num_list =~ /[^0-9,']/ ) {
+  if ($site_num_list =~ /[^0-9,]/ ) {
     die("ERROR: $site_num_list\ndoes not look like USGS id(s).\n");
   }
 }
@@ -538,7 +538,7 @@ sub build_site_num_list
 
   #build list of sites to grab data for
   foreach $usgs_num (keys %$usgs_sites) {
-    $site_num_list .= "'". $usgs_num ."',";
+    $site_num_list .= $usgs_num . ',';
   }
   chop $site_num_list;
   return $site_num_list;
@@ -561,6 +561,9 @@ sub get_usgs_sites
   my $id_limit_clause = '';
 
   if ($site_num_list = shift) {
+    $site_num_list = "'" . $site_num_list;
+    $site_num_list =~ s/,/','/g;
+    $site_num_list .= "'";
     $id_limit_clause = "b.primary_site_code in ( $site_num_list ) and";
   }
 
@@ -610,7 +613,18 @@ order by usgs_id";
 sub get_usgs_codes
 {
   my ($code_num_list, $value, $sth);
-#  my $id_limit_clause = ''; #no use for limit clause yet
+  my $id_limit_clause = '';
+  my $site_num_list;
+
+  if ($site_num_list = shift) {
+    $site_num_list = "'" . $site_num_list;
+    $site_num_list =~ s/,/','/g;
+    $site_num_list .= "'";
+    $id_limit_clause = "b.primary_site_code in ( $site_num_list ) and";
+  } else {
+    hdb->hdbdie("No sites specified for usgs codes!\n");
+  }
+
 
 # outcome should be 'load_usgs_realtime' or official or provisional
 # the mapping list has already been loaded with just the site that
@@ -621,7 +635,7 @@ sub get_usgs_codes
   my $get_data_code_statement =
   "select distinct b.primary_data_code data_id
 from hdb_ext_data_source a, ref_ext_site_data_map b 
-where b.primary_site_code in ( $_[0] ) and
+where $id_limit_clause
 a.ext_data_source_id = b.ext_data_source_id and
 a.ext_data_source_name = '$title{$flowtype}'";
 
