@@ -58,7 +58,7 @@ while (@ARGV)
   } elsif ($arg =~ /-o/) {	# get overwrite flag
     $overwrite="'O'";
   } elsif ($arg =~ /-i/) {	# get usgs id
-    $site_num_list .= shift(@ARGV) . ',';
+    $site_num_list .= "'" . shift(@ARGV). "'" . ','
   } elsif ($arg =~ /-n/) {	# get number of days
     $numdays=shift(@ARGV);
   } elsif ($arg =~ /-b/) {	# get begin date
@@ -89,7 +89,7 @@ while (@ARGV)
 # if user specified usgs gage ids, chop off last comma
 if (defined($site_num_list)) {
   chop $site_num_list;
-  if ($site_num_list =~ /[^0-9,]/ ) {
+  if ($site_num_list =~ /[^0-9,']/ ) {
     die("ERROR: $site_num_list\ndoes not look like USGS id(s).\n");
   }
 }
@@ -538,7 +538,7 @@ sub build_site_num_list
 
   #build list of sites to grab data for
   foreach $usgs_num (keys %$usgs_sites) {
-    $site_num_list .= $usgs_num . ','
+    $site_num_list .= "'". $usgs_num ."',";
   }
   chop $site_num_list;
   return $site_num_list;
