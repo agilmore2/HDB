@@ -801,8 +801,8 @@ Example: $progname -u app_user -p <hdbpassword> -n 2 -i 09260000 -a -r i
   -t               : Test retrieval, but do not insert data into DB
   -f <filename>    : Filename instead of live web
   -n <numdays>     : Days for retrieval (max 31 for realtime)
-  -b <YYYY-MM-DD>  : Begin date for data retrieval
-  -e <YYYY-MM-DD>  : End date for data retrieval
+  -b <DD-MON-YYYY>  : Begin date for data retrieval
+  -e <DD-MON-YYYY>  : End date for data retrieval
   -o               : Use overwrite flag, otherwise null
   -w               : Web address (URL developed to get USGS data)
   -d               : Debugging output
