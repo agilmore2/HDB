@@ -77,7 +77,7 @@ my $datestr = substr $line, 0, 9;
 print "$datestr\n";
 
 #skip past header
-for ($i = 0; $i < 151-55; $i++)
+for ($i = 0; $i < 92; $i++)
   { $line = <INFILE>; }
 
 my ($cur_site_name, $site_id);
@@ -131,9 +131,10 @@ READ: while ($line = <INFILE>)
   $value_hash{"COMPUTED INFLOW"} =~ s/\)//g;
   $value_hash{"COMPUTED INFLOW"} =~ s/\(/-/g;
 
-  if ($value_hash{"COMPUTED INFLOW"}) {
-    $value_hash{"COMPUTED INFLOW"} = sprintf("%.1f",$value_hash{"COMPUTED INFLOW"}/1.98347);
-  }
+# NO longer have to convert AF to cfs
+#  if ($value_hash{"COMPUTED INFLOW"}) {
+#    $value_hash{"COMPUTED INFLOW"} = sprintf("%.1f",$value_hash{"COMPUTED INFLOW"}/1.98347);
+#  }
 
 #values are in a global hash, so just need to pass in date, and could omit that
 
