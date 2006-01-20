@@ -92,7 +92,6 @@ int SqlVerifySDIList(char * sdilist)
    if (sdis != sdiCount)
    {
       fprintf(stderr, "One or more of the site_datatype_ids specified do not have derivations defined!\n");
-      return (ERROR);
    }
       
    return (OK);
