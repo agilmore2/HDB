@@ -384,19 +384,20 @@ until (!defined($data[0])) {
   # put data into database, handing site id and agg id for use
   # when aggDisagg is called, unless testflag is set
   # function returns date of first value and last value updated
-  my ($first_date, $updated_date);
+  my ($first_date, $updated_date, $rows_processed);
 
   if (defined($insertflag)) {
   #tell user something, so they know it is working
     print "Working on USGS gage number: $usgs_no\n";
     #pass in possibly huge array of data for specific usgs id
-    ($first_date, $updated_date) =
+    ($first_date, $updated_date, $rows_processed) =
              insert_values(\@cur_values,
                            $usgs_sites->{$usgs_no});
     if (!defined($first_date)) {
       print "No data updated for $usgs_no\n";
     } else {
       print "Data updated from $first_date to $updated_date for $usgs_no\n";
+      print "Number of data values from USGS processed: $rows_processed\n";
     }
   }
 
@@ -725,6 +726,8 @@ sub insert_values
     # insert or update or do nothing for each datapoint (row in file);
     foreach $line (@data)
     {
+
+      $i++;
       @row = split /\t/, $line;
       $value_date = $row[2];
       $value = $row[$usgs_site->{column}];
@@ -732,10 +735,6 @@ sub insert_values
 	$value =~ s/,//g;
       }
 
-      # find the previous value, if any for this point
-      undef $old_val;
-      $old_val = 
-      check_value($value_date,$usgs_site->{sdi},$usgs_site->{interval});
 # check if value from source is known
       if (!defined ($value) or $value eq '') {
 	print "data missing: $usgs_site->{sdi}, date $value_date\n" if defined($debug);
@@ -747,11 +746,8 @@ sub insert_values
       } elsif ($value =~ m/[^0-9\.]/) { # check for other text, complain
 	print "data corrupted: $usgs_site->{sdi}, date $value_date: $value\n";
 	next;
-      } elsif (defined($old_val) and $old_val == $value) {
-#        print "no changes: $usgs_site->{sdi}, date $value_date, value $value, old_val = $old_val\n";
-	next; # source and database are same, do nothing
-      } elsif (!defined($old_val) or $old_val != $value) {
-	# update or insert, source and database differ (or database value does not exist)
+      } else {
+	# update or insert
         if (defined($debug)) {
           if (!defined($old_val)) {
             print "modifying for $usgs_site->{sdi}, date $value_date, value $value, old_val = undef\n";
@@ -781,7 +777,7 @@ sub insert_values
   } elsif ($first_date) {	# commit the data
     $hdb->dbh->commit or $hdb->hdbdie($hdb->dbh->errstr);
   }
-  return $first_date, $updated_date;
+  return $first_date, $updated_date, $i;
 }
 
 sub usage
