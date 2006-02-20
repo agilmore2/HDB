@@ -200,6 +200,12 @@ tablespace HDB_idx
 storage(initial 250M)
 ;
 
+create index r_base_enddate_idx
+on r_base(end_date_time)
+tablespace HDB_idx
+storage(initial 250M)
+;
+
 create table r_base_archive
    (site_datatype_id             number NOT NULL,
     interval                     varchar2(16) NOT NULL,
