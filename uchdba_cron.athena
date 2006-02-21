@@ -25,11 +25,11 @@
 #
 # Read data from USGS website
 #
-00 07,09,11,13,15 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/usgs2hdb/src; ./usgs2hdb.pl -u app_user -p <PASSWORD> -n 2 -a > $HDB_ENV/usgs2hdb/src/usgs2hdb.log 2> $HDB_ENV/usgs2hdb/src/usgs2hdb.err
+00 07,09,11,13,15 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/usgs2hdb/src; ./usgs2hdb.pl -u app_user -p <PASSWORD> -n 2 -l r > $HDB_ENV/usgs2hdb/src/usgs2hdb.log 2> $HDB_ENV/usgs2hdb/src/usgs2hdb.err
 #
-# Read data from USGS website Saturday, all 31 days
+# Read data from USGS website every day, all 31 days
 #
-03 5 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/usgs2hdb/src; ./usgs2hdb.pl -u app_user -p <PASSWORD> -n 31 -a > $HDB_ENV/usgs2hdb/src/usgs2hdb31.log 2> $HDB_ENV/usgs2hdb/src/usgs2hdb31.err
+03 5 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/usgs2hdb/src; ./usgs2hdb.pl -u app_user -p <PASSWORD> -n 31 -l r > $HDB_ENV/usgs2hdb/src/usgs2hdb31.log 2> $HDB_ENV/usgs2hdb/src/usgs2hdb31.err
 #
 # Read data from CO DOMSAT website
 #
