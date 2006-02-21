@@ -263,12 +263,10 @@ public class DBAccess
         finally
         {
           try {
-            rset.close();
-            stmt.close();
-            if (rset!=null){
+            if (rset!=null) {
                 rset.close();
             }
-            if (stmt!=null){
+            if (stmt!=null) {
                 stmt.close();
             }
           }
