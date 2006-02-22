@@ -16,3 +16,4 @@ grep -v -- --- temp.out | awk '/-/ {s += $2 ; printf "%s\t%d\n",$1,$2*1.9835} EN
 mailx -s "Powell Release" crane@wapa.gov,telschow@wapa.gov,tryan@uc.usbr.gov <powellrel
 
 rm powellrel temp.out
+
