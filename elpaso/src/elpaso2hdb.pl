@@ -77,8 +77,16 @@ my $datestr = substr $line, 0, 9;
 print "$datestr\n";
 
 #skip past header
-for ($i = 0; $i < 92; $i++)
-  { $line = <INFILE>; }
+SKIP: while ($line = <INFILE>) 
+{
+  if ($line =~ /RESERVOIR DATA/) {
+    #skip 12 more lines
+    for ($i = 0; $i < 12; $i++) {
+      $line = <INFILE>;
+    }
+    last SKIP;
+  }
+}
 
 my ($cur_site_name, $site_id);
 READ: while ($line = <INFILE>)
