@@ -16,6 +16,7 @@ public class DayfileParser {
   private String file_name = null;
   private Logger log = null;
   private String location = "OTHER";
+  private DataObject dobj = new DataObject();
 
   public DayfileParser( String _file_name)
   {
@@ -28,7 +29,6 @@ public class DayfileParser {
  {
 
         try {
-            DataObject dobj = new DataObject();
             //   add some connection defaults incase the property file doesn't have them
             dobj.put("connections","5");
             dobj.put("reuse","2000");
@@ -221,6 +221,14 @@ public void process()
           try
           {
             Connection conn = DriverManager.getConnection(ConnectionPoolManager.URL_PREFIX + "myalias", null, null);
+
+             // this could be a new connection so make sure role is set
+             String query,status = null;
+             DBAccess db = new DBAccess(conn);
+             query = "set role app_role identified by " + dobj.get("role_password");
+             status = db.performDML(query,dobj);
+
+
             new ObservationThread(inputLine,hash,conn).start();
           reads++; 
           }
