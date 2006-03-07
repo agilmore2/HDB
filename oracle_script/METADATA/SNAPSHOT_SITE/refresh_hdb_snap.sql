@@ -132,6 +132,12 @@ CREATE OR REPLACE PROCEDURE refresh_HDB_snap  (which_table IN varchar2)
                refresh_snapshot_table('HDB_OVERWRITE_FLAG');
                refresh_snapshot_table('HDB_COLLECTION_SYSTEM');
                refresh_snapshot_table('HDB_LOADING_APPLICATION');
+               refresh_snapshot_table('HDB_EXT_SITE_CODE_SYS');
+               refresh_snapshot_table('HDB_EXT_DATA_CODE_SYS');
+               refresh_snapshot_table('HDB_EXT_SITE_CODE');
+               refresh_snapshot_table('HDB_EXT_DATA_CODE');
+               refresh_snapshot_table('HDB_EXT_DATA_SOURCE');
+
 			else
                refresh_snapshot_table(upper(which_table));
             end if;
