@@ -14,9 +14,9 @@ create table hdb_attr (
 attr_id                        number(11) NOT NULL  ,    
 attr_name                      varchar2(64) NOT NULL  , 
 attr_common_name               varchar2(64) NOT NULL, 
-attr_code                      varchar2(16) NOT NULL  ,
-unit_id                        number(11) NOT NULL  ,      
-objecttype_id                  number(11) NOT NULL        
+attr_value_type                varchar2(10) NOT NULL  ,
+attr_code                      varchar2(16),
+unit_id                        number(11)
 )                                                        
 pctfree 10
 pctused 40
@@ -183,6 +183,127 @@ storage (initial 50k
          next 50k
          pctincrease 0);
 ;                       
+
+create table hdb_ext_site_code_sys
+(ext_site_code_sys_id         	number(11) not null,
+ ext_site_code_sys_name        	varchar2(64) not null,
+ agen_id                        number(11),
+ model_id			number(11))
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+create table hdb_ext_site_code
+(ext_site_code_sys_id         	number(11) not null,
+ primary_site_code              varchar2(240) not null,
+ secondary_site_code           	varchar2(64),
+ hdb_site_id			number(11) not null,
+ date_time_loaded               date not null)
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+create table hdb_ext_site_code_archive (  
+EXT_SITE_CODE_SYS_ID           NUMBER(22)       NOT NULL, 
+PRIMARY_SITE_CODE              VARCHAR2(240)    NOT NULL,  
+SECONDARY_SITE_CODE            VARCHAR2(64)     ,
+HDB_SITE_ID                    NUMBER(22)       NOT NULL, 
+DATE_TIME_LOADED               DATE             NOT NULL,
+ARCHIVE_REASON		       VARCHAR2(10)     NOT NULL,  
+DATE_TIME_ARCHIVED	       DATE             NOT NULL,        
+ARCHIVE_CMMNT		       VARCHAR2(1000))
+pctfree 10 
+pctused 40 
+tablespace HDB_data                                                                               
+storage (initial 50k 
+         next 50k 
+         pctincrease 0);                                                                           
+                                                                                                                        
+create table hdb_ext_data_code_sys
+(ext_data_code_sys_id         	number(11) not null,
+ ext_data_code_sys_name        	varchar2(64) not null,
+ agen_id                        number(11),
+ model_id			number(11))
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+create table hdb_ext_data_code
+(ext_data_code_sys_id         	number(11) not null,
+ primary_data_code              varchar2(64) not null,
+ secondary_data_code           	varchar2(64),
+ hdb_datatype_id		number(11) not null,
+ date_time_loaded               date not null)
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+create table hdb_ext_data_code_archive ( 
+EXT_DATA_CODE_SYS_ID           NUMBER(22)         NOT NULL, 
+PRIMARY_DATA_CODE              VARCHAR2(64)       NOT NULL,
+SECONDARY_DATA_CODE            VARCHAR2(64)       ,   
+HDB_DATATYPE_ID                NUMBER(22)         NOT NULL, 
+DATE_TIME_LOADED               DATE               NOT NULL,                                   
+ARCHIVE_REASON		       VARCHAR2(10)       NOT NULL,       
+DATE_TIME_ARCHIVED	       DATE               NOT NULL,           
+ARCHIVE_CMMNT		       VARCHAR2(1000))    
+pctfree 10 
+pctused 40 
+tablespace HDB_data      
+storage (initial 50k 
+         next 50k 
+         pctincrease 0);                                                                           
+
+create table hdb_ext_data_source
+(ext_data_source_id         	number(11) not null,
+ ext_data_source_name         	varchar2(64) not null,
+ agen_id                        number(11),
+ model_id			number(11),
+ ext_site_code_sys_id		number(11),
+ ext_data_code_sys_id		number(11),
+ collection_system_id		number(11),
+ data_quality			varchar2(16),
+ description			varchar2(200),
+ date_time_loaded               date not null)
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+                                              
+create table hdb_ext_data_source_archive ( 
+EXT_DATA_SOURCE_ID             NUMBER(22)            NOT NULL, 
+EXT_DATA_SOURCE_NAME           VARCHAR2(64)          NOT NULL, 
+AGEN_ID                        NUMBER(22)            ,    
+MODEL_ID                       NUMBER(22)            , 
+EXT_SITE_CODE_SYS_ID           NUMBER(22)            , 
+EXT_DATA_CODE_SYS_ID           NUMBER(22)            , 
+COLLECTION_SYSTEM_ID           NUMBER(22)            ,  
+DATA_QUALITY                   VARCHAR2(16)          ,  
+DESCRIPTION                    VARCHAR2(200)         , 
+DATE_TIME_LOADED               DATE                  NOT NULL,                                  
+ARCHIVE_REASON		       VARCHAR2(10)          NOT NULL,                         
+DATE_TIME_ARCHIVED	       DATE                  NOT NULL,                              
+ARCHIVE_CMMNT		       VARCHAR2(1000))                             
+pctfree 10 
+pctused 40 
+tablespace HDB_data                              
+storage (initial 50k 
+         next 50k 
+         pctincrease 0);                                                                           
 
 create table hdb_gagetype (                  
 gagetype_id                    number(11) NOT NULL,     
@@ -716,7 +837,78 @@ storage (initial 50k
          next 50k
          pctincrease 0);
 
+create table ref_ext_site_data_map
+(mapping_id        		number(11) not null,
+ ext_data_source_id         	number(11) not null,
+ primary_site_code         	varchar2(240) not null,
+ primary_data_code         	varchar2(64) not null,
+ extra_keys_y_n    		varchar2(1) not null,
+ hdb_site_datatype_id  		number(11) not null,
+ hdb_interval_name          	varchar2(16) not null,
+ hdb_method_id			number(11),
+ hdb_computation_id		number(11),
+ hdb_agen_id                    number(11),
+ is_active_y_n                  varchar2(1) not null,
+ cmmnt                          varchar2(500),
+ date_time_loaded               date not null)
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
 
+create table ref_ext_site_data_map_archive
+(mapping_id        		number(11) not null,
+ ext_data_source_id         	number(11) not null,
+ primary_site_code         	varchar2(240) not null,
+ primary_data_code         	varchar2(64) not null,
+ extra_keys_y_n    		varchar2(1) not null,
+ hdb_site_datatype_id  		number(11) not null,
+ hdb_interval_name          	varchar2(16) not null,
+ hdb_method_id			number(11),
+ hdb_computation_id		number(11),
+ hdb_agen_id                    number(11),
+ is_active_y_n                  varchar2(1) not null,
+ cmmnt                          varchar2(500),
+ date_time_loaded               date not null,
+ archive_reason			varchar2(10) not null,
+ date_time_archived		date not null,
+ archive_cmmnt			varchar2(1000))
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+create table ref_ext_site_data_map_keyval
+(mapping_id         		number(11) not null,
+ key_name           		varchar2(32) not null,
+ key_value          		varchar2(32) not null,
+ date_time_loaded               date not null)
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+create table ref_ext_site_data_map_key_arch ( 
+MAPPING_ID                     NUMBER(22)         NOT NULL, 
+KEY_NAME                       VARCHAR2(32)       NOT NULL,
+KEY_VALUE                      VARCHAR2(32)       NOT NULL,
+DATE_TIME_LOADED               DATE               NOT NULL,                          
+ARCHIVE_REASON		       VARCHAR2(10)       NOT NULL,
+DATE_TIME_ARCHIVED	       DATE               NOT NULL,  
+ARCHIVE_CMMNT		       VARCHAR2(1000)) 
+pctfree 10 
+pctused 40 
+tablespace HDB_data                                                                               
+storage (initial 50k 
+         next 50k 
+         pctincrease 0);                                                                           
+                                                                                                                        
 create table ref_hm_filetype (               
 hm_filetype                    char(1) NOT NULL  ,        
 hm_filetype_name               varchar2(32) NOT NULL         
@@ -816,9 +1008,9 @@ storage (initial 150k
 
 create table ref_interval_redefinition
    (interval                     varchar2(16) not null,
-    effective_start_date_time    date not null,
     time_offset                  number not null,
-    offset_units                 varchar2(10) not null
+    offset_units                 varchar2(10) not null,
+    date_time_loaded             date not null
    )
 pctfree 10
 pctused 40
@@ -830,9 +1022,9 @@ storage (initial 150k
 
 create table ref_interval_redef_archive
    (interval                     varchar2(16) not null,
-    effective_start_date_time    date not null,
     time_offset                  number not null,
     offset_units                 varchar2(10) not null,
+    date_time_loaded             date not null,
     archive_reason               varchar2(10) not null,
     date_time_archived           date not null,
     archive_cmmnt                varchar2(1000)
@@ -844,6 +1036,7 @@ storage (initial 150k
          next 150k
          pctincrease 0);
 ;                       
+
 
 create table ref_model_run (                                 
 model_run_id                   number(11) NOT NULL  ,       
@@ -952,6 +1145,43 @@ storage (initial 50k
          pctincrease 0);
 ;                                                       
 
+create table ref_site_attr (
+site_id                        number(11) NOT NULL  ,    
+attr_id                        number(11) NOT NULL  ,    
+effective_start_date_time      date NOT NULL,
+effective_end_date_time        date,
+value                          float,
+string_value                   varchar2(200),
+date_value                     date,
+date_time_loaded               date NOT NULL
+)                                                        
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+create table ref_site_attr_archive (
+site_id                        number(11) NOT NULL  ,    
+attr_id                        number(11) NOT NULL  ,    
+effective_start_date_time      date NOT NULL,
+effective_end_date_time        date,
+value                          float,
+string_value                   varchar2(200),
+date_value                     date,
+date_time_loaded               date not null,
+archive_reason                 varchar2(10) not null,
+date_time_archived             date not null,
+archive_cmmnt                  varchar2(1000)
+)                                                        
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
 create table ref_site_coef (                               
 site_id                        number(11) NOT NULL  ,     
 attr_id                        number(11) NOT NULL  ,    
@@ -1013,10 +1243,10 @@ storage (initial 50k
 ;
 
 CREATE TABLE ref_source_priority
-(
-    site_datatype_id	NUMBER			 NOT NULL
+(   site_datatype_id	NUMBER			 NOT NULL
   , agen_id		NUMBER                   NOT NULL
   , priority_rank	NUMBER			 NOT NULL
+  , date_time_loaded    DATE                     NOT NULL
 )
 /* ref_source_priority: 
  This table contains the prioritization order for agencies that are
@@ -1041,12 +1271,12 @@ STORAGE
 LOGGING
 TABLESPACE          hdb_data
 ;
-;
 
 create table ref_source_priority_archive
    (site_datatype_id    number not null,
     agen_id             number not null,
     priority_rank       number not null,
+    date_time_loaded    date not null,
     archive_reason      varchar2(10) not null,
     date_time_archived  date not null,
     archive_cmmnt       varchar2(1000)

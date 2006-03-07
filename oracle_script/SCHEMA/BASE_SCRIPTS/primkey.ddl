@@ -62,6 +62,46 @@ ALTER TABLE hdb_dmi_unit_map
       ADD ( CONSTRAINT hdb_dmi_unit_map_pk
             PRIMARY KEY (pr_unit_name,unit_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0)); 
 
+alter table hdb_ext_site_code_sys
+add constraint hdb_ext_site_code_sys_pk
+primary key (ext_site_code_sys_id)
+using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);  
+
+alter table hdb_ext_site_code_sys
+add constraint hdb_ext_site_code_sys_uk
+unique (ext_site_code_sys_name)
+using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);  
+
+alter table hdb_ext_site_code
+add constraint hdb_ext_site_code_pk
+primary key (ext_site_code_sys_id, primary_site_code, hdb_site_id)
+using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);  
+
+alter table hdb_ext_data_code_sys
+add constraint hdb_ext_data_code_sys_pk
+primary key (ext_data_code_sys_id)
+using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);  
+
+alter table hdb_ext_data_code_sys
+add constraint hdb_ext_data_code_sys_uk
+unique (ext_data_code_sys_name)
+using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);  
+
+alter table hdb_ext_data_code
+add constraint hdb_ext_data_code_pk
+primary key (ext_data_code_sys_id, primary_data_code, hdb_datatype_id)
+using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);  
+
+alter table hdb_ext_data_source
+add constraint hdb_ext_data_source_pk
+primary key (ext_data_source_id)
+using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);  
+
+alter table hdb_ext_data_source
+add constraint hdb_ext_data_source_uk
+unique (ext_data_source_name)
+using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);  
+
 ALTER TABLE hdb_gagetype                
       ADD ( CONSTRAINT hdb_gagetype_pk
             PRIMARY KEY (gagetype_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0)); 
@@ -187,6 +227,16 @@ ALTER TABLE ref_dmi_data_map
       ADD ( CONSTRAINT ref_dmi_data_map_pk
             PRIMARY KEY (model_id, object_name, data_name) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));
 
+alter table ref_ext_site_data_map
+add constraint ref_ext_site_data_map_pk
+primary key (mapping_id)  
+using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);  
+
+alter table ref_ext_site_data_map_keyval
+add constraint site_datatype_map_keyval_pk
+primary key (mapping_id, key_name, key_value)
+using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);  
+
 ALTER TABLE ref_hm_filetype         
       ADD ( CONSTRAINT ref_hm_filetype_pk
             PRIMARY KEY (hm_filetype) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));    
@@ -239,6 +289,11 @@ ALTER TABLE ref_res_flowlu
 ALTER TABLE ref_res_wselu
       ADD ( CONSTRAINT ref_res_wselu_pk
             PRIMARY KEY (site_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));         
+ALTER TABLE ref_site_attr
+   ADD ( CONSTRAINT ref_site_attr_pk
+         PRIMARY KEY (site_id, attr_id, effective_start_date_time)
+	 using index tablespace hdb_idx storage 
+	  (initial 50k next 50k pctincrease 0)); 
 ALTER TABLE ref_site_coef
       ADD ( CONSTRAINT ref_site_coef_pk
             PRIMARY KEY (site_id,attr_id,coef_idx) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));

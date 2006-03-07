@@ -19,21 +19,3 @@ tablespace HDB_idx
 storage(initial 30k next 30k pctincrease 0)   
 ;                               
 
-create index ref_interval_redef_arch_idx
-on ref_derivation_source_archive (interval, effective_start_date_time)
-tablespace HDB_idx
-storage (initial 70k next 70k pctincrease 0)
-;
-
-create index ref_derivation_source_arch_idx
-on ref_derivation_source_archive (site_datatype_id,  effective_start_date_time)
-tablespace HDB_idx
-storage (initial 70k next 70k pctincrease 0)
-;
-
-create index ref_derivation_dest_arch_idx
-on ref_derivation_dest_archive (base_site_datatype_id, dest_site_datatype_id,
-  effective_start_date_time)
-tablespace HDB_idx
-storage (initial 70k next 70k pctincrease 0)
-;
