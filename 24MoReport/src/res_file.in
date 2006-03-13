@@ -65,7 +65,7 @@
 919 33 1000 1 Unreg Inflow 1000 Ac-Ft
 919 29 1000 1 Regulated Inflow 1000 Ac-Ft
 919 25 1000 1 Evap Losses 1000 Ac-Ft
-919 39 1000 1 Power Release 1000 Ac-Ft
+919 39 1000 1 PowerPlant Release 1000 Ac-Ft
 919 42 1000 1 Bypass Release 1000 Ac-Ft
 919 42 1000 1 Total Release 1000 Ac-Ft
 919 49 1 4 Reservoir Elevation EOM Feet

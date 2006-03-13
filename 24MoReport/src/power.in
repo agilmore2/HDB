@@ -18,8 +18,8 @@
 972 104 1000 15 Davis Gross Energy MKWH
 972 77 100 4 Percent Of Units Available
 972 0  1000 15 KWH/AF
-923 105 1000 1 Power Release 1000 Ac-Ft
-923 105 1000 2 Power Release 1000 CFS
+923 39 1000 1 Power Release 1000 Ac-Ft
+923 39 1000 2 Power Release 1000 CFS
 923 49 1 4 EOM Reservoir Elevation Feet
 923 17 1000 1 EOM Storage 1000 Ac-Ft
 923 47 1000 1 Change_In Storage 1000 Ac-Ft
