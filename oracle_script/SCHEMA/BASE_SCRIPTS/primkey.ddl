@@ -268,10 +268,6 @@ alter table ref_interval_redefinition add constraint
     r_interval_redefinition_pk
     primary key (interval) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);
 
-alter table ref_interval_redef_archive add constraint
-    r_interval_redef_archive_pk
-    primary key (interval, effective_start_date_time) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);
-
 ALTER TABLE ref_model_run 
       ADD ( CONSTRAINT ref_model_run_pk
             PRIMARY KEY (model_run_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));
