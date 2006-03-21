@@ -8,7 +8,7 @@ set verify off
 spool create_syn_syns_master_script.sql
 
 --  Create synonyms for use by meta-data app; these refer to master tables
-select 'CREATE PUBLIC SYNONYM ' || table_name || '_SYN FOR &2..' || table_name ||
+select 'CREATE PUBLIC SYNONYM ' || substr(table_name,1,26) || '_SYN FOR &2..' || table_name ||
        '@&1;'
 from dba_tables
 where table_name like 'HDB_%'
