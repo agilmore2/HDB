@@ -61,7 +61,7 @@ int insertAVM (char **formattedDates,int site_datatype_id, double *vals_array,ch
 
  if(lookup)
  {
-   SqlLookupIds("Bureau of Reclamation","See loading application","glenPowRelease","unknown","N/A");
+   SqlLookupIds("Bureau of Reclamation","See loading application","Glen AVM Data","unknown","N/A");
    /*agen_name,collection_system_name,
      loading_application_name,method_name,computation_name);*/
    lookup = 0;

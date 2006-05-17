@@ -103,7 +103,7 @@ int main(int argc, char **argv)
       snprintf(hour,6," %d",i);
       strncat(date,hour,6);
 
-      formattedDates[i] = strndup(date,18);
+      formattedDates[i] = strdup(date);
    }
 
    if (argc != 4) 
