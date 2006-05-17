@@ -10,12 +10,11 @@ like this to reflect the date you want the Teacup generated for.
 
 2.  You must then recompile the code with the new date.  To do this type
 the command 'make' at the prompt while in the src directory.  This will create
-and executable in the work directory called 'gentea' that will get the data
-for the date you modified the code to.
+and executable in the work directory called 'gentea_hist' that will get the 
+data for the date you modified the code to.
 
-3.  Now go to the work directory and type 'gentea'  this will tell you that
-you need an input.png an output.png and a configuration file in order to run
-the program.  There are input.png files for each of the basins in the work
+3.  Now go to the work directory and type 'gentea_hist'  this will tell you 
+that you need an input.png an output.png and a configuration file in order to run the program.  There are input.png files for each of the basins in the work
 directory.  The output.png can be any name of your choosing.  The configuration
 file tells gentea where to locate the teacup diagrams on the input file.  
 There are serveral configuration files located in the work directory.  
