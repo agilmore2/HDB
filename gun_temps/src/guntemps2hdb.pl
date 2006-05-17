@@ -227,7 +227,7 @@ sub get_app_ids
 
   if ($@ or !defined($diff_computation_id)) { # something screwed up
     print $hdb->dbh->errstr, " $@\n";
-    hdbdie "Errors occurred during selection of difference computation ids for r_base.\n";
+    $hdb->hdbdie("Errors occurred during selection of difference computation ids for r_base.\n");
   }
 }
 
