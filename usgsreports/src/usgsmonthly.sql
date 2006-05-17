@@ -49,10 +49,10 @@ b.unit_id = c.unit_id;
 column beginyear new_value beginyear;
 column year new_value year;
 column size new_value size;
-select to_number(nvl(to_char(min(a.date_month+92),'YYYY'),'9999')) beginyear, 
-       to_number(nvl(to_char(max(a.date_month+92),'YYYY'),'9999')) year,
-       to_number(nvl(to_char(max(a.date_month+92),'YYYY'),'9999'))-
-       to_number(nvl(to_char(min(a.date_month+92),'YYYY'),'9999'))+ 12 as "size"
+select to_number(nvl(to_char(min(a.start_date_time+92),'YYYY'),'9999')) beginyear, 
+       to_number(nvl(to_char(max(a.start_date_time+92),'YYYY'),'9999')) year,
+       to_number(nvl(to_char(max(a.start_date_time+92),'YYYY'),'9999'))-
+       to_number(nvl(to_char(min(a.start_date_time+92),'YYYY'),'9999'))+ 12 as "size"
 from r_month a
 where a.site_datatype_id = &&sdi
 ;
@@ -102,7 +102,7 @@ column decsum new_value decsum;
 select nvl(max(a.value),0) max, nvl(sum(a.value),0) sum
 from r_month a
 where a.site_datatype_id = &&sdi
-and a.date_month between '01-jan-&beginyear' and '01-dec-&year';
+and a.start_date_time between '01-jan-&beginyear' and '01-dec-&year';
 
 /* 10 character wide formats (remember space for minus sign)*/
 column numformat new_value numformat;
@@ -134,62 +134,62 @@ where a.site_datatype_id = &sdi
 select to_char(avg(a.value),'&numformat') janave, to_char(sum(a.value),'&sumformat') jansum
 from r_month a
 where a.site_datatype_id = &sdi
-and to_char(a.date_month,'MM') = 1;
+and to_char(a.start_date_time,'MM') = 1;
 
 select to_char(avg(a.value),'&numformat') febave, to_char(sum(a.value),'&sumformat') febsum
 from r_month a
 where a.site_datatype_id = &sdi
-and to_char(a.date_month,'MM') = 2;
+and to_char(a.start_date_time,'MM') = 2;
 
 select to_char(avg(a.value),'&numformat') marave, to_char(sum(a.value),'&sumformat') marsum
 from r_month a
 where a.site_datatype_id = &sdi
-and to_char(a.date_month,'MM') = 3;
+and to_char(a.start_date_time,'MM') = 3;
 
 select to_char(avg(a.value),'&numformat') aprave, to_char(sum(a.value),'&sumformat') aprsum
 from r_month a
 where a.site_datatype_id = &sdi
-and to_char(a.date_month,'MM') = 4;
+and to_char(a.start_date_time,'MM') = 4;
 
 select to_char(avg(a.value),'&numformat') mayave, to_char(sum(a.value),'&sumformat') maysum
 from r_month a
 where a.site_datatype_id = &sdi
-and to_char(a.date_month,'MM') = 5;
+and to_char(a.start_date_time,'MM') = 5;
 
 select to_char(avg(a.value),'&numformat') junave, to_char(sum(a.value),'&sumformat') junsum
 from r_month a
 where a.site_datatype_id = &sdi
-and to_char(a.date_month,'MM') = 6;
+and to_char(a.start_date_time,'MM') = 6;
 
 select to_char(avg(a.value),'&numformat') julave, to_char(sum(a.value),'&sumformat') julsum
 from r_month a
 where a.site_datatype_id = &sdi
-and to_char(a.date_month,'MM') = 7;
+and to_char(a.start_date_time,'MM') = 7;
 
 select to_char(avg(a.value),'&numformat') augave, to_char(sum(a.value),'&sumformat') augsum
 from r_month a
 where a.site_datatype_id = &sdi
-and to_char(a.date_month,'MM') = 8;
+and to_char(a.start_date_time,'MM') = 8;
 
 select to_char(avg(a.value),'&numformat') sepave, to_char(sum(a.value),'&sumformat') sepsum
 from r_month a
 where a.site_datatype_id = &sdi
-and to_char(a.date_month,'MM') = 9;
+and to_char(a.start_date_time,'MM') = 9;
 
 select to_char(avg(a.value),'&numformat') octave, to_char(sum(a.value),'&sumformat') octsum
 from r_month a
 where a.site_datatype_id = &sdi
-and to_char(a.date_month,'MM') = 10;
+and to_char(a.start_date_time,'MM') = 10;
 
 select to_char(avg(a.value),'&numformat') novave, to_char(sum(a.value),'&sumformat') novsum
 from r_month a
 where a.site_datatype_id = &sdi
-and to_char(a.date_month,'MM') = 11;
+and to_char(a.start_date_time,'MM') = 11;
 
 select to_char(avg(a.value),'&numformat') decave, to_char(sum(a.value),'&sumformat') decsum
 from r_month a
 where a.site_datatype_id = &sdi
-and to_char(a.date_month,'MM') = 12;
+and to_char(a.start_date_time,'MM') = 12;
 
 /* now start the report*/
 /* top title, datatype names can be really long!*/
@@ -269,18 +269,18 @@ g.site_datatype_id(+) = &sdi and h.site_datatype_id(+) = &sdi and
 i.site_datatype_id(+) = &sdi and j.site_datatype_id(+) = &sdi and
 k.site_datatype_id(+) = &sdi and l.site_datatype_id(+) = &sdi and
 /* if I use to_char(x,'yyyy') instead, this query is way too slow*/
-a.date_month(+) = '01-jan-'||years.year and
-b.date_month(+) = '01-feb-'||years.year and
-c.date_month(+) = '01-mar-'||years.year and
-d.date_month(+) = '01-apr-'||years.year and
-e.date_month(+) = '01-may-'||years.year and
-f.date_month(+) = '01-jun-'||years.year and
-g.date_month(+) = '01-jul-'||years.year and
-h.date_month(+) = '01-aug-'||years.year and
-i.date_month(+) = '01-sep-'||years.year and
-j.date_month(+) = '01-oct-'||to_char(years.year-1) and
-k.date_month(+) = '01-nov-'||to_char(years.year-1) and
-l.date_month(+) = '01-dec-'||to_char(years.year-1)
+a.start_date_time(+) = '01-jan-'||years.year and
+b.start_date_time(+) = '01-feb-'||years.year and
+c.start_date_time(+) = '01-mar-'||years.year and
+d.start_date_time(+) = '01-apr-'||years.year and
+e.start_date_time(+) = '01-may-'||years.year and
+f.start_date_time(+) = '01-jun-'||years.year and
+g.start_date_time(+) = '01-jul-'||years.year and
+h.start_date_time(+) = '01-aug-'||years.year and
+i.start_date_time(+) = '01-sep-'||years.year and
+j.start_date_time(+) = '01-oct-'||to_char(years.year-1) and
+k.start_date_time(+) = '01-nov-'||to_char(years.year-1) and
+l.start_date_time(+) = '01-dec-'||to_char(years.year-1)
 order by year
 ;
 quit;
