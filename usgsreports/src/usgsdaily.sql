@@ -84,7 +84,7 @@ column decsum new_value decsum;
 select nvl(max(a.value),0) max, nvl(sum(a.value),0) sum
 from r_day a
 where a.site_datatype_id = &&sdi
-and a.date_day between '01-oct-&beginyear' and last_day('01-sep-&year');
+and a.start_date_time between '01-oct-&beginyear' and last_day('01-sep-&year');
 
 /* 10 character wide formats (remember space for minus sign)*/
 column numformat new_value numformat;
@@ -108,7 +108,7 @@ select to_char(min(a.value),'&numformat') min, to_char(max(a.value),'&numformat'
        to_char(avg(a.value),'&numformat') ave, to_char(sum(a.value),'&sumformat') sum
 from r_day a
 where a.site_datatype_id = &sdi
-and a.date_day between '01-oct-&beginyear' and last_day('01-sep-&year');
+and a.start_date_time between '01-oct-&beginyear' and last_day('01-sep-&year');
 
 /*get statistics for each month.
   Only ave and sum are in here, the min and max are calculated by the compute
@@ -116,62 +116,62 @@ and a.date_day between '01-oct-&beginyear' and last_day('01-sep-&year');
 select to_char(avg(a.value),'&numformat') janave, to_char(sum(a.value),'&sumformat') jansum
 from r_day a
 where a.site_datatype_id = &sdi
-and a.date_day between '01-jan-&year' and last_day('01-jan-&year');
+and a.start_date_time between '01-jan-&year' and last_day('01-jan-&year');
 
 select to_char(avg(a.value),'&numformat') febave, to_char(sum(a.value),'&sumformat') febsum
 from r_day a
 where a.site_datatype_id = &sdi
-and a.date_day between '01-feb-&year' and last_day('01-feb-&year');
+and a.start_date_time between '01-feb-&year' and last_day('01-feb-&year');
 
 select to_char(avg(a.value),'&numformat') marave, to_char(sum(a.value),'&sumformat') marsum
 from r_day a
 where a.site_datatype_id = &sdi
-and a.date_day between '01-mar-&year' and last_day('01-mar-&year');
+and a.start_date_time between '01-mar-&year' and last_day('01-mar-&year');
 
 select to_char(avg(a.value),'&numformat') aprave, to_char(sum(a.value),'&sumformat') aprsum
 from r_day a
 where a.site_datatype_id = &sdi
-and a.date_day between '01-apr-&year' and last_day('01-apr-&year');
+and a.start_date_time between '01-apr-&year' and last_day('01-apr-&year');
 
 select to_char(avg(a.value),'&numformat') mayave, to_char(sum(a.value),'&sumformat') maysum
 from r_day a
 where a.site_datatype_id = &sdi
-and a.date_day between '01-may-&year' and last_day('01-may-&year');
+and a.start_date_time between '01-may-&year' and last_day('01-may-&year');
 
 select to_char(avg(a.value),'&numformat') junave, to_char(sum(a.value),'&sumformat') junsum
 from r_day a
 where a.site_datatype_id = &sdi
-and a.date_day between '01-jun-&year' and last_day('01-jun-&year');
+and a.start_date_time between '01-jun-&year' and last_day('01-jun-&year');
 
 select to_char(avg(a.value),'&numformat') julave, to_char(sum(a.value),'&sumformat') julsum
 from r_day a
 where a.site_datatype_id = &sdi
-and a.date_day between '01-jul-&year' and last_day('01-jul-&year');
+and a.start_date_time between '01-jul-&year' and last_day('01-jul-&year');
 
 select to_char(avg(a.value),'&numformat') augave, to_char(sum(a.value),'&sumformat') augsum
 from r_day a
 where a.site_datatype_id = &sdi
-and a.date_day between '01-aug-&year' and last_day('01-aug-&year');
+and a.start_date_time between '01-aug-&year' and last_day('01-aug-&year');
 
 select to_char(avg(a.value),'&numformat') sepave, to_char(sum(a.value),'&sumformat') sepsum
 from r_day a
 where a.site_datatype_id = &sdi
-and a.date_day between '01-sep-&year' and last_day('01-sep-&year');
+and a.start_date_time between '01-sep-&year' and last_day('01-sep-&year');
 
 select to_char(avg(a.value),'&numformat') octave, to_char(sum(a.value),'&sumformat') octsum
 from r_day a
 where a.site_datatype_id = &sdi
-and a.date_day between '01-oct-&beginyear' and last_day('01-oct-&beginyear');
+and a.start_date_time between '01-oct-&beginyear' and last_day('01-oct-&beginyear');
 
 select to_char(avg(a.value),'&numformat') novave, to_char(sum(a.value),'&sumformat') novsum
 from r_day a
 where a.site_datatype_id = &sdi
-and a.date_day between '01-nov-&beginyear' and last_day('01-nov-&beginyear');
+and a.start_date_time between '01-nov-&beginyear' and last_day('01-nov-&beginyear');
 
 select to_char(avg(a.value),'&numformat') decave, to_char(sum(a.value),'&sumformat') decsum
 from r_day a
 where a.site_datatype_id = &sdi
-and a.date_day between '01-dec-&beginyear' and last_day('01-dec-&beginyear');
+and a.start_date_time between '01-dec-&beginyear' and last_day('01-dec-&beginyear');
 
 /* now start the report*/
 /* top title, datatype names can be really long!*/
@@ -253,30 +253,30 @@ g.site_datatype_id(+) = &sdi and h.site_datatype_id(+) = &sdi and
 i.site_datatype_id(+) = &sdi and j.site_datatype_id(+) = &sdi and
 k.site_datatype_id(+) = &sdi and l.site_datatype_id(+) = &sdi and
 /* if I use to_char(x,'yyyy') instead, this query is way too slow*/
-a.date_day (+) between '01-jan-&year' and last_day('01-jan-&year') and
-b.date_day (+) between '01-feb-&year' and last_day('01-feb-&year') and
-c.date_day (+) between '01-mar-&year' and last_day('01-mar-&year') and
-d.date_day (+) between '01-apr-&year' and last_day('01-apr-&year') and
-e.date_day (+) between '01-may-&year' and last_day('01-may-&year') and
-f.date_day (+) between '01-jun-&year' and last_day('01-jun-&year') and
-g.date_day (+) between '01-jul-&year' and last_day('01-jul-&year') and
-h.date_day (+) between '01-aug-&year' and last_day('01-aug-&year') and
-i.date_day (+) between '01-sep-&year' and last_day('01-sep-&year') and
-j.date_day (+) between '01-oct-&beginyear' and last_day('01-oct-&beginyear') and
-k.date_day (+) between '01-nov-&beginyear' and last_day('01-nov-&beginyear') and
-l.date_day (+) between '01-dec-&beginyear' and last_day('01-dec-&beginyear') and
+a.start_date_time (+) between '01-jan-&year' and last_day('01-jan-&year') and
+b.start_date_time (+) between '01-feb-&year' and last_day('01-feb-&year') and
+c.start_date_time (+) between '01-mar-&year' and last_day('01-mar-&year') and
+d.start_date_time (+) between '01-apr-&year' and last_day('01-apr-&year') and
+e.start_date_time (+) between '01-may-&year' and last_day('01-may-&year') and
+f.start_date_time (+) between '01-jun-&year' and last_day('01-jun-&year') and
+g.start_date_time (+) between '01-jul-&year' and last_day('01-jul-&year') and
+h.start_date_time (+) between '01-aug-&year' and last_day('01-aug-&year') and
+i.start_date_time (+) between '01-sep-&year' and last_day('01-sep-&year') and
+j.start_date_time (+) between '01-oct-&beginyear' and last_day('01-oct-&beginyear') and
+k.start_date_time (+) between '01-nov-&beginyear' and last_day('01-nov-&beginyear') and
+l.start_date_time (+) between '01-dec-&beginyear' and last_day('01-dec-&beginyear') and
 /*finally, get the days in order*/
-to_char(a.date_day(+),'DD') = days.day and
-to_char(b.date_day(+),'DD') = days.day and
-to_char(c.date_day(+),'DD') = days.day and
-to_char(d.date_day(+),'DD') = days.day and
-to_char(e.date_day(+),'DD') = days.day and
-to_char(f.date_day(+),'DD') = days.day and
-to_char(g.date_day(+),'DD') = days.day and
-to_char(h.date_day(+),'DD') = days.day and
-to_char(i.date_day(+),'DD') = days.day and
-to_char(j.date_day(+),'DD') = days.day and
-to_char(k.date_day(+),'DD') = days.day and
-to_char(l.date_day(+),'DD') = days.day 
+to_char(a.start_date_time(+),'DD') = days.day and
+to_char(b.start_date_time(+),'DD') = days.day and
+to_char(c.start_date_time(+),'DD') = days.day and
+to_char(d.start_date_time(+),'DD') = days.day and
+to_char(e.start_date_time(+),'DD') = days.day and
+to_char(f.start_date_time(+),'DD') = days.day and
+to_char(g.start_date_time(+),'DD') = days.day and
+to_char(h.start_date_time(+),'DD') = days.day and
+to_char(i.start_date_time(+),'DD') = days.day and
+to_char(j.start_date_time(+),'DD') = days.day and
+to_char(k.start_date_time(+),'DD') = days.day and
+to_char(l.start_date_time(+),'DD') = days.day 
 order by day;
 quit;
