@@ -128,7 +128,7 @@ do
         echo 'ERROR IN DATA TRANSFER TO FLAGSTAFF! Notify Rick or Andrew.'
         echo "Exited with status: $stat."
 #Not a fatal error
-        exit 1
+#        exit 1
     fi
 
     echo '       Mailing data to WAPA'
