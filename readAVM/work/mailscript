@@ -1,5 +1,18 @@
 #!/bin/bash
+
+#setup HDB environment
 . ../../.bashrc_hdb_app
+
+#run mimeexplode, an example script from the Perl MIME tools distribution
 ./mimeexplode >>mime.log 2>mime.err 
+
+#run the actual data loading script, passing it the name of the file as
+# sent from Page. mimexplode creates one directory per message, putting all
+# contained files in that directory. The file from the AVM computer is always
+# called REPORT1.PRN
 ../src/readAVM.pl msg0/REPORT1.PRN $APP_USER $HDB_LOCAL >>readAVM.log 2>readAVM.err
+# now delete the message directory, so that mimexplode always creates msg0
 \rm -rf msg0
+
+#run derivation on the total plant power release
+derivation $APP_USER $HDB_LOCAL 5035
