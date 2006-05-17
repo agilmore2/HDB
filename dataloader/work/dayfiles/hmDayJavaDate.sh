@@ -37,7 +37,7 @@ JAVA_ARGS="-Demailaddr=$HDB_XFER_EMAIL -Dstart.property=$HDB_ENV/dataloader/work
 
 #Make sure file has been successfully copied to $DESTDIR
 if [ $? -eq 0 ]; then
-    java $JAVA_ARGS dataloader.ProcessDayfile $DESTDIR/$FILE
+    java $JAVA_ARGS dataloader.ProcessDayfile $FILE
     exit 0;
 else
     echo "  ERROR FROM $0 at `date`
