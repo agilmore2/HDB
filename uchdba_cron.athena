@@ -44,10 +44,10 @@
 #
 21 5,9 * 10,11,12 * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/dataloader/work/archives; ./hmArchiveJava_prev.sh >> $HDB_ENV/dataloader/work/archives/dataloader_prev.log 2>$HDB_ENV/dataloader/work/archives/dataloader_prev.err
 #
-# Run derivation application every hour except 8 and 9 pm, to allow backups
+# Run derivation application every hour except 9 and 10 pm, to allow backups
 # without hanging the derivation application.
 #
-05 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,22,23 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/derivation/src; derivation app_user uchdb2 >$HDB_ENV/log/derivation.err 2>&1
+05 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,23 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/derivation/src; derivation app_user uchdb2 >$HDB_ENV/log/derivation.err 2>&1
 #
 # Move old SCADA crsp_ files into old_files directory
 #
