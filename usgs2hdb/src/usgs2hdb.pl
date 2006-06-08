@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl -wd
 
 #insert HDB library
 
@@ -623,7 +623,7 @@ sub get_usgs_codes
     $site_num_list .= "'";
     $id_limit_clause = "b.primary_site_code in ( $site_num_list ) and";
   } else {
-    hdb->hdbdie("No sites specified for usgs codes!\n");
+    $hdb->hdbdie("No sites specified for usgs codes!\n");
   }
 
 
@@ -647,7 +647,7 @@ a.ext_data_source_name = '$title{$flowtype}'";
     $sth->execute;
     $sth->bind_col(1,\$value);
     unless ($sth->fetch) {
-      hdb->hdbdie("No data codes found!\n")
+      $hdb->hdbdie("No data codes found!\n")
     };
     $data_code_list = $value;
     # now build list if there is more than one data code returned
