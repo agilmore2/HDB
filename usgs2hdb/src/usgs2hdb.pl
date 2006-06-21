@@ -27,7 +27,7 @@ chomp $progname;
 my $insertflag = 1;
 my $overwrite = 'null';
 
-my ($readfile, $runagg, $printurl, $debug, $flowtype);
+my ($readfile, $runagg, $printurl, $debug, $flowtype, $db_site);
 my ($numdays, $hdbuser, $hdbpass, $site_num_list);
 #scalar and array versions, the scalars are a string of the arrays
 my ($begindate, $enddate, @begindate, @enddate);
@@ -77,6 +77,8 @@ while (@ARGV)
     $hdbuser=shift(@ARGV);
   } elsif ($arg =~ /-p/) {	# get hdb passwd
     $hdbpass=shift(@ARGV);
+  } elsif ($arg =~ /-s/) {	# get database site to load
+    $db_site=shift(@ARGV);
   } elsif ($arg =~ /-.*/) {	# Unrecognized flag, print help.
     print STDERR "Unrecognized flag: $arg\n";
     &usage;
@@ -92,6 +94,11 @@ if (defined($site_num_list)) {
   if ($site_num_list =~ /[^0-9,]/ ) {
     die("ERROR: $site_num_list\ndoes not look like USGS id(s).\n");
   }
+}
+
+# check db_site_code
+if (!defined($db_site)) {
+  die("ERROR: db site code must be specified! (use -s <DB> on command line)");
 }
 
 #handle flowtype, realtime, provisional, or official
@@ -234,7 +241,18 @@ column to get the values from. This is a problem for the
 provisional website, which gives daily max, mean, and average flows, even when
 they are not wanted.
 
-Multiple usgs sites from the official url are not separated by headers
+Multiple usgs sites from the official url are not separated by headers (official site
+now gone, so who cares???)
+
+As of 6/21/2006, the official and provisional sites have merged.
+Data qualification codes are added to output, eg:
+
+agency_cd       site_no datetime        01_00060_00001  01_00060_00001_cd      01_00060_00002   01_00060_00002_cd       01_00060_00003  01_00060_00003_cd
+5s      15s     16s     14s     14s     14s     14s     14s     14s
+USGS    09380000        2006-06-20      17700   P       9430    P       14400  P
+
+So will have to distinguish data sources, collection systems etc by this extra column,
+also need to search for which column to look for data in by ignoring the _cd columns.
 
 =cut
 
@@ -354,10 +372,12 @@ until (!defined($data[0])) {
     $hdb->hdbdie("site or sdi or data code not defined for usgs id: $usgs_no!\n");
   }
 
-#find the column in the header that contains the right data code
+#find the column in the header that contains the right data code, making
+# sure not to match column with data qualification code (ending regex with $)
   my $col = 1;
-  until ($headers[$col++] =~ /$usgs_sites->{$usgs_no}->{data_code}/) {
+  until ($headers[$col++] =~ /$usgs_sites->{$usgs_no}->{data_code}$/) {
     if (!defined($headers[$col])) {
+      print "Looking for: '$usgs_sites->{$usgs_no}->{data_code}' in:\n";
       print "@headers\n";
       print "Cannot find value column code for header of values column!\n";
       $hdb->hdbdie("Data is not USGS website tab delimited format!\n");
@@ -589,7 +609,8 @@ where a.site_datatype_id = b.hdb_site_datatype_id and
 b.mapping_id = c.mapping_id and $id_limit_clause 
 c.key_name = '$load_title' and 
 c.key_value ='Y' and
-a.site_id = d.site_id
+a.site_id = d.site_id and
+d.db_site_code = '$db_site'
 order by usgs_id";
 
   $hdb->dbh->{FetchHashKeyName} = 'NAME_lc';
@@ -803,6 +824,7 @@ Example: $progname -u app_user -p <hdbpassword> -n 2 -i 09260000 -a -r i
   -w               : Web address (URL developed to get USGS data)
   -d               : Debugging output
   -l <r,o,p>       : Specify flow type realtime(default), provis., or official
+  -s <UC,LC,...>   : Specify db_site_code (from hdb_site) for sites to load (REQUIRED)
 ENDHELP
 
   exit (1);
