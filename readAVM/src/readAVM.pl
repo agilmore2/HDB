@@ -119,8 +119,8 @@ READ: while ($line = <INFILE>)
 
 #next line if is short (END OPERATE, page and line feeds),
 # or unneeded (header and separator lines)
-  next READ if (length($line) < 22 or $line =~ /FLOW/
-                or $line =~ /={8}/ or $line =~ /END OPERATE/);
+  next READ if (length($line) < 22 or lc($line) =~ /flow/
+                or $line =~ /={8}/ or lc($line) =~ /end operate/);
 
 #collapse whitespace
   $line =~ s/  +/ /g;
