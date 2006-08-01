@@ -21,12 +21,12 @@ FTP=/wrg/exec/pub/res_levels
 cat reservoirs | \
  while read site name 
    do
-     res_data $site $DD | grep -v ORACLE > $FTP/${name}_40d.txt
+     res_data $site $DD | grep -vi hdb |grep -v ORACLE > $FTP/${name}_40d.txt
      cat header.html $FTP/${name}_40d.txt footer.html > $FTP/${name}_40d.html
    done
 
 # Now, do the NIIP Diversion
 
-site_data 451 19 $DD | grep -v ORACLE > $FTP/niip_40d.txt
+site_data 451 19 $DD | grep -vi hdb |grep -v ORACLE > $FTP/niip_40d.txt
 cat header.html $FTP/niip_40d.txt footer.html > $FTP/niip_40d.html
 

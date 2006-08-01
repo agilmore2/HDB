@@ -28,12 +28,12 @@ cat wcao_reservoirs | \
    do
      res_data $site $DD > data/${name}_40d_res.txt
      wcao_data $site $DD > data/${name}_40d_wcao.txt
-     paste data/${name}_40d_res.txt data/${name}_40d_wcao.txt | grep -v ORACLE > $FTP/${name}_40d.txt
+     paste data/${name}_40d_res.txt data/${name}_40d_wcao.txt | grep -vi hdb |grep -v ORACLE > $FTP/${name}_40d.txt
    done
 
 cat wcao_sites | \
  while read site datatype name 
    do
-     site_data $site $datatype $DD | grep -v ORACLE > $FTP/${name}_40d.txt
+     site_data $site $datatype $DD | grep -vi hdb |grep -v ORACLE > $FTP/${name}_40d.txt
    done
 

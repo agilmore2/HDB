@@ -13,7 +13,7 @@ FTP=/wrg/exec/pub/res_levels/ph_format
 cat sites | \
  while read site datatype name 
    do
-     site_data $site $datatype $DD | grep -v ORACLE > $FTP/${name}.dat
+     site_data $site $datatype $DD | grep -vi hdb |grep -v ORACLE > $FTP/${name}.dat
    done
 
 
