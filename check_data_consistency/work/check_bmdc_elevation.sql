@@ -2,7 +2,7 @@
 -- and SCADA data for Blue Mesa Elevation
 
 -- command line argument for number of days to search back
-define days_back = 10; -- &1 avoid endless repetition of annoying warnings;
+define days_back = 10 -- &1 avoid endless repetition of annoying warnings;
 
 -- setup output
 set feedback off
