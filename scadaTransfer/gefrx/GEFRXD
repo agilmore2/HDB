@@ -4,10 +4,10 @@
 GEDIR=/wrg/hdb/HDB2_applications/scadaTransfer; export GEDIR
 
 # The output log file name and directory
-LOGFILE=/tmp/gefrx.log; export LOGFILE
+LOGFILE=$GEDIR/work/gefrx.log; export LOGFILE
 
 # The directory to place the received files
-OUTDIR=/tmp; export OUTDIR
+OUTDIR=$GEDIR/work; export OUTDIR
 
 # The serial port to use for file transfer, i.e. Solaris /dev/ttya Linux /dev/ttyS0
 DEVICE=/dev/ttyb; export DEVICE
@@ -32,6 +32,7 @@ getPID()
 APPDIR=$GEDIR/gefrx; export APPDIR
 APP=$APPDIR/gefrx; export APP
 
+XFERUSER=morning; export XFERUSER
 # Get the current process ID for gefrx if the process is running
 getPID
 
@@ -40,10 +41,12 @@ case "$1" in
 	
 'start')
 	# Make sure the application is installed.
-	if [ ! -x $APP ]; then
-		echo "$0: The GEFRX application is not installed correctly"
-		exit 1
-	fi
+	# since run as root on a client machine, this check fails for root
+	# it would suceed for $XFERUSER though
+#	if [ ! -x $APP ]; then
+#		echo "$0: The GEFRX application is not installed correctly"
+#		exit 1
+#	fi
 
 	# Make sure the application is not running
     if [ $pid -gt 0 ]; then
@@ -53,11 +56,12 @@ case "$1" in
 
 	# Start the application
 	echo Starting the GEFRX Application
-	$APP -d $DEVICE -o $OUTDIR >> $LOGFILE 2>&1 &
+	su - $XFERUSER -c "$APP -d $DEVICE -o $OUTDIR >>& $LOGFILE &"
 
+	sleep 1;
 	# Get the new PID
 	getPID
-
+	
 	# Verify that the application started
     if [ $pid -eq 0 ]; then
         echo "$0: Error starting the GEFRX application."
