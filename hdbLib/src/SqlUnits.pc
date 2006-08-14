@@ -62,7 +62,7 @@ int SqlGetUnitInfo (ID unitId, UNIT_INFO *unitInfo)
    
 
    EXEC SQL AT :current_dbsite 
-      SELECT unit_name, dimension_id, stored_unit_id, month_year, over_month_year,
+      SELECT unit_name, dimension_id, base_unit_id, month_year, over_month_year,
       is_factor, mult_factor, from_stored_expression, 
       to_stored_expression
       INTO :name, :dimension, :storedUnitId, :monthYear:monthYearInd,
