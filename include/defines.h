@@ -124,6 +124,11 @@
 #define HDB_OTHER "other"
 #define HDB_WY "wy"
 
+/* Allowable intervals used in hdb_datatype */
+#define INSTANT "instant"
+#define NONINSTANT "non-instant"
+#define EITHER "either"
+
 /* Date range indicators; used in indicating which
    of two years (high or low) contains a Feb 28 value 
    (For leap year calculating. */
@@ -139,11 +144,6 @@
 #define SEE_LOADING_APP "See loading application"
 #define UNKNOWN "unknown"
 #define OVERWRITE "overwrite"
-
-/* strings used in v_valid_interval_datatype to define
-   instantaneous or non */
-#define INSTANTANEOUS "instant"
-#define NON_INSTANTANEOUS "noninstant"
 
 /* strings used in hdb_method_class to define method_class_type */
 #define CALCULATION "calculation"

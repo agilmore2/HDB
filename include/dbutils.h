@@ -191,14 +191,6 @@ ID *
 #endif
 );
 
-int SqlGetSiteDatatypeIdWithCode(
-#ifdef ANSIPROTO
-ID,
-char *,
-ID *
-#endif
-);
-
 int SqlGetUnitId (
 #ifdef ANSIPROTO
 ID,
@@ -220,10 +212,10 @@ int *
 #endif
 );
 
-int SqlGetDatatypeEnding (
+int SqlDatatypeIsEither (
 #ifdef ANSIPROTO
 ID,
-char *
+int *
 #endif
 );
 
@@ -277,13 +269,6 @@ int SqlGetUnitInfo (
 #ifdef ANSIPROTO
 ID,
 UNIT_INFO *
-#endif
-);
-
-int SqlGetDatatypeMethodClassInfo (
-#ifdef ANSIPROTO
-ID,
-METHOD_CLASS_INFO *
 #endif
 );
 
