@@ -24,7 +24,7 @@ EXEC SQL INCLUDE SQLCA;
 
 <P> <STRONG>Function signature:</STRONG> int SqlGetUnitInfo (ID, UNIT_INFO *)
 
-<P> <STRONG>Function description:</STRONG> Given a unit_id, retrive all associated unit information (dimension, stored_unit_id, etc). Uses oradecimal converted to long double to store the multiplication factor.
+<P> <STRONG>Function description:</STRONG> Given a unit_id, retrive all associated unit information (dimension, base_unit_id, etc). Uses oradecimal converted to long double to store the multiplication factor.
 
 <P><DL> <STRONG>Function arguments:</STRONG>
 <BR><DD> ID unitId:           The HDB unit_id.

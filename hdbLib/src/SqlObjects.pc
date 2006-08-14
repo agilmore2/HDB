@@ -26,18 +26,6 @@
 *
 * Return
 * 	int	OK or ERROR: indicates if sourcetypeId was found
-*******************************
-* SqlGetSiteDatatypeIdWithCode
-* Purpose: Retrieve appropriate numerical site_datatype_id given the site_id,
-*	   and the datatype_coden.
-*
-* Input
-*	ID     siteId
-*	char * datatype_code
-*	ID     *siteDatatypeId
-*
-* Return
-* 	int	OK or ERROR: indicates if sourcetypeId was found
 *
 * AUTHOR - EDITORS
 * Carol Marra
@@ -152,67 +140,6 @@ int SqlGetSiteDatatypeIdWithId (ID siteId, ID datatypeId, ID *siteDatatypeId)
 }
 
 /***************************************************************************/
-#define FUNC_NAME    "SqlGetSiteDatatypeIdWithCode"
-/*
-<HTML>
-
-<P> <STRONG>Function name:</STRONG> SqlGetSiteDatatypeWithCode
-
-<P> <STRONG>Function signature:</STRONG> int SqlGetSiteDatatypeIdWithCode (ID, char *, ID *)
-
-<P> <STRONG>Function description:</STRONG> Given a site_id and a datatype_code, retrieves the site_datatype_id.
-
-<P><DL> <STRONG>Function arguments:</STRONG>
-<BR><DD> ID siteId:          The HDB site_id.
-<BR><DD> char *datatypeCode: The HDB datatype_code.
-<BR><DD> ID *siteDatatypeId: The retrieved site_datatype_id.
-</DL>
-
-<P> <STRONG>Function return value:</STRONG> OK or ERROR
-
-</HTML>
-*/
-
-int SqlGetSiteDatatypeIdWithCode (ID siteId, char *datatypeCode, 
-				  ID *siteDatatypeId)
-{
-  EXEC SQL BEGIN DECLARE SECTION;
-    ID sqlSiteId = siteId,
-       *sqlSiteDatatypeId = siteDatatypeId;
-    char *sqlDatatypeCode = datatypeCode;
-  EXEC SQL END DECLARE SECTION;
-
-  int result; 
-
-  EXEC SQL AT :current_dbsite SELECT site_datatype_id
-    INTO :sqlSiteDatatypeId
-    FROM hdb_site_datatype a, hdb_datatype b
-    WHERE a.site_id = :sqlSiteId
-      AND b.datatype_code = :sqlDatatypeCode
-      AND a.datatype_id = b.datatype_id;
-
-  if (sqlca.sqlcode > 0)
-    {
-      PrintError ("No site_datatype_id exists for site: %d datatype %s.\n\tYou must create one before loading this data.\n", siteId, datatypeCode);
-      EXEC SQL AT :current_dbsite ROLLBACK;
-      return (CREATE_SDI);
-    }
-
-  if ((result = SqlErrorHandler 
-       (FUNC_NAME, FALSE,
-	"Error retrieving site_datatype_id for site: %d datatype %s.\n\tExiting.", 
-	siteId, datatypeCode)) == ERROR)
-    {		
-      EXEC SQL AT :current_dbsite ROLLBACK;
-      return (ERROR);
-    }
-  
-  EXEC SQL AT :current_dbsite COMMIT;
-  
-  return (OK);
-}
-  
-/***************************************************************************/
 
 #define FUNC_NAME    "SqlDatatypeIsInstant"
 /*
@@ -238,18 +165,15 @@ int SqlDatatypeIsInstant (ID datatypeId, int *isInstant)
 {
   EXEC SQL BEGIN DECLARE SECTION;
     ID sqlDatatypeId = datatypeId;
-    char sqlInterval[11];
+    char sqlInterval[17];
   EXEC SQL END DECLARE SECTION;
   
   int result;
   
-  /* This query should return only 1 row; if it returns more, there
-     is something wrong with the definition of v_valid_interval_datatype */
-  EXEC SQL AT :current_dbsite SELECT distinct a.interval
+  EXEC SQL AT :current_dbsite SELECT allowable_intervals
     INTO :sqlInterval
-    FROM v_valid_interval_datatype a, hdb_site_datatype b
-    WHERE b.datatype_id = :sqlDatatypeId
-      AND a.site_datatype_id = b.site_datatype_id;
+    FROM hdb_site_datatype
+    WHERE b.datatype_id = :sqlDatatypeId;
   
   if ((result = SqlErrorHandler (FUNC_NAME, FALSE, "Error retrieving interval information for datatype %d.\n\tExiting.", sqlDatatypeId)) == ERROR)
     {		
@@ -257,10 +181,10 @@ int SqlDatatypeIsInstant (ID datatypeId, int *isInstant)
       return (ERROR);
     }
   
-  if (!strncmp (sqlInterval, INSTANTANEOUS, strlen (INSTANTANEOUS)))
-     *isInstant = TRUE;
-  else
+  if (!strncmp (sqlInterval, NONINSTANT, strlen (NONINSTANT)))
      *isInstant = FALSE;
+  else
+     *isInstant = TRUE;
 
   EXEC SQL AT :current_dbsite COMMIT;
   
@@ -269,19 +193,19 @@ int SqlDatatypeIsInstant (ID datatypeId, int *isInstant)
 
 /***************************************************************************/
 
-#define FUNC_NAME    "SqlGetDatatypeEnding"
+#define FUNC_NAME    "SqlDatatypeIsEither"
 /*
 <HTML>
 
-<P> <STRONG>Function name:</STRONG> SqlGetDatatypeEnding
+<P> <STRONG>Function name:</STRONG> SqlDatatypeIsEither
 
-<P> <STRONG>Function signature:</STRONG> int SqlGetDatatypeEnding (ID, char *)
+<P> <STRONG>Function signature:</STRONG> int SqlDatatypeIsEither (ID, int *)
 
-<P> <STRONG>Function description:</STRONG> Retrieves the last 3 characters of the datatype_code for the indicated datatype_id; these characters indicate things like "eop", "ave", "tot", etc.
+<P> <STRONG>Function description:</STRONG> Given a datatype_id, determines if the datatype can be used as either instant or non-instant.
 
 <P><DL> <STRONG>Function arguments:</STRONG>
-<BR><DD> ID datatypeId:        HDB datatype_id.
-<BR><DD> char *datatypeEnding: The retrieved 3-character ending of the datatype_code.
+<BR><DD> ID datatypeId:  HDB datatype_id.
+<BR><DD> int *isInstant: Returned indicator; 0 if FALSE, 1 if TRUE.
 </DL>
 
 <P> <STRONG>Function return value:</STRONG> OK or ERROR
@@ -289,98 +213,36 @@ int SqlDatatypeIsInstant (ID datatypeId, int *isInstant)
 </HTML>
 */
 
-int SqlGetDatatypeEnding (ID datatypeId, char *datatypeEnding)
+int SqlDatatypeIsEither (ID datatypeId, int *isEither)
 {
   EXEC SQL BEGIN DECLARE SECTION;
     ID sqlDatatypeId = datatypeId;
-    char sqlDatatypeEnding[4];
+    char sqlInterval[17];
   EXEC SQL END DECLARE SECTION;
   
   int result;
   
-  EXEC SQL AT :current_dbsite SELECT SUBSTR (datatype_code, -3)
-    INTO :sqlDatatypeEnding
-    FROM hdb_datatype
-    WHERE datatype_id = :sqlDatatypeId;
+  EXEC SQL AT :current_dbsite SELECT allowable_intervals
+    INTO :sqlInterval
+    FROM hdb_site_datatype
+    WHERE b.datatype_id = :sqlDatatypeId;
   
-  if ((result = SqlErrorHandler 
-       (FUNC_NAME, FALSE,
-	"Error retrieving datatypeEnding (datatypeCode) for datatype %d.\n\tExiting.", 
-	sqlDatatypeId)) == ERROR)
+  if ((result = SqlErrorHandler (FUNC_NAME, FALSE, "Error retrieving interval information for datatype %d.\n\tExiting.", sqlDatatypeId)) == ERROR)
     {		
       EXEC SQL AT :current_dbsite ROLLBACK;
       return (ERROR);
     }
   
+  if (!strncmp (sqlInterval, EITHER, strlen (EITHER)))
+     *isEither = TRUE;
+  else
+     *isEither = FALSE;
+
   EXEC SQL AT :current_dbsite COMMIT;
-  
-  strcpy (datatypeEnding, sqlDatatypeEnding);
-  datatypeEnding[3] = '\0';
   
   return (OK);
 }
 
-/***********************************************************/
-
-#define FUNC_NAME    "SqlGetDatatypeMethodClassInfo"
-/*
-<HTML>
-
-<P> <STRONG>Function name:</STRONG> SqlGetDatatypeMethodClassInfo
-
-<P> <STRONG>Function signature:</STRONG> int SqlGetDatatypeMethodClassInfo (ID, METHOD_CLASS_INFO *)
-
-<P> <STRONG>Function description:</STRONG> Retrieves information on the method class associated with the input datatype_id.
-
-<P><DL> <STRONG>Function arguments:</STRONG>
-<BR><DD> ID datatypeId:        HDB datatype_id.
-<BR><DD> METHOD_CLASS_INFO *   methodClassInfo
-</DL>
-
-<P> <STRONG>Function return value:</STRONG> OK or ERROR
-
-</HTML>
-*/
-
-int SqlGetDatatypeMethodClassInfo (ID datatypeId, METHOD_CLASS_INFO *methodClassInfo)
-{
-  EXEC SQL BEGIN DECLARE SECTION;
-    ID sqlDatatypeId = datatypeId;
-    ID methodClassId;
-    char methodClassName[65];
-    char methodClassType[25];
-  EXEC SQL END DECLARE SECTION;
-  
-  int result;
-  
-  EXEC SQL AT :current_dbsite SELECT a.method_class_id, rtrim (a.method_class_name),
-     rtrim (a.method_class_type)
-     INTO :methodClassId, :methodClassName, :methodClassType
-    FROM hdb_method_class a, hdb_datatype b
-    WHERE b.datatype_id = :sqlDatatypeId
-      AND a.method_class_id = b.method_class_id;
-  
-  if ((result = SqlErrorHandler 
-       (FUNC_NAME, FALSE,
-	"Error retrieving method class info for datatype %d.\n\tExiting.", 
-	sqlDatatypeId)) == ERROR)
-    {		
-      EXEC SQL AT :current_dbsite ROLLBACK;
-      return (ERROR);
-    }
-  
-  EXEC SQL AT :current_dbsite COMMIT;
-  
-  methodClassInfo->methodClassId = methodClassId;
-  strcpy (methodClassInfo->name, methodClassName);
-  methodClassInfo->name[strlen(methodClassInfo->name)] = 
-     '\0';
-  strcpy (methodClassInfo->methodClassType, methodClassType);
-  methodClassInfo->methodClassType[strlen(methodClassInfo->methodClassType)] = 
-     '\0';
-
-  return (OK);
-}
 
 /***********************************************************/
 

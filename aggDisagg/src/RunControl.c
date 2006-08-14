@@ -560,9 +560,8 @@ int VerifyInputs (RUN_CONTROL runControl)
 
   int result,
       isInstant,
-      statsOk,
+      isEither,
       compareResult;
-  METHOD_CLASS_INFO methodClassInfo;
   
   /* Disallow aggregation of real data that is not stat, range,
      or a dimension change */
@@ -605,26 +604,23 @@ int VerifyInputs (RUN_CONTROL runControl)
     }
     
   /* If statistics data is being generated, destination datatype cannot be an
-     end-of-period, beginning-of-period or total. */
+     end-of-period, beginning-of-period or total. Best way to check for
+     this in new datatype design is to look for allowable_intervals of "either".
+     Excluding "either" datatypes will exclude a few that might be OK for 
+     status, but this probably will not be an issue... */
   if (runControl.isStat)
     {
       if (runControl.datatypeDest != NA)
 	{
-	  if ((result = SqlGetDatatypeMethodClassInfo (runControl.datatypeDest,
-					      &methodClassInfo)) != OK)
+	  if ((result = SqlDatatypeIsEither (runControl.datatypeDest,
+					     &isEither)) != OK)
 	    {
 	      return (ERROR);
 	    }
       
-	  if ((result = SqlMethodClassStatsOk (methodClassInfo, &statsOk)) != OK)
+	  if (isEither)
 	    {
-	      return (ERROR);
-	    }
-      
-	  
-	  if (!statsOk)
-	    {
-	      PrintError ("Method '%s' of destination datatype %d indicates invalid datatype for statistics.\n\tExiting.", methodClassInfo.name, runControl.datatypeDest);
+	      PrintError ("Allowable interval of EITHER for datatype %d indicates invalid datatype for statistics.\nContact support if you believe this to be in error.\n\tExiting.", runControl.datatypeDest);
 	      return (ERROR);
 	    }
 	}
@@ -750,15 +746,9 @@ int VerifyInputs (RUN_CONTROL runControl)
       return (ERROR);
     }
 
-  /* MethodClass of EOP requires method of EOP */
-  if (runControl.methodClassId == EOP_METHOD_CLASS)
-    {
-       if (methodClassInfo.methodClassId != EOP_METHOD_CLASS)
-       {
-	  PrintError ("Method class of 'eop' requires destination datatype method class of 'eop'.\n\tExiting.");
-	  return (ERROR);
-	}
-    }
+  /* Can no longer verify if run control method_class is a match for the 
+     datatype... */
+
 
   /* If methodClass is NA, must be disaggregating. */
   if ((runControl.methodClassId == COPY_METHOD_CLASS) && 
