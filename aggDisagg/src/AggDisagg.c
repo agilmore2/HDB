@@ -10,7 +10,7 @@
 * February, 1996
 *****************************************************************************/
 #define MAIN 1
-#define VERSION "3.1"
+#define VERSION "3.5 Datatype Upgrade"
 
 #include <stdio.h>
 #include <stdlib.h>
