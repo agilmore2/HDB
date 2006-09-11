@@ -9,9 +9,9 @@ select
 hs.parent_site_id res_id,
 get_hdb_site_name(hs.parent_site_id) res ,
 to_char(rd.start_date_time,'dd') day,
-to_number(decode(hdd.datatype_name,'Average Outflow',null,round(cfs2acft(decode(rd.value,0,null,rd.value)),2))) inflow_val,
+to_number(decode(hdd.datatype_name,'average outflow',null,round(cfs2acft(decode(rd.value,0,null,rd.value)),2))) inflow_val,
 to_number(decode(hdd.datatype_name,'average inflow',null,round(cfs2acft(decode(rd.value,0,null,rd.value)),2))) outflow_val,
-nvl(to_number(decode(hdd.datatype_name,'Average Outflow',null,round(cfs2acft(decode(rd.value,0,null,rd.value)),2))),0) - 
+nvl(to_number(decode(hdd.datatype_name,'average outflow',null,round(cfs2acft(decode(rd.value,0,null,rd.value)),2))),0) - 
 nvl(to_number(decode(hdd.datatype_name,'average inflow',null,round(cfs2acft(decode(rd.value,0,null,rd.value)),2))),0) diff_val,
 hs.site_common_name acct_name,
 hs.site_id   acct_id,
