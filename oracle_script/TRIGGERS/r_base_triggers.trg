@@ -2,7 +2,7 @@
 -- notifies derivation application of data to process
 -- 10/02/01  
 --
--- Modified 10-AUG-04 by M. Bogner to fix derivation  and overwrite bug discovered by A. Gilmore at U.C.
+-- Modified 2006 by C. Marra to accomodate new datatype management
 
 create or replace trigger r_base_before_insert_update
 before insert or update 
@@ -25,26 +25,6 @@ begin
       deny_action(text);
    end if;
 
---  test the method id if unknown don't do anything otherwise
---  see that the method_id has the same method class id as the
---  implied method_class_id as the datatype
-
-    select count(*) into v_count from hdb_method
-      where :new.method_id=method_id and
-      upper(method_name) in ('UNKNOWN', 'COPY OF DATA', 'SIMPLE DIVISION');
-
-    if v_count = 0 then
-        select count(*) into v_count 
-         from  hdb_site_datatype a, hdb_datatype b, hdb_method c	 
-          where :new.method_id=c.method_id and
-                :new.site_datatype_id = a.site_datatype_id and
-                a.datatype_id = b.datatype_id  and
-                b.method_class_id = c.method_class_id;
-         if v_count = 0  then
-           text := 'Method Class Integrity check violation against implied datatypes method class';
-           deny_action(text);
-         end if;
-    end if;
 -- make sure there is not an sdi/interval in ref_derivation_source 
   if :new.overwrite_flag='O' then
     select count(*) into v_count from ref_derivation_source
@@ -101,14 +81,22 @@ begin
 
   :new.date_time_loaded:=sysdate;
 
+  /* Start and end date must be equal for instant data.
+     Datatype's allowable intervals must be either or instant 
+     for instant data */
   if (:new.interval = 'instant') then
+
      if ( :new.start_date_time <> :new.end_date_time) then
         text := 'Instant interval start and end date times must be equal';
         deny_action(text);
      end if;
 
-     select count(*) into v_count from v_valid_interval_datatype
-     where interval = 'instant' and site_datatype_id = :new.site_datatype_id;
+     select count(*) into v_count 
+     from hdb_datatype dt, hdb_site_datatype sd
+     where dt.allowable_intervals in ('instant','either') 
+       and sd.site_datatype_id = :new.site_datatype_id
+       and sd.datatype_id = dt.datatype_id;
+
      if (v_count = 0) then
         text := 'Invalid Interval for this datatype';
         deny_action(text);
@@ -116,7 +104,11 @@ begin
 
   end if;
 
+  /* Start date must be < end date for non-instant data.
+     Datatype's allowable intervals must be either or non-instant 
+     for non-instant data */
   if (:new.interval <> 'instant') then
+
      if ( :new.start_date_time > :new.end_date_time) then
         text := 'Non-instant interval start date time must be less than the end date time';
         deny_action(text);
@@ -126,8 +118,12 @@ begin
         deny_action(text);
      end if;
 
-     select count(*) into v_count from v_valid_interval_datatype
-     where interval = 'noninstant' and site_datatype_id = :new.site_datatype_id;
+     select count(*) into v_count 
+     from hdb_datatype dt, hdb_site_datatype sd
+     where dt.allowable_intervals in ('non-instant','either') 
+       and sd.site_datatype_id = :new.site_datatype_id
+       and sd.datatype_id = dt.datatype_id;
+
      if (v_count = 0) then
         text := 'Invalid Interval for this datatype';
         deny_action(text);
@@ -135,6 +131,28 @@ begin
 
   end if;
 
+  /* Validate record's agen_id against the datatype's agen_id 
+     (if there is one). */
+  select count(*) into v_count
+  from hdb_datatype dt, hdb_site_datatype sd
+  where dt.agen_id is not null
+    and sd.site_datatype_id = :new.site_datatype_id
+    and sd.datatype_id = dt.datatype_id;
+
+  if (v_count > 0) then
+    select count(*) into v_count
+    from hdb_datatype dt, hdb_site_datatype sd
+    where dt.agen_id = :new.agen_id
+      and sd.site_datatype_id = :new.site_datatype_id
+      and sd.datatype_id = dt.datatype_id;
+
+    if (v_count = 0) then
+       text := 'Invalid Agency for this datatype';
+       deny_action(text);
+    end if;
+
+  end if;
+  
 end;
 /
 show errors trigger r_base_before_insert_update;
@@ -274,3 +292,4 @@ begin
 end;
 /
 show errors trigger r_base_after_delete;
+/

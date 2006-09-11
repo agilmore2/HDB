@@ -6,7 +6,6 @@ drop public synonym hdb_computed_datatype;
 drop public synonym hdb_damtype;
 drop public synonym hdb_data_source;
 drop public synonym hdb_datatype;
-drop public synonym hdb_datatype_type;
 drop public synonym hdb_date_time_unit;
 drop public synonym hdb_derivation_flag;
 drop public synonym hdb_dimension;

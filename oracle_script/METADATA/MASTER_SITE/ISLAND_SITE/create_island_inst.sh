@@ -19,23 +19,11 @@ if test $answer != y; then
   exit
 fi
 
-echo Running pop_pk.sps
-sqlplus $dba_name/$psswd @../../pop_pk.sps $dba_name $dba_name $db_name > pop_pk.sps.out
+echo Running pop_pk_syns.ddl
+sqlplus $dba_name/$psswd @../../pop_pk_syns.ddl $dba_name $dba_name $db_name > pop_pk_syns.ddl.out
 
 echo "**********************"
-echo "Check output in pop_pk.sps.out; ok to continue? (y or n)"
-read answer
-if test $answer != y; then
-  echo Fix problems as necessary, then re-run.
-  echo Exiting...
-  exit
-fi
-
-echo Running pop_pk.spb
-sqlplus $dba_name/$psswd < ../../pop_pk.spb > pop_pk.spb.out
-
-echo "**********************"
-echo "Check output in pop_pk.spb.out; ok to continue? (y or n)"
+echo "Check output in pop_pk_syns.ddl.out; ok to continue? (y or n)"
 read answer
 if test $answer != y; then
   echo Fix problems as necessary, then re-run.

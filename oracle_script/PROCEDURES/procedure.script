@@ -1,13 +1,12 @@
-start ./PROCEDURES/check_interval_usage.prc;
 start ./PROCEDURES/check_sdi_auth.prc;
 start ./PROCEDURES/check_sdi_auth_with_site.prc;
 start ./PROCEDURES/check_site_id_auth.prc;
-start ./PROCEDURES/check_source_data_codes.prc;
 start ./PROCEDURES/check_valid_attr_value.prc;
 start ./PROCEDURES/check_valid_site_objtype.prc;
 start ./PROCEDURES/check_valid_site_ot_id.prc;
 start ./PROCEDURES/check_valid_datatype.prc;
 start ./PROCEDURES/check_valid_noop.prc;
+start ./PROCEDURES/check_valid_property_value.prc;
 start ./PROCEDURES/check_valid_agg_disagg_method.prc;
 start ./PROCEDURES/check_valid_unit.prc;
 start ./PROCEDURES/check_valid_unit_spec.prc;

@@ -1,12 +1,13 @@
 grant select on DBA.hdb_agen to public;
 grant select on DBA.hdb_attr to public;
+grant select on DBA.hdb_attr_feature to public;
 grant select on DBA.hdb_collection_system to public;
 grant select on DBA.hdb_computed_datatype to public;
 /*grant select on DBA.hdb_computed_datatype_component to public;*/
 grant select on DBA.hdb_damtype to public;
 grant select on DBA.hdb_data_source to public;
 grant select on DBA.hdb_datatype to public;
-grant select on DBA.hdb_datatype_type to public;
+grant select on DBA.hdb_datatype_feature to public;
 grant select on DBA.hdb_date_time_unit to public;
 grant select on DBA.hdb_dimension to public;
 grant select on DBA.hdb_derivation_flag to public;
@@ -21,6 +22,9 @@ grant select on DBA.hdb_ext_data_code to public;
 grant select on DBA.hdb_ext_data_code_archive to public;
 grant select on DBA.hdb_ext_data_source to public;
 grant select on DBA.hdb_ext_data_source_archive to public;
+grant select on DBA.hdb_feature to public;
+grant select on DBA.hdb_feature_class to public;
+grant select on DBA.hdb_feature_property to public;
 grant select on DBA.hdb_gagetype to public;
 grant select on DBA.hdb_interval to public;
 grant select on DBA.hdb_loading_application to public;
@@ -32,6 +36,8 @@ grant select on DBA.hdb_modeltype to public;
 grant select on DBA.hdb_objecttype to public;
 grant select on DBA.hdb_operator to public;
 grant select on DBA.hdb_overwrite_flag to public;
+grant select on DBA.hdb_physical_quantity to public;
+grant select on DBA.hdb_property to public;
 grant select on DBA.hdb_river to public;
 grant select on DBA.hdb_river_reach to public;
 grant select on DBA.hdb_site to public;
@@ -100,4 +106,3 @@ grant select on DBA.r_wystat to public;
 grant select on DBA.r_year to public;
 grant select on DBA.r_yearstat to public;
 
-grant select on DBA.v_valid_interval_datatype to public;

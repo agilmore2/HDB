@@ -1,0 +1,3 @@
+@ ./TRIGGERS/hdb_unit_pk_trig.trg;
+@ ./TRIGGERS/hdb_dimension_pk_trig.trg;
+@ ./TRIGGERS/unit_chk_val_spec.trg;

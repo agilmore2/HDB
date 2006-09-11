@@ -94,14 +94,12 @@ storage (initial 50k
 
 create table hdb_datatype (                     
 datatype_id                    number(11) NOT NULL  ,     
-datatype_name                  varchar2(64) NOT NULL  ,  
+datatype_name                  varchar2(240) NOT NULL  ,  
 datatype_common_name           varchar2(64) NOT NULL, 
+physical_quantity_name         varchar2(64) NOT NULL, 
 unit_id                        number(11) NOT NULL  , 
-datatype_type                  varchar2(32) NOT NULL,
-method_class_id                number(11) NOT NULL,
-method_source_datatype_id      number(11),
-compound_interval              varchar2(16),
-cumulative_interval            varchar2(16),
+allowable_intervals            varchar2(16) NOT NULL,
+agen_id                        number(11),
 cmmnt                          varchar2(1000)
 )                                                   
 pctfree 10
@@ -112,17 +110,6 @@ storage (initial 50k
          pctincrease 0);
 ;                       
 
-create table hdb_datatype_type (
-datatype_type                  varchar2(32) NOT NULL,
-cmmnt                          varchar2(1000)
-)
-pctfree 10
-pctused 40
-tablespace HDB_data
-storage (initial 50k
-         next 50k
-         pctincrease 0);
-;                       
 
 create table hdb_date_time_unit (
 date_time_unit                 varchar2(10) NOT NULL,
@@ -141,17 +128,6 @@ create table hdb_derivation_flag
     derivation_flag_name         varchar2(20) NOT NULL,
     cmmnt                        varchar2(1000)
 )
-pctfree 10
-pctused 40
-tablespace HDB_data
-storage (initial 50k
-         next 50k
-         pctincrease 0);
-
-create table hdb_dimension (              
-dimension_id                   number(11) NOT NULL  ,    
-dimension_name                 varchar2(32) NOT NULL    
-)                                                      
 pctfree 10
 pctused 40
 tablespace HDB_data
@@ -530,27 +506,6 @@ storage (initial 50k
          next 50k
          pctincrease 0);
 ;
-
-create table hdb_unit (                              
-unit_id                        number(11) NOT NULL  ,   
-unit_name                      varchar2(32) NOT NULL  ,  
-unit_common_name               varchar2(32)  NOT NULL, 
-dimension_id                   number(11) NOT NULL  ,    
-stored_unit_id                 number(11) NOT NULL  ,   
-month_year                     char(1) NULL      ,     
-over_month_year                char(1) NULL      ,    
-is_factor                      number(11) NOT NULL  ,
-mult_factor                    float NULL      ,    
-from_stored_expression         varchar2(64) NULL      ,    
-to_stored_expression           varchar2(64) NULL          
-)                                                        
-pctfree 10
-pctused 40
-tablespace HDB_data
-storage (initial 50k
-         next 50k
-         pctincrease 0);
-;                       
 
 create table hdb_usbr_off (                
 off_id                         number(11) NOT NULL  ,         
@@ -1302,6 +1257,88 @@ storage (initial 50k
          next 50k
          pctincrease 0);
 ;                       
+
+
+/* FEATURES */
+create table hdb_property (                     
+property_id                        number(11) NOT NULL  ,    
+property_name                      varchar2(64) NOT NULL  , 
+property_common_name               varchar2(64) NOT NULL, 
+property_value_type                varchar2(10) NOT NULL  ,
+unit_id                            number(11)
+)                                                        
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+create table hdb_feature_class (                     
+feature_class_id                        number(11) NOT NULL  ,    
+feature_class_name                      varchar2(64) NOT NULL
+)                                                      
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+create table hdb_feature (                     
+feature_id                        number(11) NOT NULL  ,    
+feature_name                      varchar2(64) NOT NULL,
+feature_class_id		  number(11) NOT NULL
+)                                                      
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+create table hdb_attr_feature (                     
+attr_id                        number(11) NOT NULL  ,    
+feature_class_id               number(11) NOT NULL  ,    
+feature_id   	               number(11) NOT NULL  
+)                                                      
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+create table hdb_datatype_feature (                     
+datatype_id                        number(11) NOT NULL  ,    
+feature_class_id                   number(11) NOT NULL  ,    
+feature_id   	                   number(11) NOT NULL  
+)                                                      
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+create table hdb_feature_property (                     
+feature_id                        number(11) NOT NULL  ,    
+property_id                       number(11) NOT NULL  ,    
+value                             float,
+string_value                      varchar2(200),
+date_value                        date
+)                                                        
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+
+
+
+
 
 
 

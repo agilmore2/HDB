@@ -13,9 +13,6 @@ read psswd
 echo Enter sys Oracle password:
 read sys_psswd
 
-echo Enter password for local meta_data_user to be created:
-read local_mdu_psswd
-
 echo Enter password for meta_data_user at Snapshot Site:
 read remote_mdu_psswd
 
@@ -24,19 +21,6 @@ read snapshot_db
 
 echo Enter name of DBA at snapshot database:
 read snapshot_dba
-
-echo "Running metaDataUser.ddl"
-sqlplus $dba_name/$psswd @metaDataUser.ddl $local_mdu_psswd > metaDataUser.out
-
-echo "**********************"
-echo "Check output in metaDataUser.out; ok to continue? (y or n)"
-read answer
-if test $answer != y; then
-  echo Fix problems as necessary, then re-run.
-  echo Exiting...
-  exit
-fi
-
 
 echo Running snapshot_link.sql...
 sqlplus $dba_name/$psswd @snapshot_link.sql $snapshot_db $remote_mdu_psswd > snapshot_link.out 

@@ -6,7 +6,6 @@ drop table hdb_computed_datatype_components;
 drop table hdb_damtype                   ;         
 drop table hdb_data_source               ;
 drop table hdb_datatype                  ;       
-drop table hdb_datatype_type             ;       
 drop table hdb_date_time_unit		 ;
 drop table hdb_derivation_flag		 ;
 drop table hdb_dimension                 ; 

@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE refresh_HDB_snap  (which_table IN varchar2)
              SELECT constraint_name, constraint_type, owner
              FROM all_constraints
              WHERE table_name = upper(the_table)
-             AND constraint_type = 'P';
+             AND constraint_type in ('P','U');
 
          CURSOR fk_constraints ( pk_name VARCHAR) IS
              SELECT constraint_name, table_name, owner
@@ -22,12 +22,18 @@ CREATE OR REPLACE PROCEDURE refresh_HDB_snap  (which_table IN varchar2)
       alter_stmt      VARCHAR2(300) := NULL;
       curs_handle     INTEGER := NULL;
       curs_ret_val    INTEGER;
-	  table_owner     VARCHAR2(100);
+      table_owner     VARCHAR2(100);
+      is_archive      INTEGER;
 
       BEGIN
-         -- disable all constraints on "the_table"
+         -- disable all constraints on "the_table" except archive tables
+ 
+         SELECT instr(lower(the_table),'archive')
+         INTO is_archive
+         FROM dual;
 
-         FOR a_constraint IN the_table_constraints LOOP
+         IF (is_archive = 0) THEN
+           FOR a_constraint IN the_table_constraints LOOP
 
 		 -- Set the constraint owner, assumed to be the table owner
 		 -- Icky to do this once for every constraint, as it should 
@@ -54,8 +60,13 @@ CREATE OR REPLACE PROCEDURE refresh_HDB_snap  (which_table IN varchar2)
 
 
                END LOOP;
-         END LOOP;
-
+           END LOOP;
+         ELSE  /* get owner of archive table */
+           SELECT owner
+           INTO table_owner
+           FROM all_tables
+           WHERE table_name = upper(the_table);
+         END IF; /* is archive table */
 
 
          DBMS_SNAPSHOT.REFRESH(table_owner||'.'||the_table, 'c');
@@ -100,8 +111,11 @@ CREATE OR REPLACE PROCEDURE refresh_HDB_snap  (which_table IN varchar2)
 
 		 -- Check to see if only one table is to be refreshed, or ALL
 		    if upper(which_table) = 'ALL' THEN
+               refresh_snapshot_table('HDB_FEATURE_CLASS');
+               refresh_snapshot_table('HDB_FEATURE');
+               refresh_snapshot_table('HDB_PROPERTY');
+               refresh_snapshot_table('HDB_FEATURE_PROPERTY');
                refresh_snapshot_table('HDB_AGEN');
-               refresh_snapshot_table('HDB_DATATYPE_TYPE');
                refresh_snapshot_table('HDB_METHOD_CLASS_TYPE');
                refresh_snapshot_table('HDB_METHOD_CLASS'); 
                refresh_snapshot_table('HDB_OPERATOR'); 
@@ -109,11 +123,11 @@ CREATE OR REPLACE PROCEDURE refresh_HDB_snap  (which_table IN varchar2)
                refresh_snapshot_table('HDB_DATE_TIME_UNIT');
                refresh_snapshot_table('HDB_INTERVAL');
      	       refresh_snapshot_table('HDB_OBJECTTYPE');
-               refresh_snapshot_table('HDB_DIMENSION');
-               refresh_snapshot_table('HDB_UNIT');
                refresh_snapshot_table('HDB_ATTR');
+               refresh_snapshot_table('HDB_ATTR_FEATURE');
                refresh_snapshot_table('HDB_SITE');
                refresh_snapshot_table('HDB_DATATYPE');
+               refresh_snapshot_table('HDB_DATATYPE_FEATURE');
                refresh_snapshot_table('HDB_COMPUTED_DATATYPE');
                refresh_snapshot_table('HDB_DATA_SOURCE');
                refresh_snapshot_table('HDB_DIVTYPE');

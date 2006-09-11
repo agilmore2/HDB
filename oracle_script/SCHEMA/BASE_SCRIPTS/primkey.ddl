@@ -9,6 +9,11 @@ ALTER TABLE hdb_attr
    ADD ( CONSTRAINT hdb_attr_pk
          PRIMARY KEY (attr_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0)); 
 
+ALTER TABLE hdb_attr_feature
+      ADD ( CONSTRAINT hdb_attr_feature_pk
+            PRIMARY KEY (attr_id, feature_class_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));  
+
+
 ALTER TABLE hdb_collection_system
       ADD ( CONSTRAINT hdb_collection_system_pk
             PRIMARY KEY (collection_system_id)
@@ -40,9 +45,10 @@ ALTER TABLE hdb_datatype
       ADD ( CONSTRAINT hdb_datatype_uk1
             UNIQUE (datatype_name) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));
 
-ALTER TABLE hdb_datatype_type 
-      ADD ( CONSTRAINT hdb_datatype_type_pk
-      PRIMARY KEY (datatype_type) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));  
+ALTER TABLE hdb_datatype_feature
+      ADD ( CONSTRAINT hdb_datatype_feature_pk
+            PRIMARY KEY (datatype_id, feature_class_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));  
+
 ALTER TABLE hdb_date_time_unit
       ADD ( CONSTRAINT hdb_date_time_unit_pk
       PRIMARY KEY (date_time_unit) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));  
@@ -50,10 +56,6 @@ ALTER TABLE hdb_date_time_unit
 alter table hdb_derivation_flag add constraint
     hdb_derivation_flag_pk
     primary key (derivation_flag) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);
-
-ALTER TABLE hdb_dimension         
-      ADD ( CONSTRAINT hdb_dimension_pk
-            PRIMARY KEY (dimension_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));   
 
 ALTER TABLE hdb_divtype
       ADD ( CONSTRAINT hdb_divtype_pk
@@ -102,6 +104,24 @@ add constraint hdb_ext_data_source_uk
 unique (ext_data_source_name)
 using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);  
 
+ALTER TABLE hdb_feature
+      ADD ( CONSTRAINT hdb_feature_pk
+            PRIMARY KEY (feature_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));  
+
+ALTER TABLE hdb_feature
+      ADD ( CONSTRAINT hdb_feature_uk
+            UNIQUE (feature_class_id, feature_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));  
+
+ALTER TABLE hdb_feature_class
+      ADD ( CONSTRAINT hdb_feature_class_pk
+            PRIMARY KEY (feature_class_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));  
+
+ALTER TABLE hdb_feature_property
+   ADD ( CONSTRAINT hdb_feature_property_pk
+         PRIMARY KEY (feature_id, property_id)
+         using index tablespace hdb_idx storage 
+          (initial 50k next 50k pctincrease 0)); 
+
 ALTER TABLE hdb_gagetype                
       ADD ( CONSTRAINT hdb_gagetype_pk
             PRIMARY KEY (gagetype_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0)); 
@@ -148,6 +168,10 @@ alter table hdb_overwrite_flag add constraint
     hdb_overwrite_flag_pk
     primary key (overwrite_flag) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);
 
+ALTER TABLE hdb_property
+   ADD ( CONSTRAINT hdb_property_pk
+         PRIMARY KEY (property_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0)); 
+
 ALTER TABLE hdb_river 
       ADD ( CONSTRAINT hdb_river_pk
             PRIMARY KEY (river_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));
@@ -170,10 +194,6 @@ ALTER TABLE hdb_site_datatype
 ALTER TABLE hdb_state
       ADD ( CONSTRAINT hdb_state_pk
             PRIMARY KEY (state_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));   
-
-ALTER TABLE hdb_unit  
-      ADD ( CONSTRAINT hdb_unit_pk
-            PRIMARY KEY (unit_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));
 
 ALTER TABLE hdb_usbr_off
       ADD ( CONSTRAINT hdb_usbr_off_pk
@@ -316,5 +336,5 @@ ALTER TABLE ref_str
             PRIMARY KEY (site_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));    
 
 ALTER user DBA 
-default tablespace hdb_user
-quota unlimited on hdb_user;
+default tablespace hdb_data
+quota unlimited on hdb_data;

@@ -8,3 +8,5 @@ AND  hdb_site_datatype.datatype_id = hdb_datatype.datatype_id
 
 grant select on v_hdb_site_datatype_name to public;
 create public synonym v_hdb_site_datatype_name for v_hdb_site_datatype_name; 
+
+

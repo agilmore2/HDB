@@ -5,7 +5,7 @@ references     hdb_dimension(dimension_id);
 
 alter table hdb_unit
 add constraint hdb_unit_fk2
-foreign key    (stored_unit_id)
+foreign key    (base_unit_id)
 references     hdb_unit(unit_id);
 
 alter table hdb_unit

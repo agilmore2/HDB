@@ -32,6 +32,21 @@ if test $answer != y; then
   exit
 fi
 
+echo Recreating procedures invalidated by dropping HDB tables
+cd ../../
+sqlplus $dba_name/$psswd < ./PROCEDURES/procedure.script > ./METADATA/SNAPSHOT_SITE/procedure.out
+
+echo "**********************"
+echo "Check output in procedure.out; ok to continue? (y or n)"
+read answer
+if test $answer != y; then
+  echo Fix problems as necessary, then re-run.
+  echo Exiting...
+  exit
+fi
+
+cd METADATA/SNAPSHOT_SITE/
+
 echo Running new_hdb_fk.sql
 sqlplus  $dba_name/$psswd @new_hdb_fk.sql > new_hdb_fk.out
 
@@ -46,7 +61,8 @@ fi
 
 echo Now you must edit new_hdb_fk_script and remove duplicate references to foreign keys.
 echo This will happen when there is a composite key, composed of more than one column
-echo There is one such key on hdb_site, hdb_site_fk4.
+echo There is one such key on hdb_site, hdb_site_fk4; also check the FK2s on
+echo hdb_attr_feature and hdb_datatype_feature.
 echo Hit any key when you have done this
 read cont
 
@@ -54,7 +70,7 @@ echo Running new_hdb_fk_script.sql
 sqlplus  $dba_name/$psswd @new_hdb_fk_script.sql > new_hdb_fk_script.out
 
 echo "**********************"
-echo "Check output in new_hdb_fk.out; ok to continue? (y or n)"
+echo "Check output in new_hdb_fk_script.out; ok to continue? (y or n)"
 read answer
 if test $answer != y; then
   echo Fix problems as necessary, then re-run.
@@ -76,7 +92,7 @@ fi
 #fi
 
 echo Running ref_refresh_monitor.sql
-sqlplus $dba_name/$psswd @ref_refresh_monitor.sql $db_name > ref_refresh_monitor.out
+sqlplus $dba_name/$psswd @ref_refresh_monitor.sql $dba_name > ref_refresh_monitor.out
 
 echo "**********************"
 echo "Check output in ref_refresh_monitor.out; ok to continue? (y or n)"
@@ -135,23 +151,11 @@ if test $answer != y; then
   exit
 fi
 
-echo Running pop_pk.sps
-sqlplus $dba_name/$psswd @../pop_pk.sps $dba_name $master_dba $master_db > pop_pk.sps.out
+echo Running pop_pk_syns.ddl
+sqlplus $dba_name/$psswd @../pop_pk_syns.ddl $dba_name $master_dba $master_db > pop_pk_syns.ddl.out
 
 echo "**********************"
-echo "Check output in pop_pk.sps.out; ok to continue? (y or n)"
-read answer
-if test $answer != y; then
-  echo Fix problems as necessary, then re-run.
-  echo Exiting...
-  exit
-fi
-
-echo Running pop_pk.spb
-sqlplus $dba_name/$psswd < ../pop_pk.spb > pop_pk.spb.out
-
-echo "**********************"
-echo "Check output in pop_pk.spb.out; ok to continue? (y or n)"
+echo "Check output in pop_pk_syns.ddl.out; ok to continue? (y or n)"
 read answer
 if test $answer != y; then
   echo Fix problems as necessary, then re-run.
@@ -246,24 +250,24 @@ if test $answer != y; then
   exit
 fi
 
+
 echo "**********************"
 echo "YOUR SNAPSHOT INSTALLATION IS **NOT** COMPLETE YET"
 echo "You must create a file called gen_trigs_script.sql in this (SNAPSHOT)"
 echo "directory. This file will contain the CREATE TRIGGER statements"
 echo "from MASTER_SITE/gen_trigs_script.sql for only the REF_ tables."
-echo "Cut and paste these create trigger statements (probably 3 of them)"
+echo "Cut and paste these create trigger statements (probably 4 of them)"
 echo "into your new file, and run it like this: "
 echo "    sqlplus <dbaname>/<psswd>@<dbname> < gen_trigs_script.sql"
 
 echo "AND, you must edit your init<DBNAME>.ora file and verify that:"
-echo "    job_queue_processes = 1 (or more) and"
-echo "    job_queue_interval = 60 (or less)"
+echo "    job_queue_processes = 1 (or more)."
 echo "If you must make any changes, you must shutdown and restart the"
 echo "database in order for these changes to take effect"
 
 echo "When the output from gen_trigs_script.sql is without error, and you have"
-echo "verified the job_queue parameters on your installation, your"
-echo "snapshot installation is complete"
+echo "verified the job_queue_processes parameters on your installation,"
+echo "your snapshot installation is complete"
 
 echo "At your leisure, run drop_old_hdb_tables.sql"
 echo "This will remove all old HDB_ tables created in the initial DB

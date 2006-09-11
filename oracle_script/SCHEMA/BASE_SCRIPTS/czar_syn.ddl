@@ -1,0 +1,2 @@
+create public synonym ref_hdb_installation for DBA.ref_hdb_installation;
+create public synonym ref_phys_quan_refresh_monitor for DBA.ref_phys_quan_refresh_monitor;

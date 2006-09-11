@@ -2,16 +2,17 @@
 @ ./TRIGGERS/auth_site_chk_role.trg;
 @ ./TRIGGERS/check_computed_datatype_id.trg;
 @ ./TRIGGERS/check_attr_type_and_unit.trg;
+@ ./TRIGGERS/check_property_type_and_unit.trg;
 @ ./TRIGGERS/combined_disagg_chk_val.trg;
 @ ./TRIGGERS/combined_ref_div_chk.trg;
 @ ./TRIGGERS/combined_ref_res_chk.trg;
 @ ./TRIGGERS/combined_ref_str_chk.trg;
-@ ./TRIGGERS/datatype_aft_row_all.trg;
-@ ./TRIGGERS/datatype_bef_stmt_all.trg;
+@ ./TRIGGERS/datatype_unit_check.trg;
 @ ./TRIGGERS/hdb_site_site_perm.trg;
 @ ./TRIGGERS/hdb_ext_site_code_triggers.trg;
 @ ./TRIGGERS/hdb_ext_data_code_triggers.trg;
 @ ./TRIGGERS/hdb_ext_data_source_triggers.trg;
+@ ./TRIGGERS/hdb_feature_property_trigs.trg;
 @ ./TRIGGERS/hdbid_chk_val_site_ot_id.trg;
 @ ./TRIGGERS/hm_hourly_daily_valid.trg;
 @ ./TRIGGERS/model_run_id_update.trg;
@@ -43,4 +44,3 @@
 @ ./TRIGGERS/r_year_triggers.trg;
 @ ./TRIGGERS/r_yearstat_sdi_perm.trg;
 @ ./TRIGGERS/sdi_chk_perm.trg;
-@ ./TRIGGERS/unit_chk_val_spec.trg;

@@ -97,16 +97,17 @@ grant  alter any table to hdb_meta_role;
 grant ref_meta_role to hdb_meta_role;
 grant  insert, delete, update on hdb_agen  to  hdb_meta_role;      
 grant  insert, delete, update on hdb_attr  to  hdb_meta_role;     
+grant  insert, delete, update on hdb_attr_feature  to  hdb_meta_role;     
 grant  insert, delete, update on hdb_collection_system  to  hdb_meta_role;   
 grant  insert, delete, update on hdb_computed_datatype  to  hdb_meta_role;   
 /*grant  insert, delete, update on hdb_computed_datatype_component  to  hdb_meta_role;   */
 grant  insert, delete, update on hdb_damtype  to  hdb_meta_role; 
 grant  insert, delete, update on hdb_data_source  to  hdb_meta_role; 
 grant  insert, delete, update on hdb_datatype  to  hdb_meta_role;   
-grant  insert, delete, update on hdb_datatype_type  to  hdb_meta_role;   
+
+grant  insert, delete, update on hdb_datatype_feature  to  hdb_meta_role;   
 grant  insert, delete, update on hdb_date_time_unit  to  hdb_meta_role;   
 grant  insert, delete, update on hdb_derivation_flag  to  hdb_meta_role;   
-grant  insert, delete, update on hdb_dimension  to  hdb_meta_role; 
 grant  insert, delete, update on hdb_divtype  to  hdb_meta_role; 
 grant  insert, delete, update on hdb_dmi_unit_map  to  hdb_meta_role;  
 grant  insert, delete, update on hdb_ext_site_code_sys  to  hdb_meta_role;  
@@ -114,6 +115,10 @@ grant  insert, delete, update on hdb_ext_site_code to  hdb_meta_role;
 grant  insert, delete, update on hdb_ext_data_code_sys  to  hdb_meta_role; 
 grant  insert, delete, update on hdb_ext_data_code  to  hdb_meta_role;  
 grant  insert, delete, update on hdb_ext_data_source  to  hdb_meta_role;  
+
+grant  insert, delete, update on hdb_feature  to  hdb_meta_role;   
+grant  insert, delete, update on hdb_feature_class  to  hdb_meta_role;   
+grant  insert, delete, update on hdb_feature_property  to  hdb_meta_role;   
 grant  insert, delete, update on hdb_gagetype  to  hdb_meta_role;    
 grant  insert, delete, update on hdb_interval  to  hdb_meta_role;    
 grant  insert, delete, update on hdb_loading_application  to  hdb_meta_role;    
@@ -125,12 +130,12 @@ grant  insert, update, delete on hdb_modeltype to hdb_meta_role;
 grant  insert, delete, update on hdb_objecttype  to  hdb_meta_role; 
 grant  insert, delete, update on hdb_operator  to  hdb_meta_role; 
 grant  insert, delete, update on hdb_overwrite_flag  to  hdb_meta_role; 
+grant  insert, delete, update on hdb_property  to  hdb_meta_role;        
 grant  insert, delete, update on hdb_river  to  hdb_meta_role;        
 grant  insert, delete, update on hdb_river_reach  to  hdb_meta_role; 
 grant  insert, delete, update on hdb_site  to  hdb_meta_role;       
 grant  insert, delete, update on hdb_site_datatype  to  hdb_meta_role;  
 grant  insert, delete, update on hdb_state  to  hdb_meta_role;         
-grant  insert, delete, update on hdb_unit  to  hdb_meta_role;        
 grant  insert, delete, update on hdb_usbr_off  to  hdb_meta_role;   
 grant  insert, delete, update on hdb_validation  to  hdb_meta_role;
 /***********************************************************************/

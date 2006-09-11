@@ -22,12 +22,47 @@ if test $answer != y
     then exit
 fi
 
+echo For physical quantities, units and dimensions
+echo is this installation a slave to a Czar y or n?
+echo NOTE: Czars and islands are installed in the same way.
+read is_slave
+
+if test $is_slave != n 
+then
+  echo You must run the slave pre-installation script 
+  echo ADD_SLAVE/slave_preinstall.sh. Have you y or n?
+  read answer
+
+  if test $answer != y 
+  then
+    exit
+  fi
+fi
+
+
 # Prompting for information
 
 echo Enter DBA user name:
 read dba_name
 echo Enter DBA user password:
 read passwd
+
+# Get passwords for users on czar install
+if test $is_slave != y 
+then
+  echo Enter password for czar_user to be created
+  read czar_passwd
+
+  echo Enter password for meta_data_user to be created
+  read md_passwd
+# Get czar DBA, DB info for slave install
+else
+  echo Enter name of Czar database
+  read czar_dbname
+
+  echo Enter name of DBA on Czar database
+  read czar_dba
+fi
 
 # Copying site-independent information to parent directory.
 
@@ -60,6 +95,25 @@ mv temp ./SCHEMA/userpriv.ddl
 sed 's/DBA/'$dba_name'/g' ./SCHEMA/userprivsys.ddl > temp
 mv temp ./SCHEMA/userprivsys.ddl
 
+# Make substitutions in czar files
+if test $is_slave != y 
+then
+  sed 's/CZAR_PASSWD/'$czar_passwd'/g' ./SCHEMA/czar_users.ddl > temp
+  mv temp ./SCHEMA/czar_users.ddl
+  sed 's/MD_PASSWD/'$md_passwd'/g' ./SCHEMA/czar_users.ddl > temp
+  mv temp ./SCHEMA/czar_users.ddl
+  sed 's/DBA/'$dba_name'/g' ./SCHEMA/czar_syn.ddl > temp
+  mv temp ./SCHEMA/czar_syn.ddl
+  sed 's/DBA/'$dba_name'/g' ./SCHEMA/czar_userpriv.ddl > temp
+  mv temp ./SCHEMA/czar_userpriv.ddl
+# Make substitutions in slave files
+else
+  sed 's/CZAR_DBA/'$czar_dba'/g' ./SCHEMA/slave_snapshot.ddl > temp
+  mv temp ./SCHEMA/slave_snapshot.ddl
+  sed 's/CZAR_DBNAME/'$czar_dbname'/g' ./SCHEMA/slave_snapshot.ddl > temp
+  mv temp ./SCHEMA/slave_snapshot.ddl
+fi
+
 sed 's/hdb_dba_owner/'$dba_name'/g' ./SCHEMA/set_dba_roles.ddl > temp
 mv temp ./SCHEMA/set_dba_roles.ddl
 
@@ -73,26 +127,80 @@ sqlplus '$dba_name/$passwd as sysdba'    < ./SCHEMA/user.ddl        > out1
 grep ERROR out1
 sqlplus '$dba_name/$passwd as sysdba'    < ./SCHEMA/set_dba_roles.ddl > out1.01
 grep ERROR out1.01
+
+if test $is_slave != y 
+then
+  sqlplus '$dba_name/$passwd as sysdba'    < ./SCHEMA/czar_users.ddl > out1.02
+  grep ERROR out1.02
+fi
+
 sqlplus $dba_name/$passwd  < ./SCHEMA/tbl.ddl         > out2
 grep ERROR out2
+
+# Create czar,island tables, or slave snapshots
+if test $is_slave != y 
+then
+  sqlplus $dba_name/$passwd  < ./SCHEMA/czar_tbl.ddl > out2.01
+  grep ERROR out2.01
+else
+  sqlplus $dba_name/$passwd    < ./SCHEMA/slave_snapshot.ddl > out2.02
+  grep ERROR out2.02
+fi
+
 sqlplus $dba_name/$passwd  < ./SCHEMA/timeSeries.ddl  > out3
 grep ERROR out3
 sqlplus $dba_name/$passwd  < ./SCHEMA/userprivsys.ddl > out4
 grep ERROR out4
 sqlplus $dba_name/$passwd  < ./SCHEMA/syn.ddl         > out5
 grep ERROR out5
+
+# Create czar syns
+if test $is_slave != y 
+then
+  sqlplus $dba_name/$passwd   < ./SCHEMA/czar_syn.ddl > out5.01
+  grep ERROR out5.01
+fi
+
 sqlplus $dba_name/$passwd  < ./SCHEMA/role.ddl        > out6
 grep ERROR out6
+
+if test $is_slave != y 
+then
+  sqlplus $dba_name/$passwd  < ./SCHEMA/czar_role.ddl        > out6.01
+  grep ERROR out6.01
+fi
+
 sqlplus $dba_name/$passwd  < ./SCHEMA/rolepriv.ddl    > out7
 grep ERROR out7
+
+if test $is_slave != y 
+then
+  sqlplus $dba_name/$passwd  < ./SCHEMA/czar_rolepriv.ddl    > out7.01
+  grep ERROR out7.01
+
+  sqlplus $dba_name/$passwd  < ./SCHEMA/czar_md_userpriv.ddl    > out7.02
+  grep ERROR out7.02
+fi
+
 sqlplus $dba_name/$passwd  < ./SCHEMA/index.ddl       > out8
 grep ERROR out8
 sqlplus $dba_name/$passwd  < ./SCHEMA/primkey.ddl     > out9
 grep ERROR out9
+
+if test $is_slave != y 
+then
+  sqlplus $dba_name/$passwd  < ./SCHEMA/czar_primkey.ddl    > out9.01
+  grep ERROR out9.01
+fi
+
 sqlplus $dba_name/$passwd  < ./CONSTRAINTS/constraints.script > out10
 grep ERROR out10
-sqlplus $dba_name/$passwd  < ./SCHEMA/view.ddl > out11
-grep ERROR out11
+
+if test $is_slave != y 
+then
+  sqlplus $dba_name/$passwd  < ./CONSTRAINTS/czar_constraints.script    > out10.01
+  grep ERROR out10.01
+fi
 
 # Running permissions script.
 
@@ -104,16 +212,59 @@ sqlplus $dba_name/$passwd  < ./PACKAGES/package.script > out12
 grep ERROR out12
 sqlplus $dba_name/$passwd  < ./PROCEDURES/procedure.script > out13
 grep ERROR out13
+
+if test $is_slave != y 
+then
+  sqlplus $dba_name/$passwd  < ./PROCEDURES/czar_procedure.script    > out13.01
+  grep ERROR out13.01
+fi
+
 sqlplus $dba_name/$passwd  < ./TRIGGERS/trigger.script > out14
 grep ERROR out14
+
+if test $is_slave != y 
+then
+  sqlplus $dba_name/$passwd  < ./TRIGGERS/czar_trigger.script    > out14.01
+  grep ERROR out14.01
+fi
+
 sqlplus $dba_name/$passwd  < ./SCHEMA/userpriv.ddl > out15
 grep ERROR out15
+
+if test $is_slave != y 
+then
+  sqlplus $dba_name/$passwd  < ./SCHEMA/czar_userpriv.ddl > out15.01
+  grep ERROR out15.01
+fi
+
+# initialize ref_hdb_installation for czar DB
+if test $is_slave != y 
+then
+  echo                 IMPORTANT
+  echo You must load a record for your database installation into
+  echo ref_hdb_installation. Use the same db_site_db_name and
+  echo db_site_code as you do for ref_db_list. Set is_czar_db to Y.
+  echo
+else
+  sqlplus $dba_name/$passwd  < ./ADD_SLAVE/meta_data_user_grant.sql > out16
+  grep ERROR out16
+  echo                 IMPORTANT
+  echo You must load a record for your database installation into
+  echo ref_hdb_installation on the Czar database. Use the same 
+  echo db_site_db_name and db_site_code as you do for your
+  echo database in your installation\'s ref_db_list. Set is_czar_db to N.
+  echo
+  echo Also, check your init.ora file to ensure that 
+  echo job_queue_processes is at least 1. If not, you must reset it
+  echo which requires stopping and starting the database.
+  echo
+fi
 
 echo                   IMPORTANT 
 echo Database has been created. Loading standard data.
 echo
 
-sh ./STANDARD_DATA/standard.sh $dba_name $passwd
+sh ./STANDARD_DATA/standard.sh $dba_name $passwd $is_slave
 
 echo Load of standard date complete.
 echo Don\'t forget to check output in the .log and .out files in STANDARD_DATA

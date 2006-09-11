@@ -12,6 +12,7 @@ select 'CREATE PUBLIC SYNONYM ' || substr(table_name,1,26) || '_SYN FOR &2..' ||
        '@&1;'
 from dba_tables
 where table_name like 'HDB_%'
+and table_name not in ('HDB_DIMENSION','HDB_UNIT','HDB_PHYSICAL_QUANTITY')
 order by table_name;
 
 spool off;

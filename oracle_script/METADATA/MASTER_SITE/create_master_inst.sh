@@ -10,9 +10,6 @@ read psswd
 echo Enter sys Oracle password:
 read sys_psswd
 
-echo Enter password for local meta_data_user to be created:
-read local_mdu_psswd
-
 echo Enter password for meta_data_user at Snapshot Site:
 read remote_mdu_psswd
 
@@ -21,18 +18,6 @@ read snapshot_db
 
 echo Enter name of DBA at snapshot database:
 read snapshot_dba
-
-echo "Running metaDataUser.ddl"
-sqlplus $dba_name/$psswd @metaDataUser.ddl $local_mdu_psswd > metaDataUser.out
-
-echo "**********************"
-echo "Check output in metaDataUser.out; ok to continue? (y or n)"
-read answer
-if test $answer != y; then
-  echo Fix problems as necessary, then re-run.
-  echo Exiting...
-  exit
-fi
 
 
 echo Running snapshot_link.sql...
@@ -95,23 +80,11 @@ if test $answer != y; then
   exit
 fi
 
-echo Running pop_pk.sps
-sqlplus $dba_name/$psswd @../pop_pk.sps $dba_name $dba_name $db_name > pop_pk.sps.out
+echo Running pop_pk_syns.ddl
+sqlplus $dba_name/$psswd @../pop_pk_syns.ddl $dba_name $dba_name $db_name > pop_pk_syns.ddl.out
 
 echo "**********************"
-echo "Check output in pop_pk.sps.out; ok to continue? (y or n)"
-read answer
-if test $answer != y; then
-  echo Fix problems as necessary, then re-run.
-  echo Exiting...
-  exit
-fi
-
-echo Running pop_pk.spb
-sqlplus $dba_name/$psswd < ../pop_pk.spb > pop_pk.spb.out
-
-echo "**********************"
-echo "Check output in pop_pk.spb.out; ok to continue? (y or n)"
+echo "Check output in pop_pk_syns.ddl.out; ok to continue? (y or n)"
 read answer
 if test $answer != y; then
   echo Fix problems as necessary, then re-run.
