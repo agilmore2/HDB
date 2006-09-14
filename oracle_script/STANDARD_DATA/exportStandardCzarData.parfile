@@ -1,9 +1,0 @@
-userid = standard/standard
-file = standardCzarData.dmp
-grants = N
-indexes = N
-triggers = N
-rows = Y
-constraints = N
-owner = (standard,standard_czar)
-log = standardCzarDataExp.log
