@@ -61,10 +61,22 @@ int SqlGetAVMData(char *date)
             switch (j) {
                 case 0:
                    if (sqlca.sqlcode == 1403) {
-                      printf ("ERROR, NO DATA FOR GC AVM RELEASE, SITE DATATYPE %d, HOUR %d!\n",
-                              site_datatype_id, i);
+
+                   	 EXEC SQL SELECT A.VALUE into val:value_null_indicator
+                                     FROM R_HOUR A
+                                     WHERE A.SITE_DATATYPE_ID = 1862
+                                     AND START_DATE_TIME = :day;
+
+                      if (sqlca.sqlcode == 1403 ) {
+                         printf ("ERROR, NO DATA FOR GC AVM RELEASE, SITE DATATYPE %d, HOUR %d!\n",
+                                 site_datatype_id, i);
+                      }
+                      else {
+                         printf ("WARNING, NO DATA FOR GC AVM RELEASE, SITE DATATYPE %d, HOUR %d, but data exists for Power Release.\n",site_datatype_id, i);
+                      }
                       avm_rel[i] = 998877;
                    }
+                   
                    else {
                       avm_rel[i] = val;
                    }
