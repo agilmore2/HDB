@@ -44,7 +44,8 @@ echo "     $HDB_ENV/scadaTransfer/work"
 echo "Enter uchdba password if requested:"
 /bin/su - uchdba -c "source $HDB_ENV/.cshrc_hdb_app; \
 		cd $HDB_ENV/scadaTransfer/work; \
-		nohup ../src/poll4csv.pl >&poll4csv.out &"
+		nohup ../src/poll4csv.pl -u app_user -p $HDB_LOCAL -f csv_ \
+                   -d . -a test >&poll4csv.out &"
 
 }
 
