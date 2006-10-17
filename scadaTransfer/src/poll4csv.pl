@@ -30,13 +30,13 @@ while (@ARGV)
   } elsif ($arg =~ /-a/) {	# get directory to move to
     $archivedir = shift(@ARGV);
     if (! -d $archivedir) {
-      print "directory not found: $archivedir\n";
+      print "archive directory not found: $archivedir\n";
       usage();
     }
   } elsif ($arg =~ /-d/) {	# get directory to check
     $polldir = shift(@ARGV);
     if (! -d $polldir) {
-      print "directory not found: $polldir\n";
+      print "polling directory not found: $polldir\n";
       usage();
     }
  }
