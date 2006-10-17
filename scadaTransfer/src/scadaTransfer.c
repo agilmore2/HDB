@@ -34,8 +34,8 @@ int main( int argc, char** argv )
   ID  sourcetypeId,sourceId;
   SQL_DATE updateTime;
     
-  float  values[NUM_SITES][NUM_DATATYPES][NUM_HOURS], tail[NUM_SITES][NUM_HOURS], vals_array[NUM_HOURS];
-  float  hour[NUM_SITES][NUM_HOURS];
+  double  values[NUM_SITES][NUM_DATATYPES][NUM_HOURS], tail[NUM_SITES][NUM_HOURS], vals_array[NUM_HOURS];
+  double  hour[NUM_SITES][NUM_HOURS];
 
   FILE   *in;
 
@@ -202,7 +202,7 @@ int main( int argc, char** argv )
 
       for(i=0; i < NUM_HOURS; i++)
 	{
-	  fscanf(in,"%f%f%f%f%f%f%f%f%f",
+	  fscanf(in,"%lf%lf%lf%lf%lf%lf%lf%lf%lf",
 		 &hour[index][i],&values[index][0][i],&tail[index][i],&values[index][1][i],
 		 &values[index][2][i],&values[index][3][i],&values[index][6][i],&values[index][5][i],
 		 &values[index][4][i]);
@@ -235,7 +235,7 @@ int main( int argc, char** argv )
 	      strcpy (&(dater[11]), temp);
 	      dater[20] = '\0';
 /*	      printf ("Calling SqlFormatDate\n\n"); */
-	      if (result = SqlFormatDate (dater, formattedDates[i]) != OK)
+	      if ((result = SqlFormatDate (dater, formattedDates[i])) != OK)
 		{
 		  PrintError ("Error formatting date %s\n\t Exiting.", dater);
 		}
@@ -265,7 +265,7 @@ int main( int argc, char** argv )
 	  /* copy values for this SDI into array to be passed to insert function */
           /* castrate this program to only load data for the last hour.
              Since the new system will be loading data for 00-23 until fixed. */
-	  for (i=23;i < NUM_HOURS; i++)
+	  for (i=0;i < NUM_HOURS; i++)
 	    {
 	      vals_array[i]=values[index][k][i];
 	    }

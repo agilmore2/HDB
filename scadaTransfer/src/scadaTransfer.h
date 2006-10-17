@@ -24,7 +24,7 @@ int insertScada(
 #ifdef ANSIPROTO
 SQL_DATE *,
 int,
-float *,
+double *,
 ID,
 char *
 #endif

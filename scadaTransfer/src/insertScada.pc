@@ -34,7 +34,7 @@ static lookup=1;
 
 #define FUNC_NAME "insertScada"
 
-int insertScada (SQL_DATE *formattedDates,int site_datatype_id, float *vals_array,ID sourceId,
+int insertScada (SQL_DATE *formattedDates,int site_datatype_id, double *vals_array,ID sourceId,
 		 char *validationFlag)
 
 /* an important consideration here is to make sure that the size of SLQ variables  is consistent 
@@ -72,7 +72,9 @@ int insertScada (SQL_DATE *formattedDates,int site_datatype_id, float *vals_arra
  sdi = site_datatype_id;
  strcpy(tableName,"r_hour");
 
- for (i=0; i < NUM_HOURS; i++)
+    /* castrate this program to only load data for the last hour.
+       Since the new system will be loading data for 00-23 until fixed. */
+ for (i=23; i < NUM_HOURS; i++)
    { 
      vals=vals_array[i];
      strcpy(date_time,formattedDates[i]);
