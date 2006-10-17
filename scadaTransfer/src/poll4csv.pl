@@ -12,7 +12,7 @@ $verstring =~ s/ \$//;
 my $progname = basename($0);
 chomp $progname;
 
-my ($polldir, $pattern, @files, $file, $hdbuser, $hdbpass);
+my ($polldir, $archivedir, $pattern, @files, $file, $hdbuser, $hdbpass);
 
 while (@ARGV)
 {
@@ -27,14 +27,19 @@ while (@ARGV)
     $hdbpass=shift(@ARGV);
   } elsif ($arg =~ /-f/) {	# get filename pattern
     $pattern = shift(@ARGV);
-  } elsif ($arg =~ /-d/) {	# get file to read from
+  } elsif ($arg =~ /-a/) {	# get directory to move to
+    $archivedir = shift(@ARGV);
+    if (! -d $archivedir) {
+      print "directory not found: $archivedir\n";
+      usage();
+    }
+  } elsif ($arg =~ /-d/) {	# get directory to check
     $polldir = shift(@ARGV);
     if (! -d $polldir) {
       print "directory not found: $polldir\n";
       usage();
-      exit 1;
     }
-  }
+ }
 }
 
 if (!defined($hdbuser) || !defined($hdbpass)) {
@@ -52,6 +57,10 @@ if (!defined($pattern)) {
   usage();
 }
 
+if (!defined($archivedir)) {
+  $archivedir=$polldir . "/archives";
+}
+
 
 #run this loop forever
 while (1) {
@@ -66,7 +75,7 @@ while (1) {
     foreach $file (@files) {
       my @program=("perl","../src/scada2hdb.pl","-u",$hdbuser,"-p",$hdbpass,"-f","$polldir/$file");
       system (@program) == 0 or die "Failed to run scada2hdb.pl!\n $!";
-      system ("mv","-f","$polldir/$file","$polldir/archives/$file") == 0 or
+      system ("mv","-f","$polldir/$file","$archivedir/$file") == 0 or
          die "Failed to move file: $file\n$!\n";
 #      print "$file\n";
     }
@@ -89,6 +98,7 @@ Example: $progname -d <directory> -u <user_name> -p <hdbpassword> -f <pattern>
   -p <hdbpassword> : HDB password (REQUIRED)
   -f <filename pattern>    : file pattern to watch for (REQUIRED)
   -d <directory>   : directory to watch for files with right pattern <REQUIRED>
+  -a <directory>   : where to move files after processing <defaults to polldir/archives>
 ENDHELP
 
   exit (1);
