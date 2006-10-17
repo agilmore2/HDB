@@ -1,0 +1,87 @@
+#!/sbin/sh -h
+#h  This script is used to start or stop the HDB XA21 SCADA dataloader
+#h  
+#h  Usage: scadaloader [-h] <start | stop>
+#h  
+#h  options:
+#h  
+#h     -h       Help.
+#h     start   Start the HDB dataloader
+#h     stop    Stop the HDB dataloader
+#h 
+#################################################################################
+
+#Set HDB_ENV here, so we can run this as a init daemon
+HDB_ENV=/wrg/hdb/HDB2_applications
+
+
+# Display usage.
+exec=`basename $0`
+usage='(echo ; echo "Usage: $exec [-h] <start | stop>" ; echo )'
+
+
+# Check command line argument.
+if test $# -eq 0 ; then
+     eval $usage
+     exit 1 
+fi
+
+
+# Display help manual.
+help() # [prefix]
+{
+  _h__prefix=${1:-"^#h "}
+  sed -n 's,'"$_h__prefix"'\(.*\),\1,p' $0
+  return 0;
+}
+
+
+# Start loader daemon.
+start_hdb_loader()
+{
+echo "Starting hdb scada loader in directory:"
+echo "     $HDB_ENV/scadaTransfer/work"
+echo "Enter uchdba password if requested:"
+/bin/su - uchdba -c "source $HDB_ENV/.cshrc_hdb_app; \
+		cd $HDB_ENV/scadaTransfer/work; \
+		nohup ../src/poll4csv.pl >&poll4csv.out &"
+
+}
+
+
+# Stop loader daemon.
+stop_hdb_loader()
+{
+#should dynamically find this
+
+echo "Stopping hdb scada loader"
+/bin/su - uchdba -c "source $HDB_ENV/.cshrc_hdb_app; \
+	            kill `pgrep poll4csv.pl`"
+}
+
+# Parse command line options.
+option=
+for input in $* ; do
+     case $input in
+        -h|-H|-help) help ; exit 0 ;;
+        start     ) option=start ;;
+        stop      ) option=stop ;;
+        *          ) echo ; echo "\"$input\" is not a valid option."
+                     eval $usage
+                     exit 1 ;;
+     esac
+done
+
+# Start or stop the license server daemon.
+action=
+case "$option" in
+   start) action=started ;
+          start_hdb_loader ;
+    ;;
+   stop) action=stopped ;
+          stop_hdb_loader ;
+    ;;
+esac
+
+echo
+
