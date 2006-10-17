@@ -57,7 +57,7 @@ stop_hdb_loader()
 
 echo "Stopping hdb scada loader"
 /bin/su - uchdba -c "source $HDB_ENV/.cshrc_hdb_app; \
-	            pkill poll4csv.pl"
+	            pkill -U uchdba poll4csv.pl"
 }
 
 # Parse command line options.
