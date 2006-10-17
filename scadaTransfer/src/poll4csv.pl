@@ -1,5 +1,6 @@
-#!/usr/local/bin/perl -w
+#!/usr/local/bin/perl
 
+use warnings;
 use strict;
 use File::Basename;
 
@@ -11,7 +12,7 @@ $verstring =~ s/ \$//;
 my $progname = basename($0);
 chomp $progname;
 
-my ($polldir, $pattern, @files, $file);
+my ($polldir, $pattern, @files, $file, $hdbuser, $hdbpass);
 
 while (@ARGV)
 {
@@ -63,7 +64,7 @@ while (1) {
   #move them to the archives subdirectory
   if (@files) {
     foreach $file (@files) {
-      my @program=("perl","../src/scada2hdb.pl","-u","app_user","-p","uchdbdev","-f","$polldir/$file");
+      my @program=("perl","../src/scada2hdb.pl","-u",$hdbuser,"-p",$hdbpass,"-f","$polldir/$file");
       system (@program) == 0 or die "Failed to run scada2hdb.pl!\n $!";
       system ("mv","-f","$polldir/$file","$polldir/archives/$file") == 0 or
          die "Failed to move file: $file\n$!\n";

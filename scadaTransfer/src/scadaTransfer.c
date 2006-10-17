@@ -263,7 +263,9 @@ int main( int argc, char** argv )
 	    }	    
 
 	  /* copy values for this SDI into array to be passed to insert function */
-	  for (i=0;i < NUM_HOURS; i++)
+          /* castrate this program to only load data for the last hour.
+             Since the new system will be loading data for 00-23 until fixed. */
+	  for (i=23;i < NUM_HOURS; i++)
 	    {
 	      vals_array[i]=values[index][k][i];
 	    }
