@@ -78,7 +78,7 @@ while (1) {
       system ("mv","-f","$polldir/$file","$archivedir/$file") == 0 or
          die "Failed to move file: $file\n$!\n";
 #then run derivation for specified SDIs
-      system ("./derive_scada");
+      system ("./derive_scada") == 0 or warn "Derivation failed!\n";
 #      print "$file\n";
     }
   }
