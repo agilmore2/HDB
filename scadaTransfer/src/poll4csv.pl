@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use File::Basename;
 
-my $verstring = '$Revision$';
+my $verstring = '$Revision$ ';
 $verstring =~ s/^\$Revision: //;
 $verstring =~ s/ \$//;
 
@@ -77,6 +77,8 @@ while (1) {
       system (@program) == 0 or die "Failed to run scada2hdb.pl!\n $!";
       system ("mv","-f","$polldir/$file","$archivedir/$file") == 0 or
          die "Failed to move file: $file\n$!\n";
+#then run derivation for specified SDIs
+      system ("./derive_scada");
 #      print "$file\n";
     }
   }
