@@ -1,7 +1,7 @@
 #!/sbin/sh -h
 #h  This script is used to start or stop the HDB XA21 SCADA dataloader
 #h  
-#h  Usage: scadaloader [-h] <start | stop>
+#h  Usage: scadaloader [-h] <start | stop | status>
 #h  
 #h  options:
 #h  
@@ -17,7 +17,7 @@ HDB_ENV=/wrg/hdb/HDB2_applications
 
 # Display usage.
 exec=`basename $0`
-usage='(echo ; echo "Usage: $exec [-h] <start | stop>" ; echo )'
+usage='(echo ; echo "Usage: $exec [-h] <start | stop | status>" ; echo )'
 
 
 # Check command line argument.
@@ -35,6 +35,17 @@ help() # [prefix]
   return 0;
 }
 
+status_hdb_loader()
+{
+    pid=`pgrep poll4csv.pl`
+    if [ -z "$pid" ]
+    then
+	echo "ERROR! SCADA Polling script is not running!"
+    else
+	echo "OK: SCADA Polling script is running!"
+    fi
+}
+
 
 # Start loader daemon.
 start_hdb_loader()
@@ -44,7 +55,8 @@ echo "     $HDB_ENV/scadaTransfer/work"
 echo "Enter uchdba password if requested:"
 /bin/su - uchdba -c "source $HDB_ENV/.cshrc_hdb_app; \
 		cd $HDB_ENV/scadaTransfer/work; \
-		nohup ../src/poll4csv.pl -u app_user -p $HDB_LOCAL -f csv_ \
+		nohup ../src/poll4csv.pl -u app_user -p $HDB_LOCAL \
+                  -f 'csv_.*[0-9]$' \
                   -d . -a old_csv >&poll4csv.out &"
 
 }
@@ -67,6 +79,7 @@ for input in $* ; do
         -h|-H|-help) help ; exit 0 ;;
         start     ) option=start ;;
         stop      ) option=stop ;;
+        status    ) option=status ;;
         *          ) echo ; echo "\"$input\" is not a valid option."
                      eval $usage
                      exit 1 ;;
@@ -81,6 +94,9 @@ case "$option" in
     ;;
    stop) action=stopped ;
           stop_hdb_loader ;
+    ;;
+   status) action=status ;
+          status_hdb_loader ;
     ;;
 esac
 

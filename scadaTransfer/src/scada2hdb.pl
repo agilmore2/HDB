@@ -153,12 +153,16 @@ READ: while ($line = <INFILE>)
   my $sitecode=$fields[5].",".$fields[6];
   my $value=$fields[7];
 
+# define this flag on command line to test reading, but not inserting.
   next READ unless defined($insertflag);
+
+# check apparent validation field.
+ # zero seems to be ok validation, 8 and 128 seem also ok. 32 may be bad.
+  next READ if not ($fields[8]==0 or $fields[8]==8 or $fields[8]==128);
 
 #use the string "sitecode,datacode" as the lookup key for the sdi etc.
 #pretty lame, but don't want to take time to make 2D hash
-  if (defined($scada_map->{$sitecode}->{sdi}) #do we have an sdi
-      and $fields[8]==0) { # zero seems to be ok validation, else is bad
+  if (defined($scada_map->{$sitecode}->{sdi}))  { #do we have an sdi
     insert_values($scada_map->{$sitecode},
                   \@value_date, $value);
   }
