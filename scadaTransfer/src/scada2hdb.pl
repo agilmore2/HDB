@@ -259,7 +259,6 @@ sub get_app_ids
   $nameid->{agen}->{name} = 'Bureau of Reclamation';
   $nameid->{collect}->{name} = 'SCADA';
   $nameid->{load_app}->{name} = $progname;
-  $nameid->{load_app}->{name} = 'scadaTransfer';
   $nameid->{method}->{name} = 'unknown';
   $nameid->{computation}->{name} = 'unknown';
 
