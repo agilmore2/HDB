@@ -6,14 +6,34 @@ if [ $1 ]
 then
     if test $1 = "-v"
     then
-       echo Version 1.2 #3.2
+       echo Version 1.3 #3.2
         exit 0
     fi
     WY=$1
     shift
 else 
-    echo "Usage: `basename $0` <water year for loading, eg 2003> <sitecodes/pcode,sitecode/pcode,...>"
+    echo "Usage: `basename $0` <water year for loading, eg 2003> <sitecodes/pcode,sitecode/pcode,...>  <-[n]d  for R_BASE deletes>"
     exit 1
+fi
+
+#handle optional R_BASE delete flag first
+if [ $2 ]
+then
+    if test $2 = "-d"
+    then
+       DELETEFLAG='-d'
+    elif test $2 = "-nd"
+    then
+       DELETEFLAG='-nd'
+    else
+       echo "Usage: "
+       echo "`basename $0` <water year for loading, eg 2003> <sitecodes/pcode,sitecode/pcode,...> <-[n]d  for R_BASE deletes>"
+       echo "site/pcode arguments may NOT contain spaces unless quotes are used!"
+       echo "Invalid arguments: $@"
+       exit 1
+    fi
+else
+    DELETEFLAG='-nd'
 fi
 
 #handle optional site code parameter, may not contain spaces
@@ -22,12 +42,13 @@ then
     SITECODES=$1
 else
     SITECODES='*'
+    DELETEFLAG='-nd'
 fi
 
-if [ $2 ]
+if [ $3 ]
 then
     echo "Usage: "
-    echo "`basename $0` <water year for loading, eg 2003> <sitecodes/pcode,sitecode/pcode,...>"
+    echo "`basename $0` <water year for loading, eg 2003> <sitecodes/pcode,sitecode/pcode,...> <-[n]d  for R_BASE deletes>"
     echo "site/pcode arguments may NOT contain spaces unless quotes are used!"
     echo "Invalid arguments: $@"
     exit 1
@@ -60,7 +81,7 @@ JAVA_ARGS="-Demailaddr=$HDB_XFER_EMAIL -Dstart.property=$HDB_ENV/dataloader/work
 if [ $? -eq 0 ]; then
     echo "Running archive loader, this may take a long while..."
 
-    java $JAVA_ARGS dataloader.ProcessArchfile filename=$DESTDIR/$FILE SITE_CODES=$SITECODES logname=wy${WY}_user.log
+    java $JAVA_ARGS dataloader.ProcessArchfile filename=$DESTDIR/$FILE SITE_CODES=$SITECODES logname=wy${WY}_user.log $DELETEFLAG
     exit 0;
 else
     echo "  ERROR FROM $0 at `date`
