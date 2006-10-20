@@ -98,7 +98,8 @@ if (defined($site_num_list)) {
 
 # check db_site_code
 if (!defined($db_site)) {
-  die("ERROR: db site code must be specified! (use -s <DB> on command line)");
+  print "ERROR: db site code must be specified! (use -s <DB> on command line)";
+  usage();
 }
 
 #handle flowtype, realtime, provisional, or official
@@ -804,9 +805,9 @@ sub insert_values
 sub usage
 {
   print STDERR <<"ENDHELP";
-$progname [ -h | -v ] | [ options ]
+$progname $verstring [ -h | -v ] | [ options ]
 Retrieves USGS flow data and inserts into HDB
-Example: $progname -u app_user -p <hdbpassword> -n 2 -i 09260000 -a -r i
+Example: $progname -u app_user -p <hdbpassword> -n 2 -i 09260000 -l r -s UC
 
   -h               : This help
   -v               : Version
@@ -814,7 +815,7 @@ Example: $progname -u app_user -p <hdbpassword> -n 2 -i 09260000 -a -r i
   -p <hdbpassword> : HDB password (REQUIRED)
   -i <usgs_id>     : USGS gage id to look for. Must be in HDB. More than one
                      may be specified with -i id1,id2 or -i id1 -i id2
-                     IF NONE SPECIFIED, WILL LOAD ALL GAGES SET UP IN HDB.
+                     IF NONE SPECIFIED, WILL LOAD ALL GAGES ENABLED IN HDB.
   -t               : Test retrieval, but do not insert data into DB
   -f <filename>    : Filename instead of live web
   -n <numdays>     : Days for retrieval (max 31 for realtime)
