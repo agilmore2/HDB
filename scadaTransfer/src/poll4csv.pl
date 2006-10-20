@@ -72,6 +72,7 @@ while (1) {
   #if any new files, run the loading script against them, and then
   #move them to the archives subdirectory
   if (@files) {
+    sleep 10;
     foreach $file (@files) {
       my @program=("perl","../src/scada2hdb.pl","-u",$hdbuser,"-p",$hdbpass,"-f","$polldir/$file");
       system (@program) == 0 or die "Failed to run scada2hdb.pl!\n $!";
