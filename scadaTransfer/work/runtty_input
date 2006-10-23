@@ -95,7 +95,7 @@ do
 # if the log file needs to be edited, edit the file (correct the 
 # data - then run the following executable (scadaTransfer)
     echo 'Placing Data into HDB2'
-    scadaTransfer crsp_$date.dat app_user uchdb2
+#    scadaTransfer crsp_$date.dat app_user uchdb2
     stat=$?
     if [ $stat -ne 0 ]
     then
