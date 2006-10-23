@@ -1,3 +1,3 @@
 #!/bin/bash
 #Script to handle transfer of files to Mary Frantz WAPA
-mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_$1.dat
+mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov, telschow@wapa.gov,pdavidson@uc.usbr.gov, rclayton@uc.usbr.gov < crsp_$1.dat
