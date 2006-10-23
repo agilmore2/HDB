@@ -74,7 +74,7 @@ int insertScada (SQL_DATE *formattedDates,int site_datatype_id, double *vals_arr
 
     /* castrate this program to only load data for the last hour.
        Since the new system will be loading data for 00-23 until fixed. */
- for (i=23; i < NUM_HOURS; i++)
+ for (i=24; i < NUM_HOURS; i++)
    { 
      vals=vals_array[i];
      strcpy(date_time,formattedDates[i]);
