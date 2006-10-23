@@ -86,23 +86,23 @@ then
     exit 1;
 fi
 
-for date in `cat current_dates`
-do
+#for date in `cat current_dates`
+#do
 
 # application scadaTransfer is run using the applications role
 # it has two arguments the name of the log file and the password
 # this application can be run independant of this script
 # if the log file needs to be edited, edit the file (correct the 
 # data - then run the following executable (scadaTransfer)
-    echo 'Placing Data into HDB2'
+#    echo 'Placing Data into HDB2'
 #    scadaTransfer crsp_$date.dat app_user uchdb2
-    stat=$?
-    if [ $stat -ne 0 ]
-    then
-        echo "scadaTransfer failed, exiting!"
-        exit $stat
-    fi
-done
+#    stat=$?
+#    if [ $stat -ne 0 ]
+#    then
+#        echo "scadaTransfer failed, exiting!"
+#        exit $stat
+#    fi
+#done
 
 # ****************
 # Run the derivation app to place the data into r_day
