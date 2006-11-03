@@ -23,10 +23,12 @@ public class ArchfileParser {
   private DataObject site_codes = new DataObject();
   private boolean specified_codes = false;
   private boolean parameter_override = false;
+  private boolean do_deletes = false;
 
-  public ArchfileParser( String _file_name)
+  public ArchfileParser( String _file_name, boolean _do_deletes)
   {
     file_name = _file_name; 
+    do_deletes = _do_deletes;
     log = Logger.getInstance();
   }
 
@@ -222,6 +224,7 @@ public void process()
      
 if (!specified_codes || (specified_codes && (site_codes.get(site_code.trim()) != null || site_codes.get(site_code.trim()+"/"+pcode.trim()) != null)))
       {
+         process = true;
          String inputLine;	
          for (i=0; i<npairs; i++) 
          {
@@ -231,11 +234,15 @@ if (!specified_codes || (specified_codes && (site_codes.get(site_code.trim()) !=
            //System.out.println(reads + "   " + inputLine);
            //System.out.println("S=" +inputLine.substring(16,24).trim() + " P="+ inputLine.substring(25,33).trim()+
            //" V=" + inputLine.substring(36).trim());
-
        
              try
              {
-              if (!value[i].equals("998877.00"))   //  null value assigned to unfilled values
+
+              boolean _cont = false;
+              if (value[i].equals("998877.00") & do_deletes)  _cont = true;
+              if (!value[i].equals("998877.00") ) _cont = true;
+              //  null value assigned to unfilled values  will delete if user specified to do deletes
+              if (_cont)
               {
                 //System.out.println(inputLine);
                 Connection conn = DriverManager.getConnection(ConnectionPoolManager.URL_PREFIX + "myalias", null, null);
@@ -253,6 +260,9 @@ if (!specified_codes || (specified_codes && (site_codes.get(site_code.trim()) !=
                   process = rb.get_sdi();
                 }
  
+                dobj.put("DO_DELETE","N");
+                if (value[i].equals("998877.00") & do_deletes) dobj.put("DO_DELETE","Y");   
+
                 old_site_code = site_code;
                 old_pcode = pcode;
                 hash = new Hashtable(dobj.getTable());

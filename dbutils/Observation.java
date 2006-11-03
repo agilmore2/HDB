@@ -15,6 +15,7 @@ public class Observation
     private boolean debug = false;
     private boolean log_all = true;
     private boolean fatal_error = true;
+    private boolean rbase_delete = false;
     private DBAccess db = null;
 
     public Observation(String str, Hashtable _hash, Connection _conn)  
@@ -28,6 +29,7 @@ public class Observation
       if ((String)do2.get("file_type") == null) do2.put("file_type","D");
       if ((String)do2.get("debug") != null && ((String)do2.get("debug")).equals("Y")) debug = true;
       if ((String)do2.get("log_all") != null && ((String)do2.get("log_all")).equals("N")) log_all = false;
+      if ((String)do2.get("do_delete") != null && ((String)do2.get("do_delete")).equals("Y")) rbase_delete = true;
     }
 
     public void process()
@@ -47,27 +49,29 @@ public class Observation
        if (cont) this.get_sdi();
        if (cont) this.get_interval();
        if (cont) this.validation();
-
-       if (cont)   //main continue check from here we can either update, insert or ignore duplicates
+       if (cont && !rbase_delete)   //main continue check from here we can either update, insert or ignore duplicates
                    //  data operation decided by the procedure call
        {
           String proc = "{ call modify_r_base_raw(?,?,to_date(?,'YYYYMONDD HH24:MI')" + do2.get("start_time_offset") 
-            + ",null,?,?,?,?,?,?,?,?,?)}";
+            + ",?,?,?,?,?,?,?,?,?,?)}";
           CallableStatement stmt = db.getConnection(do2).prepareCall(proc);
           // set all the called procedures input variables from the DataObject
           stmt.setLong(1,Long.parseLong(do2.get("site_datatype_id").toString()));
           stmt.setString(2,(String) do2.get("interval"));
           stmt.setString(3,(String) do2.get("start_date_time"));
           //stmt.setString(4,(String) do2.get("end_date_time"));  let procedure determine end_date_time
-          stmt.setFloat(4,Float.parseFloat(do2.get("value").toString()));
-          stmt.setString(5,(String) do2.get("overwrite_flag"));
-          stmt.setString(6,(String) do2.get("validation"));
-          stmt.setLong(7,Long.parseLong(do2.get("agen_id").toString()));
-          stmt.setLong(8,Long.parseLong(do2.get("collection_system_id").toString()));
-          stmt.setLong(9,Long.parseLong(do2.get("loading_application_id").toString()));
-          stmt.setLong(10,Long.parseLong(do2.get("method_id").toString()));
-          stmt.setLong(11,Long.parseLong(do2.get("computation_id").toString()));
-          stmt.setString(12,"Y");
+          stmt.setFloat(5,Float.parseFloat(do2.get("value").toString()));
+          stmt.setLong(6,Long.parseLong(do2.get("agen_id").toString()));
+          stmt.setString(7,(String) do2.get("overwrite_flag"));
+          stmt.setString(8,(String) do2.get("validation"));
+          stmt.setLong(9,Long.parseLong(do2.get("collection_system_id").toString()));
+          stmt.setLong(10,Long.parseLong(do2.get("loading_application_id").toString()));
+          stmt.setLong(11,Long.parseLong(do2.get("method_id").toString()));
+          stmt.setLong(12,Long.parseLong(do2.get("computation_id").toString()));
+          stmt.setString(13,"Y");
+
+          stmt.registerOutParameter(4, java.sql.Types.DATE);
+
           // execute the stored procedure call
           stmt.execute();
 
@@ -76,6 +80,20 @@ public class Observation
           fatal_error = false;
 
        }  // end of main continue check continue
+
+       if (cont && rbase_delete)   //  this observation record is to be deleted from r_base if it exists
+       {
+          String del_sql = "delete from r_base where " +
+                 " site_datatype_id =  " + do2.get("site_datatype_id").toString() +
+                 " and interval = '" + (String) do2.get("interval") + "' " +
+                 " and start_date_time =  to_date('" + do2.get("start_date_time").toString() + "','YYYYMONDD HH24:MI')" +
+                 " and agen_id = " + do2.get("agen_id").toString() +
+                 " and collection_system_id = " + do2.get("collection_system_id").toString() +
+                 " and loading_application_id = " + do2.get("loading_application_id").toString() ; 
+          String status = db.performDML(del_sql,do2);
+          if (debug) log.debug(this,del_sql);
+          if (debug) log.debug(this,status); 
+       }
 
        if (!cont)
        {
