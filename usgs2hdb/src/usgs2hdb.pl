@@ -356,7 +356,8 @@ until (!defined($data[0])) {
   my $field_defs = shift @data;
 
   #check to see if no data at all
-  if (substr ($data[0], 0, 1) eq '#') {
+  if (($data[0] eq '') or (substr ($data[0], 0, 1) eq '#')) {
+    shift @data;
     next STATION;
   }
 
