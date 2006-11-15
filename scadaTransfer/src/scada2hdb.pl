@@ -26,7 +26,7 @@ chomp $progname;
 my $insertflag = 1;
 my $overwrite = 'null';
 
-my ($hdb, @value_date, @data_date);
+my ($hdb, @value_date);
 my ($debug,$readfile);
 my ($hdbuser, $hdbpass);
 
@@ -99,32 +99,27 @@ open (INFILE, "$readfile") || die "Error: couldn't open input file $ARGV[0]";
 
 =FORMAT
 
-The filename is expected to be csv_YYYY_MM_DD_HH_MI_SS, where the date is the
-date the file was created.
-The data is expected in the following format, one value per line, 6000 lines:
+The data is expected in the following format, one value per line, ~864 lines:
 
 YYYY,MM,DD,HH,MI,SITE,datatatype_name,value,somevalidationcode
 
 which is 9 fields.
 
-The file also contains data on individual units:
-
-YYYY,MM,DD,HH,MI,SITE,UNIT,datatype_name,value,somevalidationcode
-
-which is 10 fields.
+Other processes in this pipeline cut this file down from the original
+6000 lines per day.
 
 =cut
 
 my ($line, $datestr, @fields, @prevdate, $sitecode);
 my ($value, $head, $rel, $seenspill);
 
-# get date of data
-$datestr = substr $readfile, index($readfile,"csv_")+4;
 
-(@data_date = split(/_/,$datestr)) ||
-  die "There was an error parsing the date in the datafile!.\n";
+# get date in filename, assume date starts after last '_'
+# and ends at beginning of extension (.dat for example)
+$datestr = substr $readfile, rindex($readfile,"_")+1;
+$datestr = substr $datestr, 0,index($datestr,".");
 
-print "@data_date\n";
+print "$datestr\n";
 
 my $scada_map = get_scada_map();
 
@@ -194,7 +189,7 @@ READ: while ($line = <INFILE>)
     $rel=$value;
 
   } elsif ($fields[6] eq "spillway_release") {
-    if (@value_date != @prevdate) {
+    if (@value_date != @prevdate or $seenspill==1) {
       warn "data not in expected order, release not calculated!\n";
     } else {
       $rel+=$value;

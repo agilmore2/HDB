@@ -13,6 +13,7 @@ my $progname = basename($0);
 chomp $progname;
 
 my ($polldir, $archivedir, $pattern, @files, $file, $hdbuser, $hdbpass);
+my (@crspfiles, $crspfile);
 
 while (@ARGV)
 {
@@ -58,9 +59,10 @@ if (!defined($pattern)) {
 }
 
 if (!defined($archivedir)) {
-  $archivedir=$polldir . "/archives";
+  $archivedir=$polldir . "/old_csv";
 }
 
+chdir $polldir;
 
 #run this loop forever
 while (1) {
@@ -69,19 +71,40 @@ while (1) {
   @files = grep { /^$pattern/ && -f "$polldir/$_" } readdir(DIR);
   closedir DIR;
 
-  #if any new files, run the loading script against them, and then
-  #move them to the archives subdirectory
+  #if any new files, 
+  # run parsecsv.pl to create separate crsp_ files for each day
+  # run the loading script against them, and then
+  # move the crsp_ files to the old_files subdir and
+  # move the csv file to old_csv subdir
   if (@files) {
     sleep 10;
     foreach $file (@files) {
-      my @program=("perl","../src/scada2hdb.pl","-u",$hdbuser,"-p",$hdbpass,"-f","$polldir/$file");
-      system (@program) == 0 or die "Failed to run scada2hdb.pl!\n $!";
-      system ("mv","-f","$polldir/$file","$archivedir/$file") == 0 or
+      my @program=("perl","../src/parsecsv.pl","-f","$polldir/$file");
+      system (@program) == 0 or die "Failed to run parsecsv.pl!\n $!";
+
+      #read the directory again to find all crsp_ files
+      opendir(DIR, $polldir) || die "opendir of $polldir failed: $!";
+      @crspfiles = grep { /^crsp_/ && -f "$polldir/$_" } readdir(DIR);
+      closedir DIR;
+
+      # now for each crsp file created by parsecsv.pl, run the loading script
+      foreach $crspfile (@crspfiles) {
+        my @program=("perl","../src/scada2hdb.pl","-t","-u",$hdbuser,"-p",$hdbpass,"-f","$polldir/$crspfile");
+        system (@program) == 0 or die "Failed to run scada2hdb.pl!\n $!";
+      # move processed crspfile to old_files
+        rename "$polldir/$crspfile", "$polldir/old_files/$crspfile" or
+           die "Failed to move file: $crspfile\n$!\n";
+      }
+
+      #now move processed csv file to command line specified directory
+      rename "$polldir/$file","$archivedir/$file" or
          die "Failed to move file: $file\n$!\n";
-#then run derivation for specified SDIs
+    }
+
+#then run derivation for specified SDIs, only need to do this after each set of
+#files processed, not for each file.
       system ("./derive_scada") == 0 or warn "Derivation failed!\n";
 #      print "$file\n";
-    }
   }
   sleep 60;
 }
