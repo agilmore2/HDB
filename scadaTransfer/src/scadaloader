@@ -57,7 +57,7 @@ echo "Enter uchdba password if requested:"
 		cd $HDB_ENV/scadaTransfer/work; \
 		nohup ../src/poll4csv.pl -u app_user -p $HDB_LOCAL \
                   -f 'csv_.*[0-9]$' \
-                  -d . -a old_csv >&poll4csv.out &"
+                  -d . >&poll4csv.out &"
 
 }
 
