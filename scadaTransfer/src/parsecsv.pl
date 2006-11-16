@@ -19,7 +19,7 @@ my $insertflag = 1;
 my $overwrite = 'null';
 
 my (@value_date, @file_date, @data_date);
-my ($debug,$readfile, $newdate, $newmonth);
+my ($debug,$readfile, $newdate, $newmonth, $readdir);
 my %datefiles;
 
 #======================================================================
@@ -51,9 +51,6 @@ if (!defined($readfile)) {
   usage();
 }
 
-# get date on input file
-open (INFILE, "$readfile") || die "Error: couldn't open input file $ARGV[0]";
-
 
 =FORMAT
 
@@ -84,6 +81,11 @@ for 00 hours the next day.
 
 my ($line, $datestr, @fields, @prevdate, $sitecode);
 my ($value, $head, $rel, $seenspill);
+
+# get date on input file
+open (INFILE, "$readfile") || die "Error: couldn't open input file $ARGV[0]";
+
+$readdir = dirname($readfile);
 
 # get date of file
 $datestr = substr $readfile, index($readfile,"csv_")+4;
@@ -127,7 +129,7 @@ READ: while ($line = <INFILE>)
 
     $newdate=join('',$value_date[0],$newmonth, $value_date[2]);
     if (!defined($datefiles{$newdate})) {
-      my $newfile = "crsp_$newdate.dat";
+      my $newfile = "$readdir/crsp_$newdate.dat";
       unlink ($newfile);
       $datefiles{$newdate} =  new FileHandle "> $newfile" or
         die "unable to open $newfile";

@@ -26,21 +26,15 @@ while (@ARGV)
     $hdbuser=shift(@ARGV);
   } elsif ($arg =~ /-p/) {	# get hdb passwd
     $hdbpass=shift(@ARGV);
-  } elsif ($arg =~ /-f/) {	# get filename pattern
+  } elsif ($arg =~ /-f/) {	# get csv filename pattern
     $pattern = shift(@ARGV);
-  } elsif ($arg =~ /-a/) {	# get directory to move to
-    $archivedir = shift(@ARGV);
-    if (! -d $archivedir) {
-      print "archive directory not found: $archivedir\n";
-      usage();
-    }
   } elsif ($arg =~ /-d/) {	# get directory to check
     $polldir = shift(@ARGV);
     if (! -d $polldir) {
       print "polling directory not found: $polldir\n";
       usage();
     }
- }
+  }
 }
 
 if (!defined($hdbuser) || !defined($hdbpass)) {
@@ -58,9 +52,7 @@ if (!defined($pattern)) {
   usage();
 }
 
-if (!defined($archivedir)) {
-  $archivedir=$polldir . "/old_csv";
-}
+$archivedir=$polldir . "/old_csv";
 
 chdir $polldir;
 
@@ -77,14 +69,17 @@ while (1) {
   # move the crsp_ files to the old_files subdir and
   # move the csv file to old_csv subdir
   if (@files) {
-    sleep 10;
+    sleep 10; # wait for gefrx to finish checking the file before moving it!
     foreach $file (@files) {
       my @program=("perl","../src/parsecsv.pl","-f","$polldir/$file");
       system (@program) == 0 or die "Failed to run parsecsv.pl!\n $!";
 
-      #read the directory again to find all crsp_ files
+      #read the directory again to find all crsp_20* files 
+      # have to do this since the old scada files are crsp_ as well, they
+      # just use a two digit year instead of four.
+      # watch out for the Y2.1K bug!
       opendir(DIR, $polldir) || die "opendir of $polldir failed: $!";
-      @crspfiles = grep { /^crsp_/ && -f "$polldir/$_" } readdir(DIR);
+      @crspfiles = grep { /^crsp_20/ && -f "$polldir/$_" } readdir(DIR);
       closedir DIR;
 
       # now for each crsp file created by parsecsv.pl, run the loading script
@@ -122,9 +117,8 @@ Example: $progname -d <directory> -u <user_name> -p <hdbpassword> -f <pattern>
   -v               : Version
   -u <hdbusername> : HDB application user name (REQUIRED)
   -p <hdbpassword> : HDB password (REQUIRED)
-  -f <filename pattern>    : file pattern to watch for (REQUIRED)
-  -d <directory>   : directory to watch for files with right pattern <REQUIRED>
-  -a <directory>   : where to move files after processing <defaults to polldir/archives>
+  -f <filename pattern>    : file pattern to watch for csv files(REQUIRED)
+  -d <directory>   : directory to watch for files with right pattern (REQUIRED_
 ENDHELP
 
   exit (1);
