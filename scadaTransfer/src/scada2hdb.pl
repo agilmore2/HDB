@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/local/bin/perl
 
 #insert HDB library
 
@@ -14,6 +14,7 @@ use DBI;
 #use DBD::Oracle;
 
 use strict;
+use warnings;
 
 my $verstring = '$Revision$';
 $verstring =~ s/^\$Revision: //;
@@ -111,7 +112,8 @@ Other processes in this pipeline cut this file down from the original
 =cut
 
 my ($line, $datestr, @fields, @prevdate, $sitecode);
-my ($value, $head, $rel, $seenspill);
+my ($value, $head, $rel);
+my $seenspill =0;
 
 
 # get date in filename, assume date starts after last '_'
@@ -183,7 +185,8 @@ READ: while ($line = <INFILE>)
                       \@value_date, $head);
       }
     }
-
+# expect the fields turbine, spillway, and hollow_jet releases in that order,
+# warn if not
   } elsif ($fields[6] eq "turbine_release") {
     @prevdate=@value_date;
     $rel=$value;
@@ -198,7 +201,7 @@ READ: while ($line = <INFILE>)
 
   } elsif ($fields[6] eq "hollow_jet_release") {
     if (@value_date != @prevdate or $seenspill==0) {
-      warn "data not in expected order, release not calculated!\n";
+      die "data not in expected order, release not calculated! Exiting!\n";
     } else {
       $rel+=$value;
       $seenspill=0;
