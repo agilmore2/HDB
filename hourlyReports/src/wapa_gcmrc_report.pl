@@ -18,7 +18,7 @@ my $cc = 'agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov';
 if ($OSNAME == 'linux') {
   $mail = "mail";
 } elsif ($OSNAME == 'solaris') {
-  $mail = "mailx"
+  $mail = "mailx";
 }
 
 
