@@ -101,4 +101,4 @@ if ($status == 99) {
   close GLEN;
 }
 
-exit $status;
+exit 0;
