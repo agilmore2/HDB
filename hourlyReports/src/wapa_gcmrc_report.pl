@@ -15,9 +15,9 @@ my $cc = 'agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov';
 
 #handle bogus mail transfer programs. In Linux, mail is the more featureful,
 # and in Solaris, mailx is.
-if ($OSNAME == 'linux') {
+if ($OSNAME eq 'linux') {
   $mail = "mail";
-} elsif ($OSNAME == 'solaris') {
+} elsif ($OSNAME eq 'solaris') {
   $mail = "mailx";
 }
 
