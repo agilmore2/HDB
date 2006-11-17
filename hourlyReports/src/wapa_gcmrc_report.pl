@@ -3,15 +3,24 @@
 use strict;
 use warnings;
 
+use English '-no_match_vars';
+
 my $numdays = $ARGV[0];
 my $status = 0;
 
-my ($app,$sqlfile, $sqlout, @output);
+my ($app,$sqlfile, $sqlout, @output, $mail);
 
 my $to = 'frantz@wapa.gov,telschow@wapa.gov';
 my $cc = 'agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov';
 
-my $mail = "mail";
+#handle bogus mail transfer programs. In Linux, mail is the more featureful,
+# and in Solaris, mailx is.
+if ($OSNAME == 'linux') {
+  $mail = "mail";
+} elsif ($OSNAME == 'solaris') {
+  $mail = "mailx"
+}
+
 
 if (!$numdays) {
   print "Usage: wapa_gcmrc_report.pl <number of days to look back>\n";
