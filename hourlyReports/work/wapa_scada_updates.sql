@@ -30,7 +30,7 @@ define days_back = &1;
 define app_name = 'HDB WAPA/GCMRC Update';
 
 -- setup output
---set feedback off
+set feedback off
 set pagesize 0
 set linesize 100
 set verify off
@@ -170,7 +170,6 @@ order by b.primary_site_code, b.primary_data_code, a.start_date_time;
 
 spool off;
 
-set termout on
 /* The rest of these queries are to handle the data that has been updated 
  since the last time this query ran, for data from 40 days ago to the day
 before days_back.
