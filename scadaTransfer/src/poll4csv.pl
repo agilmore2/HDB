@@ -84,7 +84,7 @@ while (1) {
 
       # now for each crsp file created by parsecsv.pl, run the loading script
       foreach $crspfile (@crspfiles) {
-        my @program=("perl","../src/scada2hdb.pl","-t","-u",$hdbuser,"-p",$hdbpass,"-f","$polldir/$crspfile");
+        my @program=("perl","../src/scada2hdb.pl","-u",$hdbuser,"-p",$hdbpass,"-f","$polldir/$crspfile");
         system (@program) == 0 or die "Failed to run scada2hdb.pl!\n $!";
       # move processed crspfile to old_files
         rename "$polldir/$crspfile", "$polldir/old_files/$crspfile" or
