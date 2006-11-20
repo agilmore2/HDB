@@ -197,7 +197,7 @@ select 99 update_rows from dual where exists(
 select *
 from r_hour a, ref_ext_site_data_map b, hdb_ext_data_source c
 where trunc(a.start_date_time,'DD')
-between trunc(sysdate - 40,'DD')  and trunc(sysdate - &&days_back,'DD') and
+between trunc(sysdate - 40,'DD')  and trunc(sysdate - &&days_back - 1,'DD') and
 a.date_time_loaded >= '&&last_timestamp' and
 b.hdb_site_datatype_id = a.site_datatype_id and
 b.ext_data_source_id = c.ext_data_source_id and
@@ -211,7 +211,7 @@ b.primary_site_code||','|| b.primary_data_code||','||
 round(a.value,2) as data
 from r_hour a, ref_ext_site_data_map b, hdb_ext_data_source c
 where trunc(a.start_date_time,'DD')
-between trunc(sysdate - 40,'DD')  and trunc(sysdate - &&days_back-1,'DD') and
+between trunc(sysdate - 40,'DD')  and trunc(sysdate - &&days_back - 1,'DD') and
 a.date_time_loaded >= '&&last_timestamp' and
 b.hdb_site_datatype_id = a.site_datatype_id and
 b.ext_data_source_id = c.ext_data_source_id and
