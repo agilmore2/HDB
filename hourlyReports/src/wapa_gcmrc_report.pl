@@ -13,6 +13,7 @@ my ($app,$sqlfile, $sqlout, @output, $mail);
 my $to = 'frantz@wapa.gov,telschow@wapa.gov';
 my $cc = 'agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov';
 
+
 #handle bogus mail transfer programs. In Linux, mail is the more featureful,
 # and in Solaris, mailx is.
 if ($OSNAME eq 'linux') {
@@ -21,6 +22,12 @@ if ($OSNAME eq 'linux') {
   $mail = "mailx";
 }
 
+my $testing=0;
+if ($testing) {
+  $cc= 'agilmore@uc.usbr.gov';
+  $to = 'agilmore@uc.usbr.gov';
+#  $mail = 'cat';
+}
 
 if (!$numdays) {
   print "Usage: wapa_gcmrc_report.pl <number of days to look back>\n";
@@ -40,8 +47,19 @@ elsif ($numdays =~ /\D/ ) {
 $sqlout = `sqlplus -S -L app_user/uchdb2\@uchdb2 \@wapa_scada_updates.sql $numdays`;
 $status = $?;
 
-die "sqlplus failed! $sqlout $!\n" if ($status > 0 and $status !=99);
-
+# taken from 'perldoc -f system'
+if ($status == -1) {
+  print "failed to execute sqlplus!: $!\n";
+}
+elsif ($status & 127) {
+  printf "sqlplus died with signal %d\n",
+  ($status & 127);
+} else {
+  $status = $status >>8; #shift by 8 bits to get to actual signal value
+  if ($status > 0 and $status !=99) {
+    die "sqlplus failed! $status, $sqlout $!\n";
+  } # else no error
+}
 
 #for testing
 #$sqlout="20061116\n";
@@ -49,6 +67,7 @@ die "sqlplus failed! $sqlout $!\n" if ($status > 0 and $status !=99);
 
 print $sqlout;
 chomp $sqlout;
+
 
 #read all lines from daily file
 open INFILE, "<wapa_$sqlout.dat" or die "unable to open wapa output file: wapa_$sqlout.dat $!\n";
