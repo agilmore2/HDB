@@ -13,7 +13,7 @@ my $progname = basename($0);
 chomp $progname;
 
 my ($polldir, $archivedir, $pattern, @files, $file, $hdbuser, $hdbpass);
-my (@crspfiles, $crspfile);
+my (@crspfiles, $crspfile, @dates, $date);
 
 while (@ARGV)
 {
