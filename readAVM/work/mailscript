@@ -16,3 +16,36 @@
 
 #run derivation on the total plant power release
 derivation $APP_USER $HDB_LOCAL 5035
+
+# now create Glen Power Release, assume new data for yesterday
+# NASTY HACK!
+
+yesterday=`/usr/local/bin/date +%y%b%d -d 'yesterday'`
+
+glenPowRelease app_user uchdb2 $yesterday
+if [ $? -ne 0 ]
+    then
+    echo "Glen Power Release failed."
+fi
+
+../../scadaTransfer/work/derive_pwr
+if [ $? -ne 0 ]
+    then
+    echo "derivation for Power Release failed, exiting!"
+fi
+
+# we need to calculate a new glenTotRelease,
+# but we may not have data in the database! Try it anyway, and no big deal
+# if it fails here.
+
+glenTotRelease app_user uchdb2 $yesterday
+if [ $? -ne 0 ]
+    then
+    echo "Glen Total Release failed, exiting!"
+fi
+
+../../scadaTransfer/work/derive_tot
+if [ $? -ne 0 ]
+    then
+    echo "derivation for Total Release failed, exiting!"
+fi
