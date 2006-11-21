@@ -108,7 +108,8 @@ if ($status == 99) {
   print MAIL @output;
   close MAIL;
 
-  unlink "wapa_update_$sqlout.dat";
+# do not want to delete the output of the updates.
+#  unlink "wapa_update_$sqlout.dat";
 
   @glen = grep {/GLEN/} @output;
 
