@@ -13,7 +13,10 @@ OBJS = \
 main: $(TARGET)
 
 clean: 
-	rm -f $(TARGET) $(OBJS)
+	rm -f $(TARGET) $(OBJS) edit_scada2hdb.pl
+
+install:
+	ln -s scada2hdb.pl edit_scada2hdb.pl
 
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) $(LIBS) -luc -o $(TARGET)
