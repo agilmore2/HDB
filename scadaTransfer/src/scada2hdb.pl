@@ -381,7 +381,7 @@ sub usage
   print STDERR <<"ENDHELP";
 $progname [ -h | -v ] | [ options ]
 Retrieves SCADA data and inserts into HDB
-Example: $progname -u app_user -p <hdbpassword> -f <csvfile>
+Example: $progname -u app_user -p <hdbpassword> -f <crspfile>
 
   -h               : This help
   -v               : Version
