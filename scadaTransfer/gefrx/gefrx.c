@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <stdarg.h>
+#include <errno.h>
 
 
 /*
@@ -709,7 +710,7 @@ RETURNS:     NONE
 		status = GE_FAIL;
 	}
 
-	if ((status != GE_SUCCESS) && (!cmd_parms.user_device))
+	if ((status != GE_SUCCESS) || (!cmd_parms.user_device))
 		{
 		fprintf(stderr, "\n\n\nGEFRX Application - Version 1.0.0\n\n\n");
 
@@ -818,7 +819,7 @@ RETURNS:     NONE
 	/*
 	** Enable raw mode transfer
 	*/
-	options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+	options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG | IEXTEN);
 
 
 
@@ -848,13 +849,15 @@ RETURNS:     NONE
 			DEBUG1("%02x ",*(tempPtr+frame_bytes_read));
 
 			frame_bytes_read += bytes_read;
+                        fflush(stdout);
+                        fflush(stderr);
 
 			/*
 			** Output debug only in the first serial character
 			*/
 			if (frame_bytes_read == 1)
 			{
-				DEBUG0("Received serial data.");
+				DEBUG0("Received serial data.\n");
 			}
 
 		}
@@ -933,17 +936,21 @@ RETURNS:     NONE
 				file_fd = 0;
 			}
 
+                        mode_t mode= S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
 			file_fd = open(msg.filename,O_CREAT | 
-					O_WRONLY | O_TRUNC);
-
-			fchmod(file_fd,
-				S_IRUSR | 
-				S_IWUSR | 
-				S_IRGRP | 
-				S_IWGRP | 
-				S_IROTH ); 
-
-			write(file_fd,msg.data_buffer,msg.data_size);
+                                       O_WRONLY | O_TRUNC, mode);
+                        
+                        if (file_fd == -1)
+                        {
+                           perror(msg.filename);
+                           printf("Error opening file!\n");
+                           creat(msg.filename, mode);
+                           perror(msg.filename);
+                           printf("Error opening file again!\n");
+                           //                           exit(1);
+                        }
+                        
+                        write(file_fd,msg.data_buffer,msg.data_size);
 
 			send_ack(serial_fd);
 			break;
@@ -1030,6 +1037,10 @@ RETURNS:     NONE
 			break;
 			}
 		}
+                /* flush the output, so user gets notification of what is going on. */
+                fflush(stdout);
+                fflush(stderr);
+
 	}
 	
 
@@ -1039,9 +1050,3 @@ RETURNS:     NONE
 
 
 }
-
-
-
-
-
-
