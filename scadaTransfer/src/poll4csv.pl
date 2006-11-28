@@ -106,9 +106,14 @@ while (1) {
     grep {/20(\d\d\w\w\w\d\d)/ && push @dates, $1 } @crspfiles;
     for $date (@dates) {
       system ("glenTotRelease app_user uchdb2 $date") or
-         warn "glenTotRelease failed!\n";
+        warn "glenTotRelease failed!\n";
     }
     system ("./derive_tot") or warn "Derivation failed!\n";
+# attempt to ship scada data to hydromet
+    for $date (@dates) {
+      system ("scadaData app_user uchdb2 $date") or 
+        warn "scadaData failed.\n";
+    }
   }
   sleep 60;
 }

@@ -31,7 +31,7 @@ fi
 ../../scadaTransfer/work/derive_pwr
 if [ $? -ne 0 ]
     then
-    echo "derivation for Power Release failed, exiting!"
+    echo "derivation for Power Release failed!"
 fi
 
 # we need to calculate a new glenTotRelease,
@@ -41,11 +41,17 @@ fi
 glenTotRelease app_user uchdb2 $yesterday
 if [ $? -ne 0 ]
     then
-    echo "Glen Total Release failed, exiting!"
+    echo "Glen Total Release failed!"
 fi
 
 ../../scadaTransfer/work/derive_tot
 if [ $? -ne 0 ]
     then
-    echo "derivation for Total Release failed, exiting!"
+    echo "derivation for Total Release failed!"
+fi
+#massive HACK here, how do we know which date to send data to hydromet for?
+scadaData app_user uchdb2 $yesterday
+if [ $? -ne 0 ]
+    then
+    echo "scadaData failed!"
 fi
