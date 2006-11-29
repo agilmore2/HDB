@@ -124,11 +124,11 @@ READ: while ($line = <INFILE>)
   if ($@) {
     die "Invalid Date detected in input file, exiting!\n$line\n$@\n";
   }
+
+  # reset value_date to be zero padded
+  @value_date[1..4] = map {sprintf "%02d",$_} @value_date[1..4];
   # reset fields to be output from adjusted date
-  $fields[0] = $value_date[0];
-  for my $i (1 .. 4) {
-    $fields[$i] = sprintf "%02d", $value_date[$i];
-  }
+  @fields[0..4] = @value_date[0..4];
 
   if (!defined($data_date[0]) or # if this is the first time through or
            ($value_date[0] != $data_date[0] or # date is different
@@ -140,7 +140,10 @@ READ: while ($line = <INFILE>)
     $newdate=join('',$value_date[0],$newmonth, $value_date[2]);
     if (!defined($datefiles{$newdate})) {
       my $newfile = "$readdir/crsp_$newdate.dat";
-      unlink ($newfile);
+      while (-e $newfile) {
+        $newfile =~ s/dat$/update.dat/;
+      }
+
       $datefiles{$newdate} =  new FileHandle "> $newfile" or
         die "unable to open $newfile";
     }
@@ -160,7 +163,8 @@ sub usage
   print STDERR <<"ENDHELP";
 $progname [ -h | -v ] | [ options ]
 Parses csv file and writes files containing only interesting data
-with a filename reflecting the date of data in the file
+with a filename reflecting the date of data in the file.
+Adjusts date in data to reflect start time, rather than end.
 Example: $progname -f <csvfile>
 
   -h               : This help
