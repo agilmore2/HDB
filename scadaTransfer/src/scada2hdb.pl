@@ -141,8 +141,8 @@ READ: while ($line = <INFILE>)
   @value_date=@fields[0..4]; #get first 5 fields from line and
   $value_date[5]=0; #zero seconds field
 
-# fix the fact that the data is reported as end of hour
-  eval {@value_date = Add_Delta_DHMS(@value_date,0,-1,0,0);};
+# check the date in the file
+  eval {@value_date = Add_Delta_DHMS(@value_date,0,0,0,0);};
   if ($@) {
     die "Invalid Date detected in input file, exiting!\n$line\n";
   }

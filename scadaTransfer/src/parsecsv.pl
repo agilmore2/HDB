@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 
-use Date::Calc qw(Month_to_Text);
+use Date::Calc qw(Month_to_Text Add_Delta_DHMS);
 use File::Basename;
 use FileHandle;
 use Data::Dumper;
@@ -119,11 +119,21 @@ READ: while ($line = <INFILE>)
   @value_date=@fields[0..4]; #get first 5 fields from line and
   $value_date[5]=0; #zero seconds field
 
-  if (!defined($data_date[0]) # if this is the first time through
-       or ($value_date[3] >= 1 and # or hour is 1 or more and date is different
-           ($value_date[0] != $data_date[0] or
+# fix the fact that the data is reported as end of hour
+  eval {@value_date = Add_Delta_DHMS(@value_date,0,-1,0,0);};
+  if ($@) {
+    die "Invalid Date detected in input file, exiting!\n$line\n$@\n";
+  }
+  # reset fields to be output from adjusted date
+  $fields[0] = $value_date[0];
+  for my $i (1 .. 4) {
+    $fields[$i] = sprintf "%02d", $value_date[$i];
+  }
+
+  if (!defined($data_date[0]) or # if this is the first time through or
+           ($value_date[0] != $data_date[0] or # date is different
            $value_date[1] != $data_date[1] or
-           $value_date[2] != $data_date[2]))) {
+           $value_date[2] != $data_date[2])) {
     #make upper case version of first three letters of month name
     $newmonth=uc substr Month_to_Text($value_date[1]),0,3;
 
