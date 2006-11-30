@@ -6,12 +6,11 @@ HDB Generic PERL interface
 
 =head1 VERSION
 
-Documentation for Hdb.pm $ID: $
+Documentation for Hdb.pm $Id$
 
 =head1 SYNOPSIS
 
-To create a DBI handle to HDB as app_user, must have the proper environmental
-variables set:
+To create a DBI handle to HDB:
 
  use Hdb;
 
@@ -19,18 +18,35 @@ variables set:
 
  $hdb->connect_to_db($dbname, $user, $pass);
 
-To allow editting of values:
+Different version of the above, using connect info from a file.
+
+ $hdb->connect_from_file($filename);
+
+To allow editting of values, must have appropriate environment variables:
 
  $hdb->set_approle();
 
-Look up ids from database:
+Look up ids from database by name. Argument is a hash of hashes, with values
+for the key 'name' for the keys: agen, collect, load_app, method, computation:
 
- $hdb->get_app_ids(\%nameid);
+  my $nameid;
 
- Argument is a hash of hashes, with values for the key 'name' for the keys:
- agen, collect, load_app, method, computation;
+  $nameid->{agen}->{name} = 'Colorado Division of Water Resources';
+  $nameid->{collect}->{name} = '(see agency)';
+  $nameid->{load_app}->{name} = 'codwr2hdb.pl';
+  $nameid->{method}->{name} = 'unknown';
+  $nameid->{computation}->{name} = 'unknown';
 
-To get at the DBI handle, 
+  $hdb->get_app_ids($nameid);
+
+  $agen_id = $nameid->{agen}->{id};
+  $collect_id = $nameid->{collect}->{id};
+  $load_app_id = $nameid->{load_app}->{id};
+  $method_id = $nameid->{method}->{id};
+  $computation_id = $nameid->{computation}->{id};
+
+To get at the DBI handle:
+
  my $dbh = Hdb->dbh;
 
 =head1 DESCRIPTION
@@ -74,6 +90,14 @@ sub dbh
   my $self = shift;
   return $self->{dbh};
 }
+
+=item hdbdie()
+
+Call hdbdie to rollback uncommitted database changes and disconnect from the database:
+
+ $hdb->hdbdie("Error occurred, rolling back changes\n");
+
+=cut
 
 sub hdbdie {
   my $self = shift;
@@ -140,10 +164,13 @@ sub set_approle {
   return $self->{dbh};
 }
 
-
 #this function connects to the database as the specified user
 sub connect_to_db {
   my $self = shift;
+  if (defined($self->{dbh})) {
+    $self->hdbdie("Attempted to connect while already connected to $self->{dbname}!\n");
+  }
+
   $self->{dbname} = $_[0];
   my $user = $_[1];
   my $pass=$_[2];
@@ -153,6 +180,56 @@ sub connect_to_db {
                      or $self->hdbdie($DBI::errstr);
 
   return $self->{dbh};
+}
+
+sub connect_from_file {
+  use Fcntl ’:mode’;
+
+  my $self = shift;
+  if (defined($self->{dbh})) {
+    $self->hdbdie("Attempted to connect while already connected to $self->{dbname}!\n");
+  }
+
+#check that user can read the file
+  $filename = $_[0];
+  if (! -r $filename) {
+    die ("$filename is not readable!\n")
+  }
+
+ open ACCESS, $filename;
+# check that the file is not readable from anyone but user
+  my $mode = (stat(ACCESS))[2];
+  if ($mode & (S_IRGRP | S_IROTH) ) {
+    die ("$filename has incorrect permissions! Should not be readable by group or others\n");
+  }
+
+=item ACCESS FILE FORMAT
+
+
+ should have three lines:
+
+ username <username>
+ password <password>
+ database <databasename>
+
+Will fail if file contains anything else.
+
+=cut
+
+  while (<ACCESS>) {
+    if (/^username /) {
+      $user = $_ =~ s/^username //;
+    } elsif (/^password /) {
+      $pass = $_ =~ s/^password //;
+    } elsif (/^database /) {
+      $database = $_ =~ s/^database //;
+    } else {
+      die ("Unrecognized line in access file: $_");
+    }
+  }
+  close ACCESS;
+
+  return $self->connect_to_db($database,$user,$pass);
 }
 
 sub get_app_ids
@@ -200,6 +277,17 @@ sub get_app_ids
 
   return $nameid;
 }
+
+
+=item get_SDI
+
+Get a site_datatype_id from the database, given site_id and datatype_id.
+Meant as an example, not really all that useful.
+
+
+ my $sdi = $hdb->get_SDI($site_id,$datatype_id);
+
+=cut
 
 sub get_SDI
 {
