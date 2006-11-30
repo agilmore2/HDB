@@ -1,19 +1,18 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
-#insert HDB library
-
-use lib "$ENV{HDB_ENV}/perlLib/lib";
-# Don't need
-#use lib "$ENV{HDB_ENV}/perlLib/lib/i386-linux";
+use strict;
+use warnings;
 
 use LWP::UserAgent;
 use Date::Calc qw(Delta_DHMS Add_Delta_Days Month_to_Text Decode_Date_EU Today);
 use Compress::Zlib;
 use File::Basename;
 use Data::Dumper;
-use Hdb;
 
-use strict;
+#insert HDB library
+
+use lib "$ENV{HDB_ENV}/perlLib/lib";
+use Hdb;
 
 #Version Information
 my $verstring = '$Revision$';
@@ -27,7 +26,7 @@ chomp $progname;
 my $insertflag = 1;
 my $overwrite = 'null';
 
-my ($readfile, $runagg, $printurl, $debug, $flowtype, $db_site);
+my ($readfile, $accountfile, $runagg, $printurl, $debug, $flowtype, $db_site);
 my ($numdays, $hdbuser, $hdbpass, $site_num_list);
 #scalar and array versions, the scalars are a string of the arrays
 my ($begindate, $enddate, @begindate, @enddate);
@@ -45,8 +44,14 @@ while (@ARGV)
     $insertflag=undef;
   } elsif ($arg =~ /-f/) {	# get file to read from
     $readfile = shift(@ARGV);
-    if (! -e $readfile) {
-      print "file not found: $readfile";
+    if (! -r $readfile) {
+      print "file not found or unreadable: $readfile\n";
+      exit 1;
+    }
+  } elsif ($arg =~ /-a/) {	# get database login file
+    $accountfile = shift(@ARGV);
+    if (! -r $accountfile) {
+      print "file not found or unreadable: $accountfile\n";
       exit 1;
     }
   } elsif ($arg =~ /-l/) {	# get flow type
@@ -98,25 +103,27 @@ if (defined($site_num_list)) {
 
 # check db_site_code
 if (!defined($db_site)) {
-  print "ERROR: db site code must be specified! (use -s <DB> on command line)";
+  print "ERROR: db site code must be specified! (use -s <DB> on command line)\n";
   usage();
 }
 
-#handle flowtype, realtime, provisional, or official
+#handle flowtype, unit or daily
+#realtime, provisional, or official used to be these,
+#but the USGS merged the sources for Official and Provisional
 #check if flowtype is defined, if not, we assume realtime
 if (!defined($flowtype)) {
-  $flowtype = 'r';
+  $flowtype = 'u';
 }
 
-if (! ($flowtype =~ /^[rop]$/)) {
-  print "Error, invalid flow type defined: $flowtype.";
-  print "Specify one of r, p, or o (realtime, provisional, or official)";
+if (! ($flowtype =~ /^[ud]$/)) {
+  print "Error, invalid flow type defined: '$flowtype'\n";
+  print "Specify one of u or d (unit (instantaneous) or daily)\n";
   usage();
 }
 
 #do not have table set up to specify which official data to automatically get
-if (($flowtype eq "o") and ! defined($site_num_list)) {
-  print "Lookout! You have specified loading all sites in HDB!\n";
+if (($flowtype eq "d") and !defined($site_num_list)) {
+  print "Lookout! You have specified loading all daily sites in HDB!\n";
   print "Are you sure you want to do this? (y/n) \n";
   my $yn;
   read STDIN, $yn,2;
@@ -136,9 +143,8 @@ if (($flowtype eq "o") and ! defined($site_num_list)) {
 # data corresponding to that source from the database
 
 my %title;
-$title{r}='USGS Realtime';
-$title{p}='USGS Provisional';
-$title{o}='USGS Official';
+$title{u}='USGS Unit Values (Realtime)';
+$title{d}='USGS Daily Values (Provisional/Official)';
 
 #Truth table and results for numdays, begindate and enddate
 # errors are all defined, only enddate defined.
@@ -160,7 +166,7 @@ if (defined($numdays)) {
     usage();
   }
 
-  if ($numdays >31 and $flowtype eq 'i') {
+  if ($numdays >31 and $flowtype eq 'u') {
     print "Number of days (argument to -n) must be 31 or less for realtime data.\n";
     usage();
   }
@@ -199,14 +205,19 @@ if (!@begindate or !@enddate) {
 $begindate = sprintf ("%4d-%02d-%02d",@begindate);
 $enddate = sprintf  ("%4d-%02d-%02d",@enddate);
 
-if (!defined($hdbuser) || !defined($hdbpass)) {
-  print "Error! No user or password!\n";
+# we may want to rethink the above to handle new capabilities of
+# NWIS to return only a few hours of data, and only data that has changed in 
+# the last x minutes.
+
+
+if ((!defined($hdbuser) || !defined($hdbpass)) && !defined($accountfile)) {
+  print "Error! No database login information! No user or password!\n";
   usage();
 }
 
-=FORMAT
+=head2 FORMAT
 
-The data is expected in the following format:
+ The data is expected in the following format:
 # large number of comments delimited by pound signs (#)
 # including a disclaimer, a retrieved: timestamp, a description of the format
 # a list of sites contained in the file
@@ -248,12 +259,13 @@ now gone, so who cares???)
 As of 6/21/2006, the official and provisional sites have merged.
 Data qualification codes are added to output, eg:
 
-agency_cd       site_no datetime        01_00060_00001  01_00060_00001_cd      01_00060_00002   01_00060_00002_cd       01_00060_00003  01_00060_00003_cd
-5s      15s     16s     14s     14s     14s     14s     14s     14s
-USGS    09380000        2006-06-20      17700   P       9430    P       14400  P
+ agency_cd       site_no datetime        01_00060_00003  01_00060_00003_cd
+ 5s      15s     16s     14s     14s
+ USGS    09380000        2006-06-20      14400  P
 
-So will have to distinguish data sources, collection systems etc by this extra column,
-also need to search for which column to look for data in by ignoring the _cd columns.
+So will have to distinguish data sources, collection systems etc by this extra
+column, also need to search for which column to look for data in by ignoring
+the _cd columns.
 
 =cut
 
@@ -261,12 +273,18 @@ also need to search for which column to look for data in by ignoring the _cd col
 # global because used in several sub routines
 my $hdb = Hdb->new;
 
-my $dbname;
-if (!defined($dbname = $ENV{HDB_LOCAL})) {
-  $hdb->hdbdie("Environment variable HDB_LOCAL not set...\n");
+if (defined($accountfile)) {
+  $hdb->connect_from_file($accountfile);
+} else {
+  my $dbname;
+  if (!defined($dbname = $ENV{HDB_LOCAL})) {
+    $hdb->hdbdie("Environment variable HDB_LOCAL not set...\n");
+  }
+  #create connection to database
+  $hdb->connect_to_db($dbname, $hdbuser, $hdbpass);
 }
-#create connection to database
-$hdb->connect_to_db($dbname, $hdbuser, $hdbpass);
+
+#set write ability on connection (app_role)
 $hdb->set_approle();
 
 #Set date format to ISO, USGS data also in this format
@@ -366,6 +384,12 @@ until (!defined($data[0])) {
   my (@firstrow) = split /\t/, $data[0];
   my $usgs_no = $firstrow[1];
 
+  # check that usgs_no is sane, i.e. contains only digits:
+  if ($usgs_no =~ /\D/) {
+    print STDERR "Warning! '$usgs_no' does not appear to be a valid USGS site number!\n";
+    $hdb->hdbdie("Assuming data retrieved is garbage and giving up!\n");
+  }
+
   #check on found data for this usgs no
   $usgs_sites->{$usgs_no}->{found_data} = 1;
   if (!defined($usgs_sites->{$usgs_no}->{sdi}) or
@@ -379,14 +403,26 @@ until (!defined($data[0])) {
   my $col = 1;
   until ($headers[$col++] =~ /$usgs_sites->{$usgs_no}->{data_code}$/) {
     if (!defined($headers[$col])) {
-      print "Looking for: '$usgs_sites->{$usgs_no}->{data_code}' in:\n";
-      print "@headers\n";
-      print "Cannot find value column code for header of values column!\n";
+      print STDERR "Not found: '$usgs_sites->{$usgs_no}->{data_code}' in:\n";
+      print STDERR "@headers\n";
+      print STDERR "Cannot find value column code from header!\n";
       $hdb->hdbdie("Data is not USGS website tab delimited format!\n");
     }
   }
   #variable defining which column to read values from
   $usgs_sites->{$usgs_no}->{column} = $col-1;
+
+  #look for data quality column
+  # column header should be something like 01_00060_00003_cd
+  # and should be the column immediately after the value
+  # does the realtime data have this?
+  unless ($headers[$col] =~ /$usgs_sites->{$usgs_no}->{data_code}_cd$/) {
+    print STDERR "Not found: '$usgs_sites->{$usgs_no}->{data_code}_cd' in:\n";
+    print STDERR "@headers\n";
+    print STDERR "Cannot find quality column code from header!\n";
+    $hdb->hdbdie("Data is not USGS website tab delimited format!\n");
+  }
+  $usgs_sites->{$usgs_no}->{qualitycolumn} = $col;
 
   # count number of rows that are not comments after header
   #and are still the same usgs site
@@ -403,8 +439,7 @@ until (!defined($data[0])) {
   #make a slice of the input data for this site
   my (@cur_values)= @data[0..$i-1];
 
-  # put data into database, handing site id and agg id for use
-  # when aggDisagg is called, unless testflag is set
+  # put data into database, unless testflag is set
   # function returns date of first value and last value updated
   my ($first_date, $updated_date, $rows_processed);
 
@@ -447,7 +482,9 @@ foreach my $usgs_no (keys %$usgs_sites) {
 #End main program, subroutines below
 
 #global variables read from database
-my ($load_app_id, $agen_id, $collect_id, $validation, $url);
+my ($load_app_id, $agen_id, $validation, $url);
+
+my ($collect_id, $official_collect_id);
 
 sub get_app_ids
 {
@@ -511,6 +548,29 @@ hdb_loading_application where loading_application_name = '$load_app_name'";
   else {
     $validation = "'" . $validation . "'";
   }
+
+  my $get_official_collect_statement = 
+  "select collection_system_id
+ from hdb_collection_system
+ where collection_system_name = 'USGS Official'";
+
+  eval {
+    $sth = $hdb->dbh->prepare($get_official_collect_statement);
+    $sth->execute;
+    $sth->bind_col(1,\$official_collect_id);
+    my $stuff = $sth->fetch;
+    Dumper($stuff);
+    unless ( $stuff ) {
+      $hdb->hdbdie("Data source definition not found, $agen_id, $collect_id, $validation, $url!\n")
+    };
+    $sth->finish();
+  };
+
+  if ($@) { # something screwed up
+    print $hdb->dbh->errstr, " $@\n";
+    $hdb->hdbdie("Errors occurred during selection of collection id info for USGS Official.\n");
+  }
+
 }
 
 sub build_url
@@ -538,11 +598,8 @@ sub build_url
 
   my $parameters = "?date_format=YYYY-MM-DD&format=rdb&rdb_compression=gz&begin_date=$begindate&end_date=$enddate";
 
-  #apparently, the official site barfs if you use "parameter_cd" but
-  # not having any parameter code at all doesn't make any difference
-  if ($flowtype ne 'o') {
-    $parameters .= "&parameter_cd=$_[1]";
-  }
+  #append data code list, complete url syntax done in get_usgs_codes
+  $parameters .= "$_[1]";
 
   $parameters .="&multiple_site_no=$_[0]";
 
@@ -590,12 +647,6 @@ sub get_usgs_sites
     $id_limit_clause = "b.primary_site_code in ( $site_num_list ) and";
   }
 
-#use title of data source, lowercase, with '_' instead of spaces,
-# preceded by 'load_' to find the right key name for the datamapping table
-  my $load_title = "load_";
-  $load_title .= lc($title{$flowtype});
-  $load_title =~ s/ /_/g;
-
 # outcome should be 'load_usgs_realtime' or official or provisional
 # the mapping list has already been loaded with just the site that
 # are appropriate for this installation
@@ -606,13 +657,14 @@ sub get_usgs_sites
  b.hdb_computation_id comp_id, b.hdb_site_datatype_id sdi,
  d.site_id, d.site_name
 from hdb_site_datatype a, ref_ext_site_data_map b,
-ref_ext_site_data_map_keyval c, hdb_site d
+ref_ext_site_data_map_keyval c, hdb_site d, hdb_ext_data_source e
 where a.site_datatype_id = b.hdb_site_datatype_id and
 b.mapping_id = c.mapping_id and $id_limit_clause 
-c.key_name = '$load_title' and 
-c.key_value ='Y' and
+b.is_active_y_n = 'Y' and
 a.site_id = d.site_id and
-d.db_site_code = '$db_site'
+d.db_site_code = '$db_site' and
+b.ext_data_source_id = e.ext_data_source_id and
+e.ext_data_source_name = '$title{$flowtype}'
 order by usgs_id";
 
   $hdb->dbh->{FetchHashKeyName} = 'NAME_lc';
@@ -672,11 +724,19 @@ a.ext_data_source_name = '$title{$flowtype}'";
     unless ($sth->fetch) {
       $hdb->hdbdie("No data codes found!\n")
     };
-    $data_code_list = $value;
+    #create list for use with retrieval. 
+    # the parameter list should be like "&cb_00060=on&cb_00065=on" etc
+    # one cb_ setting for each data code. The value codes in the resulting
+    # output and in the generic mapping are 00060_00003, so
+    # we have to subtract all that extra at the end for this use.
+    # realtime codes are 00060 in the db, so this will not affect them
+    $value =~ s/_.*//;
+    $data_code_list = '&cb_' . $value. '=on';
     # now build list if there is more than one data code returned
     # if more than one data code per site, will fail
     while ($sth->fetch) {
-      $data_code_list .= ',' . $value;
+      $value =~ s/_.*//;
+      $data_code_list .= '&cb_' . $value . '=on';
     }
     $sth->finish();
   };
@@ -721,21 +781,28 @@ sub insert_values
   my $usgs_site = $_[1];
 
   my $i = 0;
-  my ($first_date, $end_date_time) = undef;
-  my ($value, $value_date, $updated_date);
+  my $first_date = undef;
+  my ($value, $value_date, $updated_date, $qual_code);
   my ($line, @row);
   my $old_val;
+  my $valid_code = $validation;
+  my $coll_id = $collect_id;
 
 # SQL statements
 
+# this statement takes arguments of
+# start_date_time, end_date_time, value, validation, and collection system id
+# the rest of the arguments are predetermined by command line arguments and
+# the generic mapping for this site
+
   my $modify_data_statement = "
   BEGIN
-    modify_r_base_raw($usgs_site->{sdi},'$usgs_site->{interval}',
+    modify_r_base($usgs_site->{sdi},'$usgs_site->{interval}',
                       ?,/* start_date_time */
-                      ?,/* end_date_time (in/out, not used) */
                       ?,/* value */
-                      $agen_id,$overwrite,$validation,
-                      $collect_id,$load_app_id,
+                      $agen_id,$overwrite,
+                      ?, ?, /* validation, collection system id
+                      $load_app_id,
                       $usgs_site->{meth_id},$usgs_site->{comp_id},
                       'Y');/*do update? */
   END;";
@@ -754,8 +821,28 @@ sub insert_values
       @row = split /\t/, $line;
       $value_date = $row[2];
       $value = $row[$usgs_site->{column}];
+
       if ($value) { # get rid of ',' in display
 	$value =~ s/,//g;
+      }
+
+# For daily values:
+# validation is defaulted to the value of the $validation variable
+# but may be overwritten by the qual_code from the row of data
+# Currently, the codes seen from the USGS are: none, P and A
+# 'A' is approved data, which is the "Official" data. Rows with 
+# this quality code are given a different collection system, and this
+# quality code is passed on as the validation.
+
+      if ($flowtype eq 'd') {
+        $qual_code = $row[$usgs_site->{qualitycolumn}];
+        if (defined($qual_code) and $qual_code eq 'A') {
+          $valid_code = "'$qual_code'";
+          $coll_id = $official_collect_id;
+        } else {
+          $valid_code = $validation;
+          $coll_id = $collect_id;
+        }
       }
 
 # check if value from source is known
@@ -767,7 +854,7 @@ sub insert_values
 	     if defined($debug);
 	next;
       } elsif ($value =~ m/[^0-9\.]/) { # check for other text, complain
-	print "data corrupted: $usgs_site->{sdi}, date $value_date: $value\n";
+	print "value field not recognized: $usgs_site->{sdi}, date $value_date: $value\n";
 	next;
       } else {
 	# update or insert
@@ -779,11 +866,11 @@ sub insert_values
           }
         }
 	$modsth->bind_param(1,$value_date);
-	$modsth->bind_param_inout(2,\$end_date_time,50);
-	$modsth->bind_param(3,$value);
+	$modsth->bind_param(2,$value);
+	$modsth->bind_param(3,$coll_id);
+	$modsth->bind_param(4,$valid_code);
 	$modsth->execute;
 	
-	$end_date_time = undef;
 	if (!defined($first_date)) { # mark that data has changed
 	  $first_date = $value_date;
 	}
@@ -820,12 +907,12 @@ Example: $progname -u app_user -p <hdbpassword> -n 2 -i 09260000 -l r -s UC
   -t               : Test retrieval, but do not insert data into DB
   -f <filename>    : Filename instead of live web
   -n <numdays>     : Days for retrieval (max 31 for realtime)
-  -b <DD-MON-YYYY>  : Begin date for data retrieval
-  -e <DD-MON-YYYY>  : End date for data retrieval
+  -b <DD-MON-YYYY> : Begin date for data retrieval
+  -e <DD-MON-YYYY> : End date for data retrieval
   -o               : Use overwrite flag, otherwise null
   -w               : Web address (URL developed to get USGS data)
   -d               : Debugging output
-  -l <r,o,p>       : Specify flow type realtime(default), provis., or official
+  -l <u,d>         : Specify flow type realtime(default), provis., or official
   -s <UC,LC,...>   : Specify db_site_code (from hdb_site) for sites to load (REQUIRED)
 ENDHELP
 
