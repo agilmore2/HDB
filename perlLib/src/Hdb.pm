@@ -183,7 +183,7 @@ sub connect_to_db {
 }
 
 sub connect_from_file {
-  use Fcntl ’:mode’;
+  use Fcntl ':mode';
 
   my $self = shift;
   if (defined($self->{dbh})) {
@@ -203,7 +203,7 @@ sub connect_from_file {
     die ("$filename has incorrect permissions! Should not be readable by group or others\n");
   }
 
-=item ACCESS FILE FORMAT
+=item ACCOUNT FILE FORMAT
 
 
  should have three lines:
@@ -217,17 +217,24 @@ Will fail if file contains anything else.
 =cut
 
   while (<ACCESS>) {
-    if (/^username /) {
-      $user = $_ =~ s/^username //;
-    } elsif (/^password /) {
-      $pass = $_ =~ s/^password //;
-    } elsif (/^database /) {
-      $database = $_ =~ s/^database //;
+    if (s/^username //) {
+      chomp;
+      $user = $_;
+    } elsif (s/^password //) {
+      chomp;
+      $pass = $_;
+    } elsif (s/^database //) {
+      chomp;
+      $database = $_;
     } else {
       die ("Unrecognized line in access file: $_");
     }
   }
   close ACCESS;
+
+  if (!defined($user) || !defined($pass) || !defined($database)) {
+    die ("database account file has incorrect format!\nexpecting user pass database\n");
+  }
 
   return $self->connect_to_db($database,$user,$pass);
 }
