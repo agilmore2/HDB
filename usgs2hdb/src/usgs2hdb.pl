@@ -27,7 +27,7 @@ chomp $progname;
 my $insertflag = 1;
 my $overwrite = 'null';
 
-my ($readfile, $accountfile, $runagg, $printurl, $debug, $flowtype, $db_site);
+my ($readfile, $accountfile, $runagg, $printurl, $debug, $flowtype);
 my ($numdays, $hdbuser, $hdbpass, $site_num_list);
 #scalar and array versions, the scalars are a string of the arrays
 my ($begindate, $enddate, @begindate, @enddate);
@@ -83,8 +83,8 @@ while (@ARGV)
     $hdbuser=shift(@ARGV);
   } elsif ($arg =~ /-p/) {	# get hdb passwd
     $hdbpass=shift(@ARGV);
-  } elsif ($arg =~ /-s/) {	# get database site to load
-    $db_site=shift(@ARGV);
+  } elsif ($arg =~ /-s/) {	# get database site to load, IGNORED
+    shift(@ARGV);
   } elsif ($arg =~ /-.*/) {	# Unrecognized flag, print help.
     print STDERR "Unrecognized flag: $arg\n";
     &usage;
@@ -100,12 +100,6 @@ if (defined($site_num_list)) {
   if ($site_num_list =~ /[^0-9,]/ ) {
     die("ERROR: $site_num_list\ndoes not look like USGS id(s).\n");
   }
-}
-
-# check db_site_code
-if (!defined($db_site)) {
-  print "ERROR: db site code must be specified! (use -s <DB> on command line)\n";
-  usage();
 }
 
 #handle flowtype, unit or daily
@@ -663,7 +657,6 @@ where a.site_datatype_id = b.hdb_site_datatype_id and
 b.mapping_id = c.mapping_id and $id_limit_clause 
 b.is_active_y_n = 'Y' and
 a.site_id = d.site_id and
-d.db_site_code = '$db_site' and
 b.ext_data_source_id = e.ext_data_source_id and
 e.ext_data_source_name = '$title{$flowtype}'
 order by usgs_id";
@@ -903,8 +896,9 @@ Example: $progname -u app_user -p <hdbpassword> -n 2 -i 09260000 -l r -s UC
 
   -h               : This help
   -v               : Version
-  -u <hdbusername> : HDB application user name (REQUIRED)
-  -p <hdbpassword> : HDB password (REQUIRED)
+  -a <accountfile> : HDB account access file (REQUIRED or both below)
+  -u <hdbusername> : HDB application user name (account file or REQUIRED)
+  -p <hdbpassword> : HDB password (account file or REQUIRED)
   -i <usgs_id>     : USGS gage id to look for. Must be in HDB. More than one
                      may be specified with -i id1,id2 or -i id1 -i id2
                      IF NONE SPECIFIED, WILL LOAD ALL GAGES ENABLED IN HDB.
@@ -916,8 +910,7 @@ Example: $progname -u app_user -p <hdbpassword> -n 2 -i 09260000 -l r -s UC
   -o               : Use overwrite flag, otherwise null
   -w               : Web address (URL developed to get USGS data)
   -d               : Debugging output
-  -l <u,d>         : Specify flow type realtime(default), provis., or official
-  -s <UC,LC,...>   : Specify db_site_code (from hdb_site) for sites to load (REQUIRED)
+  -l <u,d>         : Specify flow type: unitvalues (realtime default),or daily
 ENDHELP
 
   exit (1);

@@ -1,1 +1,1 @@
-00 07,09,11,13,15 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/usgs2hdb/src; ./usgs2hdb.pl -u app_user -p <PASSWORD> -n 2 -l u -s UC > $HDB_ENV/usgs2hdb/src/usgs2hdb.log 2> $HDB_ENV/usgs2hdb/src/usgs2hdb.err
+00 07,09,11,13,15 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/usgs2hdb/src; ./usgs2hdb.pl -a $HOME/.hdbaccountfile -n 2 > $HDB_ENV/usgs2hdb/src/usgs2hdb.log 2> $HDB_ENV/usgs2hdb/src/usgs2hdb.err
