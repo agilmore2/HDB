@@ -108,7 +108,7 @@ while (1) {
       system ("glenTotRelease app_user uchdb2 $date") == 0 or
         warn "glenTotRelease failed!\n";
     }
-    system ("./derive_tot") or warn "Total Release Derivation failed!\n";
+    system ("./derive_tot") == 0 or warn "Total Release Derivation failed!\n";
 # attempt to ship scada data to hydromet
     for $date (@dates) {
       system ("scadaData app_user uchdb2 $date") == 0 or 
