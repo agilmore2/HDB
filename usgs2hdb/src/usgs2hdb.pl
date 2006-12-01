@@ -560,8 +560,8 @@ hdb_loading_application where loading_application_name = '$load_app_name'";
       my $stuff = $sth->fetch;
       Dumper($stuff);
       unless ( $stuff ) {
-        warn("Data source definition for USGS Official not found!\n")
-        print("Official data will not be labeled with USGS Official collection system\.n")
+        warn("Data source definition for USGS Official not found!\n");
+        print("Official data will not be labeled with USGS Official collection system\.n");
         $official_collect_id= $collect_id;
       }
       $sth->finish();
