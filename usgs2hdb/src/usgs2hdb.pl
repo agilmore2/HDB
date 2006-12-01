@@ -150,8 +150,8 @@ $title{d}='USGS Daily Values (Provisional/Official)';
 # Num Days | Beg Date | End Date | Result
 # nothing defined                   error
 #  def                              end date = now, beg date = enddate-numdays
-#  def        def                   enddate = beg date + numdays
-#             def                   endate = now, check max num days?
+#  def        def                   end date = beg date + numdays
+#             def                   end date = now, check max num days?
 #             def         def       ok
 #                         def       error, what is beg date?
 #  def                    def       beg date = end date - numdays
@@ -264,6 +264,18 @@ Data qualification codes are added to output, eg:
 So will have to distinguish data sources, collection systems etc by this extra
 column, also need to search for which column to look for data in by ignoring
 the _cd columns.
+
+=head2 Design Notes
+
+Current limitations include the lack of ability to collect more than one
+parameter per site. They might even be in the file received from USGS, but
+this application will only read the first. This would be fixable with
+some work to insert_values() and the header parsing code.
+
+Getting a different parameter at a different site is currently supported, but
+unused.
+
+This program really, really needs some modularization.
 
 =cut
 
@@ -449,10 +461,10 @@ until (!defined($data[0])) {
              insert_values(\@cur_values,
                            $usgs_sites->{$usgs_no});
     if (!defined($first_date)) {
-      print "No data updated for $usgs_no\n";
+      print "No data processed for $usgs_sites->{$usgs_no}->{site_name}, $usgs_no\n";
     } else {
-      print "Data updated from $first_date to $updated_date for $usgs_no\n";
-      print "Number of data values from USGS processed: $rows_processed\n";
+      print "Data processed from $first_date to $updated_date for $usgs_sites->{$usgs_no}->{site_name}, $usgs_no\n";
+      print "Number of rows from USGS processed: $rows_processed\n";
     }
   }
 
@@ -541,10 +553,8 @@ hdb_loading_application where loading_application_name = '$load_app_name'";
   }
 
   if (!defined($validation)) {
+ #needs to be empty string for dynamic sql to recognize as null, not 'null'!
     $validation = '';
-  }
-  else {
-    $validation = "'" . $validation . "'";
   }
 
   if ($flowtype eq "d") {
@@ -748,32 +758,6 @@ a.ext_data_source_name = '$title{$flowtype}'";
   return $data_code_list;
 }
 
-sub check_value
-{
-  my $check_date=$_[0];
-  my $site_datatype_id=$_[1];
-  my $interval=$_[2];
-  my ($sth, $value);
-
-  my $check_data_statement = "select value from r_base
-where start_date_time = '$check_date' and site_datatype_id = $site_datatype_id and interval = '$interval'";
-
-  eval {
-    $sth = $hdb->dbh->prepare($check_data_statement);
-
-    $sth->execute;
-    $sth->bind_col(1,\$value);
-    $sth->fetch;
-    $sth->finish();
-  };
-
-  if ($@) { # something screwed up
-    print $hdb->dbh->errstr, " $@\n";
-    $hdb->hdbdie("Errors occurred during selection of data already in database.\n");
-  }
-  return ($value);
-}
-
 sub insert_values
 {
   my @data = @{$_[0]};
@@ -783,7 +767,6 @@ sub insert_values
   my $first_date = undef;
   my ($value, $value_date, $updated_date, $qual_code);
   my ($line, @row);
-  my $old_val;
   my $valid_code = $validation;
   my $coll_id = $collect_id;
 
@@ -794,7 +777,13 @@ sub insert_values
 # the rest of the arguments are predetermined by command line arguments and
 # the generic mapping for this site
 
-  if (!defined()) {
+  if (!defined($usgs_site->{interval}) or
+      !defined($agen_id) or
+      !defined($overwrite) or
+      !defined($load_app_id) or
+      !defined($usgs_site->{meth_id}) or
+      !defined($usgs_site->{comp_id})) {
+    $hdb->hdbdie("Unable to write data to database for $usgs_site->{site_name}\nRequired information missing in insert_values()!\n");
   }
 
   my $modify_data_statement = "
@@ -821,7 +810,10 @@ sub insert_values
 
       $i++;
       @row = split /\t/, $line;
+
+      #value date is already in required format
       $value_date = $row[2];
+
       $value = $row[$usgs_site->{column}];
 
       if ($value) { # get rid of ',' in display
@@ -839,15 +831,21 @@ sub insert_values
       if ($flowtype eq 'd') {
         $qual_code = $row[$usgs_site->{qualitycolumn}];
         if (defined($qual_code) and $qual_code eq 'A') {
-          $valid_code = "'$qual_code'";
-          $coll_id = $official_collect_id;
+          $valid_code = $qual_code;
+          $coll_id = $official_collect_id; #from USGS official in collect table
         } else {
-          $valid_code = $validation;
-          $coll_id = $collect_id;
+          $valid_code = $validation; #from data source table
+          $coll_id = $collect_id; #from data source table
         }
       }
 
-# check if value from source is known
+      #need all three of these here. Also checking on value next
+      if (!defined($value_date) or
+          !defined($valid_code) or
+          !defined($coll_id)) {
+        $hdb->hdbdie("Undefined date, valid code or collection id in insert_values()!\n");
+      }
+# check if value is known, if not, move to next row
       if (!defined ($value) or $value eq '') {
 	print "data missing: $usgs_site->{sdi}, date $value_date\n" if defined($debug);
 	next;
@@ -861,11 +859,7 @@ sub insert_values
       } else {
 	# update or insert
         if (defined($debug)) {
-          if (!defined($old_val)) {
-            print "modifying for $usgs_site->{sdi}, date $value_date, value $value, old_val = undef\n";
-          } else {
-            print "modifying for $usgs_site->{sdi}, date $value_date, value $value, old_val = $old_val\n";
-          }
+          print "modifying for $usgs_site->{sdi}, date $value_date, value $value, update status unknown\n";
         }
 	$modsth->bind_param(1,$value_date);
 	$modsth->bind_param(2,$value);
