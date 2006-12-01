@@ -3,6 +3,9 @@
 use strict;
 use warnings;
 
+#use libraries from HDB environment (Solaris only except for HDB.pm)
+use lib "$ENV{HDB_ENV}/perlLib/lib";
+
 use LWP::UserAgent;
 use Date::Calc qw(Delta_DHMS Add_Delta_Days Month_to_Text Decode_Date_EU Today);
 use Compress::Zlib;
@@ -10,8 +13,6 @@ use File::Basename;
 use Data::Dumper;
 
 #insert HDB library
-
-use lib "$ENV{HDB_ENV}/perlLib/lib";
 use Hdb;
 
 #Version Information
@@ -794,6 +795,9 @@ sub insert_values
 # start_date_time, end_date_time, value, validation, and collection system id
 # the rest of the arguments are predetermined by command line arguments and
 # the generic mapping for this site
+
+  if (!defined()) {
+  }
 
   my $modify_data_statement = "
   BEGIN
