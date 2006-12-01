@@ -800,7 +800,8 @@ sub insert_values
   my $modify_data_statement = "
   BEGIN
     modify_r_base($usgs_site->{sdi},'$usgs_site->{interval}',
-                      ?,/* start_date_time */
+                      ?,null,/* start_date_time, end_date_time */
+
                       ?,/* value */
                       $agen_id,$overwrite,
                       ?, ?, /* validation, collection system id
