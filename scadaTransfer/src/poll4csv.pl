@@ -98,20 +98,20 @@ while (1) {
 
 #then run derivation for specified SDIs, only need to do this after each set of
 #files processed, not for each file.
-    system ("./derive_scada") == 0 or warn "Derivation failed!\n";
+    system ("./derive_scada") == 0 or warn "SCADA Derivation failed!\n";
 #      print "$file\n";
 
 # we need to try and create Glen total release here. But for which day?
 # We assume here that power release was computed by the AVM process
     grep {/20(\d\d\w\w\w\d\d)/ && push @dates, $1 } @crspfiles;
     for $date (@dates) {
-      system ("glenTotRelease app_user uchdb2 $date") or
+      system ("glenTotRelease app_user uchdb2 $date") == 0 or
         warn "glenTotRelease failed!\n";
     }
-    system ("./derive_tot") or warn "Derivation failed!\n";
+    system ("./derive_tot") or warn "Total Release Derivation failed!\n";
 # attempt to ship scada data to hydromet
     for $date (@dates) {
-      system ("scadaData app_user uchdb2 $date") or 
+      system ("scadaData app_user uchdb2 $date") == 0 or 
         warn "scadaData failed.\n";
     }
   }
