@@ -658,9 +658,8 @@ sub get_usgs_sites
  b.hdb_computation_id comp_id, b.hdb_site_datatype_id sdi,
  d.site_id, d.site_name
 from hdb_site_datatype a, ref_ext_site_data_map b,
-ref_ext_site_data_map_keyval c, hdb_site d, hdb_ext_data_source e
-where a.site_datatype_id = b.hdb_site_datatype_id and
-b.mapping_id = c.mapping_id and $id_limit_clause 
+hdb_site d, hdb_ext_data_source e
+where a.site_datatype_id = b.hdb_site_datatype_id and $id_limit_clause
 b.is_active_y_n = 'Y' and
 a.site_id = d.site_id and
 b.ext_data_source_id = e.ext_data_source_id and
