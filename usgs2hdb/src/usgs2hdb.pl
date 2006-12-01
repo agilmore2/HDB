@@ -869,8 +869,8 @@ sub insert_values
         }
 	$modsth->bind_param(1,$value_date);
 	$modsth->bind_param(2,$value);
-	$modsth->bind_param(3,$coll_id);
-	$modsth->bind_param(4,$valid_code);
+	$modsth->bind_param(3,$valid_code);
+	$modsth->bind_param(4,$coll_id);
 	$modsth->execute;
 	
 	if (!defined($first_date)) { # mark that data has changed
