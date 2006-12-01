@@ -541,7 +541,7 @@ hdb_loading_application where loading_application_name = '$load_app_name'";
   }
 
   if (!defined($validation)) {
-    $validation = 'null';
+    $validation = '';
   }
   else {
     $validation = "'" . $validation . "'";
