@@ -4,7 +4,7 @@ LOGFILE=/wrg/hdb/HDB2_applications/readAVM/work/procmail.err
 :0 i
 * ^Subject: Fwd: Data
 * !^X-Loop: uchdba@athena.uc.usbr.gov
-| cd /wrg/hdb/HDB2_applications/readAVM/work && ./mailscript
+| cd /wrg/hdb/HDB2_applications/readAVM/work && ./mailscript 1>&2
 
 :0 E
 !agilmore@uc.usbr.gov
