@@ -801,10 +801,9 @@ sub insert_values
   BEGIN
     modify_r_base($usgs_site->{sdi},'$usgs_site->{interval}',
                       ?,null,/* start_date_time, end_date_time */
-
                       ?,/* value */
                       $agen_id,$overwrite,
-                      ?, ?, /* validation, collection system id
+                      ?, ?, /* validation, collection system id */
                       $load_app_id,
                       $usgs_site->{meth_id},$usgs_site->{comp_id},
                       'Y');/*do update? */
