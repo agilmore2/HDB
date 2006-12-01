@@ -6,6 +6,9 @@ use warnings;
 #use libraries from HDB environment (Solaris only except for HDB.pm)
 use lib "$ENV{HDB_ENV}/perlLib/lib";
 
+#this next is for solaris only, but won't hurt Linux
+use lib "$ENV{HDB_ENV}/perlLib/lib/sun4-solaris";
+
 use LWP::UserAgent;
 use Date::Calc qw(Delta_DHMS Add_Delta_Days Month_to_Text Decode_Date_EU Today);
 use Compress::Zlib;
@@ -528,7 +531,7 @@ hdb_loading_application where loading_application_name = '$load_app_name'";
     Dumper($stuff);
     unless ( $stuff ) {
       $hdb->hdbdie("Data source definition not found, $agen_id, $collect_id, $validation, $url!\n")
-    };
+    }
     $sth->finish();
   };
 
@@ -544,28 +547,31 @@ hdb_loading_application where loading_application_name = '$load_app_name'";
     $validation = "'" . $validation . "'";
   }
 
-  my $get_official_collect_statement = 
-  "select collection_system_id
- from hdb_collection_system
- where collection_system_name = 'USGS Official'";
+  if ($flowtype eq "d") {
+    my $get_official_collect_statement = 
+    "select collection_system_id
+     from hdb_collection_system
+     where collection_system_name = 'USGS Official'";
 
-  eval {
-    $sth = $hdb->dbh->prepare($get_official_collect_statement);
-    $sth->execute;
-    $sth->bind_col(1,\$official_collect_id);
-    my $stuff = $sth->fetch;
-    Dumper($stuff);
-    unless ( $stuff ) {
-      $hdb->hdbdie("Data source definition not found, $agen_id, $collect_id, $validation, $url!\n")
+    eval {
+      $sth = $hdb->dbh->prepare($get_official_collect_statement);
+      $sth->execute;
+      $sth->bind_col(1,\$official_collect_id);
+      my $stuff = $sth->fetch;
+      Dumper($stuff);
+      unless ( $stuff ) {
+        warn("Data source definition for USGS Official not found!\n")
+        print("Official data will not be labeled with USGS Official collection system\.n")
+        $official_collect_id= $collect_id;
+      }
+      $sth->finish();
     };
-    $sth->finish();
-  };
 
-  if ($@) { # something screwed up
-    print $hdb->dbh->errstr, " $@\n";
-    $hdb->hdbdie("Errors occurred during selection of collection id info for USGS Official.\n");
+    if ($@) {                   # something screwed up
+      print $hdb->dbh->errstr, " $@\n";
+      $hdb->hdbdie("Errors occurred during selection of collection id info for USGS Official.\n");
+    }
   }
-
 }
 
 sub build_url
@@ -892,7 +898,7 @@ sub usage
   print STDERR <<"ENDHELP";
 $progname $verstring [ -h | -v ] | [ options ]
 Retrieves USGS flow data and inserts into HDB
-Example: $progname -u app_user -p <hdbpassword> -n 2 -i 09260000 -l r -s UC
+Example: $progname -a <accountfile> -n 2 -i 09260000 -l u
 
   -h               : This help
   -v               : Version
