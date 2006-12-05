@@ -10,7 +10,7 @@ my $status = 0;
 
 my ($app,$sqlfile, $sqlout, @output, $mail);
 
-my $to = 'frantz@wapa.gov,telschow@wapa.gov';
+my $to = 'frantz@wapa.gov,telschow@wapa.gov,patno@wapa.gov';
 my $cc = 'agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov';
 
 
