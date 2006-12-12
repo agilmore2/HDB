@@ -103,6 +103,7 @@ while (1) {
 
 # we need to try and create Glen total release here. But for which day?
 # We assume here that power release was computed by the AVM process
+    @dates=undef;
     grep {/20(\d\d\w\w\w\d\d)/ && push @dates, $1 } @crspfiles;
     for $date (@dates) {
       system ("glenTotRelease app_user uchdb2 $date") == 0 or
