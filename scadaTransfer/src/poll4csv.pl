@@ -12,7 +12,7 @@ $verstring =~ s/ \$//;
 my $progname = basename($0);
 chomp $progname;
 
-my ($polldir, $archivedir, $pattern, @files, $file, $hdbuser, $hdbpass);
+my ($polldir, $archivedir, $pattern, @files, $file, $accountfile);
 my (@crspfiles, $crspfile, @dates, $date);
 
 while (@ARGV)
@@ -22,10 +22,8 @@ while (@ARGV)
     usage();
   } elsif ($arg =~ /-v/) {	# print version
     version();
-  } elsif ($arg =~ /-u/) {	# get hdb user
-    $hdbuser=shift(@ARGV);
-  } elsif ($arg =~ /-p/) {	# get hdb passwd
-    $hdbpass=shift(@ARGV);
+  } elsif ($arg =~ /-a/) {	# get hdb login file
+    $accountfile=shift(@ARGV);
   } elsif ($arg =~ /-f/) {	# get csv filename pattern
     $pattern = shift(@ARGV);
   } elsif ($arg =~ /-d/) {	# get directory to check
@@ -37,8 +35,8 @@ while (@ARGV)
   }
 }
 
-if (!defined($hdbuser) || !defined($hdbpass)) {
-  print "Error! No user or password!\n";
+if (!defined($accountfile)) {
+  print "Error! No HDB login file!\n";
   usage();
 }
 
@@ -63,6 +61,8 @@ while (1) {
   @files = grep { /^$pattern/ && -f "$polldir/$_" } readdir(DIR);
   closedir DIR;
 
+  undef @dates;
+
   #if any new files, 
   # run parsecsv.pl to create separate crsp_ files for each day
   # run the loading script against them, and then
@@ -84,7 +84,7 @@ while (1) {
 
       # now for each crsp file created by parsecsv.pl, run the loading script
       foreach $crspfile (@crspfiles) {
-        my @program=("perl","../src/scada2hdb.pl","-u",$hdbuser,"-p",$hdbpass,"-f","$polldir/$crspfile");
+        my @program=("perl","../src/scada2hdb.pl","-a",$accountfile,"-f","$polldir/$crspfile");
         system (@program) == 0 or die "Failed to run scada2hdb.pl!\n $!";
       # move processed crspfile to old_files
         rename "$polldir/$crspfile", "$polldir/old_files/$crspfile" or
@@ -94,6 +94,9 @@ while (1) {
       #now move processed csv file to command line specified directory
       rename "$polldir/$file","$archivedir/$file" or
          die "Failed to move file: $file\n$!\n";
+
+      #get the date for all of the crsp files created by parsecsv
+      grep {/20(\d\d\w\w\w\d\d)/ && push @dates, $1 } @crspfiles;
     }
 
 #then run derivation for specified SDIs, only need to do this after each set of
@@ -103,8 +106,7 @@ while (1) {
 
 # we need to try and create Glen total release here. But for which day?
 # We assume here that power release was computed by the AVM process
-    @dates=undef;
-    grep {/20(\d\d\w\w\w\d\d)/ && push @dates, $1 } @crspfiles;
+
     for $date (@dates) {
       system ("glenTotRelease app_user uchdb2 $date") == 0 or
         warn "glenTotRelease failed!\n";
@@ -112,7 +114,7 @@ while (1) {
     system ("./derive_tot") == 0 or warn "Total Release Derivation failed!\n";
 # attempt to ship scada data to hydromet
     for $date (@dates) {
-      system ("scadaData app_user uchdb2 $date") == 0 or 
+      system ("scadaData app_user uchdb2 $date") == 0 or
         warn "scadaData failed.\n";
     }
   }
@@ -130,8 +132,7 @@ Example: $progname -d <directory> -u <user_name> -p <hdbpassword> -f <pattern>
 
   -h               : This help
   -v               : Version
-  -u <hdbusername> : HDB application user name (REQUIRED)
-  -p <hdbpassword> : HDB password (REQUIRED)
+  -a <accountfile> : HDB account login file (REQUIRED)
   -f <filename pattern>    : file pattern to watch for csv files(REQUIRED)
   -d <directory>   : directory to watch for files with right pattern (REQUIRED_
 ENDHELP

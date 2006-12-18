@@ -29,7 +29,7 @@ my $overwrite = 'null';
 
 my ($hdb, @value_date);
 my ($debug,$readfile);
-my ($hdbuser, $hdbpass);
+my ($accountfile, $hdbuser, $hdbpass);
 
 #======================================================================
 #parse arguments
@@ -52,6 +52,12 @@ while (@ARGV)
       print "file not found: $readfile";
       exit 1;
     }
+  } elsif ($arg =~ /-a/) {	# get file to read from
+    $accountfile = shift(@ARGV);
+    if (! -e $accountfile) {
+      print "file not found: $accountfile";
+      exit 1;
+    }
   } elsif ($arg =~ /-u/) {	# get hdb user
     $hdbuser=shift(@ARGV);
   } elsif ($arg =~ /-p/) {	# get hdb passwd
@@ -65,8 +71,8 @@ while (@ARGV)
   }
 }
 
-if (!defined($hdbuser) || !defined($hdbpass)) {
-  print "Error! No user or password!\n";
+if (!defined($accountfile) and (!defined($hdbuser) || !defined($hdbpass))) {
+  print "Error! No database login information!\n";
   usage();
 }
 
@@ -79,12 +85,18 @@ if (!defined($readfile)) {
 # global because used in several sub routines
 $hdb = Hdb->new;
 
-my $dbname;
-if (!defined($dbname = $ENV{HDB_LOCAL})) {
-  die "Environment variable HDB_LOCAL not set...\n";
-}
 #create connection to database
-$hdb->connect_to_db($dbname, $hdbuser, $hdbpass);
+if (defined($accountfile)) {
+  $hdb->connect_from_file($accountfile);
+} else {
+  my $dbname;
+  if (!defined($dbname = $ENV{HDB_LOCAL})) {
+    $hdb->hdbdie("Environment variable HDB_LOCAL not set...\n");
+  }
+  #create connection to database
+  $hdb->connect_to_db($dbname, $hdbuser, $hdbpass);
+}
+
 $hdb->set_approle();
 
 #Set date format to HDB Standard, with hours and minutes
@@ -385,8 +397,9 @@ Example: $progname -u app_user -p <hdbpassword> -f <crspfile>
 
   -h               : This help
   -v               : Version
-  -u <hdbusername> : HDB application user name (REQUIRED)
-  -p <hdbpassword> : HDB password (REQUIRED)
+  -a <loginfile>   : HDB account login file (REQUIRED or both of the following)
+  -u <hdbusername> : HDB application user name (see above)
+  -p <hdbpassword> : HDB password (see above)
   -f <filename>    : file to read from (REQUIRED)
   -t               : Test retrieval, but do not insert data into DB
   -o               : Use overwrite flag, otherwise null
