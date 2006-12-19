@@ -23,84 +23,40 @@ chomp $progname;
 
 my $insertflag = 1;
 
-my ($readfile, $runagg, $printurl, $debug);
+my ($readfile, $runagg, $printurl, $debug, $accountfile);
 my ($hdbuser, $hdbpass, @site_num_list);
+
+
+parseargs(@ARGV);
+
 
 #======================================================================
 #parse arguments
-while (@ARGV)
-{
-  my $arg = shift(@ARGV);
-  if ($arg =~ /-h/) {	        # print help
-    &usage;
-  } elsif ($arg =~ /-v/) {	# print version
-    &version;
-  } elsif ($arg =~ /-t/) {	# get test flag
-    $insertflag=undef;
-  } elsif ($arg =~ /-f/) {	# get file to read from
-    $readfile = shift(@ARGV);
-    if (! -e $readfile) {
-      print "file not found: $readfile";
-      exit 1;
-    }
-  } elsif ($arg =~ /-a/) {	# get run aggDisagg flag
-    $runagg=1;
-  } elsif ($arg =~ /-w/) {	# get print URL flag
-    $printurl=1;
-  } elsif ($arg =~ /-d/) {	# get debug flag
-    $debug=1;
-  } elsif ($arg =~ /-i/) {	# get codwr id
-    push @site_num_list, shift(@ARGV);
-  } elsif ($arg =~ /-u/) {	# get hdb user
-    $hdbuser=shift(@ARGV);
-  } elsif ($arg =~ /-p/) {	# get hdb passwd
-    $hdbpass=shift(@ARGV);
-  } elsif ($arg =~ /-.*/) {	# Unrecognized flag, print help.
-    print STDERR "Unrecognized flag: $arg\n";
-    &usage;
-  } else {
-    print STDERR "Unrecognized command line argument: $arg\n";
-    &usage;
-  }
-}
 
-# if user specified codwr gage ids, chop off last comma
-if (@site_num_list) {
-  if (grep (/[^A-Z]/, @site_num_list)) {
-    die "ERROR: @site_num_list\ndoes not look like CODWR id.\n";
-  }
-}
-
-if (!defined($hdbuser) || !defined($hdbpass)) {
-  print "ERROR: Arguments -u and -p (HDB username and password) required\n\n";
-  usage();
-}
-
-if (defined($runagg)) {
-  my $aggdisagg_loc = `which aggDisagg 2>/dev/null`;
-  chomp $aggdisagg_loc;
-  if (! -x $aggdisagg_loc ) {
-    print STDERR "Cannot find aggDisagg in your path, will not aggregate.
-To fix this, include the HDB bin directory in your path.\n";
-    undef $runagg;
-  }
-}
 
 #HDB database interface
 # global because used in several sub routines
 my $hdb = Hdb->new;
 
-my $dbname;
-if (!defined($dbname = $ENV{HDB_LOCAL})) {
-  die "Environment variable HDB_LOCAL not set...\n";
+if (defined($accountfile)) {
+  $hdb->connect_from_file($accountfile);
+} else {
+  my $dbname;
+  if (!defined($dbname = $ENV{HDB_LOCAL})) {
+    $hdb->hdbdie("Environment variable HDB_LOCAL not set...\n");
+  }
+  #create connection to database
+  $hdb->connect_to_db($dbname, $hdbuser, $hdbpass);
 }
-#create connection to database
-$hdb->connect_to_db($dbname, $hdbuser, $hdbpass);
+
+#set write ability on connection (app_role)
 $hdb->set_approle();
 
 #Set date format to the format used by their website
 $hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'MM/DD/YYYY HH:MI:SS AM'")
   or die "Unable to set NLS_DATE_FORMAT to US \n";
+
+my $datasource = "Colorado Division of Water Resources (CODWR)";
 
 get_app_ids();
 
@@ -132,15 +88,16 @@ data is in REVERSE order!
 
 my (@data);
 
-#note the DISCHRG code, some sites use numbers on the end, but this matches ok
-
 my $i = 0;
 
 if (defined($readfile))
 {
   $i = 0;
+
+#note the DISCHRG code, some sites use numbers on the end, but this matches ok
   my $datate = new HTML::TableExtract(headers =>
 				    ["Date/Time", "DISCHRG"]);
+
   $datate->parse_file($readfile) or die "HTML parse of $readfile failed: $!\n";
   foreach my $row ($datate->rows) {
     $data[$i][0] = $$row[0]; #note headers above, so this is date/time
@@ -192,7 +149,8 @@ if (defined($readfile))
 
     $i = 0;
     my $datate = new HTML::TableExtract(headers =>
-				    ["Date/Time", "DISCHRG"]);
+				    ["Date/Time",
+                                     $codwr_sites->{$codwr_no}->{data_code}]);
 
     $datate->parse($response->content)
        or die "HTML parse of response failed: $!\n"; ;
@@ -204,7 +162,7 @@ if (defined($readfile))
 
     print Dumper(@data) if defined($debug);
     process_data(\@data, $codwr_no);
-  }
+  } # end of foreach site loop
 }
 
 # print error messages for all sites that no data was returned for
@@ -217,6 +175,59 @@ foreach my $codwr_no (keys %$codwr_sites) {
 exit 0;
 
 #End main program, subroutines below
+
+sub parseargs {
+  while (@_) {
+    my $arg = shift;
+    if ($arg =~ /-h/) {	        # print help
+      &usage;
+    } elsif ($arg =~ /-v/) {	# print version
+      &version;
+    } elsif ($arg =~ /-t/) {	# get test flag
+      $insertflag=undef;
+    } elsif ($arg =~ /-f/) {	# get file to read from
+      $readfile = shift;
+      if (! -e $readfile) {
+        print "file not found: $readfile";
+        exit 1;
+      }
+    } elsif ($arg =~ /-a/) {	# get database login file
+      $accountfile = shift;
+      if (! -r $accountfile) {
+        print "file not found or unreadable: $accountfile\n";
+        exit 1;
+      }
+    } elsif ($arg =~ /-w/) {	# get print URL flag
+      $printurl=1;
+    } elsif ($arg =~ /-d/) {	# get debug flag
+      $debug=1;
+    } elsif ($arg =~ /-i/) {	# get codwr id
+      push @site_num_list, shift;
+    } elsif ($arg =~ /-u/) {	# get hdb user
+      $hdbuser=shift;
+    } elsif ($arg =~ /-p/) {	# get hdb passwd
+      $hdbpass=shift;
+    } elsif ($arg =~ /-.*/) {	# Unrecognized flag, print help.
+      print STDERR "Unrecognized flag: $arg\n";
+      usage();
+    } else {
+      print STDERR "Unrecognized command line argument: $arg\n";
+      usage();
+    }
+  }
+
+  # if user specified codwr gage ids, chop off last comma
+  if (@site_num_list) {
+    if (grep (/[^A-Z]/, @site_num_list)) {
+      die "ERROR: @site_num_list\ndoes not look like CODWR id.\n";
+    }
+  }
+
+  if (!defined($accountfile) and (!defined($hdbuser) || !defined($hdbpass))) {
+    print "ERROR: Required: accountfile (-a) or HDB username and password(-u -p)\n";
+    usage();
+  }
+}
 
 my $agen_id;
 my $collect_id;
@@ -250,7 +261,7 @@ sub process_data
   my $codwr_no = $_[1];
 
   $codwr_sites->{$codwr_no}->{found_data} = 1;
-  my $cur_sdi = $codwr_sites->{$codwr_no}->{site_datatype_id};
+  my $cur_sdi = $codwr_sites->{$codwr_no}->{sdi};
   my $cur_site = $codwr_sites->{$codwr_no}->{site_id};
 
   # put data into database, handing site id
@@ -276,21 +287,14 @@ sub build_url
 # specify discharge(these codes change!)  : MTYPE=$_[1]
 # no way to specify how much data is returned
 
-# this hack is to handle the different datacodes used for flow at the
-# sites of interest. This is lame, but ...
-  my %datacode = ("DOLBMCCO", "DISCHRG",
-		  "DOLTUNCO", "DISCHRG",
-		  "DOVCANCO", "DISCHRG1",
-		  "MVIDIVCO", "DISCHRG3",
-		  "UCANALCO", "DISCHRG2",
-		  "RIFRGRCO", "DISCHRG",
-		  "AZOTUNNM", "DISCHRG");
+# retrieval from database included data_codes for the various discharge
+# column ids
 
   die "Site id $_[0] not recognized, no datacode known!\n" 
-      unless (defined ($datacode{$_[0]}));
+      unless (defined $codwr_sites->{$_[0]}->{data_code});
 
   my $url = "http://www.dwr.state.co.us/Hydrology/flow_data.asp?";
-  $url .= "ID=$_[0]&MTYPE=$datacode{$_[0]}";
+  $url .= "ID=$_[0]&MTYPE=$codwr_sites->{$_[0]}->{data_code}";
 
   return $url;
 }
@@ -323,30 +327,37 @@ sub get_codwr_sites
 {
   my $id_limit_clause = '';
 
+# join arguments with "','" to make quoted string comma delimited list
   if (@_) {
     my $commalist = join ('\',\'',@_);
-    $id_limit_clause = "a.scs_id in ( '$commalist' ) and";
+    $id_limit_clause = "b.primary_site_code in ( '$commalist' ) and";
   }
 
-  my $get_codwr_no_statement = "select a.scs_id, a.site_id, b.site_datatype_id
-from hdb_site a, hdb_site_datatype b
-where a.site_id = b.site_id and
-b.datatype_id = 18 and
-a.scs_id is not null and $id_limit_clause
-( a.scs_id like '______CO' or a.scs_id like '______NM')
-order by scs_id ";
+
+  my $get_codwr_no_statement = "select b.primary_site_code codwr_id, b.primary_data_code data_code,
+ b.hdb_interval_name interval, b.hdb_method_id meth_id,
+ b.hdb_computation_id comp_id, b.hdb_site_datatype_id sdi,
+ d.site_id, d.site_name
+from hdb_site_datatype a, ref_ext_site_data_map b,
+hdb_site d, hdb_ext_data_source e
+where a.site_datatype_id = b.hdb_site_datatype_id and
+b.is_active_y_n = 'Y' and $id_limit_clause 
+a.site_id = d.site_id and
+b.ext_data_source_id = e.ext_data_source_id and
+e.ext_data_source_name = '$datasource'
+order by codwr_id";
 
   $hdb->dbh->{FetchHashKeyName} = 'NAME_lc';
 
   my $hashref;
 
-  print $get_codwr_no_statement, @_,"\n" if defined($debug);
+  print $get_codwr_no_statement."\n" if defined($debug);
 
   eval {
     $hashref = $hdb->dbh->selectall_hashref($get_codwr_no_statement,1);
   };
 
-  if ($@) { # something screwed up
+ if ($@) { # something screwed up
     print $hdb->dbh->errstr, ": $@\n";
     die "Errors occurred during automatic selection of CODWR gage ids.\n";
   }
@@ -392,7 +403,6 @@ sub insert_values
 
   my $i = 0;
   my $first_date = undef;
-  my $end_date_time = undef;
   my ($value, $value_date, $updated_date);
   my ($line);
   my ($old_val, $old_source);
@@ -401,10 +411,11 @@ sub insert_values
 
   my $modify_data_statement = "
     BEGIN
-        modify_r_base_raw(?,'instant',?,?,?, /* sdi, interval, start_date_time, end_date_time (in/out, not used), value */
-                          $agen_id,null,'Z', /* overwrite, validation */
-                          $collect_id,$load_app_id,$method_id,$computation_id,
-                          'Y');                 /*do update? */
+        modify_r_base(?,'instant',/*sdi, interval, */
+                      ?,null,?, /*start_date_time,null end_date_time, value*/
+                      $agen_id,null,'Z', /* overwrite, validation */
+                      $collect_id,$load_app_id,$method_id,$computation_id,
+                      'Y');                 /*do update? */
     END;";
 
   eval
@@ -417,7 +428,7 @@ sub insert_values
       #fix the non-reporting of time for their website for midnight,
       # ie, the date times are all in the form MM/DD/YYYY HH:MI:SS AM
       # except for midnight, which is reported as MM/DD/YYYY
-      if ($line->[0] =~ /^[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}$/) {
+      if ($line->[0] =~ /^\d\d?\/\d\d?\/\d{4}$/) {
 	$line->[0] .= " 12:00:00 AM";
       }
 
@@ -426,8 +437,8 @@ sub insert_values
 
       # find the previous value, if any for this point
       undef $old_val;
-      ($old_val, $old_source) = check_value($value_date, $cur_sdi);
-      # check if value from source is known
+      $old_val = check_value($value_date, $cur_sdi);
+      # check if value is known
       if (!defined $value or $value eq '') {
 	print "data missing: $cur_sdi, date $value_date\n" if defined($debug);
 	next;
@@ -448,12 +459,8 @@ sub insert_values
 	#modify
 	$modsth->bind_param(1,$cur_sdi);
 	$modsth->bind_param(2,$value_date);
-	$modsth->bind_param_inout(3,\$end_date_time,50);
-	$modsth->bind_param(4,$value);
+	$modsth->bind_param(3,$value);
 	$modsth->execute;
-
-	# throw away resulting end_date_time, we do not need it
-	$end_date_time = undef;
 
 	if (!defined($first_date)) { # mark that data has changed
 	  $first_date = $value_date;
@@ -484,7 +491,7 @@ sub usage
 {
   print STDERR <<"ENDHELP";
 $progname [ -h | -v ] | [ options ]
-Retrieves CODWR flow data and inserts into HDB, runs aggDisagg to r_hour.
+Retrieves CODWR flow data and inserts into HDB.
 Example: $progname -u app_user -p <hdbpassword> -n 2 -i 09260000 -a
 
   -h               : This help
