@@ -20,7 +20,7 @@ derivation $APP_USER $HDB_LOCAL 5035
 # now create Glen Power Release, assume new data for yesterday
 # NASTY HACK!
 
-yesterday=`/usr/local/bin/date +%y%b%d -d 'yesterday'`
+yesterday=`/usr/local/bin/date +%y%b%d -d 'yesterday' | tr '[a-z]' '[A-Z]'`
 
 glenPowRelease app_user uchdb2 $yesterday
 if [ $? -ne 0 ]
@@ -28,7 +28,7 @@ if [ $? -ne 0 ]
     echo "Glen Power Release failed."
 fi
 
-../../scadaTransfer/work/derive_pwr
+../../scadaTransfer/src/derive_pwr
 if [ $? -ne 0 ]
     then
     echo "derivation for Power Release failed!"
@@ -44,7 +44,7 @@ if [ $? -ne 0 ]
     echo "Glen Total Release failed!"
 fi
 
-../../scadaTransfer/work/derive_tot
+../../scadaTransfer/src/derive_tot
 if [ $? -ne 0 ]
     then
     echo "derivation for Total Release failed!"
