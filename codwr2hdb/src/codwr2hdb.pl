@@ -468,10 +468,10 @@ sub insert_values
 
   my $modify_data_statement = "
     BEGIN
-        modify_r_base(?,$codwr_site->{interval},/*sdi, interval, */
+        modify_r_base(?,'$codwr_site->{interval}',/*sdi, interval, */
                       ?,null,?, /*start_date_time,null end_date_time, value*/
-                      $agen_id,null,'Z', /* overwrite, validation */
-                      $collect_id,$load_app_id
+                      $agen_id,null,'$validation',/*agen, overwrite, validation*/
+                      $collect_id,$load_app_id,
                       $codwr_site->{meth_id},$codwr_site->{comp_id},
                       'Y');                 /*do update? */
     END;";
