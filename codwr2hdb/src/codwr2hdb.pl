@@ -121,7 +121,7 @@ if (defined($readfile))
   process_data(\@data, $codwr_no);
 } else { # attempt to get data from CODWR web page
 
-  foreach my $codwr_no (keys %$codwr_sites) {
+SITE: foreach my $codwr_no (keys %$codwr_sites) {
 
     my $url = build_url($codwr_no);
     if (defined($printurl) or defined($debug)) {
@@ -154,6 +154,11 @@ if (defined($readfile))
 
     $datate->parse($response->content)
        or die "HTML parse of response failed: $!\n"; ;
+
+    unless ($datate->tables) {
+      print "Unrecognized Data format! Skipping site $codwr_no\n";
+      next SITE;
+    }
 
     foreach my $row ($datate->rows) {
       $data[$i][0] = $$row[0]; #note headers above, so this is date/time
@@ -229,30 +234,72 @@ sub parseargs {
   }
 }
 
-my $agen_id;
-my $collect_id;
-my $load_app_id;
-my $method_id;
-my $computation_id;
+#global variables read from database
+my ($load_app_id, $agen_id, $validation, $url);
+
+my ($collect_id);
 
 sub get_app_ids
 {
-# Get ids to describe where data came from
-  my $nameid;
+# Get application wide ids to describe where data came from
+# only need to lookup loading application separately,
+# the data source generic mapping table contain everything but method
+# and computation.
 
-  $nameid->{agen}->{name} = 'Colorado Division of Water Resources';
-  $nameid->{collect}->{name} = '(see agency)';
-  $nameid->{load_app}->{name} = 'codwr2hdb.pl';
-  $nameid->{method}->{name} = 'unknown';
-  $nameid->{computation}->{name} = 'unknown';
+# defined early in the program
+  my $load_app_name = $progname;
+  my $sth;
 
-  $hdb->get_app_ids($nameid);
+  my $get_load_app_statement = "select loading_application_id from
+hdb_loading_application where loading_application_name = '$load_app_name'";
 
-  $agen_id = $nameid->{agen}->{id};
-  $collect_id = $nameid->{collect}->{id};
-  $load_app_id = $nameid->{load_app}->{id};
-  $method_id = $nameid->{method}->{id};
-  $computation_id = $nameid->{computation}->{id};
+  eval {
+    $sth = $hdb->dbh->prepare($get_load_app_statement);
+    $sth->execute;
+    $sth->bind_col(1,\$load_app_id);
+    unless ($sth->fetch) {
+      $hdb->hdbdie("Loading application id for $load_app_name not found!\n")
+    };
+    $sth->fetch;
+    $sth->finish();
+  };
+
+  if ($@) { # something screwed up
+    print $hdb->dbh->errstr, " $@\n";
+    $hdb->hdbdie("Errors occurred during selection of loading application id for $load_app_name.\n");
+  }
+
+  my $get_other_info_statement = "select e.agen_id,
+ e.collection_system_id collect_id, e.data_quality validation,
+ e.description url
+ from hdb_ext_data_source e
+ where e.ext_data_source_name = '$datasource'";
+
+  eval {
+    $sth = $hdb->dbh->prepare($get_other_info_statement);
+    $sth->execute;
+    $sth->bind_col(1,\$agen_id);
+    $sth->bind_col(2,\$collect_id);
+    $sth->bind_col(3,\$validation);
+    $sth->bind_col(4,\$url);
+    my $stuff = $sth->fetch;
+    Dumper($stuff);
+    unless ( $stuff ) {
+      $hdb->hdbdie("Data source definition not found, $agen_id, $collect_id, $validation, $url!\n")
+    }
+    $sth->finish();
+  };
+
+  if ($@) { # something screwed up
+    print $hdb->dbh->errstr, " $@\n";
+    $hdb->hdbdie("Errors occurred during selection of data source info for $datasource.\n");
+  }
+
+  if (!defined($validation)) {
+ #needs to be empty string for dynamic sql to recognize as null, not 'null'!
+    $validation = '';
+  }
+
 }
 
 sub process_data
@@ -260,9 +307,8 @@ sub process_data
   my $data = $_[0];
   my $codwr_no = $_[1];
 
-  $codwr_sites->{$codwr_no}->{found_data} = 1;
-  my $cur_sdi = $codwr_sites->{$codwr_no}->{sdi};
-  my $cur_site = $codwr_sites->{$codwr_no}->{site_id};
+  my $codwr_site = $codwr_sites->{$codwr_no};
+  $codwr_site->{found_data} = 1;
 
   # put data into database, handing site id
   # function returns date of first value and last value updated
@@ -271,7 +317,7 @@ sub process_data
   if (defined($insertflag)) {
     #tell user something, so they know it is working
     print "Working on CODWR gage number: $codwr_no\n";
-    ($first_date, $updated_date) = insert_values($data, $cur_sdi);
+    ($first_date, $updated_date) = insert_values($data, $codwr_site);
     if (!defined($first_date)) {
       print "No data updated for $codwr_no\n";
     }
@@ -293,10 +339,11 @@ sub build_url
   die "Site id $_[0] not recognized, no datacode known!\n" 
       unless (defined $codwr_sites->{$_[0]}->{data_code});
 
-  my $url = "http://www.dwr.state.co.us/Hydrology/flow_data.asp?";
-  $url .= "ID=$_[0]&MTYPE=$codwr_sites->{$_[0]}->{data_code}";
+  my $parameters = "ID=$_[0]&MTYPE=$codwr_sites->{$_[0]}->{data_code}";
 
-  return $url;
+# url already initialized by get_app_ids()
+
+  return $url . $parameters;
 }
 
 sub build_site_num_list
@@ -395,7 +442,8 @@ where start_date_time = ? and site_datatype_id = ? and interval = 'instant'";
 sub insert_values
 {
   my @data = @{$_[0]};
-  my $cur_sdi = $_[1];
+  my $codwr_site = $_[1];
+  my $cur_sdi = $codwr_site->{sdi};
 
   #fixed the url encoding to only retrieve one
   # parameter, so no longer need this, but could need it again
@@ -407,14 +455,24 @@ sub insert_values
   my ($line);
   my ($old_val, $old_source);
 
+
+  if (!defined($codwr_site->{interval}) or
+      !defined($agen_id) or
+      !defined($load_app_id) or
+      !defined($collect_id) or
+      !defined($codwr_site->{meth_id}) or
+      !defined($codwr_site->{comp_id})) {
+    $hdb->hdbdie("Unable to write data to database for $codwr_site->{site_name}\nRequired information missing in insert_values()!\n");
+  }
 # SQL statements
 
   my $modify_data_statement = "
     BEGIN
-        modify_r_base(?,'instant',/*sdi, interval, */
+        modify_r_base(?,$codwr_site->{interval},/*sdi, interval, */
                       ?,null,?, /*start_date_time,null end_date_time, value*/
                       $agen_id,null,'Z', /* overwrite, validation */
-                      $collect_id,$load_app_id,$method_id,$computation_id,
+                      $collect_id,$load_app_id
+                      $codwr_site->{meth_id},$codwr_site->{comp_id},
                       'Y');                 /*do update? */
     END;";
 
@@ -492,7 +550,7 @@ sub usage
   print STDERR <<"ENDHELP";
 $progname [ -h | -v ] | [ options ]
 Retrieves CODWR flow data and inserts into HDB.
-Example: $progname -u app_user -p <hdbpassword> -n 2 -i 09260000 -a
+Example: $progname -u app_user -p <hdbpassword> -i iAZOTUNNM
 
   -h               : This help
   -v               : Version
@@ -503,7 +561,6 @@ Example: $progname -u app_user -p <hdbpassword> -n 2 -i 09260000 -a
                      If none specified, will load all gages set up in HDB.
   -t               : Test retrieval, but do not insert data into DB
   -f <filename>    : Filename instead of live web
-  -a               : Run aggDisagg after loading instantaneous data
   -w               : Web address (URL developed to get CODWR data)
   -d               : Debugging output
 ENDHELP
