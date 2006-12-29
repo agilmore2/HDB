@@ -38,12 +38,18 @@ while (<INFILE>)
       $result = `diff -u $expectfile $errfile`;
       if ($?) {
         $status = 1;
-        $output .= "\nApplication $app had an error! $errfile is not as expected as of $errfiletime\n";
+        $output .= "
+Application error   : $app
+File not as expected: $errfile
+as of               : $errfiletime\n";
         $output .= $result;
       }
     } else {
       $status = 1;
-      $output .= "\nApplication $app had an error!\n$errfile is not empty as of $errfiletime\n";
+      $output .= "
+Application error   : $app
+File is not empty   : $errfile
+as of               : $errfiletime\n";
       #Make this file get sucked in completely, don't break on newlines
       my $oldsep = $INPUT_RECORD_SEPARATOR;
       $INPUT_RECORD_SEPARATOR = undef;
@@ -69,7 +75,7 @@ while (<INFILE>)
   ($app,$cmdname) = split '=';
   $ps = `ps -fuuchdba|grep $cmdname|grep -v grep`;
   if (!$ps) {
-    $output .= "\nRealtime application down: $app.\n";
+    $output .= "\nRealtime application down: $app\n";
     $status = 1;
   }
 }
