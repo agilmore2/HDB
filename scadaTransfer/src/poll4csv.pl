@@ -13,7 +13,7 @@ my $progname = basename($0);
 chomp $progname;
 
 my ($polldir, $archivedir, $pattern, @files, $file, $accountfile);
-my (@crspfiles, $crspfile, @dates, $date);
+my (@crspfiles, $crspfile, $newcrspfile, @dates, $date);
 
 while (@ARGV)
 {
@@ -87,7 +87,11 @@ while (1) {
         my @program=("perl","../src/scada2hdb.pl","-a",$accountfile,"-f","$polldir/$crspfile");
         system (@program) == 0 or die "Failed to run scada2hdb.pl!\n $!";
       # move processed crspfile to old_files
-        rename "$polldir/$crspfile", "$polldir/old_files/$crspfile" or
+        $newcrspfile=$crspfile;
+        while (-e "$polldir/old_files/$newcrspfile") {
+          $newcrspfile =~ s/dat$/update.dat/;
+        }
+        rename "$polldir/$crspfile", "$polldir/old_files/$newcrspfile" or
            die "Failed to move file: $crspfile\n$!\n";
       }
 
@@ -101,7 +105,7 @@ while (1) {
 
 #then run derivation for specified SDIs, only need to do this after each set of
 #files processed, not for each file.
-    system ("./derive_scada") == 0 or warn "SCADA Derivation failed!\n";
+    system ("../src/derive_scada") == 0 or warn "SCADA Derivation failed!\n";
 #      print "$file\n";
 
 # we need to try and create Glen total release here. But for which day?
@@ -111,7 +115,7 @@ while (1) {
       system ("glenTotRelease app_user uchdb2 $date") == 0 or
         warn "glenTotRelease failed!\n";
     }
-    system ("./derive_tot") == 0 or warn "Total Release Derivation failed!\n";
+    system ("../src/derive_tot") == 0 or warn "Total Release Derivation failed!\n";
 # attempt to ship scada data to hydromet
     for $date (@dates) {
       system ("scadaData app_user uchdb2 $date") == 0 or

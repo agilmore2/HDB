@@ -140,9 +140,6 @@ READ: while ($line = <INFILE>)
     $newdate=join('',$value_date[0],$newmonth, $value_date[2]);
     if (!defined($datefiles{$newdate})) {
       my $newfile = "$readdir/crsp_$newdate.dat";
-      while (-e $newfile) {
-        $newfile =~ s/dat$/update.dat/;
-      }
 
       $datefiles{$newdate} =  new FileHandle "> $newfile" or
         die "unable to open $newfile";
