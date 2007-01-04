@@ -119,20 +119,24 @@ if (! ($flowtype =~ /^[ud]$/)) {
   usage();
 }
 
-#do not have table set up to specify which official data to automatically get
-if (($flowtype eq "d") and !defined($site_num_list)) {
-  print "Lookout! You have specified loading all daily sites in HDB!\n";
-  print "Are you sure you want to do this? (y/n) \n";
-  my $yn;
-  read STDIN, $yn,2;
-  chomp $yn;
-  if ($yn eq 'n') {
-    exit 0;
-  } elsif ( $yn eq 'y') {
-    ; # do nothing
-  } else {
-    print "I'm sorry, I can't do that, Dave.\n";
-    exit 1;
+# If we are running from a terminal, check if user really wants to load all
+# this data! If it is not a terminal, we can assume the user knows what they
+# are doing!
+if (-t STDIN) {
+  if (($flowtype eq "d") and !defined($site_num_list)) {
+    print "Lookout! You have specified loading all daily sites in HDB!\n";
+    print "Are you sure you want to do this? (y/n) \n";
+    my $yn;
+    read STDIN, $yn,2;
+    chomp $yn;
+    if ($yn eq 'n') {
+      exit 0;
+    } elsif ( $yn eq 'y') {
+      ;                         # do nothing
+    } else {
+      print "I'm sorry, I can't do that, Dave.\n";
+      exit 1;
+    }
   }
 }
 
