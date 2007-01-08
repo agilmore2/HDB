@@ -1,16 +1,10 @@
 /* 
 This sqlscript does the following:
-store current time in a variable
 store date of lookback period (a command line variable)
 
-check to see if there are any updates to data for the period from 40 days ago
-  to the beginning of the lookback period
-  by checking date_time_loaded against the timestamp stored in previous run.
-write all these rows to a file named wapa_update_dateoflookback.dat
-
-update a driver table to store the timestamp found in step 1.
-
-exit status is set to the number of rows found with updates.
+grab all data for defined sites/datatypes 
+   from yesterday back to the lookback period
+   and write them to a file named wapa_dateoflookback.dat
 
 It is expected that the calling shell script, if any, would
 create the glen_ data files by grepping through the output
@@ -40,12 +34,6 @@ select to_char(sysdate - &&days_back, 'YYYYMMDD') day from dual;
 
 set termout off;
 
-column current_time new_value current_time;
-alter session set nls_date_format = 'DD-MON-YYYY HH24:MI:SS';
-select sysdate current_time from dual;
-
-
-
 /* data for this query is defined by an entry in hdb_ext_data_source
 with the name 'HDB WAPA/GCMRC Update' and a loading application id exists 
 with the same name. 
@@ -56,7 +44,7 @@ query for this application.
 
 Assumptions: all queries are for hourly data
 
-Queries to generate metadata to drive this report:
+DDL/DML to generate metadata to drive this report:
 
 
 insert into hdb_loading_application values(null, 'HDB WAPA/GCMRC Update',null,
@@ -148,62 +136,22 @@ d.datatype_id in (39,49,46,1197,73,14);
 
 */
 
-/* The rest of these queries are to handle the data that has been updated 
- since the last time this query ran, for data from 40 days ago to the day
-before days_back.
+/* This query is for all data in the previous days_back days. */
 
-If this is the first time this script has run, assume no data updates are
-desired for data in the last 40 days.
-*/
-
-column last_timestamp new_value last_timestamp;
-/* if the following select returns no rows, this query will provide a default*/
-select sysdate - &&days_back last_timestamp from dual;
-
-select last_retrieval last_timestamp
-from ref_loading_application_data a, hdb_loading_application b
-where a.loading_application_id = b.loading_application_id and
-b.loading_application_name = '&&app_name';
-
-
-/* any way to avoid doing one query for the number of rows, and another
- for all the data? without doing this in an application? */
-define update_rows = 0;
-column update_rows new_value update_rows;
-
-select 99 update_rows from dual where exists(
-select *
-from r_hour a, ref_ext_site_data_map b, hdb_ext_data_source c
-where trunc(a.start_date_time,'DD')
-between trunc(sysdate - 40,'DD')  and trunc(sysdate - &&days_back - 1,'DD') and
-a.date_time_loaded >= '&&last_timestamp' and
-b.hdb_site_datatype_id = a.site_datatype_id and
-b.ext_data_source_id = c.ext_data_source_id and
-c.ext_data_source_name = '&&app_name');
-
-spool wapa_update_&&day..dat
+spool wapa_&&day..dat
  -- extra period here because using &&day chomps one
 
 select to_char(a.start_date_time,'YYYY-MM-DD,HH24:MI:SS')||','||
-b.primary_site_code||','|| b.primary_data_code||','||
+b.primary_site_code||','||b.primary_data_code||','||
 round(a.value,2) as data
-from r_hour a, ref_ext_site_data_map b, hdb_ext_data_source c
-where trunc(a.start_date_time,'DD')
-between trunc(sysdate - 40,'DD')  and trunc(sysdate - &&days_back - 1,'DD') and
-a.date_time_loaded >= '&&last_timestamp' and
+from r_hour a, ref_ext_site_data_map b, hdb_ext_data_source c where
+trunc(a.start_date_time,'DD')
+between trunc(sysdate - &&days_back,'DD') and trunc(sysdate,'DD') and
 b.hdb_site_datatype_id = a.site_datatype_id and
 b.ext_data_source_id = c.ext_data_source_id and
-c.ext_data_source_name = '&&app_name'
+c.ext_data_source_name = '&&app_name' 
 order by b.primary_site_code, b.primary_data_code, a.start_date_time;
-
 
 spool off;
 
-update ref_loading_application_data
-set last_retrieval = '&&current_time'
-where loading_application_id = 
-(select loading_application_id from
-hdb_loading_application 
-where loading_application_name = '&&app_name');
-
-exit update_rows;
+quit;
