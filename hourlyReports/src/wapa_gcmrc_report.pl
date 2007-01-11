@@ -28,9 +28,6 @@ if (defined ($testing) && $testing eq "-d") {
 } else {
   $testing=0;
 }
-  $cc= 'agilmore@uc.usbr.gov';
-  $to = 'agilmore@uc.usbr.gov';
-
 
 if (!$numdays) {
   print "Usage: wapa_gcmrc_report.pl <number of days to look back>\n";
@@ -109,6 +106,8 @@ if (!$testing) {
 
   $sqlout = `sqlplus -S -L app_user/uchdb2\@uchdb2 \@wapa_scada_updates.sql $numdays`;
   $status = $?;
+
+  chomp $sqlout;
 
   # taken from 'perldoc -f system'
   if ($status == -1) {
