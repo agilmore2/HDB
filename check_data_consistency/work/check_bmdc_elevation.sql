@@ -25,7 +25,7 @@ b.collection_system_id = 7 and -- SCADA
 (a.start_date_time = (b.start_date_time + 2/24) and (a.start_date_time < '29-OCT-2006' or a.start_date_time >= '02-apr-2007'))) and 
 /* SCADA end date time is one hour off of instantaneous data
    DST issue, so when DST changes, this needs to get altered */
-abs(a.value - b.value) > .041 and -- difference of 0.031 feet is alarm
+abs(a.value - b.value) > .099 and -- Paul said .1 is fine, tired of hearing it 
 a.start_date_time > sysdate - &&days_back and 
 c.site_datatype_id = a.site_datatype_id and 
 c.datatype_id in (24) and -- instant elevation
@@ -55,7 +55,7 @@ a.collection_system_id in (2,3) and
 b.collection_system_id = 7 and
 ((a.start_date_time = (b.start_date_time + 1/24) and a.start_date_time between '29-OCT-2006' and '11-MAR-2007') or
 (a.start_date_time = (b.start_date_time + 2/24) and (a.start_date_time < '29-OCT-2006' or a.start_date_time >= '02-apr-2007'))) and 
-abs(a.value - b.value) > .041 and
+abs(a.value - b.value) > .099 and
 a.start_date_time > sysdate - &&days_back and
 c.site_datatype_id = a.site_datatype_id and
 c.datatype_id in (24) and
