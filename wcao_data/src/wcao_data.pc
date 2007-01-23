@@ -192,6 +192,8 @@ main ( int argc, char** argv )
 	  val_null1[count1]= value_null_indicator;
 	}
       count1 = count1 + 1;
+      if (count1 == count_base-1)
+         break;
     }
 
 
