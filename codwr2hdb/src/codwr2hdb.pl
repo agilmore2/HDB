@@ -122,7 +122,7 @@ if (defined($readfile))
 } else { # attempt to get data from CODWR web page
 
 SITE: foreach my $codwr_no (keys %$codwr_sites) {
-
+    undef(@data);
     my $url = build_url($codwr_no);
     if (defined($printurl) or defined($debug)) {
       print "$url\n";
@@ -167,6 +167,7 @@ SITE: foreach my $codwr_no (keys %$codwr_sites) {
 
     print Dumper(@data) if defined($debug);
     process_data(\@data, $codwr_no);
+    
   } # end of foreach site loop
 }
 
@@ -206,8 +207,8 @@ sub parseargs {
       $printurl=1;
     } elsif ($arg =~ /-d/) {	# get debug flag
       $debug=1;
-    } elsif ($arg =~ /-i/) {	# get codwr id
-      push @site_num_list, shift;
+    } elsif ($arg =~ /-i/) {	# get codwr id, split possible id,id,id
+      push @site_num_list, split /,/, shift;
     } elsif ($arg =~ /-u/) {	# get hdb user
       $hdbuser=shift;
     } elsif ($arg =~ /-p/) {	# get hdb passwd
@@ -550,7 +551,7 @@ sub usage
   print STDERR <<"ENDHELP";
 $progname [ -h | -v ] | [ options ]
 Retrieves CODWR flow data and inserts into HDB.
-Example: $progname -u app_user -p <hdbpassword> -i iAZOTUNNM
+Example: $progname -u app_user -p <hdbpassword> -i AZOTUNNM
 
   -h               : This help
   -v               : Version
