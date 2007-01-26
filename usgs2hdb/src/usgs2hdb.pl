@@ -35,9 +35,11 @@ my ( $hdbuser, $hdbpass, @site_num_list );
 
 my ( $begindatestr, $enddatestr);
 
-#======================================================================
-#parse arguments
-process_args(@ARGV); # uses globals, bad!
+#global variables read from database in get_app_ids
+my ( $load_app_id, $agen_id, $validation,
+     $url, $collect_id, $official_collect_id );
+     
+my $agen_abbrev = "USGS";
 
 #flowtype defines the title of the datasource, and we retrieve all other
 # data corresponding to that source from the database
@@ -45,6 +47,10 @@ process_args(@ARGV); # uses globals, bad!
 my %title;
 $title{u} = 'USGS Unit Values (Realtime)';
 $title{d} = 'USGS Daily Values (Provisional/Official)';
+
+#======================================================================
+#parse arguments
+process_args(@ARGV); # uses globals, bad!
 
 =head2 FORMAT
 
@@ -132,10 +138,6 @@ $hdb->set_approle();
 $hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI'")
   or $hdb->hdbdie("Unable to set NLS_DATE_FORMAT to ISO standard\n");
 
-#global variables read from database in get_app_ids
-my ( $load_app_id, $agen_id, $validation,
-     $url, $collect_id, $official_collect_id );
-
 get_app_ids();
 
 my ( $usgs_sites, $usgs_codes );
@@ -165,7 +167,7 @@ if ( defined($readfile) ) {
 # shortening the @data array after a insert
 # the insert is passed a slice of @data
 
-my $i = 0;
+my $numrows=0;
 STATION:
 until ( !defined( $data[0] ) ) {
 
@@ -178,20 +180,20 @@ until ( !defined( $data[0] ) ) {
 
   # count number of rows that are not comments after header
   #and are still the same usgs site
-  while (     $i <= $#data                              # while haven't reached the end of the data
-          and substr( $data[$i], 0, 1 ) ne '#'          # and first character is #
-          and ( split /\t/, $data[$i] )[1] eq $usgs_no )# and second tab-delimited file is still same id
+  while (     $numrows <= $#data                              # while haven't reached the end of the data
+          and substr( $data[$numrows], 0, 1 ) ne '#'          # and first character is #
+          and ( split /\t/, $data[$numrows] )[1] eq $usgs_no )# and second tab-delimited file is still same id
   {
-    $i++;
+    $numrows++;
   }
 
-  if ( $i eq 0 )
+  if ( $numrows eq 0 )
   { # USGS has started putting completely empty headers in for stations not in realtime system?
     next STATION;
   }
 
   #make a slice of the input data for this site
-  my (@cur_values) = @data[ 0 .. $i - 1 ];
+  my (@cur_values) = @data[ 0 .. $numrows - 1 ];
 
   # put data into database, unless testflag is set
   if ( defined($insertflag) ) {
@@ -199,22 +201,30 @@ until ( !defined( $data[0] ) ) {
   }
 
   #now shorten the file array by the number of lines used up by this usgs id
-  @data = @data[ $i .. $#data ];
+  @data = @data[ $numrows .. $#data ];
 
   #reset row count
-  $i = 0;
+  $numrows = 0;
 }
 
-# print error messages for all sites that no data was returned for
+# print error messages for all sites that no or bad data was returned 
+my @data_errors;
 foreach my $usgs_no ( keys %$usgs_sites ) {
-  if ( !defined( $usgs_sites->{$usgs_no}->{found_data} ) ) {
-    print STDERR
-"No $title{$flowtype} data found for site: $usgs_sites->{$usgs_no}->{site_name}   USGS ID: $usgs_no\n";
+  my $usgs_site = $usgs_sites->{$usgs_no};
+  if ( !defined( $usgs_site->{found_data} ) ) {
+    push @data_errors,
+"No data found for site: $usgs_site->{site_name}, $usgs_no\n";
+  } elsif (defined($usgs_site->{error_code})) {
+    push @data_errors,
+"Bad data seen for site: $usgs_site->{site_name}, $usgs_no: $usgs_site->{error_code}\n";
   }
 }
 
-#End main program, subroutines below
+print STDERR sort @data_errors;
 
+exit 0;
+
+#End main program, subroutines below
 
 sub get_app_ids {
 
@@ -365,7 +375,7 @@ sub build_site_num_list {
 
 sub build_web_request {
   my $ua = LWP::UserAgent->new;
-  $ua->agent( 'USGS Streamflow -> US Bureau of Reclamation HDB dataloader: '
+  $ua->agent( '$agen_abbrev Streamflow -> US Bureau of Reclamation HDB dataloader: '
               . $ua->agent );
   $ua->from('agilmore@uc.usbr.gov');
   $ua->timeout(600);
@@ -413,7 +423,7 @@ order by usgs_id";
   if ($@) {    # something screwed up
     print $hdb->dbh->errstr, " $@\n";
     $hdb->hdbdie(
-              "Errors occurred during automatic selection of USGS gage ids.\n");
+              "Errors occurred during automatic selection of $agen_abbrev gage ids.\n");
   }
 
   return $hashref;
@@ -487,7 +497,7 @@ sub insert_values {
   my @data      = @{ $_[0] };
   my $usgs_site = $_[1];
 
-  my $i          = 0;
+  my $numrows          = 0;
   my $first_date = undef;
   my ( $value, $value_date, $updated_date, $qual_code );
   my ( $line, @row );
@@ -533,7 +543,7 @@ sub insert_values {
     # insert or update or do nothing for each datapoint (row in file);
     foreach $line (@data) {
 
-      $i++;
+      $numrows++;
       @row = split /\t/, $line;
 
       #value date is already in required format
@@ -581,10 +591,13 @@ sub insert_values {
       } elsif ( $value =~ m/Ice/ ) {    # check for Ice
         print "Iced up: $usgs_site->{sdi}, date $value_date: $value\n"
           if defined($debug);
+        $usgs_site->{error_code}=$value;
         next;
       } elsif ( $value =~ m/[^0-9\.]/ ) {    # check for other text, complain
         print
-"value field not recognized: $usgs_site->{sdi}, date $value_date: $value\n";
+"value field not recognized: $usgs_site->{sdi}, date $value_date: $value\n"
+           if defined($debug);
+        $usgs_site->{error_code}=$value;
         next;
       } else {
 
@@ -617,13 +630,13 @@ sub insert_values {
   } elsif ($first_date) {    # commit the data
     $hdb->dbh->commit or $hdb->hdbdie( $hdb->dbh->errstr );
   }
-  return $first_date, $updated_date, $i;
+  return $first_date, $updated_date, $numrows;
 }
 
 sub usage {
   print STDERR <<"ENDHELP";
 $progname $verstring [ -h | -v ] | [ options ]
-Retrieves USGS flow data and inserts into HDB
+Retrieves $agen_abbrev flow data and inserts into HDB
 Example: $progname -a <accountfile> -n 2 -i 09260000 -l u
 
   -h               : This help
@@ -631,7 +644,7 @@ Example: $progname -a <accountfile> -n 2 -i 09260000 -l u
   -a <accountfile> : HDB account access file (REQUIRED or both below)
   -u <hdbusername> : HDB application user name (account file or REQUIRED)
   -p <hdbpassword> : HDB password (account file or REQUIRED)
-  -i <usgs_id>     : USGS gage id to look for. Must be in HDB. More than one
+  -i <usgs_id>     : $agen_abbrev gage id to look for. Must be in HDB. More than one
                      may be specified with -i id1,id2 or -i id1 -i id2
                      IF NONE SPECIFIED, WILL LOAD ALL GAGES ENABLED IN HDB.
   -t               : Test retrieval, but do not insert data into DB
@@ -640,7 +653,7 @@ Example: $progname -a <accountfile> -n 2 -i 09260000 -l u
   -b <DD-MON-YYYY> : Begin date for data retrieval
   -e <DD-MON-YYYY> : End date for data retrieval
   -o               : Use overwrite flag, otherwise null
-  -w               : Web address (URL developed to get USGS data)
+  -w               : Web address (URL developed to get $agen_abbrev data)
   -d               : Debugging output
   -l <u,d>         : Specify flow type: unitvalues (realtime default),or daily
 ENDHELP
@@ -719,7 +732,7 @@ sub process_args {
   # if user specified usgs gage ids, check that they match pattern
   if (@site_num_list) {
     if (grep (/[^0-9]/, @site_num_list)) {
-      die "ERROR: @site_num_list\ndoes not look like USGS id(s).\n";
+      die "ERROR: @site_num_list\ndoes not look like $agen_abbrev id(s).\n";
     }
   }
 
@@ -798,18 +811,18 @@ sub read_from_web {
   # check result
   if ( $response->is_success ) {
     my $status = $response->status_line;
-    print "Data read from USGS: $status\n";
+    print "Data read from $agen_abbrev: $status\n";
 
     # assume that response is compressed, and expand it
     my ($inflated) = Compress::Zlib::memGunzip( $response->content );
     if ( !$inflated ) {
-      $hdb->hdbdie("no data returned from USGS, exiting.\n");
+      $hdb->hdbdie("no data returned from $agen_abbrev, exiting.\n");
     }
     print $inflated if defined($debug);
     @$data = split /\n/, $inflated;
   } else {    # ($response->is_error)
     printf STDERR $response->error_as_HTML;
-    $hdb->hdbdie("Error reading from USGS web page, cannot continue\n");
+    $hdb->hdbdie("Error reading from $agen_abbrev web page, cannot continue\n");
   }
   return;
 }
@@ -834,7 +847,7 @@ sub read_header {
   my @headers = split /\t/, $header;
   if ( $headers[0] ne "agency_cd" ) {
     print "@headers\n";
-    $hdb->hdbdie("Data is not USGS website tab delimited format!\n");
+    $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
   }
 
   #save header data for finding column,
@@ -857,7 +870,7 @@ sub read_header {
   # check that usgs_no is sane, i.e. contains only digits:
   if ( $usgs_no =~ /\D/ ) {
     print STDERR
-      "Warning! '$usgs_no' does not appear to be a valid USGS site number!\n";
+      "Warning! '$usgs_no' does not appear to be a valid $agen_abbrev site number!\n";
     $hdb->hdbdie("Assuming data retrieved is garbage and giving up!\n");
   }
 
@@ -879,7 +892,7 @@ sub read_header {
       print STDERR "Not found: '$usgs_sites->{$usgs_no}->{data_code}' in:\n";
       print STDERR "@headers\n";
       print STDERR "Cannot find value column code from header!\n";
-      $hdb->hdbdie("Data is not USGS website tab delimited format!\n");
+      $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
     }
   }
 
@@ -894,7 +907,7 @@ sub read_header {
     print STDERR "Not found: '$usgs_sites->{$usgs_no}->{data_code}_cd' in:\n";
     print STDERR "@headers\n";
     print STDERR "Cannot find quality column code from header!\n";
-    $hdb->hdbdie("Data is not USGS website tab delimited format!\n");
+    $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
   }
   $usgs_sites->{$usgs_no}->{qualitycolumn} = $col;
 
@@ -909,19 +922,23 @@ sub process_data {
   my ($rows_processed,$updated_date,$first_date);
 
   #tell user something, so they know it is working
-  print "Working on USGS gage number: $usgs_no\n";
+  print "Working on $agen_abbrev gage number: $usgs_no\n";
 
+   my $usgs_site = $usgs_sites->{$usgs_no};
+ 
   #pass in possibly huge array of data for specific usgs id
   #function returns date of first value and last value updated
   ( $first_date, $updated_date, $rows_processed ) =
-    insert_values( \@$cur_values, $usgs_sites->{$usgs_no} );
+    insert_values( \@$cur_values, $usgs_site );
+
+#report results of insertion, and report error codes to STDERR
   if ( !defined($first_date) ) {
     print
-      "No data processed for $usgs_sites->{$usgs_no}->{site_name}, $usgs_no\n";
+      "No data processed for $usgs_site->{site_name}, $usgs_no\n";
   } else {
     print
-"Data processed from $first_date to $updated_date for $usgs_sites->{$usgs_no}->{site_name}, $usgs_no\n";
-    print "Number of rows from USGS processed: $rows_processed\n";
+"Data processed from $first_date to $updated_date for $usgs_site->{site_name}, $usgs_no\n";
+    print "Number of rows from $agen_abbrev processed: $rows_processed\n";
   }
   return;
 }
