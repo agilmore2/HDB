@@ -20,9 +20,6 @@ use strict;
 
 use English qw( -no_match_vars );
 
-#files from CODWR are DOS line ended, so prepare to chomp that way.
-$INPUT_RECORD_SEPARATOR = "\r\n";
-
 #check to see command line usage.
 my $progname = basename($0);
 chomp $progname;
@@ -31,9 +28,6 @@ chomp $progname;
 my $insertflag = 1;
 my ( $readfile, $runagg, $printurl, $debug, $accountfile );
 my ( $hdbuser, $hdbpass, @site_num_list );
-
-#global date string representations for use in retrieving data
-my ( $begindatestr, $enddatestr ) = process_args(@ARGV);
 
 #HDB database interface
 # global because used in several sub routines
@@ -44,10 +38,14 @@ my $datasource = "Colorado Division of Water Resources (CODWR)";
 
 #global variables read from database in get_app_ids
 my ( $load_app_id, $agen_id, $validation, $url, $collect_id );
+my $agen_abbrev = "CODWR";
 
 #global hash reference containing meta data about sites
 # initialized by get_codwr_sites below, and referenced throughout
 my ($codwr_sites);
+
+#global date string representations for use in retrieving data
+my ( $begindatestr, $enddatestr ) = process_args(@ARGV);
 
 $hdb = Hdb->new();
 if ( defined($accountfile) ) {
@@ -109,7 +107,14 @@ Only one site at a time can be retrieved
 GOES randomly timed data is on a different page than
 normal self-timed data
 
+Unfortunately, the following change to the input record separator is
+required.
+
 =cut
+
+
+#files from CODWR are DOS line ended, so prepare to chomp that way.
+$INPUT_RECORD_SEPARATOR = "\r\n";
 
 if ( defined($readfile) ) {
   my (@data);
@@ -128,13 +133,20 @@ if ( defined($readfile) ) {
   }    # end of foreach site loop
 }
 
-# print error messages for all sites that no data was returned for
+# print error messages for all sites that no or bad data was returned 
+my @data_errors;
 foreach my $codwr_no ( keys %$codwr_sites ) {
-  if ( !defined( $codwr_sites->{$codwr_no}->{found_data} ) ) {
-    print STDERR
-"No realtime data found for site CODWR ID: $codwr_no site_id: $codwr_sites->{$codwr_no}->{site_id}\n";
+  my $codwr_site = $codwr_sites->{$codwr_no};
+  if ( !defined( $codwr_site->{found_data} ) ) {
+    push @data_errors,
+"No data found for site: $codwr_site->{site_name}, $codwr_no\n";
+  } elsif (defined($codwr_site->{error_code})) {
+    push @data_errors,
+"Bad data seen for site: $codwr_site->{site_name}, $codwr_no: $codwr_site->{error_code}\n";
   }
 }
+
+print STDERR sort @data_errors;
 
 exit 0;
 
@@ -199,7 +211,7 @@ sub process_args {
   # if user specified codwr gage ids, chop off last comma
   if (@site_num_list) {
     if ( grep ( /[^A-Z]/, @site_num_list ) ) {
-      die "ERROR: @site_num_list\ndoes not look like CODWR id.\n";
+      die "ERROR: @site_num_list\ndoes not look like $agen_abbrev id.\n";
     }
   }
 
@@ -303,18 +315,19 @@ sub read_header {
   my @headers = split /\t/, $header;
   if (!($headers[0] =~ /Station/ )) {
     print "@headers\n";
-    $hdb->hdbdie("Data is not CODWR website tab delimited format!\n");
+    $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
   }
 
   #check to see if no data at all, blank line
-  if (    ( $data->[0] eq '' )
+  if (!defined($data->[0])  
+       or ( $data->[0] eq '' )
        or ( substr( $data->[0], 0, 1 ) eq '#' ) )
   {
     shift @$data;
     return 0;    #no data, next station please!
   }
 
-  # now we have data, mark data as found in USGS ID
+  # now we have data, mark data as found in CODWR ID
   # assume that the format holds, and the id is in second column
   my (@firstrow) = split /\t/, $data->[0];
   my $codwr_no = $firstrow[0];
@@ -322,7 +335,7 @@ sub read_header {
   # check that codwr_no is sane, i.e. contains only upper case letters:
   if ( $codwr_no =~ /[^[:upper:]]/ ) {
     print STDERR
-      "Warning! '$codwr_no' does not appear to be a valid CODWR site number!\n";
+      "Warning! '$codwr_no' does not appear to be a valid $agen_abbrev site number!\n";
     $hdb->hdbdie("Assuming data retrieved is garbage and giving up!\n");
   }
 
@@ -345,7 +358,7 @@ sub read_header {
       print STDERR "Not found: '$codwr_sites->{$codwr_no}->{data_code}' in:\n";
       print STDERR "@headers\n";
       print STDERR "Cannot find value column code from header!\n";
-      $hdb->hdbdie("Data is not CODWR website tab delimited format!\n");
+      $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
     }
   }
 
@@ -375,15 +388,22 @@ sub process_data {
 
   # put data into database, handing site id
   # function returns date of first value and last value updated
-  my ( $first_date, $updated_date );
+  my ( $first_date, $updated_date, $rows_processed );
 
   if ( defined($insertflag) ) {
 
     #tell user something, so they know it is working
-    print "Working on CODWR gage number: $codwr_no\n";
-    ( $first_date, $updated_date ) = insert_values( $data, $codwr_site );
+    print "Working on $agen_abbrev gage number: $codwr_no\n";
+    ( $first_date, $updated_date, $rows_processed ) = 
+       insert_values( $data, $codwr_site );
+
+#report results of insertion, and report error codes to STDERR
     if ( !defined($first_date) ) {
-      print "No data updated for $codwr_no\n";
+      print "No data updated for $codwr_site->{site_name}, $codwr_no\n";
+    } else {
+      print
+"Data processed from $first_date to $updated_date for $codwr_sites->{$codwr_no}->{site_name}, $codwr_no\n";
+      print "Number of rows from $agen_abbrev processed: $rows_processed\n";
     }
   }
 }
@@ -398,7 +418,7 @@ sub build_url ($$$) {
 # program generating the result  : http://www.dwr.state.co.us/SurfaceWater/data/export_tabular.aspx
 # specify site                            : ID=$_[0]
 # specify discharge(these codes change!)  : MTYPE=$_[1]
-# specify instant, hourly, or daily       : INTERVAl=1
+# specify instant, hourly, or daily       : INTERVAL=1
 # specify start and end dates             : START=YYYY-MM-DD&END=YYYY-MM-DD
 
   # retrieval from database included data_codes for the various discharge
@@ -407,7 +427,7 @@ sub build_url ($$$) {
   die "Site id $_[0] not recognized, no datacode known!\n"
     unless ( defined $codwr_sites->{ $_[0] }->{data_code} );
 
-  my $parameters = "INTERVAl=1&START=$begin_date&END=$end_date";
+  my $parameters = "INTERVAL=1&START=$begin_date&END=$end_date";
   $parameters .= "&ID=$_[0]&MTYPE=$codwr_sites->{$_[0]}->{data_code}";
 
   # url described by database, retrieved in get_app_ids()
@@ -430,7 +450,7 @@ sub build_site_num_list {
 sub build_web_request {
   my $ua = LWP::UserAgent->new;
   $ua->agent(
-         'CO DWR DOMSAT Streamflow -> US Bureau of Reclamation HDB dataloader: '
+         '$agen_abbrev Streamflow -> US Bureau of Reclamation HDB dataloader: '
            . $ua->agent );
   $ua->from('agilmore@uc.usbr.gov');
   my $request = HTTP::Request->new();
@@ -474,7 +494,7 @@ order by codwr_id";
 
   if ($@) {    # something screwed up
     print $hdb->dbh->errstr, ": $@\n";
-    die "Errors occurred during automatic selection of CODWR gage ids.\n";
+    die "Errors occurred during automatic selection of $agen_abbrev gage ids.\n";
   }
 
   return $hashref;
@@ -515,7 +535,7 @@ sub insert_values {
   # parameter, so no longer need this, but could need it again
   my $column = 1;
 
-  my $i          = 0;
+  my $numrows    = 0;
   my $first_date = undef;
   my ( $value, $value_date, $updated_date );
   my ( $dummy, $row,        @fields );
@@ -552,7 +572,7 @@ Required information missing in insert_values()!\n"
 
     # insert or update or do nothing for each datapoint;
     foreach $row (@data) {
-
+      $numrows++;
       # throw away first column, which is station id repeated
       ( $dummy, @fields ) = split /\t/, $row;
 
@@ -569,6 +589,7 @@ Required information missing in insert_values()!\n"
         next;
       } elsif ( $value =~ m/[^0-9\.]/ ) {    # check for other text, complain
         print "data corrupted: $cur_sdi, date $value_date: $value\n";
+        $codwr_site->{error_code} = $value;
         next;
       } elsif ( defined($old_val) and $old_val == $value ) {
         next;    # source and database are same, do nothing
@@ -604,36 +625,37 @@ Required information missing in insert_values()!\n"
   
   if ($@) {    # something screwed up in insert/update
     print "$hdb->dbh->errstr, $@\n";
-    die
-"Errors occurred during insert/update/deletion of data. Rolled back any database manipulation.\n";
+    $hdb->dbh->rollback;
+    $hdb->hdbdie(
+"Errors occurred during insert/update/deletion of data. Rolled back any database manipulation.\n");
   } elsif ($first_date) {    # commit the data
     if ( defined($debug) ) {
-      $hdb->dbh->rollback or die $hdb->dbh->errstr;
+      $hdb->dbh->rollback or $hdb->hdbdie($hdb->dbh->errstr);
     } else {
-      $hdb->dbh->commit or die $hdb->dbh->errstr;
+      $hdb->dbh->commit or $hdb->hdbdie($hdb->dbh->errstr);
     }
   }
-  return ( $first_date, $updated_date );
+  return ( $first_date, $updated_date, $numrows );
 }
 
 sub usage {
   print STDERR <<"ENDHELP";
 $progname [ -h | -v ] | [ options ]
-Retrieves CODWR flow data and inserts into HDB.
+Retrieves $agen_abbrev flow data and inserts into HDB.
 Example: $progname -u app_user -p <hdbpassword> -i AZOTUNNM
 
   -h               : This help
   -v               : Version
   -u <hdbusername> : HDB application user name (REQUIRED)
   -p <hdbpassword> : HDB password (REQUIRED)
-  -i <codwr_id>    : CODWR gage id to look for. Must be in HDB. More than one
+  -i <codwr_id>    : $agen_abbrev gage id to look for. Must be in HDB. More than one
                      may be specified with -i id1,id2 or -i id1 -i id2
                      If none specified, will load all gages set up in HDB.
   -t               : Test retrieval, but do not insert data into DB
   -f <filename>    : Filename instead of live web
-  -w               : Web address (URL developed to get CODWR data)
+  -w               : Web address (URL developed to get $agen_abbrev data)
   -d               : Debugging output
-  -n               : number of days to load (default 1)
+  -n               : number of days to load
   -b <DD-MON-YYYY> : Begin date for data retrieval
   -e <DD-MON-YYYY> : End date for data retrieval
 ENDHELP
@@ -680,17 +702,17 @@ sub read_from_web {
   # check result
   if ( $response->is_success ) {
     my $status = $response->status_line;
-    print "Data read from CODWR: $status\n";
+    print "Data read from $agen_abbrev: $status\n";
 
     if ( !$response->content ) {
-      $hdb->hdbdie("no data returned from CODWR, exiting.\n");
+      $hdb->hdbdie("no data returned from $agen_abbrev, exiting.\n");
     }
     print $response->content if defined($debug);
 
     @$data = split /$INPUT_RECORD_SEPARATOR/, $response->content;
   } else {    # ($response->is_error)
     printf STDERR $response->error_as_HTML;
-    $hdb->hdbdie("Error reading from CODWR web page, cannot continue\n");
+    $hdb->hdbdie("Error reading from $agen_abbrev web page, cannot continue\n");
   }
   return;
 }
