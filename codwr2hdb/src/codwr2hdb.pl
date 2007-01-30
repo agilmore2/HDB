@@ -105,16 +105,10 @@ Name of the flow column changes from
 DISCHRG to DISCHRG1 to DISCHRG2 to DISCHRG3
 Only one site at a time can be retrieved
 GOES randomly timed data is on a different page than
-normal self-timed data
-
-Unfortunately, the following change to the input record separator is
-required.
+normal self-timed data?
 
 =cut
 
-
-#files from CODWR are DOS line ended, so prepare to chomp that way.
-$INPUT_RECORD_SEPARATOR = "\r\n";
 
 if ( defined($readfile) ) {
   my (@data);
