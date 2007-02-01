@@ -11,8 +11,31 @@ my $status = 0;
 
 my ($app,$sqlfile, $sqlout, @output, $mail);
 
-my $to = 'telschow@wapa.gov,patno@wapa.gov,loftin@wapa.gov';
-my $cc = 'agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov';
+#get the email addresses to write to
+# first line of this reponse is
+# mailto: <emailaddresses>
+my @mailto = `sqlplus -S -L app_user/uchdb2\@uchdb2 \@wapa_mailto.sql`;
+$status = $?;
+
+# taken from 'perldoc -f system'
+if ($status == -1) {
+  print "failed to execute sqlplus!: $!\n";
+}
+elsif ($status & 127) {
+  printf "sqlplus died with signal %d\n",
+  ($status & 127);
+} else {
+  $status = $status >>8; #shift by 8 bits to get to actual signal value
+  if ($status > 0) {
+    die "sqlplus failed! $status, $sqlout $!\n";
+  } # else no error
+}
+
+chomp @mailto;
+my $to = $mailto[0];
+$to =~ s/^mailto: //;
+
+my $cc = $ENV{HDB_NOTIFY_EMAIL};
 
 
 #handle bogus mail transfer programs. In Linux, mail is the more featureful,
