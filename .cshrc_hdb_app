@@ -1,6 +1,6 @@
 # SITE SPECIFIC: email of person responsible for data transfers
 setenv HDB_XFER_EMAIL agilmore@uc.usbr.gov
-setenv HDB_NOTIFY_EMAIL agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov,tryan@uc.usbr.gov,ccutler@uc.usbr.gov,bbilly@uc.usbr.gov,emanseau@uc.usbr.gov
+setenv HDB_NOTIFY_EMAIL agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov,tryan@uc.usbr.gov,bbilly@uc.usbr.gov,emanseau@uc.usbr.gov
 
 # HDB - required for all HDB interactions
 # These probably need editting for a new system
@@ -14,6 +14,8 @@ setenv OUTPUT_DMI_PATH $HDB_BIN
 
 # Additional settings which may not be in user's .cshrc
 setenv PATH "$PATH":$HDB_BIN
+
+setenv JDKDIR /usr/jdk1.5
 
 # SITE SPECIFIC - for hydromet applications
 setenv ARCHIVE_DIR $HDB_ENV/dataloader/work/archives
