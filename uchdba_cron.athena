@@ -25,15 +25,17 @@
 #
 # Read data from USGS website
 #
-00 07,09,11,13,15 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/usgs2hdb/src; ./usgs2hdb.pl -u app_user -p <PASSWORD> -n 2 -l r -s UC > $HDB_ENV/usgs2hdb/src/usgs2hdb.log 2> $HDB_ENV/usgs2hdb/src/usgs2hdb.err
+00 07,09,11,13,15 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/usgs2hdb/src; ./usgs2hdb.pl -a $HOME/.app_user_login -n 2 -l u > $HDB_ENV/usgs2hdb/src/usgs2hdb.log 2> $HDB_ENV/usgs2hdb/src/usgs2hdb.err
 #
 # Read data from USGS website every day, all 31 days
 #
-03 5 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/usgs2hdb/src; ./usgs2hdb.pl -u app_user -p <PASSWORD> -n 31 -l r -s UC > $HDB_ENV/usgs2hdb/src/usgs2hdb31.log 2> $HDB_ENV/usgs2hdb/src/usgs2hdb31.err
+03 5 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/usgs2hdb/src; ./usgs2hdb.pl -a $HOME/.app_user_login -n 31 -l u > $HDB_ENV/usgs2hdb/src/usgs2hdb31.log 2> $HDB_ENV/usgs2hdb/src/usgs2hdb31.err
 #
 # Read data from CO DOMSAT website
 #
-27 7,9,16,21 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/codwr2hdb/src; ./codwr2hdb.pl -u app_user -p <PASSWORD> -a > $HDB_ENV/codwr2hdb/src/codwr2hdb.log 2> $HDB_ENV/codwr2hdb/src/codwr2hdb.err
+#
+27 7,9,16,21 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/codwr2hdb/src; ./codwr2hdb.pl -a $HOME/.app_user_login -n 3 > $HDB_ENV/codwr2hdb/src/codwr2hdb.log 2> $HDB_ENV/codwr2hdb/src/codwr2hdb.err
+#
 #
 # Run Archive Loader for current water year
 #
@@ -97,7 +99,7 @@
 #
 # Transfer SQL generated hourly data to WAPA and GCMRC
 #
-27 11 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/hourlyReports/work; ../src/wapa_gcmrc_report.pl 1 >> $HDB_ENV/hourlyReports/work/wapagcmrc.out 2> $HDB_ENV/hourlyReports/work/wapagcmrc.err
+27 11 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/hourlyReports/work; ../src/wapa_gcmrc_report.pl -a $HOME/.app_user_login >> $HDB_ENV/hourlyReports/work/wapagcmrc.out 2> $HDB_ENV/hourlyReports/work/wapagcmrc.err
 #
 # Transfer Daily (and monthly running total) Powell Release to WAPA/Montrose
 #
