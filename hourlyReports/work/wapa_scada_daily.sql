@@ -10,31 +10,7 @@ It is expected that the calling shell script, if any, would
 create the glen_ data files by grepping through the output
 It will have to determine whether the glen_update file is empty or not.
 
-FIXMEs: how to handle empty timestamp?
-how to avoid running second query if number of rows was zero?
-
-*/
--- command line argument for number of days to search back
-define days_back = &1;
-
-define app_name = 'HDB WAPA/GCMRC Update';
-
--- setup output
-set feedback off
-set pagesize 0
-set linesize 100
-set verify off
-
-set heading off;
-set trimspool on;
-
-
-column day new_value day;
-select to_char(sysdate - &&days_back, 'YYYYMMDD') day from dual;
-
-set termout off;
-
-/* data for this query is defined by an entry in hdb_ext_data_source
+Data for this query is defined by an entry in hdb_ext_data_source
 with the name 'HDB WAPA/GCMRC Update' and a loading application id exists 
 with the same name. 
 Further, we'll reuse the SCADA(?) site name mappings
@@ -136,7 +112,26 @@ d.datatype_id in (39,49,46,1197,73,14);
 
 */
 
-/* This query is for all data in the previous days_back days. */
+
+
+-- command line argument for date to retrieve data for
+define day = &1;
+
+define app_name = 'HDB WAPA/GCMRC Update';
+
+-- setup output
+set feedback off
+set pagesize 0
+set linesize 100
+set verify off
+
+set heading off;
+set trimspool on;
+
+set termout off;
+
+
+/* This query is for all data in the specified day. */
 
 spool wapa_&&day..dat
  -- extra period here because using &&day chomps one
@@ -146,12 +141,10 @@ b.primary_site_code||','||b.primary_data_code||','||
 round(a.value,2) as data
 from r_hour a, ref_ext_site_data_map b, hdb_ext_data_source c where
 trunc(a.start_date_time,'DD')
-between trunc(sysdate - &&days_back,'DD') and trunc(sysdate,'DD') and
+between to_date(&&day,'YYYYMMDD') and to_date(&&day,'YYYYMMDD')+1 and
 b.hdb_site_datatype_id = a.site_datatype_id and
 b.ext_data_source_id = c.ext_data_source_id and
 c.ext_data_source_name = '&&app_name' 
 order by b.primary_site_code, b.primary_data_code, a.start_date_time;
 
 spool off;
-
-quit;

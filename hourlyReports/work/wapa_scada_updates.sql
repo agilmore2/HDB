@@ -1,7 +1,7 @@
 /* 
 This sqlscript does the following:
 store current time in a variable
-store date of lookback period (a command line variable)
+run daily report for yesterday (in separate sql script)
 
 check to see if there are any updates to data for the period from 40 days ago
   to the beginning of the lookback period
@@ -19,34 +19,7 @@ It will have to determine whether the glen_update file is empty or not.
 FIXMEs: how to handle empty timestamp?
 how to avoid running second query if number of rows was zero?
 
-*/
--- command line argument for number of days to search back
-define days_back = &1;
-
-define app_name = 'HDB WAPA/GCMRC Update';
-
--- setup output
-set feedback off
-set pagesize 0
-set linesize 100
-set verify off
-
-set heading off;
-set trimspool on;
-
-
-column day new_value day;
-select to_char(sysdate - &&days_back, 'YYYYMMDD') day from dual;
-
-set termout off;
-
-column current_time new_value current_time;
-alter session set nls_date_format = 'DD-MON-YYYY HH24:MI:SS';
-select sysdate current_time from dual;
-
-
-
-/* data for this query is defined by an entry in hdb_ext_data_source
+Data for this query is defined by an entry in hdb_ext_data_source
 with the name 'HDB WAPA/GCMRC Update' and a loading application id exists 
 with the same name. 
 Further, we'll reuse the SCADA(?) site name mappings
@@ -148,9 +121,35 @@ d.datatype_id in (39,49,46,1197,73,14);
 
 */
 
+
+define app_name = 'HDB WAPA/GCMRC Update';
+
+-- setup output
+set feedback off
+set pagesize 0
+set linesize 100
+set verify off
+
+set heading off;
+set trimspool on;
+
+set termout off;
+
+column current_time new_value current_time;
+alter session set nls_date_format = 'DD-MON-YYYY HH24:MI:SS';
+select sysdate current_time from dual;
+
+set termout on;
+-- get date for yesterday
+column day new_value day;
+select to_char(trunc(sysdate - 1,'DD'), 'YYYYMMDD') day from dual;
+set termout off;
+
+@wapa_scada_daily &&day
+
 /* The rest of these queries are to handle the data that has been updated 
  since the last time this query ran, for data from 40 days ago to the day
-before days_back.
+before yesterday.
 
 If this is the first time this script has run, assume no data updates are
 desired for data in the last 40 days.
@@ -158,7 +157,7 @@ desired for data in the last 40 days.
 
 column last_timestamp new_value last_timestamp;
 /* if the following select returns no rows, this query will provide a default*/
-select sysdate - &&days_back last_timestamp from dual;
+select sysdate - 1 last_timestamp from dual;
 
 select last_retrieval last_timestamp
 from ref_loading_application_data a, hdb_loading_application b
@@ -175,7 +174,7 @@ select 99 update_rows from dual where exists(
 select *
 from r_hour a, ref_ext_site_data_map b, hdb_ext_data_source c
 where trunc(a.start_date_time,'DD')
-between trunc(sysdate - 40,'DD')  and trunc(sysdate - &&days_back - 1,'DD') and
+between trunc(sysdate - 40,'DD')  and trunc(sysdate - 2,'DD') and
 a.date_time_loaded >= '&&last_timestamp' and
 b.hdb_site_datatype_id = a.site_datatype_id and
 b.ext_data_source_id = c.ext_data_source_id and
@@ -189,7 +188,7 @@ b.primary_site_code||','|| b.primary_data_code||','||
 round(a.value,2) as data
 from r_hour a, ref_ext_site_data_map b, hdb_ext_data_source c
 where trunc(a.start_date_time,'DD')
-between trunc(sysdate - 40,'DD')  and trunc(sysdate - &&days_back - 1,'DD') and
+between trunc(sysdate - 40,'DD')  and trunc(sysdate - 2,'DD') and
 a.date_time_loaded >= '&&last_timestamp' and
 b.hdb_site_datatype_id = a.site_datatype_id and
 b.ext_data_source_id = c.ext_data_source_id and
