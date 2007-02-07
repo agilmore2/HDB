@@ -183,24 +183,54 @@ sub connect_to_db {
 }
 
 sub connect_from_file {
+  my $self = shift;
+  if (defined($self->{dbh})) {
+    $self->hdbdie("Attempted to connect while already connected to $self->{dbname}!\n");
+  }
+
+#pass filename (only argument) to read_accountfile function
+  my ($database, $user, $pass) = $self->read_accountfile (shift);
+
+  if (!defined($user) || !defined($pass) || !defined($database)) {
+    die ("database account file has incorrect format!\nexpecting user pass database\n");
+  }
+
+  return $self->connect_to_db($database,$user,$pass);
+}
+
+=item read_accountfile
+
+my ($database,$user,$pass) = $hdb->readaccountfile($filename);
+
+$filename must be the name of an account file with the appropriate contents
+It must not be readable by any other users (mode go-r)
+
+=cut
+
+sub read_accountfile {
   use Fcntl ':mode';
 
   my $self = shift;
   if (defined($self->{dbh})) {
     $self->hdbdie("Attempted to connect while already connected to $self->{dbname}!\n");
   }
+  my $filename = shift;
+   
+  my ($database,$pass,$user);
 
-#check that user can read the file
-  $filename = $_[0];
-  if (! -r $filename) {
-    die ("$filename is not readable!\n")
+  #check that user can read the file
+  if ( !-r $filename ) {
+    $self->hdbdie("$filename is not readable!\n");
   }
 
- open ACCESS, $filename;
-# check that the file is not readable from anyone but user
-  my $mode = (stat(ACCESS))[2];
-  if ($mode & (S_IRGRP | S_IROTH) ) {
-    die ("$filename has incorrect permissions! Should not be readable by group or others\n");
+  open ACCESS, $filename;
+
+  # check that the file is not readable from anyone but user
+  my $mode = ( stat(ACCESS) )[2];
+  if ( $mode & ( S_IRGRP | S_IROTH ) ) {
+    $self->hdbdie(
+"$filename has incorrect permissions! Should not be readable by group or others\n"
+    );
   }
 
 =item ACCOUNT FILE FORMAT
@@ -227,16 +257,11 @@ Will fail if file contains anything else.
       chomp;
       $database = $_;
     } else {
-      die ("Unrecognized line in access file: $_");
+      $self->hdbdie("Unrecognized line in access file: $_");
     }
   }
   close ACCESS;
-
-  if (!defined($user) || !defined($pass) || !defined($database)) {
-    die ("database account file has incorrect format!\nexpecting user pass database\n");
-  }
-
-  return $self->connect_to_db($database,$user,$pass);
+  return ($database, $user, $pass);
 }
 
 sub get_app_ids
@@ -323,4 +348,5 @@ sub get_SDI
 }
 
 1;
+
 
