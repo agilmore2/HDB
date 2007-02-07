@@ -130,7 +130,7 @@ from
 where 
  trunc(a.start_date_time,'DD')
   between trunc(sysdate - 40,'DD')  and trunc(sysdate - 2,'DD') and
- a.date_time_loaded >= to_date('$last_timestamp')-1/(24*60) and
+ a.date_time_loaded >= to_date('$last_timestamp')-(1/(24*60)) and
  b.hdb_site_datatype_id = a.site_datatype_id and
  b.ext_data_source_id = c.ext_data_source_id and
  c.ext_data_source_name = '$app_name' 
