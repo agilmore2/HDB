@@ -4,7 +4,7 @@
 
 # SITE SPECIFIC: email of person responsible for data transfers
 HDB_XFER_EMAIL=agilmore@uc.usbr.gov; export HDB_XFER_EMAIL
-HDB_NOTIFY_EMAIL=agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov,tryan@uc.usbr.gov,bbilly@uc.usbr.gov,emanseau@uc.usbr.gov; export HDB_NOTIFY_EMAIL
+HDB_NOTIFY_EMAIL=agilmore@uc.usbr.gov,rclayton@uc.usbr.gov,pdavidson@uc.usbr.gov,tryan@uc.usbr.gov,bbilly@uc.usbr.gov,emanseau@uc.usbr.gov,hpatno@uc.usbr.gov; export HDB_NOTIFY_EMAIL
 
 # HDB - required for all HDB interactions 
 # These must be editted for a new system
