@@ -102,11 +102,6 @@ where
  order by b.primary_site_code, b.primary_data_code, a.start_date_time
 ";
 
-my $lasttimesql = "select last_retrieval-1 last_timestamp
-from ref_loading_application_data a, hdb_loading_application b
-where a.loading_application_id = b.loading_application_id and
- b.loading_application_name = '$app_name'";
- 
 my $updatetimesql = "update ref_loading_application_data
 set last_retrieval = '$current_time'
 where loading_application_id = 
@@ -114,6 +109,11 @@ where loading_application_id =
 hdb_loading_application 
 where loading_application_name = '$app_name')";
 
+my $lasttimesql = "select last_retrieval last_timestamp
+from ref_loading_application_data a, hdb_loading_application b
+where a.loading_application_id = b.loading_application_id and
+ b.loading_application_name = '$app_name'";
+ 
 my $last_timestamp = @{$hdb->dbh->selectcol_arrayref("$lasttimesql")}[0];
 
   if (not defined($last_timestamp)) {
