@@ -73,20 +73,32 @@ if (defined ($testing) && $testing eq "-d") {
  
 $hdb->dbh->do("alter session set NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS'");
 
+#many of these HDB queries use the following syntax:
+# my $var = @{$hdb->dbh->selectcol_arrayref("query")}[0]
+# this is just a fancy way of getting the first item in the array that
+# a reference is returned to by the query.
+# since no column number is given to the selectcol_arrayref function,
+# the first column is returned.
+# since all of the queries in this script only return one column, this
+# is quiet useful. 
+
+# get the current time from the database
 my $current_time = @{$hdb->dbh->selectcol_arrayref("
 select sysdate current_time from dual
 ")}[0];
 
+# get the date for yesterday and print it
 my $yesterday = @{$hdb->dbh->selectcol_arrayref("
 select to_char(trunc(sysdate - 1,'DD'), 'YYYYMMDD') day from dual
 ")}[0];
 
 print $yesterday."\n";
 
-
 #define SQL queries. 
 my $mailtosql =  "select description from hdb_ext_data_source where
 ext_data_source_name = '$app_name'";
+
+#get data where the truncated to day date is yesterday
 my $dailysql =  "select
  to_char(a.start_date_time,'YYYY-MM-DD,HH24:MI:SS')||','||
  b.primary_site_code||','||b.primary_data_code||','||
@@ -94,7 +106,7 @@ my $dailysql =  "select
 from
  r_hour a, ref_ext_site_data_map b, hdb_ext_data_source c
 where
- trunc(a.start_date_time,'DD') = to_date($yesterday,'YYYYMMDD') and
+ trunc(a.start_date_time,'DD') = to_date('$yesterday','YYYYMMDD') and
  b.hdb_site_datatype_id = a.site_datatype_id and
  b.ext_data_source_id = c.ext_data_source_id and
  c.ext_data_source_name = '$app_name' 
@@ -102,6 +114,7 @@ where
  order by b.primary_site_code, b.primary_data_code, a.start_date_time
 ";
 
+# update the date loaded time
 my $updatetimesql = "update ref_loading_application_data
 set last_retrieval = '$current_time'
 where loading_application_id = 
@@ -109,6 +122,7 @@ where loading_application_id =
 hdb_loading_application 
 where loading_application_name = '$app_name')";
 
+# get the time that last application ran
 my $lasttimesql = "select last_retrieval last_timestamp
 from ref_loading_application_data a, hdb_loading_application b
 where a.loading_application_id = b.loading_application_id and
@@ -121,6 +135,8 @@ my $last_timestamp = @{$hdb->dbh->selectcol_arrayref("$lasttimesql")}[0];
     select sysdate - 1 last_timestamp from dual")}[0];
   }
 
+#get data for the last 40 days until the day before yesterday
+# that changed since one minute before the last time this application ran
 my $updatessql = "select 
  to_char(a.start_date_time,'YYYY-MM-DD,HH24:MI:SS')||','||
  b.primary_site_code||','||b.primary_data_code||','||
@@ -138,14 +154,6 @@ where
  order by b.primary_site_code, b.primary_data_code, a.start_date_time
 ";
 
-
-if (not (defined ($mailtosql) 
-          and defined ($dailysql)
-          and defined ($lasttimesql)
-          and defined ($updatessql)
-          and defined ($updatetimesql))) {
-  $hdb->hdbdie("invalid SQL files detected! Failing.");
-}
 #get the email addresses to write to
 # first line of this reponse is
 # mailto: <emailaddresses>
@@ -159,6 +167,7 @@ my $cc = $ENV{HDB_NOTIFY_EMAIL};
 
 my $data = $hdb->dbh->selectcol_arrayref("$dailysql");
 
+# get the array that $data refers to
 my @output = @$data;
 
 #mail this data to WAPA
