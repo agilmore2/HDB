@@ -175,7 +175,7 @@ my $mailcmd = $mail;
 if (!$testing) {
   #grep for GLEN, and ftp it to GCMRC
   my @glen = grep {/GLEN/} @output;
-  open GLEN, "|ncftpput -f gcqaccount.dat -c glen_$yesterday.dat"
+  open GLEN, "|ncftpput -o useCLNT=0 -f gcqaccount.dat -c glen_$yesterday.dat"
   or $hdb->hdbdie("ftp failed! $!");
   
 #  open GLEN, ">glen_$yesterday.dat";
@@ -218,7 +218,7 @@ if (!$testing) {
 
   my @glen = grep {/GLEN/} @output;
 
-  open GLEN, "|ncftpput -f gcqaccount.dat -c glen_update_$yesterday.dat" 
+  open GLEN, "|ncftpput -o useCLNT=0 -f gcqaccount.dat -c glen_update_$yesterday.dat" 
   or $hdb->hdbdie("ftp failed! $!");
 
 # open GLEN, ">glen_update_$yesterday.dat";

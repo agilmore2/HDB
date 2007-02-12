@@ -61,7 +61,7 @@ touch colo.report
 \rm -f nm$junk.txt
 \rm -f co$junk.txt
 
-ncftpget -e snotel_hist.err -p $FTP_PASSWD $FTP_HOST . \
+ncftpget -o useCLNT=0 -e snotel_hist.err -p $FTP_PASSWD $FTP_HOST . \
 $FTP_DIR/colorado/wy$1/cl$junk.txt \
 $FTP_DIR/riogrande/wy$1/rg$junk.txt \
 $FTP_DIR/ut/wy$1/ut$junk.txt \

@@ -14,7 +14,7 @@ FTP_DIR=/pub/outgoing/bor
 FTP_USER=anonymous
 FTP_PASSWD=$HDB_XFER_EMAIL
 
-ncftpget -u $FTP_USER -p $FTP_PASSWD $FTP_HOST . $FTP_DIR/data4usbr.unl
+ncftpget -o useCLNT=0 -u $FTP_USER -p $FTP_PASSWD $FTP_HOST . $FTP_DIR/data4usbr.unl
 
 echo ' '
 echo '     FTP Processing complete'
