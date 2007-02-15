@@ -22,11 +22,11 @@ derivation $APP_USER $HDB_LOCAL 5035
 
 yesterday=`/usr/local/bin/date +%y%b%d -d 'yesterday' | tr '[a-z]' '[A-Z]'`
 
-glenPowRelease app_user uchdb2 $yesterday
-if [ $? -ne 0 ]
-    then
-    echo "Glen Power Release failed."
-fi
+#glenPowRelease app_user uchdb2 $yesterday
+#if [ $? -ne 0 ]
+#    then
+#    echo "Glen Power Release failed."
+#fi
 
 ../../scadaTransfer/src/derive_pwr
 if [ $? -ne 0 ]
