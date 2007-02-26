@@ -167,7 +167,7 @@ READ: while ($line = <INFILE>)
 
 # check apparent validation field.
  # zero seems to be ok validation, 8 and 128 seem also ok. 32 may be bad.
-  next READ if not ($fields[8]==0 or $fields[8]==8 or $fields[8]==128);
+  next READ if not ($fields[8]==0 or $fields[8]==8 or $fields[8]==128 or $fields[8]==32);
 
 #use the string "sitecode,datacode" as the lookup key for the sdi etc.
 #pretty lame, but don't want to take time to make 2D hash
@@ -225,6 +225,7 @@ READ: while ($line = <INFILE>)
     }
   }
 }
+
 
 $hdb->dbh->disconnect();
 
