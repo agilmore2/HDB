@@ -12,7 +12,7 @@ FTP_DIR=/data/snow/update
 #FTP_USER=anonymous
 FTP_PASSWD=$HDB_XFER_EMAIL
 
-ncftpget -o useCLNT=0 -p $FTP_PASSWD $FTP_HOST . \
+ncftpget -V -o useCLNT=0 -p $FTP_PASSWD $FTP_HOST . \
 $FTP_DIR/colorado.txt \
 $FTP_DIR/riogrand.txt \
 $FTP_DIR/ut.txt \

@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # we create the new data in a pipe, and then put it on the server.
-res_data 964 40 |\grep -v ORACLE | ncftpput -o useCLNT=0 -c -e jordanelle.ftperr -f account.dat COE/jordanelle.dat
-res_data 928 40 |\grep -v ORACLE | ncftpput -o useCLNT=0 -c -e starvation.ftperr -f account.dat COE/starvation.dat
+res_data 964 40 |\grep -v ORACLE | ncftpput -V -o useCLNT=0 -c -e jordanelle.ftperr -f account.dat COE/jordanelle.dat
+res_data 928 40 |\grep -v ORACLE | ncftpput -V -o useCLNT=0 -c -e starvation.ftperr -f account.dat COE/starvation.dat
 
 
 #run a couple of scripts, writes to hydromet's directory
@@ -26,5 +26,5 @@ mv $$.dat data.dat
 
 # then place those files on the ftp site
 
-ncftpput -o useCLNT=0 -e coehour.ftperr -f account.dat COE/ hour.dat
-ncftpput -o useCLNT=0 -e coedata.ftperr -f account.dat COE/ data.dat
+ncftpput -V -o useCLNT=0 -e coehour.ftperr -f account.dat COE/ hour.dat
+ncftpput -V -o useCLNT=0 -e coedata.ftperr -f account.dat COE/ data.dat
