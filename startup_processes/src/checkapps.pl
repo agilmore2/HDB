@@ -132,8 +132,9 @@ sub stop_cp ($$) {
   my $hdb = shift;
   my $cps = shift;
 
+
   foreach my $cp (@$cps) {
-    system( "$decdir/bin/stopcomp", "-a", "\"$cp\"" );
+    system( "$decdir/bin/stopcomp", "-a", "\"$cp\"", ">/dev/null" );
   }
 }
 
