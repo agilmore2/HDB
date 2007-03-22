@@ -99,7 +99,7 @@ sub check_rs ($$) {
       print "Routing Spec $rs is down, no lock or status file\n";
     } else {
       my $rs_stat = read_rs_stat($rs);
-      if ( $rs_stat->{readtime} > localtime() - 3600 ) {
+      if ( $rs_stat->{StartTime}/1000 > time()-3600 ) {
         print
           "Routing Spec $rs is down, status file not updated in 60 minutes\n";
       } else {
