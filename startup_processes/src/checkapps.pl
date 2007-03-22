@@ -2,6 +2,7 @@
 
 use warnings;
 use strict;
+use POSIX 'setsid';
 
 use File::Basename;
 use Date::Calc qw(Decode_Date_US Today_and_Now);
@@ -55,7 +56,8 @@ sub main {
   my $cps = read_cp($hdb);
 
   if ( $mode eq 'start' ) {
-    startup_rs($rss);
+   undef $hdb;
+#    startup_rs($rss);
     startup_cp($cps);
   } elsif ( $mode eq 'status' ) {
     check_rs( $hdb, $rss );
@@ -75,8 +77,10 @@ sub startup_rs($) {
   my $rss = shift;
 
   foreach my $rs (@$rss) {
-    system( "$decdir/bin/rs", "-e", "-k", "$decdir/lockdir/$rs.lock", "\"$rs\"" );
+    my @args =
+      ( "$decdir/bin/rs", "-e", "-k", "$decdir/lockdir/$rs.lock", "\"$rs\"" );
 
+    daemonize(@args);
   }
 }
 
@@ -86,19 +90,36 @@ sub startup_cp($) {
   foreach my $cp (@$cps) {
     my $logfile = lc($cp);
     $logfile =~ s/\W//g;
-    $logfile = "$decdir/log/".$logfile;
-     
-    system( "$decdir/bin/compproc", "-d", "1", "-l",$logfile,"-a", "\"cp\"" );
+    $logfile = "$decdir/log/" . $logfile. ".log";
+
+    my @args =
+      ( "$decdir/bin/compproc", "-d", "1", "-l", $logfile, "-a", "\"$cp\"" );
+    daemonize(@args);
   }
+}
+
+#this function is from perldoc perlipc, with a few additions for real use
+sub daemonize {
+  local $SIG{CHLD} = 'IGNORE';
+
+  print @_;
+  defined( my $pid = fork() ) or die "Can't fork: $!";    
+  return if $pid;
+  setsid() or die "Can't start a new session: $!";
+  open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
+  open STDOUT, '>/dev/null'
+    or die "Can't write to /dev/null: $!";
+  open STDERR, '>&STDOUT' or die "Can't dup stdout: $!";
+  
+  exec (@_);
 }
 
 sub stop_rs ($$) {
   my $hdb = shift;
   my $rss = shift;
-  
+
   foreach my $rs (@$rss) {
-    if (! -e "$decdir/lockdir/$rs.lock")
-    {
+    if ( !-e "$decdir/lockdir/$rs.lock" ) {
       print "Cannot stop $rs, $decdir/lockdir/$rs.lock file not found!\n";
     } else {
       print "Stopping Routing Spec $rs\n";
@@ -112,10 +133,9 @@ sub stop_cp ($$) {
   my $cps = shift;
 
   foreach my $cp (@$cps) {
-    system("$decdir/bin/stopcomp", "-a", "\"$cp\"" );
+    system( "$decdir/bin/stopcomp", "-a", "\"$cp\"" );
   }
 }
-
 
 sub check_rs ($$) {
   my $hdb = shift;
@@ -128,22 +148,29 @@ sub check_rs ($$) {
       print "Routing Spec $rs is down, no lock or status file\n";
     } else {
       my $rs_stat = read_rs_stat($rs);
+
       #returns much information, but we care about StartTime,
       #which is in milliseconds since epoch
-      
+
       my $timediff = time() - $rs_stat->{StartTime} / 1000;
-      # time() returns current time since epoch, so this is difference in seconds between
-      # last rs run time and current time
-      if ( $timediff < 21 and
-           ($rs_stat->{Status} eq 'Running' or
-            $rs_stat->{Status} eq 'Waiting')) {
-        printf "Routing Spec $rs is up, last run %.2f seconds ago.\n",$timediff;
-      } elsif ($rs_stat->{Status} eq 'Stopped') {
+
+# time() returns current time since epoch, so this is difference in seconds between
+# last rs run time and current time
+      if (
+           $timediff < 21
+           and (    $rs_stat->{Status} eq 'Running'
+                 or $rs_stat->{Status} eq 'Waiting' )
+        )
+      {
+        printf "Routing Spec $rs is up, last run %.2f seconds ago.\n",
+          $timediff;
+      } elsif ( $rs_stat->{Status} eq 'Stopped' ) {
         print "Routing Spec $rs is down, status is stopped.\n";
       } else {
-        printf "Routing Spec $rs is down, status $rs_stat->{Status} file last updated %.2f seconds ago\n",
-                $timediff;
-      }    
+        printf
+"Routing Spec $rs is down, status $rs_stat->{Status} file last updated %.2f seconds ago\n",
+          $timediff;
+      }
     }
   }
 }
@@ -163,28 +190,31 @@ sub check_cp ($$) {
   b.loading_application_name = '$cp'"
     );
 
-    my $heartbeat = $heartbeats->[0][0] *60*60*24;
+    my $heartbeat = $heartbeats->[0][0];
+
     # transform heartbeat from fractional days to seconds
-     
+
     my $pid = $heartbeats->[0][1];
 
-    if ( !defined( $heartbeat ) ) {
+    if ( !defined($heartbeat) ) {
       print "Comp Proc $cp is down: No heartbeat in database\n";
-    } elsif ( $heartbeat < 2 ) {
+    } elsif ( $heartbeat < 2  / 60 / 60 / 24) {
 
       #heartbeat is less than two seconds old, CP is looking for work
       print "Comp Proc $cp is up, looking for work.\n";
     } else {
+
       #heartbeat is older, see if pid is running
       system("ps -p $pid >/dev/null");
       if ( $? == -1 ) {
         print "failed to execute ps: $!\n";
       } elsif ( ( $? >> 8 ) > 0 ) {    # this gives exit value for system call
-        printf "Comp Proc $cp is down, %.2f days old, no process id $pid found.\n",
-         $heartbeat/24/60/60;
+        printf
+          "Comp Proc $cp is down, %.2f days old, no process id $pid found.\n",
+          $heartbeat;
       } else {
         printf "Comp Proc $cp is up, process id $pid found, %.2f days old.\n",
-          $heartbeat/24/60/60;
+          $heartbeat;
       }
     }
   }
@@ -228,7 +258,7 @@ sub read_rs_stat ($) {
   my %rs_stat;
   foreach my $line (@lines) {
     chomp $line;
-    chop $line; # stupid \r\n!
+    chop $line;    # stupid \r\n!
     my @fields = split( /=/, $line, 2 );
     $rs_stat{ $fields[0] } = $fields[1];
   }
