@@ -75,7 +75,7 @@ sub startup_rs($) {
   my $rss = shift;
 
   foreach my $rs (@$rss) {
-    system( "echo", "$decdir/bin/rs", "-e", "-k", "$decdir/lockdir/$rs.lock", "$rs" );
+    system( "$decdir/bin/rs", "-e", "-k", "$decdir/lockdir/$rs.lock", "\"$rs\"" );
 
   }
 }
@@ -88,7 +88,7 @@ sub startup_cp($) {
     $logfile =~ s/\W//g;
     $logfile = "$decdir/log/".$logfile;
      
-    system( "echo", "$decdir/bin/compproc", "-d", "1", "-l",$logfile,"-a", $cp );
+    system( "$decdir/bin/compproc", "-d", "1", "-l",$logfile,"-a", "\"cp\"" );
   }
 }
 
@@ -112,7 +112,7 @@ sub stop_cp ($$) {
   my $cps = shift;
 
   foreach my $cp (@$cps) {
-    system("echo", "$decdir/bin/stopcomp", "-a", "$cp" );
+    system("$decdir/bin/stopcomp", "-a", "\"$cp\"" );
   }
 }
 
