@@ -134,7 +134,7 @@ sub stop_cp ($$) {
 
 
   foreach my $cp (@$cps) {
-    system( "$decdir/bin/stopcomp", "-a", "\"$cp\"", ">/dev/null" );
+    system( "$decdir/bin/stopcomp", "-a", "\"$cp\"" );
   }
 }
 
