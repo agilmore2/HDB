@@ -80,6 +80,7 @@ sub startup_rs($) {
     my @args =
       ( "$decdir/bin/rs", "-e", "-k", "$decdir/lockdir/$rs.lock", "\"$rs\"" );
 
+    print "Starting up $rs\n";
     daemonize(@args);
   }
 }
@@ -94,6 +95,9 @@ sub startup_cp($) {
 
     my @args =
       ( "$decdir/bin/compproc", "-d", "1", "-l", $logfile, "-a", "\"$cp\"" );
+      
+    print "Starting up $cp\n";
+      
     daemonize(@args);
   }
 }
