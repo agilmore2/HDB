@@ -57,7 +57,7 @@ sub main {
 
   if ( $mode eq 'start' ) {
    undef $hdb;
-#    startup_rs($rss);
+    startup_rs($rss);
     startup_cp($cps);
   } elsif ( $mode eq 'status' ) {
     check_rs( $hdb, $rss );
