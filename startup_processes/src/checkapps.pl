@@ -102,7 +102,6 @@ sub startup_cp($) {
 sub daemonize {
   local $SIG{CHLD} = 'IGNORE';
 
-  print @_;
   defined( my $pid = fork() ) or die "Can't fork: $!";    
   return if $pid;
   setsid() or die "Can't start a new session: $!";
