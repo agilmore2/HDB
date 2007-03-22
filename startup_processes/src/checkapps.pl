@@ -63,6 +63,7 @@ sub main {
   } elsif ( $mode eq 'stop' ) {
     stop_rs( $hdb, $rss );
     stop_cp( $hdb, $cps );
+    sleep 10;
   } else {
     $hdb->hdbdie("Unrecognized mode $mode!\n");
   }
@@ -74,8 +75,7 @@ sub startup_rs($) {
   my $rss = shift;
 
   foreach my $rs (@$rss) {
-    system( "echo", "$decdir/bin/rs", "-e", "-k", "$decdir/lockdir/$rs.lock",
-            "-l", "$rs.log", "$rs" );
+    system( "echo", "$decdir/bin/rs", "-e", "-k", "$decdir/lockdir/$rs.lock", "$rs" );
 
   }
 }
@@ -84,9 +84,38 @@ sub startup_cp($) {
   my $cps = shift;
 
   foreach my $cp (@$cps) {
-    system( "echo", "$decdir/bin/compproc", "-d", "1", "-a", "$cp" );
+    my $logfile = lc($cp);
+    $logfile =~ s/\W//g;
+    $logfile = "$decdir/log/".$logfile;
+     
+    system( "echo", "$decdir/bin/compproc", "-d", "1", "-l",$logfile,"-a", $cp );
   }
 }
+
+sub stop_rs ($$) {
+  my $hdb = shift;
+  my $rss = shift;
+  
+  foreach my $rs (@$rss) {
+    if (! -e "$decdir/lockdir/$rs.lock")
+    {
+      print "Cannot stop $rs, $decdir/lockdir/$rs.lock file not found!\n";
+    } else {
+      print "Stopping Routing Spec $rs\n";
+      unlink("$decdir/lockdir/$rs.lock");
+    }
+  }
+}
+
+sub stop_cp ($$) {
+  my $hdb = shift;
+  my $cps = shift;
+
+  foreach my $cp (@$cps) {
+    system("echo", "$decdir/bin/stopcomp", "-a", "$cp" );
+  }
+}
+
 
 sub check_rs ($$) {
   my $hdb = shift;
@@ -99,12 +128,22 @@ sub check_rs ($$) {
       print "Routing Spec $rs is down, no lock or status file\n";
     } else {
       my $rs_stat = read_rs_stat($rs);
-      if ( $rs_stat->{StartTime}/1000 > time()-3600 ) {
-        print
-          "Routing Spec $rs is down, status file not updated in 60 minutes\n";
+      #returns much information, but we care about StartTime,
+      #which is in milliseconds since epoch
+      
+      my $timediff = time() - $rs_stat->{StartTime} / 1000;
+      # time() returns current time since epoch, so this is difference in seconds between
+      # last rs run time and current time
+      if ( $timediff < 21 and
+           ($rs_stat->{Status} eq 'Running' or
+            $rs_stat->{Status} eq 'Waiting')) {
+        printf "Routing Spec $rs is up, last run %.2f seconds ago.\n",$timediff;
+      } elsif ($rs_stat->{Status} eq 'Stopped') {
+        print "Routing Spec $rs is down, status is stopped.\n";
       } else {
-        print "Routing Spec $rs is up\n";
-      }
+        printf "Routing Spec $rs is down, status $rs_stat->{Status} file last updated %.2f seconds ago\n",
+                $timediff;
+      }    
     }
   }
 }
@@ -124,29 +163,32 @@ sub check_cp ($$) {
   b.loading_application_name = '$cp'"
     );
 
-    my @heartbeat = @$heartbeats;
+    my $heartbeat = $heartbeats->[0][0] *60*60*24;
+    # transform heartbeat from fractional days to seconds
+     
+    my $pid = $heartbeats->[0][1];
 
-    if ( !defined( $heartbeat[0][0] ) ) {
+    if ( !defined( $heartbeat ) ) {
       print "Comp Proc $cp is down: No heartbeat in database\n";
-    } elsif ( $heartbeat[0][0] < 2 / 24 / 60 / 60 ) {
+    } elsif ( $heartbeat < 2 ) {
 
       #heartbeat is less than two seconds old, CP is looking for work
       print "Comp Proc $cp is up, looking for work.\n";
     } else {
-
       #heartbeat is older, see if pid is running
-      system("ps -p $heartbeat[0][1]");
+      system("ps -p $pid >/dev/null");
       if ( $? == -1 ) {
         print "failed to execute ps: $!\n";
       } elsif ( ( $? >> 8 ) > 0 ) {    # this gives exit value for system call
-        print "Comp Proc $cp is down, no process id $heartbeat[0][1] found\n";
+        printf "Comp Proc $cp is down, %.2f days old, no process id $pid found.\n",
+         $heartbeat/24/60/60;
       } else {
-        print
-"Comp Proc $cp is up, process id $heartbeat[0][1] found, $heartbeat[0][0] days old.\n";
+        printf "Comp Proc $cp is up, process id $pid found, %.2f days old.\n",
+          $heartbeat/24/60/60;
       }
     }
   }
-}    
+}
 
 sub read_rs($) {
   my $hdb = shift;
@@ -183,9 +225,10 @@ sub read_rs_stat ($) {
   open STATFILE, "$decdir/routstat/$rs.stat";
   my @lines = <STATFILE>;
   close STATFILE;
-
   my %rs_stat;
   foreach my $line (@lines) {
+    chomp $line;
+    chop $line; # stupid \r\n!
     my @fields = split( /=/, $line, 2 );
     $rs_stat{ $fields[0] } = $fields[1];
   }
