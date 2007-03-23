@@ -26,6 +26,10 @@
 #include <stdarg.h>
 #include <errno.h>
 
+/* need time.h on linux for correct strftime and struct tm defines */
+#ifdef __linux__
+ #include <time.h>
+#endif
 
 /*
 ** The following macro enables or disables debug.  Please do not remove this 
