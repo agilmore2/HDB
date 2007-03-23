@@ -27,7 +27,8 @@ XFERUSER=morning; export XFERUSER
 getPID()
 {
 	# Get the process ID of any running gefrx process
-	pid=`ps -e | awk '/gefrx/ && !/awk/ {print $1}' `
+	pid=`ps -e | awk '/gefrx/ && !/awk/ {print $1}'`
+
 
 	# Verify that a pid was found if not make the process ID 0
 	if [ "$pid" = "" ]; then
