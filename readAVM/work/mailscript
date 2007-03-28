@@ -38,11 +38,11 @@ fi
 # but we may not have data in the database! Try it anyway, and no big deal
 # if it fails here.
 
-glenTotRelease app_user uchdb2 $yesterday
-if [ $? -ne 0 ]
-    then
-    echo "Glen Total Release failed!"
-fi
+#glenTotRelease app_user uchdb2 $yesterday
+#if [ $? -ne 0 ]
+#    then
+#    echo "Glen Total Release failed!"
+#fi
 
 ../../scadaTransfer/src/derive_tot
 if [ $? -ne 0 ]

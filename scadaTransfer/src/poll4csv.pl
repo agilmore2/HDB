@@ -110,11 +110,11 @@ while (1) {
 
 # we need to try and create Glen total release here. But for which day?
 # We assume here that power release was computed by the AVM process
-
-    for $date (@dates) {
-      system ("glenTotRelease app_user uchdb2 $date") == 0 or
-        warn "glenTotRelease failed!\n";
-    }
+#
+#    for $date (@dates) {
+#      system ("glenTotRelease app_user uchdb2 $date") == 0 or
+#        warn "glenTotRelease failed!\n";
+#    }
     system ("../src/derive_tot") == 0 or warn "Total Release Derivation failed!\n";
 # attempt to ship scada data to hydromet
     for $date (@dates) {
