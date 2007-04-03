@@ -25,7 +25,7 @@ start() {
 
 stop() {
 	echo -n $"Stopping $prog: "
-	su - uchdba -c "uchdba $HDB_ENV/startup_processes/src/checkapps.pl -a ~uchdba/.app_user_login stop"
+	su - uchdba -c "$HDB_ENV/startup_processes/src/checkapps.pl -a ~uchdba/.app_user_login stop"
 	echo
 }
 
