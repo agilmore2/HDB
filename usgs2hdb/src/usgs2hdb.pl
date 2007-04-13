@@ -375,7 +375,7 @@ sub build_site_num_list {
 
 sub build_web_request {
   my $ua = LWP::UserAgent->new;
-  $ua->agent( '$agen_abbrev Streamflow -> US Bureau of Reclamation HDB dataloader: '
+  $ua->agent( "$agen_abbrev Streamflow -> US Bureau of Reclamation HDB dataloader: "
               . $ua->agent );
   $ua->from('agilmore@uc.usbr.gov');
   $ua->timeout(600);
