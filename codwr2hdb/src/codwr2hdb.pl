@@ -444,7 +444,7 @@ sub build_site_num_list {
 sub build_web_request {
   my $ua = LWP::UserAgent->new;
   $ua->agent(
-         '$agen_abbrev Streamflow -> US Bureau of Reclamation HDB dataloader: '
+         "$agen_abbrev Streamflow -> US Bureau of Reclamation HDB dataloader: "
            . $ua->agent );
   $ua->from('agilmore@uc.usbr.gov');
   my $request = HTTP::Request->new();
