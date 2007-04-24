@@ -30,7 +30,7 @@ chomp $progname;
 my $insertflag = 1;
 my $overwrite  = 'null';
 
-my ( $readfile, $accountfile, $runagg, $printurl, $debug, $flowtype );
+my ( $readfile, $accountfile, $runagg, $printurl, $debug, $flowtype, $compression );
 my ( $hdbuser, $hdbpass, @site_num_list );
 
 my ( $begindatestr, $enddatestr);
@@ -328,14 +328,14 @@ sub build_url {
   #locations of USGS programs generating our data are contained in database
   # and looked up by get_app_ids subroutine above.
   #this url could be generated from http://waterdata.usgs.gov/nwis/uv
-  # or dv, or the discharge url
+  # or dv
   # but the url generated that way has lots of extra junk
   # parts of the url used here:
   # program generating the result  : stored in $url, see definition
   # specify flow                   : parameter_cd= (from database)
   # specify date format            : date_format=YYYY-MM-DD
   # specify tab delimited format   : format=rdb
-  # specify gzip compression       : rdb_compression=gz
+  # specify gzip compression       : rdb_compression=gz (Off by default at USGS request)
   # specify begin date             : begin_date=$begindatestr
   # specify end date               : end_date=$enddatestr
   # specify multiple site numbers  : multiple_site_no=
@@ -346,7 +346,11 @@ sub build_url {
   # you can specify period also in hours by appending h to the end of numdays
 
   my $parameters =
-"?date_format=YYYY-MM-DD&format=rdb&rdb_compression=gz&begin_date=$begindatestr&end_date=$enddatestr";
+"?date_format=YYYY-MM-DD&format=rdb&begin_date=$begindatestr&end_date=$enddatestr";
+
+  if ($compression) {
+    $parameters .= "&rdb_compression=gz"
+  }
 
   #append data code list, complete url syntax done in get_usgs_codes
   $parameters .= "$usgs_codes";
@@ -652,6 +656,7 @@ Example: $progname -a <accountfile> -n 2 -i 09260000 -l u
   -n <numdays>     : Days for retrieval (max 31 for realtime)
   -b <DD-MON-YYYY> : Begin date for data retrieval
   -e <DD-MON-YYYY> : End date for data retrieval
+  -z               : Save bandwidth by getting compressed data, off by default by request
   -o               : Use overwrite flag, otherwise null
   -w               : Web address (URL developed to get $agen_abbrev data)
   -d               : Debugging output
@@ -720,6 +725,8 @@ sub process_args {
       $hdbpass = shift;
     } elsif ( $arg =~ /-s/ ) {    # get database site to load, IGNORED
       shift(@ARGV);
+    } elsif ( $arg =~ /-z/ ) {    # get compression request
+      $compression = 1;
     } elsif ( $arg =~ /-.*/ ) {    # Unrecognized flag, print help.
       print STDERR "Unrecognized flag: $arg\n";
       &usage;
@@ -813,13 +820,23 @@ sub read_from_web {
     my $status = $response->status_line;
     print "Data read from $agen_abbrev: $status\n";
 
-    # assume that response is compressed, and expand it
-    my ($inflated) = Compress::Zlib::memGunzip( $response->content );
-    if ( !$inflated ) {
-      $hdb->hdbdie("no data returned from $agen_abbrev, exiting.\n");
+    # if compression requested, expand the response content
+    # not by default since USGS asked not to for CPU power limits
+    if ($compression) {
+      my ($inflated) = Compress::Zlib::memGunzip( $response->content );
+      if ( !$inflated ) {
+        $hdb->hdbdie("no data returned from $agen_abbrev, exiting.\n");
+      }
+      print $inflated if defined($debug);
+      @$data = split /\n/, $inflated;
+    } else {
+      my $content = $response->content;
+      if ( !$content) {
+        $hdb->hdbdie("no data returned from $agen_abbrev, exiting.\n");
+      }
+      print $content if defined($debug);
+      @$data = split /\n/, $content;
     }
-    print $inflated if defined($debug);
-    @$data = split /\n/, $inflated;
   } else {    # ($response->is_error)
     printf STDERR $response->error_as_HTML;
     $hdb->hdbdie("Error reading from $agen_abbrev web page, cannot continue\n");
