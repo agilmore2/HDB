@@ -25,6 +25,7 @@ my ( $accountfile, $hdbuser, $hdbpass, $debug, $sitearg );
 #store decodes dir of HDB environment for use
 my $decdir = "$ENV{HDB_ENV}/decodes";
 
+#the ugly globals...
 my $agen_abbrev      = 'USGS';
 my $data_source      = 'USGS Unit Values (Realtime)';
 my $usgs_rating_type = 'Shift Adjusted Stage Flow';
@@ -37,8 +38,6 @@ main();  #at end of file to allow all subroutines to be prototyped.
 # FIXME: JUST USGS sites from telemetry, instead of Realtime web loader
 sub read_usgs_sites ($) {
   my $hdb = shift;
-
-  my $data_source = 'USGS Unit Values (Realtime)';
 
   my $sites = $hdb->dbh->selectcol_arrayref(
     "select distinct b.primary_site_code siteno from
@@ -148,7 +147,12 @@ sub delete_rating_points ($$) {
   my $rating=shift;
   
   eval {
-    $hdb->dbh->do("delete from ref_rating where rating_id = $rating");
+    my $sth = $hdb->dbh->prepare(
+    "begin
+       delete_rating_points(?);
+     end;");
+    $sth->bind_param(1,$rating);
+    $sth->execute;
   };
  
   if (@$) { #errors
@@ -208,7 +212,7 @@ sub find_rating ($$) {
 
   eval {
     $rating_id =
-      $hdb->dbh->selectcol_arrayref(
+      $hdb->dbh->selectcol_arrayref( #ugly global var here...
             "select find_site_rating('$usgs_rating_type',$sdi) from dual")->[0];
   };
 
@@ -256,9 +260,11 @@ sub update_rating_info ($$$) {
 
   eval {
     my $sth = $hdb->dbh->prepare(
-    "update ref_site_rating set description = ? where
-     rating_id = $rating");
-    $sth->bind_param(1,$desc);
+    "begin
+       update_rating_desc (?,?);
+     end;");
+    $sth->bind_param(1,$rating);
+    $sth->bind_param(2,$desc);
     $sth->execute;
   };    # semicolon here because of use of eval
 
