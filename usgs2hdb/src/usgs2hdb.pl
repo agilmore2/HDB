@@ -873,7 +873,8 @@ sub read_header {
   my $field_defs = shift @$data;
 
   #check to see if no data at all, blank line
-  if (   ( $data->[0] eq '' )
+  if (   !defined($data->[0])
+      or $data->[0] eq '' 
       or ( substr( $data->[0], 0, 1 ) eq '#' ) ) {
     shift @$data;
     return 0; #no data, next station please!
