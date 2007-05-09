@@ -36,20 +36,24 @@ int SqlGetSystemRunDate(int model_run, char * sysDate)
   int result;
 
   EXEC SQL BEGIN DECLARE SECTION;
-    char date[25];
+    char lcdate[25];
+    char ucdate[25];
     int mrid = model_run;
+    int lcday;
+    int ucday;
   EXEC SQL END DECLARE SECTION;
 
-  SwitchSession("UC"); /*set session to uchdb */
+  SwitchSession("LC"); /*set session to lchdb */
   if (( result = SqlErrorHandler (FUNC_NAME, TRUE,
-          "Problem setting session to uchdb.\n")) != OK)
+          "Problem setting session to lchdb.\n")) != OK)
      {
        PrintError("Error occurred in session 2\n");
        return(ERROR);;
      }
 
+       PrintError("***********   get model run id from lchdb2 **************\n");
   EXEC SQL AT :current_dbsite SELECT to_char(sys_date, 
-      'dd-mon-yyyy hh24:mi:ss') INTO :date FROM ref_model_run
+      'dd-mon-yyyy hh24:mi:ss') INTO :lcdate FROM ref_model_run
        where model_run_id = :mrid;
 
 if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
@@ -58,7 +62,40 @@ if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
         return (ERROR);
   }
 
-strcpy (sysDate, date);
+       PrintError("***********   extract the day  **************\n");
+if ((result = SqlExtractDatePart(lcdate, DAY, &lcday)) !=OK)
+  {
+    PrintError("Error in extracting the date\n");
+  }
+
+       PrintError("***********   switch to uchdb  **************\n");
+  SwitchSession("UC"); /*set session to uchdb */
+  if (( result = SqlErrorHandler (FUNC_NAME, TRUE,
+          "Problem setting session to uchdb.\n")) != OK)
+     {
+       PrintError("Error occurred in session 2\n");
+       return(ERROR);;
+     }
+
+       PrintError("***********   get model run id from uchdb2 **************\n");
+  EXEC SQL AT :current_dbsite SELECT to_char(sys_date, 
+      'dd-mon-yyyy hh24:mi:ss') INTO :ucdate FROM ref_model_run
+       where model_run_id = :mrid;
+
+if ((result = SqlErrorHandler (FUNC_NAME, TRUE,
+                "Problem getting date.\n")) != OK)
+  {
+        return (ERROR);
+  }
+
+if ((result = SqlExtractDatePart(ucdate, DAY, &ucday)) !=OK)
+  {
+    PrintError("Error in extracting the date\n");
+  }
+if ( ucday > lcday)
+   strcpy (sysDate, ucdate);
+else
+   strcpy (sysDate, lcdate);
 
 return(OK);
 
@@ -277,7 +314,15 @@ if (success != OK)
 
 if (sdid==0) return(OK);
 
-if (sdid==2078) sdid = 2074;
+/* Made change to the way Hoover capacity is determined*/
+/* With Lake Mead's changing elevations, unit capacity test*/
+/* are being run so the capacity could be changing every 2*/
+/* foot drop.  What I have done here is to take the capacity*/
+/* value written to HDB from the model, which is now set by a*/
+/* rule, and use it as the actual capacity value. */
+
+/*if (sdid==2078) sdid = 2074; take this line out - May 9, 2005 - LS*/
+
 if (sdid==2079) sdid = 2075;
 if (sdid==2080) sdid = 2076;
 
