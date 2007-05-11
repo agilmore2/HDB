@@ -126,7 +126,7 @@ sub process_rating ($$$) {
   my $rating = find_rating( $hdb, $site );    
 
   if ($rating) {
-    if ( compare_rating($hdb, $rating, \@barerat )) {
+    if (compare_rating($hdb, $rating, \@barerat )) {
       #actual ratings are the same, no update required, we're done;
       print "No change in rating for $site\n";
       return;
@@ -175,18 +175,19 @@ sub update_rating ($$$) {
   my $rat  = shift;
 
   my @rating_info;
+  my %seen = ();
 
   foreach (@$rat) {
     chomp;
     if (/^#/) {
-      next unless /STATION|RATING|SHIFT/;    #ignore all other rows in header
+      next unless /DATABASE|STATION|RATING|SHIFT/;    #ignore all other rows in header
       next unless
-        /NAME|NUMBER|ID|REMARKS|COMMENT|PREV BEGIN/;    #only pick these rows out of header
+        /NAME|NUMBER|ID|REMARKS|COMMENT|PREV BEGIN|PREV STAGE/;    #only pick these rows out of header
       s/^# \/\///;                          # get rid of leading '# //' text
-      push @rating_info,$_;
+      push @rating_info,$_ unless $seen{$_}++; #avoid duplicate entries... after perldoc -q dup
     } elsif (/^INDEP/) {
       #header finished
-      my $desc = join " ", @rating_info;
+      my $desc = join "\n", @rating_info;
       #update description
       update_rating_info( $hdb, $rating, $desc );
     } elsif (/[[:upper:]]/) {    # match any uppercase character.
@@ -230,11 +231,15 @@ sub find_agen_sdi ($$) {
   my $hdb  = shift;
   my $site = shift;
 
-  my $querysql = "select b.agen_id, a.hdb_site_datatype_id
-  from ref_ext_site_data_map a, hdb_ext_data_source b
+  my $querysql = "select b.agen_id, d.site_datatype_id
+  from ref_ext_site_data_map a, hdb_ext_data_source b,
+  hdb_site_datatype c, hdb_site_datatype d
   where primary_site_code = '$site' and
   b.ext_data_source_id = a.ext_data_source_id and
-  b.ext_data_source_name = '$data_source'";
+  b.ext_data_source_name = '$data_source' and
+  a.hdb_site_datatype_id = c.site_datatype_id and
+  d.site_id = c.site_id and
+  d.datatype_id = 65"; #hardcoded Gage Height here, UG!
 
   my ( $agen_id, $sdi);
 
@@ -264,7 +269,7 @@ sub update_rating_info ($$$) {
        update_rating_desc (?,?);
      end;");
     $sth->bind_param(1,$rating);
-    $sth->bind_param(2,$desc);
+    $sth->bind_param(2,substr($desc,0,1000)); #description in DB has 1000 char limit
     $sth->execute;
   };    # semicolon here because of use of eval
 
