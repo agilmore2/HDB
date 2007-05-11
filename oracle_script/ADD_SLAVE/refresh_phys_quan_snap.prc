@@ -10,13 +10,13 @@ CREATE OR REPLACE PROCEDURE refresh_phys_quan_snap
          -- snapshot being refreshed.  
          CURSOR the_table_constraints IS
              SELECT constraint_name, constraint_type, owner
-             FROM all_constraints
+             FROM user_constraints
              WHERE table_name = upper(the_table)
              AND constraint_type = 'P';
 
          CURSOR fk_constraints ( pk_name VARCHAR) IS
              SELECT constraint_name, table_name, owner
-             FROM all_constraints
+             FROM user_constraints
              WHERE r_constraint_name =  pk_name;
 
       alter_stmt      VARCHAR2(300) := NULL;

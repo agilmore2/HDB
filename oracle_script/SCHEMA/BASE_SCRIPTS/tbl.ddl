@@ -365,8 +365,21 @@ storage (initial 50k
 
 create table hdb_model (                      
 model_id                       number(11) NOT NULL  ,    
-model_name                     varchar2(64) NOT NULL  , 
-cmmnt                        varchar2(1000) NULL     
+model_name                     varchar2(64) NOT NULL  ,
+coordinated                    varchar2(1) NOT NULL, 
+cmmnt                          varchar2(1000) NULL     
+)                                                     
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+;                       
+
+create table hdb_model_coord (                      
+model_id                       number(11) NOT NULL  ,    
+db_site_code                   varchar2(3) NOT NULL
 )                                                     
 pctfree 10
 pctused 40
@@ -605,8 +618,8 @@ create table ref_db_list (
 session_no                     number(11) NOT NULL  ,         
 db_site_db_name                varchar2(25) NOT NULL  ,      
 db_site_code                   varchar2(3) NOT NULL  ,      
-maxid                          number(11) NULL      ,      
-max_sync_id                    number(11) NULL            
+min_coord_model_run_id         number(11) NULL      ,      
+max_coord_model_run_id         number(11) NULL      
 )                                                        
 pctfree 10
 pctused 40
@@ -997,15 +1010,16 @@ create table ref_model_run (
 model_run_id                   number(11) NOT NULL  ,       
 model_run_name                 varchar2(64) NOT NULL  ,    
 model_id                       number(11) NOT NULL  ,     
-sys_date                       date  default SYSDATE NOT NULL,
+date_time_loaded               date  default SYSDATE NOT NULL,
+user_name                      varchar2(30) NOT NULL,
+extra_keys_y_n                 varchar2(1) NOT NULL,
 run_date                       date NOT NULL  ,          
-probability                    number(11) NULL      ,   
-modeltype                      varchar2(1) NULL      , 
-user_id                        number(11) NULL      , 
 start_date                     date NULL      ,      
 end_date                       date NULL      ,     
+hydrologic_indicator           varchar2(32) NULL,
+modeltype                      varchar2(1) NULL      , 
 time_step_descriptor           varchar2(128) NULL      ,    
-cmmnt                        varchar2(1000) NULL         
+cmmnt                          varchar2(1000) NULL         
 )                                                         
 pctfree 10
 pctused 40
@@ -1013,20 +1027,60 @@ tablespace HDB_data
 storage (initial 50k
          next 50k
          pctincrease 0);
-;                       
 
-create table ref_model_user (                           
-user_id                        number(11) NOT NULL  ,  
-login_name                     varchar2(10) NOT NULL , 
-name                           varchar2(32) NOT NULL 
-)
+create table ref_model_run_archive (                                 
+model_run_id                   number(11) NOT NULL  ,       
+model_run_name                 varchar2(64) NOT NULL  ,    
+model_id                       number(11) NOT NULL  ,     
+date_time_loaded               date NOT NULL,
+user_name                      varchar2(30) NOT NULL,
+extra_keys_y_n                 varchar2(1) NOT NULL,
+run_date                       date NOT NULL  ,          
+start_date                     date NULL      ,      
+end_date                       date NULL      ,     
+hydrologic_indicator           number(11) NULL      ,   
+modeltype                      varchar2(1) NULL      , 
+time_step_descriptor           varchar2(128) NULL      ,    
+cmmnt                          varchar2(1000) NULL         ,
+archive_reason                 varchar2(10) NOT NULL,
+date_time_archived             date NOT NULL,
+archive_cmmnt                  varchar2(1000) NULL
+)                                                         
 pctfree 10
 pctused 40
 tablespace HDB_data
 storage (initial 50k
          next 50k
          pctincrease 0);
-;                                 
+
+create table ref_model_run_keyval (                                 
+model_run_id                   number(11) NOT NULL  ,       
+key_name                       varchar2(32) NOT NULL,
+key_value                      varchar2(32) NOT NULL,
+date_time_loaded               date  default SYSDATE NOT NULL
+)                                                         
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+create table ref_model_run_keyval_archive (                                 
+model_run_id                   number(11) NOT NULL  ,       
+key_name                       varchar2(32) NOT NULL,
+key_value                      varchar2(32) NOT NULL,
+date_time_loaded               date NOT NULL,
+archive_reason                 varchar2(10) NOT NULL,
+date_time_archived             date NOT NULL,
+archive_cmmnt                  varchar2(1000) NULL
+)                                                         
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
 
 create table ref_res (                          
 site_id                        number(11) NOT NULL  ,   

@@ -5,8 +5,10 @@
    procedures which *must* fire for app_role will not fire, due to fact that
    model_role is also automatically enabled. So, grant all model privs to 
    model_priv_role, then grant this role to app_role and model_role. */
-grant update (maxid, max_sync_id) on ref_db_list  to  model_priv_role;
 grant insert, update, delete on ref_model_run to model_priv_role;
+grant insert, delete, update on ref_model_run_keyval to model_priv_role;
+grant insert, delete, update on ref_model_run_archive to model_priv_role;
+grant insert, delete, update on ref_model_run_keyval_archive to model_priv_role;
 grant insert, update (value), delete on m_day to model_priv_role;
 grant insert, update (value), delete on m_hour to model_priv_role;
 grant insert, update (value), delete on m_month to model_priv_role;
@@ -14,12 +16,6 @@ grant insert, update (value), delete on m_monthstat to model_priv_role;
 grant insert, update (value), delete on m_monthrange to model_priv_role;
 grant insert, update (value), delete on m_year to model_priv_role;
 grant insert, update (value), delete on m_wy to model_priv_role;
-/***********************************************************************/
-/*  grant privileges to model_role                              */
-/***********************************************************************/
-grant model_priv_role to model_role;
-grant connect to model_role;
-
 
 /***********************************************************************/
 /*  grant privileges to app_role                                       */
@@ -28,7 +24,6 @@ grant model_priv_role to app_role;
 grant connect to app_role;
 grant insert, update, delete on hm_temp_data to app_role;
 grant update (max_hourly_date, max_daily_date) on ref_hm_site_datatype to app_role;
-grant insert, update, delete on ref_model_run to app_role;
 grant insert, update, delete on r_base to app_role;
 grant insert, update (value, source_id), delete on r_daystat to app_role;
 grant insert, update (value, source_id), delete on r_hourstat to app_role;
@@ -72,7 +67,6 @@ grant  insert, delete, update on ref_site_coef  to  ref_meta_role;
 grant  insert, delete, update on ref_site_coef_day  to  ref_meta_role; 
 grant  insert, delete, update on ref_site_coef_month  to  ref_meta_role; 
 grant  insert, delete, update on ref_site_coeflu  to  ref_meta_role;       
-grant  insert, delete, update on ref_model_user  to  ref_meta_role;       
 grant  insert, update, delete on ref_app_data_source to ref_meta_role;       
 grant  insert, delete, update on ref_agg_disagg  to  ref_meta_role;
 grant  insert, delete, update on ref_dmi_data_map  to  ref_meta_role;
@@ -126,6 +120,7 @@ grant  insert, delete, update on hdb_method  to  hdb_meta_role;
 grant  insert, delete, update on hdb_method_class  to  hdb_meta_role;   
 grant  insert, delete, update on hdb_method_class_type  to  hdb_meta_role;   
 grant  insert, delete, update on hdb_model  to  hdb_meta_role;       
+grant  insert, delete, update on hdb_model_coord  to  hdb_meta_role;       
 grant  insert, update, delete on hdb_modeltype to hdb_meta_role;
 grant  insert, delete, update on hdb_objecttype  to  hdb_meta_role; 
 grant  insert, delete, update on hdb_operator  to  hdb_meta_role; 

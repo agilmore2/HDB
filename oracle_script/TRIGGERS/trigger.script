@@ -15,7 +15,6 @@
 @ ./TRIGGERS/hdb_feature_property_trigs.trg;
 @ ./TRIGGERS/hdbid_chk_val_site_ot_id.trg;
 @ ./TRIGGERS/hm_hourly_daily_valid.trg;
-@ ./TRIGGERS/model_run_id_update.trg;
 @ ./TRIGGERS/ref_derivation_destination_triggers.trg;
 @ ./TRIGGERS/ref_derivation_source_triggers.trg;
 @ ./TRIGGERS/ref_ext_site_data_map_triggers.trg;
@@ -44,3 +43,8 @@
 @ ./TRIGGERS/r_year_triggers.trg;
 @ ./TRIGGERS/r_yearstat_sdi_perm.trg;
 @ ./TRIGGERS/sdi_chk_perm.trg;
+@ ./TRIGGERS/ref_model_run_triggers.trg;
+@ ./TRIGGERS/ref_model_run_keyval_triggers.trg;
+@ ./TRIGGERS/ref_db_list_triggers.trg;
+@ ./TRIGGERS/ref_model_run_archive_triggers.trg;
+@ ./TRIGGERS/ref_model_run_keyval_archive_triggers.trg;

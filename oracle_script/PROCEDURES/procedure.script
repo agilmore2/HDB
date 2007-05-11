@@ -11,7 +11,6 @@ start ./PROCEDURES/check_valid_agg_disagg_method.prc;
 start ./PROCEDURES/check_valid_unit.prc;
 start ./PROCEDURES/check_valid_unit_spec.prc;
 start ./PROCEDURES/deny_action.prc;
-start ./PROCEDURES/update_new_modelrun_id.prc;
 start ./PROCEDURES/delete_r_base.prc;
 start ./PROCEDURES/update_r_base_raw.prc;
 start ./PROCEDURES/insert_r_base.prc;
@@ -32,3 +31,19 @@ start ./PROCEDURES/is_derivation_source.prc;
 start ./PROCEDURES/is_overwrite.prc;
 start ./PROCEDURES/create_site_data_map.prc;
 start ./PROCEDURES/get_site_data_map.prc;
+start ./PROCEDURES/model_is_coord.prc
+start ./PROCEDURES/get_next_model_run_id.prc
+start ./PROCEDURES/insert_coord_model_run_id.prc
+start ./PROCEDURES/update_coord_model_run_id.prc
+start ./PROCEDURES/delete_coord_model_run_id.prc
+start ./PROCEDURES/insert_coord_model_run_keyval.prc
+start ./PROCEDURES/update_coord_model_run_keyval.prc
+start ./PROCEDURES/delete_coord_model_run_keyval.prc
+start ./PROCEDURES/get_just_created_model_run_id.prc
+start ./PROCEDURES/create_model_run_id.prc
+start ./PROCEDURES/update_model_run_id.prc
+start ./PROCEDURES/touch_model_run_id.prc
+start ./PROCEDURES/delete_model_run_id.prc
+start ./PROCEDURES/get_model_run_id.prc
+start ./PROCEDURES/update_coord_mri_archive_cmmnt.prc
+start ./PROCEDURES/update_coord_mri_kv_arch_cmmnt.prc

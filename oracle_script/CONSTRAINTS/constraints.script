@@ -15,6 +15,8 @@ start ./CONSTRAINTS/hdb_feature_property_ref.ddl
 start ./CONSTRAINTS/hdb_interval_ref.ddl;
 start ./CONSTRAINTS/hdb_method_class_ref.ddl;
 start ./CONSTRAINTS/hdb_method_ref.ddl;
+start ./CONSTRAINTS/hdb_model_ref.ddl;
+start ./CONSTRAINTS/hdb_model_coord_ref.ddl;
 start ./CONSTRAINTS/hdb_physical_quantity_ref.ddl
 start ./CONSTRAINTS/hdb_property_ref.ddl
 start ./CONSTRAINTS/hdb_river_reach_ref.ddl;
@@ -39,6 +41,7 @@ start ./CONSTRAINTS/ref_hm_site_hdbid_ref.ddl;
 start ./CONSTRAINTS/ref_hm_site_pcode_ref.ddl;
 start ./CONSTRAINTS/ref_interval_redefinition_ref.ddl;
 start ./CONSTRAINTS/ref_model_run_ref.ddl;
+start ./CONSTRAINTS/ref_model_run_keyval_ref.ddl;
 start ./CONSTRAINTS/ref_res_flowlu_ref.ddl;
 start ./CONSTRAINTS/ref_res_ref.ddl;
 start ./CONSTRAINTS/ref_res_wselu_ref.ddl;

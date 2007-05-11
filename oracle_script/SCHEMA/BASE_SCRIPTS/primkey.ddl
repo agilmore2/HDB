@@ -156,6 +156,10 @@ ALTER TABLE hdb_modeltype
       ADD ( CONSTRAINT hdb_modeltype_pk
             PRIMARY KEY (modeltype) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));
 
+ALTER TABLE hdb_model_coord
+      ADD ( CONSTRAINT hdb_model_coord_pk
+            PRIMARY KEY (model_id, db_site_code) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));
+
 ALTER TABLE hdb_objecttype        
       ADD ( CONSTRAINT hdb_objecttype_pk
       PRIMARY KEY (objecttype_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));
@@ -292,9 +296,10 @@ ALTER TABLE ref_model_run
       ADD ( CONSTRAINT ref_model_run_pk
             PRIMARY KEY (model_run_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));
 
-ALTER TABLE ref_model_user
-      ADD ( CONSTRAINT ref_model_user_pk
-            PRIMARY KEY (user_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0)); 
+ALTER TABLE ref_model_run_keyval 
+      ADD ( CONSTRAINT ref_model_run_keyval_pk
+            PRIMARY KEY (model_run_id, key_name) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));
+
 ALTER TABLE ref_res      
       ADD ( CONSTRAINT ref_res_pk  
             PRIMARY KEY (site_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));  

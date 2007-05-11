@@ -32,6 +32,7 @@ create public synonym hdb_method        for DBA.hdb_method;
 create public synonym hdb_method_class        for DBA.hdb_method_class;
 create public synonym hdb_method_class_type        for DBA.hdb_method_class_type;
 create public synonym hdb_model                  for DBA.hdb_model;
+create public synonym hdb_model_coord            for DBA.hdb_model_coord;
 create public synonym hdb_modeltype                       for DBA.hdb_modeltype;
 create public synonym hdb_objecttype    for DBA.hdb_objecttype;
 create public synonym hdb_operator        for DBA.hdb_operator;
@@ -78,7 +79,9 @@ create public synonym ref_interval_redefinition      for DBA.ref_interval_redefi
 create public synonym ref_interval_redef_archive     for DBA.ref_interval_redef_archive;
 create public synonym ref_model      for DBA.ref_model;
 create public synonym ref_model_run                       for DBA.ref_model_run;
-create public synonym ref_model_user for DBA.ref_model_user;
+create public synonym ref_model_run_keyval for DBA.ref_model_run_keyval;
+create public synonym ref_model_run_archive for DBA.ref_model_run_archive;
+create public synonym ref_model_run_keyval_archive for DBA.ref_model_run_keyval_archive;
 create public synonym ref_res        for DBA.ref_res;
 create public synonym ref_res_flowlu                  for DBA.ref_res_flowlu;
 create public synonym ref_res_wselu                    for DBA.ref_res_wselu;
