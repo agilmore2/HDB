@@ -18,6 +18,8 @@
 * SqlGetModelRunId
 * Purpose: Given the model_id, model_run_name, and run_date, create a 
 *          unique model_run_id. 
+*          As of May, 2007 this function calls the new database
+*          stored procedure create_model_run_id. *
 * 
 * Input
 *       ID       - modelId
@@ -138,21 +140,18 @@ int SqlGetModelRunId (ID modelId, char *modelRunName, SQL_DATE runDate,
 		      char *timeStep, char *comment, ID *modelRunId)
 {
   EXEC SQL BEGIN DECLARE SECTION;
-    ID sqModelId = modelId;
+    ID sqlModelId = modelId;
     char *sqlModelRunName;
     SQL_DATE sqlRunDate;
-    int sqlProbability;
+    char *hydInd;
     char *sqlModelType;
-    ID sqlUserId;
     SQL_DATE sqlStartDate, 
              sqlEndDate;
     char *sqlTimeStep,
          *sqlComment;
-    ID *sqlModelRunId = modelRunId,
-        maxId;
+    ID *sqlModelRunId = modelRunId;
     IND probInd = 0,
         modelTypeInd = 0,
-        userIdInd = 0,
         startDateInd = 0,
         endDateInd = 0,
         timeStepInd = 0,
@@ -160,18 +159,10 @@ int SqlGetModelRunId (ID modelId, char *modelRunName, SQL_DATE runDate,
   EXEC SQL END DECLARE SECTION;
 
   int   result;
-
-
-  EXEC SQL AT :current_dbsite 
-     SELECT maxid INTO :maxId FROM ref_db_list WHERE session_no = 1;
-  if ((result = SqlErrorHandler
-     (FUNC_NAME, FALSE, "Could not retrieve the maxId.\n")) != OK)
-   {
-     return (ERROR);
-   }
-
+  
   *sqlModelRunId = 0;
   sqlModelRunName = strdup (modelRunName);
+
   result = SqlFormatDate (runDate, sqlRunDate);
   if (result == ERROR)
   {
@@ -183,7 +174,7 @@ int SqlGetModelRunId (ID modelId, char *modelRunName, SQL_DATE runDate,
   if (probability == NA)
     probInd = NULL_IND;
   else
-    sqlProbability = probability;
+    sprintf (hydInd,"%d",probability);
 
   if (!modelType)
   {
@@ -192,11 +183,6 @@ int SqlGetModelRunId (ID modelId, char *modelRunName, SQL_DATE runDate,
   }
   else
     sqlModelType = strdup (modelType);
-
-  if (userId == NA)
-    userIdInd = NULL_IND;
-  else
-    sqlUserId = userId;
 
   if (!startDate)
   {
@@ -235,31 +221,30 @@ int SqlGetModelRunId (ID modelId, char *modelRunName, SQL_DATE runDate,
     commentInd = NULL_IND;
     sqlComment = NULL;
   }
-    
   else
     sqlComment = strdup (comment);
 
-
-  EXEC SQL AT :current_dbsite INSERT INTO ref_model_run 
-    VALUES (:sqlModelRunId, :sqlModelRunName, :sqModelId, sysdate,
-	    TO_DATE(:sqlRunDate, 'DD-MON-YYYY HH24:MI:SS'),
-	    :sqlProbability:probInd, :sqlModelType:modelTypeInd,
-	    :sqlUserId:userIdInd, 
-	    TO_DATE(:sqlStartDate:startDateInd, 'DD-MON-YYYY HH24:MI:SS'), 
-	    TO_DATE(:sqlEndDate:endDateInd, 'DD-MON-YYYY HH24:MI:SS'), 
-	    :sqlTimeStep:timeStepInd, :sqlComment:commentInd);
+  EXEC SQL AT :current_dbsite EXECUTE 
+    BEGIN
+	create_model_run_id (:sqlModelRunId, :sqlModelRunName, :sqlModelId, 
+                             to_date(:sqlRunDate,'dd-mon-yyyy hh24:mi:ss'), 0, 
+                             to_date(:sqlStartDate:startDateInd, 'dd-mon-yyyy hh24:mi:ss'),
+                             to_date(:sqlEndDate:endDateInd, 'dd-mon-yyyy hh24:mi:ss'), 
+                             :hydInd:probInd, 
+                             :sqlModelType:modelTypeInd, 
+                             :sqlTimeStep:timeStepInd, :sqlComment:commentInd,
+                              null);
+    END;
+  END-EXEC;
 
   if ((result = SqlErrorHandler 
-       (FUNC_NAME, FALSE, "Problem inserting record for model_run_id %d.\n\tExiting", *sqlModelRunId)) 
+       (FUNC_NAME, FALSE, "Problem inserting record for model_run_id %d.\n\tExiting", modelRunId)) 
       != OK)
     {
       return (ERROR);
     }
 
-  EXEC SQL AT :current_dbsite COMMIT;
-
-  *sqlModelRunId = maxId; 
-  return (OK);
+   return (OK);
 }
 /******************************************************************/
     

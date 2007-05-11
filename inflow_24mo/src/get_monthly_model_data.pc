@@ -152,7 +152,7 @@ int get_monthly_model_data (ID site_id, ID datatype_id, SQL_DATE dt,SQL_DATE mod
   ID         d_id = datatype_id;
   ID         m_id = model_id; /* model_id populated in .h file */
   ID         model_run_id;
-  ID         prob = probab;
+  char       hydInd[32];
   char       typ[2];
   VALUE      value;/* create a pointer with the same location as incoming pointer */
   EXEC SQL END DECLARE SECTION;
@@ -161,6 +161,7 @@ int get_monthly_model_data (ID site_id, ID datatype_id, SQL_DATE dt,SQL_DATE mod
 
   strcpy(model_r_dt,model_run_date);
   SqlFormatDate(model_r_dt,model_r_dt);
+  sprintf (hydInd,"%d",probab);
 
   strcpy(typ,type);
   /* get the model run id */  
@@ -168,18 +169,19 @@ int get_monthly_model_data (ID site_id, ID datatype_id, SQL_DATE dt,SQL_DATE mod
   EXEC SQL SELECT MODEL_RUN_ID into :model_run_id FROM REF_MODEL_RUN
 	WHERE MODEL_ID = :m_id
 	AND to_char(RUN_DATE,'dd-mon-yyyy hh24:mi:ss') = lower(:model_r_dt)
-	AND PROBABILITY = :prob
+	AND HYDROLOGIC_INDICATOR = :hydInd
 	AND MODELTYPE = :typ;
 
   if ((result = SqlErrorHandler 
        (FUNC_NAME, FALSE,
-	"Error retrieving data from ref_model_run with a model run date of %s \nwith model id of %d with a probability of %d and a modeltype of %s\n",model_r_dt,m_id,prob,typ)) == ERROR)
+	"Error retrieving data from ref_model_run with a model run date of %s \nwith model id of %d with a hydrologic_indicator of %s and a modeltype of %s\n",model_r_dt,m_id,hydInd,typ)) == ERROR)
     {		
       EXEC SQL ROLLBACK;
       return (ERROR);
     }
   
   EXEC SQL COMMIT;
+  fprintf (stdout, "MODEL RUN ID IS %hd", model_run_id);
 
   strcpy(dater,dt);
   SqlFormatDate(dt,dt);
@@ -216,15 +218,16 @@ int get_monthly_model_range_data (ID site_id, ID datatype_id, SQL_DATE b_dt,SQL_
   ID         d_id = datatype_id;
   ID         m_id = model_id; /* model_id populated in .h file */
   ID         model_run_id;
-  ID         prob = probab;
+  char       hydInd[32];
   char       typ[2];
-  VALUE      value;/* create a pointer with the same location as incoming pointer */
+  VALUE      value; /* create a pointer with the same location as incoming pointer */
   EXEC SQL END DECLARE SECTION;
   
   int result;
 
   strcpy(model_r_dt,model_run_date);
   SqlFormatDate(model_r_dt,model_r_dt);
+  sprintf (hydInd,"%d",probab);
 
   strcpy(typ,type);
   /* get the model run id */  
@@ -232,16 +235,18 @@ int get_monthly_model_range_data (ID site_id, ID datatype_id, SQL_DATE b_dt,SQL_
   EXEC SQL SELECT MODEL_RUN_ID into :model_run_id FROM REF_MODEL_RUN
 	WHERE MODEL_ID = :m_id
 	AND to_char(RUN_DATE,'dd-mon-yyyy hh24:mi:ss') = lower(:model_r_dt)
-	AND PROBABILITY = :prob
+	AND HYDROLOGIC_INDICATOR = :hydInd
 	AND MODELTYPE = :typ;
 
   if ((result = SqlErrorHandler 
        (FUNC_NAME, FALSE,
-	"Error retrieving data from ref_model_run with a model run date of %s with model id of %d with a probability of %d and a modeltype of %s",model_r_dt,m_id,prob,typ)) == ERROR)
+	"Error retrieving data from ref_model_run with a model run date of %s with model id of %d with a hydrologic_indicator of %s and a modeltype of %s",model_r_dt,m_id,hydInd,typ)) == ERROR)
     {		
       EXEC SQL ROLLBACK;
       return (ERROR);
     }
+
+  fprintf (stdout, "MODEL RUN ID IS %hd", model_run_id);
   
   EXEC SQL COMMIT;
 

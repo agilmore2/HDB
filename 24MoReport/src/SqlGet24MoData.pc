@@ -52,7 +52,7 @@ int SqlGetSystemRunDate(int model_run, char * sysDate)
      }
 
        PrintError("***********   get model run id from lchdb2 **************\n");
-  EXEC SQL AT :current_dbsite SELECT to_char(sys_date, 
+  EXEC SQL AT :current_dbsite SELECT to_char(date_time_loaded, 
       'dd-mon-yyyy hh24:mi:ss') INTO :lcdate FROM ref_model_run
        where model_run_id = :mrid;
 
@@ -78,7 +78,7 @@ if ((result = SqlExtractDatePart(lcdate, DAY, &lcday)) !=OK)
      }
 
        PrintError("***********   get model run id from uchdb2 **************\n");
-  EXEC SQL AT :current_dbsite SELECT to_char(sys_date, 
+  EXEC SQL AT :current_dbsite SELECT to_char(date_time_loaded, 
       'dd-mon-yyyy hh24:mi:ss') INTO :ucdate FROM ref_model_run
        where model_run_id = :mrid;
 
@@ -106,6 +106,7 @@ return(OK);
 int SqlGetModelRunDate(int model_run,int * mon,int * yr, char * runDate, int * prob)
 {
   int result;
+  char hyd_ind[33];
 
   EXEC SQL BEGIN DECLARE SECTION;
     int  mrid = model_run;
@@ -135,8 +136,10 @@ if ((result = SqlExtractDatePart(Rdate, YEAR, yr)) !=OK)
 
 strcpy (runDate,Rdate);
 
-   EXEC SQL AT :current_dbsite SELECT probability INTO :prob from
+   EXEC SQL AT :current_dbsite SELECT hydrologic_indicator INTO :hyd_ind from
       ref_model_run WHERE model_run_id = :mrid;
+
+   *prob = atoi(hyd_ind);
 
 return(OK);
 

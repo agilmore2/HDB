@@ -120,7 +120,7 @@ $(OBJDIR)/SqlModel.o: \
 	$(GLOBAL_INCLUDE) \
 	SqlModel.pc \
 	$(HDB_APP_INCLUDE)/utils.h
-	proc code=ansi_c iname=SqlModel.pc include=$(HDB_APP_INCLUDE)
+	proc code=ansi_c CHAR_MAP=string sqlcheck=semantics userid=$(DBA)/$(DBA_PASSWD) iname=SqlModel.pc include=$(HDB_APP_INCLUDE)
 	$(CC) $(CFLAGS)  SqlModel.c -o $@
 
 $(OBJDIR)/SqlCount.o: \
