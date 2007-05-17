@@ -466,20 +466,20 @@ storage (initial 50k
 
 create table hdb_site (                           
 site_id                        number(11) NOT NULL  ,  
-site_name                      varchar2(64) NOT NULL  , 
-site_common_name               varchar2(64)  NOT NULL, 
+site_name                      varchar2(240) NOT NULL  , 
+site_common_name               varchar2(240)  NOT NULL, 
 objecttype_id                  number(11) NOT NULL  ,  
 parent_site_id                 number(11) NULL      , 
 parent_objecttype_id           number(11) NULL      ,
 state_id                       number(11) NULL      , 
 basin_id                       number(11) NULL      ,  
-lat                            varchar2(8) NULL      ,
-longi                           varchar2(8) NULL      ,
+lat                            varchar2(24) NULL      ,
+longi                           varchar2(24) NULL      ,
 hydrologic_unit                varchar2(10) NULL     ,
 segment_no                     number(11) NULL      ,
 river_mile                     float NULL      ,    
 elevation                      float NULL      ,   
-description                    varchar2(100) NULL      ,   
+description                    varchar2(560) NULL      ,   
 nws_code                       varchar2(10) NULL      ,   
 scs_id                         varchar2(10) NULL      ,  
 shef_code                      varchar2(8) NULL      ,  
@@ -1388,14 +1388,4 @@ tablespace HDB_data
 storage (initial 50k
          next 50k
          pctincrease 0);
-
-
-
-
-
-
-
-
-
-
 
