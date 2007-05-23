@@ -1265,7 +1265,7 @@ CREATE TABLE ref_source_priority
  Lowest priority wins, ie, priority 1 wins over priority 2. 
  Multiple agencies may have the same priority, in which case the
  last one in will win.
- Agencies that are not defined in this table will also always win
+ Agencies that are not defined in this table will always lose
  over agencies that are defined in this table.
  This table is referenced by the update_r_base_raw procedure.
 */
