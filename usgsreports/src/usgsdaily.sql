@@ -1,7 +1,6 @@
 /* command line arguments */
 define site_code = &1;
 define pcode = &2;
-define year = &3;
 
 /* setup report variables */
 set colsep '';
@@ -15,39 +14,44 @@ set termout off;
 set numwidth 8;
 set null '       ---';
 
+column year new_value year;
+select nvl('&3',to_char(sysdate,'YYYY')) year from dual;
+
 /* get previous year, for use with water year */
 column beginyear new_value beginyear nopri;
 select to_char(&&year - 1) beginyear from dual;
 
 /* get site_datatype_id needs work*/
 column sdi new_value sdi;
-select hm_site_code, hm_pcode, to_char(site_datatype_id) sdi from
+select primary_site_code, primary_data_code, to_char(hdb_site_datatype_id) sdi from
+ref_ext_site_data_map
+where
+UPPER(primary_site_code) = UPPER('&&site_code') and
+UPPER(primary_data_code) = UPPER('&&pcode') and
+hdb_site_datatype_id IS NOT NULL and
+/*-- interval = 'day' and*/
+rownum = 1;
+/*select hm_site_code, hm_pcode, to_char(site_datatype_id) sdi from
 ref_hm_site_pcode
 where
 hm_site_code = UPPER('&&site_code') and
 hm_pcode = UPPER('&&pcode') and
-site_datatype_id IS NOT NULL
-;
+site_datatype_id IS NOT NULL and
+hm_filetype = 'A'
+;*/
 
 /* find HDB names for site and datatype for sdi */
-column site_name new_value name;
-column datatype_name new_value datatype;
-select a.site_name site_name, b.datatype_name datatype_name
-from hdb_site a, hdb_datatype b, hdb_site_datatype c
+column site_common_name new_value name;
+column datatype_common_name new_value datatype;
+column unit_common_name new_value unit;
+select a.site_common_name, b.datatype_common_name, d.unit_common_name 
+from hdb_site a, hdb_datatype b, hdb_site_datatype c, hdb_unit d
 where
 a.site_id = c.site_id and
 b.datatype_id = c.datatype_id and
+b.unit_id = d.unit_id and
 c.site_datatype_id = &&sdi
 ;
-
-/* get the unit name*/
-column unit_name new_value unit;
-select c.unit_name from 
-hdb_site_datatype a, hdb_datatype b, hdb_unit c
-where 
-a.site_datatype_id = &sdi and
-a.datatype_id = b.datatype_id and
-b.unit_id = c.unit_id;
 
 /* setup fake columns for reporting values */
 column min new_value min;
@@ -90,7 +94,7 @@ and a.start_date_time between '01-oct-&beginyear' and last_day('01-sep-&year');
 column numformat new_value numformat;
 select case 
 when &max > 999999999 then '99.99EEEE'
-when &max > 999999    then '999999999'
+when &max > 99999     then '999999999'
 else                       '999990.00'
 end numformat
 from dual;
@@ -98,7 +102,7 @@ from dual;
 column sumformat new_value sumformat;
 select case 
 when &sum > 99999999 then '99.99EEEE'
-when &sum > 999999 then   '999999999'
+when &sum > 99999  then   '999999999'
 else                      '999990.00'
 end sumformat
 from dual;
@@ -175,7 +179,7 @@ and a.start_date_time between '01-dec-&beginyear' and last_day('01-dec-&beginyea
 
 /* now start the report*/
 /* top title, datatype names can be really long!*/
-ttitle center "site: &&name(&&site_code) datatype: &&datatype(&&pcode) in &&unit" skip -
+ttitle center "site: &&name(&&site_code) datatype: &&datatype(&&pcode) sdi: &&sdi in &&unit" skip -
        center "Water Year October &beginyear to September &year";
 
 /*bottom title, this is where the monthly average and sum statistics and the
@@ -279,4 +283,5 @@ to_char(j.start_date_time(+),'DD') = days.day and
 to_char(k.start_date_time(+),'DD') = days.day and
 to_char(l.start_date_time(+),'DD') = days.day 
 order by day;
+
 quit;

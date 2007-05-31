@@ -4,57 +4,47 @@ define site = &1;
 set verify off;
 set feedback off;
 set pagesize 9999;
+column datatype format A24
 
-/* Can anyone tell me why this query takes SO long,
-but the next query is reasonably fast?
-*/
 
-/*
-select lpad(a.hm_site_code,9) site_code, a.hm_pcode "pcode",
-count(d.site_datatype_id) "r_day", count(m.site_datatype_id) "r_month"  from
-ref_hm_site_pcode a, r_day d, r_month m
-where
-a.hm_site_code = UPPER('&&site') and
-a.site_datatype_id IS NOT NULL and
-d.site_datatype_id(+) = a.site_datatype_id and 
-m.site_datatype_id(+) = a.site_datatype_id 
-group by a.site_datatype_id, a.hm_site_code, a.hm_pcode
-;
-*/
-
-select lpad(fir.site_code,9) "site_code", fir.pcode "pcode",
+select fir.hdb_site_datatype_id,lpad(fir.site_code,9) "site_code", fir.datatype "datatype",
 fir.r_day "r_day", sec.r_month "r_month"
 from (
-select a.site_datatype_id, a.hm_site_code site_code, a.hm_pcode pcode,
+select a.hdb_site_datatype_id, a.primary_site_code site_code, a.primary_data_code datatype,
 count(d.site_datatype_id) r_day
  from
-ref_hm_site_pcode a, r_day d
+ref_ext_site_data_map a, r_day d
 where 
-a.hm_site_code = UPPER('&&site') and
-a.site_datatype_id IS NOT NULL and
-d.site_datatype_id(+) = a.site_datatype_id
-group by a.site_datatype_id, a.hm_site_code, a.hm_pcode
+UPPER(a.primary_site_code) = UPPER('&&site') and
+a.hdb_site_datatype_id IS NOT NULL and
+d.site_datatype_id(+) = a.hdb_site_datatype_id
+group by a.hdb_site_datatype_id, a.primary_site_code, a.primary_data_code
 ) fir,
 (
-select a.site_datatype_id, count(m.site_datatype_id) r_month from
-ref_hm_site_pcode a, r_month m
+select a.hdb_site_datatype_id,  a.primary_site_code site_code,
+a.primary_data_code datatype,count(m.site_datatype_id) r_month from
+ref_ext_site_data_map a, r_month m
 where 
-a.hm_site_code = UPPER('&&site') and
-a.site_datatype_id IS NOT NULL and
-m.site_datatype_id(+) = a.site_datatype_id
-group by a.site_datatype_id, a.hm_site_code, a.hm_pcode
+UPPER(a.primary_site_code) = UPPER('&&site') and
+a.hdb_site_datatype_id IS NOT NULL and
+m.site_datatype_id(+) = a.hdb_site_datatype_id
+group by a.hdb_site_datatype_id, a.primary_site_code, a.primary_data_code
 ) sec
 where 
-fir.site_datatype_id = sec.site_datatype_id
-order by r_day desc
+fir.hdb_site_datatype_id = sec.hdb_site_datatype_id and
+fir.datatype = sec.datatype and
+fir.site_code = sec.site_code
+order by r_day desc,fir.datatype 
 ;
 
 set termout off;
 column sdi new_value sdi;
-select count (distinct site_datatype_id) sdi from
-ref_hm_site_pcode
+select count (distinct hdb_site_datatype_id) sdi from
+ref_ext_site_data_map
 where
-hm_site_code = UPPER('&&site') and
-site_datatype_id IS NOT NULL
+UPPER(primary_site_code) = UPPER('&&site') and
+hdb_site_datatype_id IS NOT NULL
 ;
+
+
 exit &sdi;

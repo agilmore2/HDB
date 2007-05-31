@@ -6,12 +6,13 @@ define datatype = &2;
 
 column sdi new_value sdi;
 
-select count (distinct site_datatype_id) sdi from
-ref_hm_site_pcode
+select count (distinct hdb_site_datatype_id) sdi from
+ref_ext_site_data_map
 where
-hm_site_code = UPPER('&&site') and
-hm_pcode = UPPER('&&datatype') and
-site_datatype_id IS NOT NULL
-;
+UPPER(primary_site_code) = UPPER('&&site') and
+UPPER(primary_data_code) = UPPER('&&datatype') and
+hdb_site_datatype_id IS NOT NULL and
+/*-- interval = 'day' and*/
+rownum = 1;
 
 exit &sdi;

@@ -14,13 +14,14 @@ mysqlcmd="sqlplus -S $APP_USER/$HDB_LOCAL@$HDB_LOCAL"
 
 usage() {
     echo "$myprog: produce water supply format report"
-    echo "Usage: $myprog site_code [pcode year] "
+    echo "Usage: $myprog site_code [pcode] [year] "
     echo "Example: $myprog glda (produces list of pcodes and data)"
+    echo "         $myprog glda fb (produces report for current water year)"
     echo "         $myprog glda fb 2003 (produces report)"
     exit 2
 }
 
-if [ $# -gt 3 -o $# -eq 0 -o $# -eq 2 ]
+if [ $# -gt 3 -o $# -eq 0 ]
 then 
     usage
 elif [ $# -eq 3 ]
@@ -51,6 +52,6 @@ then
     exit
 fi
 
-$mysqlcmd @$mydir/usgsdaily.sql $@
+$mysqlcmd @$mydir/usgsdaily.sql $1 $2 "$3"
 
 exit
