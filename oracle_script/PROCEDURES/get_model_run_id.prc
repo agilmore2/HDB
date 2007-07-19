@@ -66,8 +66,8 @@ IS
   end_dt   varchar2(100);
   hyd_ind  varchar2(100);
   modtype  varchar2(100);
-  tmstp    varchar2(100);
-  cmt      varchar2(100);
+  tmstp    varchar2(200);
+  cmt      varchar2(2000);
 
   sel_stmt varchar2(1000);
   where_stmt varchar2(1000);
@@ -77,9 +77,15 @@ IS
   dt_load  varchar2(2000);
   qry_stmt varchar2(2000);
 
+  one_quote varchar2(1);
+  two_quotes varchar2(2);
+ 
   dt_load_out   DATE;
   text varchar2(1000);
 BEGIN
+  one_quote := '''';
+  two_quotes := '''''';
+
   model_run_id_out := -1;
 
   /*  First check for inappropriate NULL values */
@@ -147,13 +153,13 @@ BEGIN
   if (model_run_name_in is null) then
     mr_name := ' ';
   else
-    mr_name := ' and lower(model_run_name) like lower(''%'||model_run_name_in||'%'')';
+    mr_name := ' and lower(model_run_name) like lower(''%'||replace(model_run_name_in,one_quote,two_quotes)||'%'')';
   end if;
 
   if (user_name_in is null) then
     usr_name := ' ';
   else
-    usr_name := ' and lower(user_name) like lower(''%'||user_name_in||'%'')';
+    usr_name := ' and lower(user_name) like lower(''%'||replace(user_name_in,one_quote,two_quotes)||'%'')';
   end if;
 
   if (run_date_in is null) then
@@ -183,7 +189,7 @@ BEGIN
   if (hydrologic_indicator_in is null) then 
     hyd_ind := ' ';
   else
-    hyd_ind := ' and lower(hydrologic_indicator) like lower(''%'||hydrologic_indicator_in||'%'')';
+    hyd_ind := ' and lower(hydrologic_indicator) like lower(''%'||replace(hydrologic_indicator_in,one_quote,two_quotes)||'%'')';
   end if;
 
   if (modeltype_in is null) then 
@@ -195,13 +201,13 @@ BEGIN
   if (time_step_descriptor_in is null) then 
     tmstp := ' ';
   else
-    tmstp := ' and lower(time_step_descriptor) like lower(''%'||time_step_descriptor_in||'%'')';
+    tmstp := ' and lower(time_step_descriptor) like lower(''%'||replace(time_step_descriptor_in,one_quote,two_quotes)||'%'')';
   end if;
 
   if (cmmnt_in is null) then 
     cmt := ' ';
   else
-    cmt := ' and lower(cmmnt) like lower(''%'||cmmnt_in||'%'')';
+    cmt := ' and lower(cmmnt) like lower(''%'||replace(cmmnt_in,one_quote,two_quotes)||'%'')';
   end if;
 
   /* Build query statement for when there are no extra keys... */
@@ -251,7 +257,7 @@ BEGIN
       end if;
 
       sel_stmt := concat (sel_stmt, ', ref_model_run_keyval key'||i);
-      key_value_stmt := concat (key_value_stmt, ' and key'||i||'.key_name = '''||v_key_name||''' and key'||i||'.key_value = '''||v_key_value||'''');
+      key_value_stmt := concat (key_value_stmt, ' and key'||i||'.key_name = '''||replace(v_key_name,one_quote,two_quotes)||''' and key'||i||'.key_value = '''||replace(v_key_value,one_quote,two_quotes)||'''');
       if (i > 1) then
         mri_stmt := concat (mri_stmt, ' and key'||i||'.model_run_id = key'||to_char(i-1)||'.model_run_id');
       end if;

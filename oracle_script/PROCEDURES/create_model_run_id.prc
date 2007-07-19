@@ -35,8 +35,18 @@ IS
   key_value varchar2(32);
   null_date date;
 
+  one_quote varchar2(1);
+  two_quotes varchar2(2);
+ 
+  hydrologic_indicator_new varchar2(32);
+  time_step_descriptor_new varchar2(128);
+  cmmnt_new                varchar2(1000);
+
   text varchar2(1000);
 BEGIN
+  one_quote := '''';
+  two_quotes := '''''';
+
   /*  First check for inappropriate NULL values */
   if (model_run_name_in is null) then
       deny_action ( 'Invalid <NULL> model_run_name');
@@ -87,9 +97,9 @@ BEGIN
     end if;
   end if; /* num_extra_keys = 0 */
 
-  dbms_output.put_line('RUN: '|| to_char(to_date(run_date_in,'dd-mon-yyyy hh24:mi:ss'),'dd-mon-yyyy hh24:mi:ss'));
-  dbms_output.put_line('RUN: '|| to_char(to_date(start_date_in,'dd-mon-yyyy hh24:mi:ss'),'dd-mon-yyyy hh24:mi:ss'));
-  dbms_output.put_line('RUN: '|| to_char(to_date(end_date_in,'dd-mon-yyyy hh24:mi:ss'),'dd-mon-yyyy hh24:mi:ss'));
+  hydrologic_indicator_new := replace (hydrologic_indicator_in,one_quote,two_quotes);
+  time_step_descriptor_new := replace (time_step_descriptor_in,one_quote,two_quotes);
+  cmmnt_new := replace (cmmnt_in,one_quote,two_quotes);
 
   /* Continue with creating model_run_id. */
   insert into ref_model_run (
@@ -121,15 +131,10 @@ BEGIN
     time_step_descriptor_in,
     cmmnt_in);
 
-/*    to_date(run_date_in,'dd-mon-yyyy hh24:mi:ss'),
-    to_date(start_date_in,'dd-mon-yyyy hh24:mi:ss'),
-    to_date(end_date_in,'dd-mon-yyyy hh24:mi:ss'),
-*/
-  dbms_output.put_line ('GOT PAST CREATE');
-
   get_just_created_model_run_id (model_run_id_out, model_run_name_in,
     model_id_in, run_date_in, num_extra_keys, start_date_in, end_date_in,
-    hydrologic_indicator_in, modeltype_in, time_step_descriptor_in, cmmnt_in);
+    hydrologic_indicator_new, modeltype_in, time_step_descriptor_new, 
+    cmmnt_new);
 
   /* Insert key-value pairs */
   if (num_extra_keys <> 0) then

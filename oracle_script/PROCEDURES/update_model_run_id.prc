@@ -31,7 +31,8 @@ create or replace PROCEDURE update_model_run_id (
    modeltype_in                 IN varchar2,
    time_step_descriptor_in      IN varchar2,
    cmmnt_in                     IN varchar2,
-   extra_keys                   IN varchar2)
+   extra_keys                   IN varchar2,
+   ignore_nulls                 IN varchar2)
 IS
   equals_check number;
   comma_check number;
@@ -50,16 +51,22 @@ IS
   end_dt   varchar2(100);
   hyd_ind  varchar2(100);
   modtype  varchar2(100);
-  tmstp    varchar2(100);
-  cmt      varchar2(100);
+  tmstp    varchar2(200);
+  cmt      varchar2(2000);
   upd_stmt varchar2(2000);
   upd_keyval_stmt varchar2(2000);
+
+  one_quote varchar2(1);
+  two_quotes varchar2(2);
 
   e_no_match  exception;
   PRAGMA EXCEPTION_INIT(e_no_match, -20102);
 
   text varchar2(1000);
 BEGIN
+  one_quote := '''';
+  two_quotes := '''''';
+
   /*  First check for inappropriate NULL values */
   if (model_run_id_in is null) then
     deny_action ( 'Invalid <NULL> model_run_id');
@@ -119,49 +126,49 @@ BEGIN
   if (model_run_name_in is null) then
     mr_name := ' model_run_name = model_run_name,';
   else
-    mr_name := ' model_run_name = '''||model_run_name_in||''',';
+    mr_name := ' model_run_name = '''||replace(model_run_name_in,one_quote,two_quotes)||''',';
   end if;
 
   if (run_date_in is null) then
     run_dt := ' run_date = run_date,';
   else
-    run_dt := ' run_date = to_date('''||run_date_in||''',''dd-mon-yyyy hh24:mi:ss''),';
+    run_dt := ' run_date = to_date('''||to_char(run_date_in,'dd-mon-yyyy hh24:mi:ss')||''',''dd-mon-yyyy hh24:mi:ss''),';
   end if;
 
-  if (start_date_in is null) then
+  if (start_date_in is null and upper(ignore_nulls) = 'Y') then
     st_dt := ' start_date = start_date,';
   else
-    st_dt := ' start_date = to_date('''||start_date_in||''',''dd-mon-yyyy hh24:mi:ss''),';
+    st_dt := ' start_date = to_date('''||to_char(start_date_in,'dd-mon-yyyy hh24:mi:ss')||''',''dd-mon-yyyy hh24:mi:ss''),';
   end if;
 
-  if (end_date_in is null) then
+  if (end_date_in is null and upper(ignore_nulls) = 'Y') then
     end_dt := ' end_date = end_date,';
   else
-    end_dt := ' end_date = to_date('''||end_date_in||''',''dd-mon-yyyy hh24:mi:ss''),';
+    end_dt := ' end_date = to_date('''||to_char(end_date_in,'dd-mon-yyyy hh24:mi:ss')||''',''dd-mon-yyyy hh24:mi:ss''),';
   end if;
 
-  if (hydrologic_indicator_in is null) then 
+  if (hydrologic_indicator_in is null and upper(ignore_nulls) = 'Y') then 
     hyd_ind := ' hydrologic_indicator = hydrologic_indicator,';
   else
-    hyd_ind := ' hydrologic_indicator = '''||hydrologic_indicator_in||''',';
+    hyd_ind := ' hydrologic_indicator = '''||replace(hydrologic_indicator_in,one_quote,two_quotes)||''',';
   end if;
 
-  if (modeltype_in is null) then 
+  if (modeltype_in is null and upper(ignore_nulls) = 'Y') then 
     modtype := ' modeltype = modeltype,';
   else
     modtype := ' modeltype = '''||modeltype_in||''',';
   end if;
 
-  if (time_step_descriptor_in is null) then 
+  if (time_step_descriptor_in is null and upper(ignore_nulls) = 'Y') then 
     tmstp := ' time_step_descriptor = time_step_descriptor,';
   else
-    tmstp := ' time_step_descriptor = '''||time_step_descriptor_in||''',';
+    tmstp := ' time_step_descriptor = '''||replace(time_step_descriptor_in,one_quote,two_quotes)||''',';
   end if;
 
-  if (cmmnt_in is null) then 
+  if (cmmnt_in is null and upper(ignore_nulls) = 'Y') then 
     cmt := ' cmmnt = cmmnt';
   else
-    cmt := ' cmmnt = '''||cmmnt_in||'''';
+    cmt := ' cmmnt = '''||replace(cmmnt_in,one_quote,two_quotes)||'''';
   end if;
 
   upd_stmt := 'UPDATE ref_model_run SET'||mr_name||run_dt||st_dt||end_dt||hyd_ind||modtype||tmstp||cmt||' WHERE model_run_id = :1';
@@ -207,7 +214,7 @@ BEGIN
         raise_application_error (-20102, text);
       end if;
 
-      upd_keyval_stmt := 'UPDATE ref_model_run_keyval SET key_value = '''||v_key_value||''' WHERE model_run_id = :2 and key_name = '''||v_key_name||'''';
+      upd_keyval_stmt := 'UPDATE ref_model_run_keyval SET key_value = '''||replace(v_key_value,one_quote,two_quotes)||''' WHERE model_run_id = :2 and key_name = '''||replace(v_key_name,one_quote,two_quotes)||'''';
       EXECUTE IMMEDIATE upd_keyval_stmt USING model_run_id_in;
 
       start_pos := comma_pos + 1;

@@ -22,13 +22,14 @@ IS
   end_dt   varchar2(100);
   hyd_ind  varchar2(100);
   modtype  varchar2(100);
-  tmstp    varchar2(100);
-  cmt      varchar2(100);
+  tmstp    varchar2(200);
+  cmt      varchar2(2000);
   prim_sel_stmt varchar2(1000);
   sec_sel_stmt  varchar2(1000);
   ter_sel_stmt  varchar2(1000);
   where_stmt    varchar2(2000);
   sel_stmt varchar2(2000);
+
   text varchar2(1000);
 BEGIN
   /* Determine new model_run_id by selecting largest MRI
@@ -75,6 +76,7 @@ BEGIN
   else
     cmt := ' and cmmnt = '''||cmmnt_in||''' ';
   end if;
+ 
 
   prim_sel_stmt := 'SELECT model_run_id FROM ref_model_run ';
   where_stmt := 'WHERE model_run_name=:1 and model_id=:2 and '||num_ext||' and run_date=:3 and '||st_dt||end_dt||hyd_ind||modtype||tmstp||cmt;
