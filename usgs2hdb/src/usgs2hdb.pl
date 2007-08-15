@@ -813,7 +813,7 @@ sub read_from_web {
   $request->uri($url);
 
   # this next function actually gets the data
-  my $response = $ua->simple_request($request);
+  my $response = $ua->request($request);
 
   # check result
   if ( $response->is_success ) {
