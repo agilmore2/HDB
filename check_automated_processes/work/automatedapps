@@ -10,3 +10,4 @@ get_load_snotel=$HDB_ENV/basins/work/get_load_snotel.err
 mimedecode=$HDB_ENV/readAVM/work/mime.err
 readAVM=$HDB_ENV/readAVM/work/readAVM.err
 hourlyReport=$HDB_ENV/hourlyReports/work/wapagcmrc.err
+ElPasoReport=$HDB_ENV/hourlyReports/src/elpaso_report.err
