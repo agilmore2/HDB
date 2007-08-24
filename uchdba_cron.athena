@@ -132,7 +132,7 @@
 # Site information scripts for output to website (used to be in Rick Clayton's crontab)
 #
 # Reservoirs (and NIIP)
-10 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/res_data/work; ./process_res_data
+10 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/res_data/work; ./process_res_data >$HDB_ENV/res_data/work/process_res_data.out 2>$HDB_ENV/res_data/work/process_res_data.err
 # Western Colorado Area Office data
 16 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/wcao_data/work; ./process_wcao_data
 # Sites (Glen Canyon single datatype for narrow browsers)
