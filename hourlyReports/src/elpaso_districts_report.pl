@@ -27,7 +27,7 @@ my $app_name = "HDB El Paso Update";
 if (not defined($ARGV[0]) 
      or $ARGV[0] ne '-a'
      or not defined($ARGV[1])) {
-  usage();  
+  usage();
 }
 
 shift; #remove -a
@@ -37,7 +37,7 @@ my $hdb=Hdb->new;
 $hdb->connect_from_file($filename);
 $hdb->dbh->{FetchHashKeyName} = "NAME_lc";
 
-$hdb->dbh->do("alter session set NLS_DATE_FORMAT = 'YYYY-MM-DD\tHH24:MI:SS'");
+$hdb->dbh->do("alter session set NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS'");
 
 # look for -d flag for testing
 my $testing = shift;
@@ -104,16 +104,24 @@ order by key_value";
 my $codes = $hdb->dbh->selectall_arrayref("$headersql",{ Slice=>{}},$site);
 
 #want header to have two tabs, then data codes
+#header setup data
+my $sp = 10;
 
-my $header = "\t\tDATA IS PROVISIONAL AND SUBJECT TO REVISION
-\t\t$site\n";
-$header .= "Date\tTime";
+my $siteheader = " " x (34-length($site)/2) . $site;
+my $provoheader .=   "            DATA IS PROVISIONAL AND SUBJECT TO REVISION";
+my $codeline ="Date       Time     ";
+my $unitline ="                    ";
+
 foreach my $code (@$codes) {
-  
-  $header .= "\t$code->{code} ($code->{unit})";
+  $codeline .= sprintf("%*.*s",$sp,$sp,"$code->{code}");
+  $code->{unit} =~ s/feet/ft/;
+  $unitline .= sprintf("%*.*s",$sp,$sp,"($code->{unit})");
 }
 
-print OUTPUT $header ."\n";
+print OUTPUT $siteheader ."\n";
+print OUTPUT $provoheader ."\n";
+print OUTPUT $codeline ."\n";
+print OUTPUT $unitline . "\n\n";
 
 #get data from last 7 days
 # uses a with statement to get all data for the report, then queries it\
@@ -134,7 +142,8 @@ d.ext_data_source_name = '$app_name' and
 start_date_time between trunc(sysdate - 7,'DD') and sysdate
 order by start_date_time)
 select
-date_time||chr(9)||a.value||chr(9)||b.value||chr(9)||c.value||chr(9)||d.value as result
+date_time,
+lpad(to_char(round(a.value,2)),22) val1,b.value val2,c.value val3,d.value val4
 from data a, data b, data c, data d,
 table(dates_between(trunc(sysdate - 7,'DD'),sysdate,15)) dates
 where
@@ -152,14 +161,30 @@ where
 # first line of this reponse is
 # mailto: <emailaddresses>
 
-my $data = $hdb->dbh->selectcol_arrayref("$datasql",{},$site);
+my $data = $hdb->dbh->selectall_arrayref("$datasql",{},$site);
 
-map($_=~s/\t+$//, @$data);
+my @output;
 
-print OUTPUT @$data;
+foreach my $row (@$data) {
+  my $line = pack("A20",$row->[0]);
+  shift (@$row);
+  foreach my $field (@$row) {
+    if (!defined($field)) {
+      $field = sprintf("%*s", $sp,"");
+    } elsif ($field < 10000) {
+      $field = sprintf("%*.2f", $sp,$field);
+    } else {
+       $field = sprintf("%*d", $sp,$field);
+    }
+    $line .=$field;
+  }
+  $line =~ s/\s+$//;
+  push @output, $line;
 
+}
+
+print OUTPUT @output;
 print OUTPUT "\n";
-
 close OUTPUT;
 
   unless ($testing) {
