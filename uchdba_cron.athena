@@ -108,7 +108,7 @@
 #
 # Transfer Daily (and monthly running total) Powell Release to WAPA/Montrose
 #
-14 10 * * 1-5 . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/xferftp/src; ./xfermail_montrose.sh >> $HDB_ENV/xferftp/src/xfermail_montrose.out 2> $HDB_ENV/xferftp/src/xfermail_montrose.err
+14 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/xferftp/src; ./xfermail_montrose.sh >> $HDB_ENV/xferftp/src/xfermail_montrose.out 2> $HDB_ENV/xferftp/src/xfermail_montrose.err
 #
 # Tea cup diagrams (used to be in Amy Thatcher's crontab)
 # 
