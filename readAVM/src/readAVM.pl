@@ -122,6 +122,9 @@ READ: while ($line = <INFILE>)
   next READ if (length($line) < 22 or lc($line) =~ /flow/
                 or $line =~ /={8}/ or lc($line) =~ /end operate/);
 
+#delete leading whitespace
+  $line =~ s/^\s+//;
+
 #collapse whitespace
   $line =~ s/  +/ /g;
 
