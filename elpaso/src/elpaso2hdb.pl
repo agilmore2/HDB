@@ -17,7 +17,7 @@ my ($hdb, @cur_sdi, @value_date, @data_date);
 #sites and datatypes desired. Not all site_ids and site_datatype_ids
 # have been created, yet.
 
-my %siteid_hash = ('ELEPHANT BUTTE RESERVOIR', 1119, "CABALLO RESERVOIR", 1094);
+my %siteid_hash = ('ELEPHANT BUTTE RES.', 1119, "CABALLO RESERVOIR", 1094);
 
 my %datatype_hash = ("ELEVATION", 49, "RELEASE", 42, "STORAGE", 17,
 		  "COMPUTED INFLOW", 29);
