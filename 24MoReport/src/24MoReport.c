@@ -16,12 +16,13 @@
 /* Changed version number to 2.0 6/7/01 because of the*/
 /* addition of the Vallecito page*/
 
+
+
 float RoundValue(float value, int round_amount) 
 {
     int temp_value;
     float difference;
     float rounding_cutoff;
-round_amount = 1000;
     /* round_amount must be 1 or a factor of ten, or this fails to round */
     if ( (round_amount != 1) && (round_amount % 10 != 0) )
     {
@@ -315,12 +316,10 @@ for (t=1; t<37; ++t)  {
      && sdis[j][i].datatype_id!=80)  {
      temp = h2opages[j][i].values[t];
      ConvertCFS_AF(units[i][j].scale,newdate,&temp);
-     temp = RoundValue(temp,1000);
      h2opages[j][i].values[t] = temp;}
 
   if (sdis[j][i].datatype_id == 25)  {
      temp = h2opages[j][i].values[t];
-     temp = RoundValue(temp,1000);
      h2opages[j][i].values[t] = temp;}
 
   if (!strcmp(row[j][1].column[i],"Bypass"))  {
@@ -422,12 +421,12 @@ fprintf(out_file,"%s %i  ", mo[mon-1], year);
    fprintf (out_file,"%10.2f ", h2opages[i][j].values[t]);
   else if (sdis[i][j].datatype_id==47 || sdis[i][j].datatype_id==15 ||
 	sdis[i][j].datatype_id==17)
-	fprintf(out_file,"%10.0f ", h2opages[i][j].values[t]/1000);
+	fprintf(out_file,"%10.0f ", RoundValue(h2opages[i][j].values[t],1000) /1000);
   else if (units[i][j].unit == 1 && sdis[i][j].datatype_id!=17)  { 
      if (sdis[i][j].datatype_id == 25||sdis[i][j].datatype_id==80 )
-        fprintf (out_file,"%10.0f ", h2opages[i][j].values[t]/1000);
+        fprintf (out_file,"%10.0f ", RoundValue(h2opages[i][j].values[t],1000) /1000);
      else {
-     fprintf(out_file,"%10.0f ", h2opages[i][j].values[t]/1000);}
+     fprintf(out_file,"%10.0f ", RoundValue(h2opages[i][j].values[t],1000) /1000);}
 
     if (t == 1) {
       total = 0;
@@ -437,17 +436,22 @@ fprintf(out_file,"%s %i  ", mo[mon-1], year);
       else 
        { sprintf(begWY,"10/1/%d", yow - 1);
          interval = mon +2;}
+
+
       success = SqlWYdata(sdis[i][j].site_datatype_id, 
 	sdis[i][j].site_id, begWY, begdate, &data);
+
       for (k=1; k<=interval; ++k)  {
         cfs = data[k];
+
         if (sdis[i][j].datatype_id !=25 && sdis[i][j].datatype_id!=80)  {
         ConvertCFS_AF(units[i][j].scale,begWY,&cfs);}
-        data[k]=RoundValue(cfs,1000);  
+        data[k] = cfs;
         total = total + data[k];
-success = SqlFormatDate(begWY,begWY);
+        success = SqlFormatDate(begWY,begWY);
 	success = SqlDateMath(ADDITION, begWY, newdate, 1,"month");
 	strcpy(begWY, newdate);  }
+
       if (sdis[i][j].datatype_id==39) temp =total;
       else if (!strcmp(row[i][1].column[j],"Bypass")) total = fabs((double)total - (double)temp);
       wytotal[j][t] = h2opages[i][j].values[t]/1000 + total/1000;}
@@ -475,9 +479,9 @@ success = SqlFormatDate(begWY,begWY);
      else if (wytotal[col][t] > 50000000)
        fprintf(out_file,"%s", buffer);
      else if (sdis[i][col].datatype_id == 25 )
-       fprintf(out_file,"%10.0f ", wytotal[col][t]);
+       fprintf(out_file,"%10.0f ", RoundValue(wytotal[col][t],1) );
      else
-       fprintf(out_file,"%10.0f ", wytotal[col][t]);}
+       fprintf(out_file,"%10.0f ", RoundValue(wytotal[col][t],1) );}
     fprintf(out_file,"\n\n");}
 if (mon==12) mon=0;
 mon = mon + 1;}
@@ -496,4 +500,3 @@ printf("Output written to 24MoReport.out\n");
 SqlDisconnectAll();
 
 }
-
