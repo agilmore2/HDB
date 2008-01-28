@@ -77,11 +77,14 @@ sub startup_rs($) {
   my $rss = shift;
 
   foreach my $rs (@$rss) {
+    my $app = lc($rs);
+    $app =~ s/\W//g;
+
     my @args =
       ( "$decdir/bin/rs", "-e", "-k", "$decdir/lockdir/$rs.lock", "\"$rs\"" );
 
     print "Starting up $rs\n";
-    daemonize(@args);
+    daemonize(@args,$app);
   }
 }
 
@@ -89,31 +92,33 @@ sub startup_cp($) {
   my $cps = shift;
 
   foreach my $cp (@$cps) {
-    my $logfile = lc($cp);
-    $logfile =~ s/\W//g;
-    $logfile = "$decdir/log/" . $logfile. ".log";
+    my $app = lc($cp);
+    $app =~ s/\W//g;
+    my $logfile = "$decdir/log/" . $app. ".log";
 
     my @args =
       ( "$decdir/bin/compproc", "-d", "1", "-l", $logfile, "-a", "\"$cp\"" );
       
     print "Starting up $cp\n";
       
-    daemonize(@args);
+    daemonize(@args,$app);
   }
 }
 
 #this function is from perldoc perlipc, with a few additions for real use
 sub daemonize {
   local $SIG{CHLD} = 'IGNORE';
+  my $appfile = "$decdir/log/" . pop();
 
-  defined( my $pid = fork() ) or die "Can't fork: $!";    
+  defined( my $pid = fork() ) or die "Can't fork: $!";
   return if $pid;
+  
   setsid() or die "Can't start a new session: $!";
   open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
-  open STDOUT, '>/dev/null'
-    or die "Can't write to /dev/null: $!";
-  open STDERR, '>&STDOUT' or die "Can't dup stdout: $!";
+  open STDOUT, ">$appfile.out" or die "Can't open $appfile.out: $!";
+  open STDERR, ">$appfile.err" or die "Can't open $appfile.err: $!";
   
+  print "in child $appfile\n";
   exec (@_);
 }
 
