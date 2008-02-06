@@ -22,6 +22,7 @@
 # Read data from El Paso's daily report
 #
 45 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/elpaso/src; . ./get_load_elpaso.sh >> $HDB_ENV/elpaso/src/get_load_elpaso.log 2> $HDB_ENV/elpaso/src/get_load_elpaso.err
+55 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/elpaso/src;bash -c "HDB_LOCAL=uchdbdev $HDB_ENV/elpaso/src/elpaso2hdb.pl Dailyflow.htm app_user uchdbdev"
 #
 # Read data from USGS website
 #
@@ -51,13 +52,9 @@
 #
 05 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,23 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/derivation/src; derivation app_user uchdb2 >$HDB_ENV/log/derivation.err 2>&1
 #
-# Move old SCADA crsp_ files into old_files directory
+# Compress last year's SCADA crsp_ files on February 1
 #
-01 02 25 * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/scadaTransfer/work; ./backup_files
-#
-# Compress last year's SCADA crsp_ files on October 1
-#
-03 02 01 10 * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/scadaTransfer/work/old_files; ./compress_files
+03 02 01 02 * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/scadaTransfer/work/old_files; ./compress_files
 #
 # Email about automated processes
 #
