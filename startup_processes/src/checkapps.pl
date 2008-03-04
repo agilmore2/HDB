@@ -2,10 +2,9 @@
 
 use warnings;
 use strict;
-use POSIX 'setsid';
 
+use POSIX 'setsid';
 use File::Basename;
-use Date::Calc qw(Decode_Date_US Today_and_Now);
 
 #use libraries from HDB environment (Solaris only except for HDB.pm)
 use lib "$ENV{HDB_ENV}/perlLib/lib";
@@ -37,9 +36,9 @@ sub main {
   my $mode = process_args(@ARGV);    # uses globals, bad!
 
   #HDB database interface
-  # global because used in several sub routines
   my $hdb = Hdb->new;
 
+  #connect to database
   if ( defined($accountfile) ) {
     $hdb->connect_from_file($accountfile);
   } else {
@@ -52,11 +51,15 @@ sub main {
     $hdb->connect_to_db( $dbname, $hdbuser, $hdbpass );
   }
 
+# read information about routing specs and computation processes from db
   my $rss = read_rs($hdb);
   my $cps = read_cp($hdb);
 
+# mode is command line arg, one of start, status, stop
   if ( $mode eq 'start' ) {
-   undef $hdb;
+    #disconnect from db
+    undef $hdb;
+    
     startup_rs($rss);
     startup_cp($cps);
   } elsif ( $mode eq 'status' ) {
@@ -65,6 +68,7 @@ sub main {
   } elsif ( $mode eq 'stop' ) {
     stop_rs( $hdb, $rss );
     stop_cp( $hdb, $cps );
+    #sleep to make sure that routing specs finish
     sleep 10;
   } else {
     $hdb->hdbdie("Unrecognized mode $mode!\n");
@@ -77,8 +81,12 @@ sub startup_rs($) {
   my $rss = shift;
 
   foreach my $rs (@$rss) {
+
+
     my $app = lc($rs);
     $app =~ s/\W//g;
+
+ # write lock file. Log and stat files go to default location ($decdir/routstat)
 
     my @args =
       ( "$decdir/bin/rs", "-e", "-k", "$decdir/lockdir/$rs.lock", "\"$rs\"" );
@@ -96,6 +104,7 @@ sub startup_cp($) {
     $app =~ s/\W//g;
     my $logfile = "$decdir/log/" . $app. ".log";
 
+# debug level 1, to logfile as specified
     my @args =
       ( "$decdir/bin/compproc", "-d", "1", "-l", $logfile, "-a", "\"$cp\"" );
       
@@ -111,12 +120,12 @@ sub daemonize {
   my $appfile = "$decdir/log/" . pop();
 
   defined( my $pid = fork() ) or die "Can't fork: $!";
-  return if $pid;
-  
+  return if $pid; # if we are parent, finished with launch
   setsid() or die "Can't start a new session: $!";
   open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
-  open STDOUT, ">$appfile.out" or die "Can't open $appfile.out: $!";
-  open STDERR, ">$appfile.err" or die "Can't open $appfile.err: $!";
+  open STDOUT, ">$ENV{HDB_ENV}/logs/$appfile$$.out"
+    or die "Can't write to /dev/null: $!";
+  open STDERR, ">$ENV{HDB_ENV}/logs/$appfile$$.err" or die "Can't dup stdout: $!";
   
   print "in child $appfile\n";
   exec (@_);
@@ -125,6 +134,8 @@ sub daemonize {
 sub stop_rs ($$) {
   my $hdb = shift;
   my $rss = shift;
+
+# method for stopping Routing Specs is removing optional lock file created at startup
 
   foreach my $rs (@$rss) {
     if ( !-e "$decdir/lockdir/$rs.lock" ) {
@@ -140,7 +151,9 @@ sub stop_cp ($$) {
   my $hdb = shift;
   my $cps = shift;
 
-
+# use provided stopcomp script to remove lock/heartbeat from db
+# while compproc is actually computing, will not check for heartbeat
+# otherwise will be checking every second
   foreach my $cp (@$cps) {
     system( "$decdir/bin/stopcomp", "-a", "\"$cp\"" );
   }
@@ -159,14 +172,19 @@ sub check_rs ($$) {
       my $rs_stat = read_rs_stat($rs);
 
       #returns much information, but we care about StartTime,
-      #which is in milliseconds since epoch
+      #which is in milliseconds since epoch, and Status
 
       my $timediff = time() - $rs_stat->{StartTime} / 1000;
 
 # time() returns current time since epoch, so this is difference in seconds between
 # last rs run time and current time
-      if (
-           $timediff < 21
+# according to docs:
+#"While running, the process will ‘touch’ the lock file every 10 seconds. If the file was
+#deleted, the process will terminate. So allow about 10 seconds after deleting a lock file
+#before starting a new instance.
+#A lock file is “busy” if it exists and has been touched within the last 20 seconds."
+
+      if ( $timediff < 21
            and (    $rs_stat->{Status} eq 'Running'
                  or $rs_stat->{Status} eq 'Waiting' )
         )
@@ -177,7 +195,7 @@ sub check_rs ($$) {
         print "Routing Spec $rs is down, status is stopped.\n";
       } else {
         printf
-"Routing Spec $rs is down, status $rs_stat->{Status} file last updated %.2f seconds ago\n",
+"Routing Spec $rs is down, status: '$rs_stat->{Status}' file last updated %.2f seconds ago\n",
           $timediff;
       }
     }
@@ -185,12 +203,11 @@ sub check_rs ($$) {
 }
 
 sub check_cp ($$) {
-
   #check heartbeat existence and age
   my $hdb = shift;
   my $cps = shift;
 
-  #find lock and stat files
+  #read status from db
   foreach my $cp (@$cps) {
     my $heartbeats = $hdb->dbh->selectall_arrayref(
       "select sysdate-heartbeat days, pid
@@ -199,21 +216,23 @@ sub check_cp ($$) {
   b.loading_application_name = '$cp'"
     );
 
+# last touch of heartbeat, in fractional days
     my $heartbeat = $heartbeats->[0][0];
 
-    # transform heartbeat from fractional days to seconds
-
+# pid of controlling script for CP 
     my $pid = $heartbeats->[0][1];
 
     if ( !defined($heartbeat) ) {
       print "Comp Proc $cp is down: No heartbeat in database\n";
-    } elsif ( $heartbeat < 2  / 60 / 60 / 24) {
+    } elsif ( $heartbeat < 2 / 60 / 60 / 24) {
 
       #heartbeat is less than two seconds old, CP is looking for work
       print "Comp Proc $cp is up, looking for work.\n";
     } else {
 
       #heartbeat is older, see if pid is running
+      # we use the ps command here and check its exit value
+      # if it is 0, the command exited sucessfully
       system("ps -p $pid >/dev/null");
       if ( $? == -1 ) {
         print "failed to execute ps: $!\n";
