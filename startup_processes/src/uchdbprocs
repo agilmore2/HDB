@@ -10,7 +10,14 @@
 # Source function library.
 test -x /etc/init.d/functions && . /etc/init.d/functions
 
+
+#============= CHANGE THESE ===============
+#
 HDB_ENV=/wrg/hdb/HDB2_applications; export HDB_ENV;
+HDB_DBA=uchdba
+#
+#================================
+
 
 test -x $HDB_ENV/startup_processes/src/checkapps.pl || exit 0
 
@@ -19,18 +26,18 @@ prog="HDB Processes"
 
 start() {
     echo -n $"Starting $prog: "
-	su - uchdba -c "$HDB_ENV/startup_processes/src/checkapps.pl -a ~uchdba/.app_user_login start"
+	su - $HDB_DBA -c "$HDB_ENV/startup_processes/src/checkapps.pl -a ~$HDB_DBA/.app_user_login start"
 	echo
 }
 
 stop() {
 	echo -n $"Stopping $prog: "
-	su - uchdba -c "$HDB_ENV/startup_processes/src/checkapps.pl -a ~uchdba/.app_user_login stop"
+	su - $HDB_DBA -c "$HDB_ENV/startup_processes/src/checkapps.pl -a ~$HDB_DBA/.app_user_login stop"
 	echo
 }
 
 status() {
-	su - uchdba -c "$HDB_ENV/startup_processes/src/checkapps.pl -a ~uchdba/.app_user_login status"
+	su - $HDB_DBA -c "$HDB_ENV/startup_processes/src/checkapps.pl -a ~$HDB_DBA/.app_user_login status"
 }
 
 #
