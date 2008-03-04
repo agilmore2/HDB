@@ -149,7 +149,7 @@ sub delete_rating_points ($$) {
   eval {
     my $sth = $hdb->dbh->prepare(
     "begin
-       delete_rating_points(?);
+       ratings.delete_rating_points(?);
      end;");
     $sth->bind_param(1,$rating);
     $sth->execute;
@@ -214,12 +214,12 @@ sub find_rating ($$) {
   eval {
     $rating_id =
       $hdb->dbh->selectcol_arrayref( #ugly global var here...
-            "select find_site_rating('$usgs_rating_type',$sdi) from dual")->[0];
+            "select ratings.find_site_rating('$usgs_rating_type',$sdi,null) from dual")->[0];
   };
 
   if (@$)    #error occurred
   {
-    $hdb->hdbdie("Query of site $site for ext_data_map failed! $!\n");
+    $hdb->hdbdie("Query of site $site for ratings failed! $!\n");
   }
 
   return $rating_id;
@@ -266,7 +266,7 @@ sub update_rating_info ($$$) {
   eval {
     my $sth = $hdb->dbh->prepare(
     "begin
-       update_rating_desc (?,?);
+       ratings.update_rating_desc (?,?);
      end;");
     $sth->bind_param(1,$rating);
     $sth->bind_param(2,substr($desc,0,1000)); #description in DB has 1000 char limit
@@ -295,13 +295,13 @@ sub create_site_rating ($$) {
   
   eval {
     my $sth = $hdb->dbh->do( "
-      begin create_site_rating($sdi,
+      begin ratings.create_site_rating($sdi,
             '$usgs_rating_type',null,null,$agen,null);
       end;" );
 
     $rating_id =
       $hdb->dbh->selectcol_arrayref(
-            "select find_site_rating('$usgs_rating_type',$sdi) from dual")->[0];
+            "select ratings.find_site_rating('$usgs_rating_type',$sdi,null) from dual")->[0];
   };    # semicolon here because of use of eval
 
   if ( @$ or !defined($rating_id) )    #error occurred
@@ -328,7 +328,7 @@ sub modify_rating_point ($$@) {
   eval {
     if (!defined ($sth)) {
       $sth = $hdb->dbh->prepare( "
-         begin modify_rating_point(?,?,?);
+         begin ratings.modify_rating_point(?,?,?);
          end;" );
     }
     $sth->bind_param(1,$rating);

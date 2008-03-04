@@ -92,7 +92,7 @@ sub delete_rating_points ($$) {
   eval {
     my $sth = $hdb->dbh->prepare(
     "begin
-       delete_rating_points(?);
+       ratings.delete_rating_points(?);
      end;");
     $sth->bind_param(1,$rating);
     $sth->execute;
@@ -129,7 +129,7 @@ sub find_rating ($$) {
   eval {
     $rating_id =
       $hdb->dbh->selectcol_arrayref(
-            "select find_site_rating('ACAPS $type',$sdi) from dual")->[0];
+            "select ratings.find_site_rating('ACAPS $type',$sdi,null) from dual")->[0];
   };
 
   if (@$)    #error occurred
@@ -153,7 +153,7 @@ sub modify_rating_point ($$@) {
   eval {
     if (!defined ($sth)) {
       $sth = $hdb->dbh->prepare( "
-         begin modify_rating_point(?,?,?);
+         begin ratings.modify_rating_point(?,?,?);
          end;" );
     }
     $sth->bind_param(1,$rating);
