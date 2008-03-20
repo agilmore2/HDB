@@ -18,11 +18,11 @@
 
 
 
-float RoundValue(float value, int round_amount) 
+double RoundValue24(double value, int round_amount) 
 {
     int temp_value;
-    float difference;
-    float rounding_cutoff;
+    double difference;
+    double rounding_cutoff;
     /* round_amount must be 1 or a factor of ten, or this fails to round */
     if ( (round_amount != 1) && (round_amount % 10 != 0) )
     {
@@ -30,26 +30,26 @@ float RoundValue(float value, int round_amount)
         return(value);
     }
 
-    rounding_cutoff = ((float) round_amount) / 2;
+    rounding_cutoff = ((double) round_amount) / 2;
 
     temp_value = (int) (value / round_amount);
     temp_value = temp_value * round_amount;
-    difference = (float) (value - temp_value);
+    difference = (double) (value - temp_value);
  
     if (difference <= rounding_cutoff)
     { /* round down */
-value = (float) temp_value;
+value = (double) temp_value;
         return (value);
     }
     else
     {                               /* round up   */
-value = (float) (temp_value + round_amount);
+value = (double) (temp_value + round_amount);
         return ( value);
     }
 }
 
 
-float ConvertCFS_AF ( int scale, char * date, float * values )
+double ConvertCFS_AF ( int scale, char * date, double * values )
 {
   int success,days,mon, yr;
 
@@ -82,11 +82,11 @@ void main (int argc, char **argv)
 time_t  clock;
 char TimeString[TIMELENGTH];
 
-float data[15], total=0, wytotal[MAX_NO_COLS][40];
+double data[15], total=0, wytotal[MAX_NO_COLS][40];
 int  interval, begmo, col, year, index, yow, mrid;
 int  flag = 0, success, m, i, j, k;
 int h2ocol[N_OF_SITES];
-float  temp,cfs, af;
+double  temp,cfs, af;
 int  t, sdi, mon, yr, prob;
 ids  sdis[N_OF_SITES][MAX_NO_COLS];
 char runDate[25],sysDate[25],begWY[50],newdate[50],the_date[50], begdate[50], moddate[50];
@@ -213,12 +213,12 @@ if (argc > 1)
 if (flag==1) goto power;
 
 /*Get System Run Date */
-if ((success = SqlGetSystemRunDate(mrid,&sysDate)) !=OK)  {
+if ((success = SqlGetSystemRunDate(mrid,sysDate)) !=OK)  {
   PrintError("Could not get system date\n");
   exit(ERROR); }
 
 /* Get Model Run Date from model table */
-if ((success = SqlGetModelRunDate(mrid,&mon, &yr,&runDate,&prob)) !=OK)  {
+if ((success = SqlGetModelRunDate(mrid,&mon, &yr,runDate,&prob)) !=OK)  {
   PrintError("Could not get model run date\n");
   exit(ERROR); }
 
@@ -269,10 +269,10 @@ if ((success = SqlGetSDI(sdis[j][i].datatype_id, sdis[j][i].site_id, &sdi))
 sdis[j][i].site_datatype_id = sdi;
 
 /* Fetch History data from table */
-SqlGet24HisData(sdis[j][i].site_id, sdi, mon, yr, &h2opages[j][i].values);
+SqlGet24HisData(sdis[j][i].site_id, sdi, mon, yr, h2opages[j][i].values);
 
 /* Fetch model data from m_table */
-SqlGet24ModData(sdis[j][i].site_id, mrid, sdi, mon, yr, &h2opages[j][i].values);
+SqlGet24ModData(sdis[j][i].site_id, mrid, sdi, mon, yr, h2opages[j][i].values);
 
 success = SqlFormatDate(moddate,moddate);
 if (success != OK)
@@ -421,12 +421,12 @@ fprintf(out_file,"%s %i  ", mo[mon-1], year);
    fprintf (out_file,"%10.2f ", h2opages[i][j].values[t]);
   else if (sdis[i][j].datatype_id==47 || sdis[i][j].datatype_id==15 ||
 	sdis[i][j].datatype_id==17)
-	fprintf(out_file,"%10.0f ", RoundValue(h2opages[i][j].values[t],1000) /1000);
+	fprintf(out_file,"%10.0f ", RoundValue24(h2opages[i][j].values[t],1000) /1000);
   else if (units[i][j].unit == 1 && sdis[i][j].datatype_id!=17)  { 
      if (sdis[i][j].datatype_id == 25||sdis[i][j].datatype_id==80 )
-        fprintf (out_file,"%10.0f ", RoundValue(h2opages[i][j].values[t],1000) /1000);
+        fprintf (out_file,"%10.0f ", RoundValue24(h2opages[i][j].values[t],1000) /1000);
      else {
-     fprintf(out_file,"%10.0f ", RoundValue(h2opages[i][j].values[t],1000) /1000);}
+     fprintf(out_file,"%10.0f ", RoundValue24(h2opages[i][j].values[t],1000) /1000);}
 
     if (t == 1) {
       total = 0;
@@ -439,7 +439,7 @@ fprintf(out_file,"%s %i  ", mo[mon-1], year);
 
 
       success = SqlWYdata(sdis[i][j].site_datatype_id, 
-	sdis[i][j].site_id, begWY, begdate, &data);
+	sdis[i][j].site_id, begWY, begdate, data);
 
       for (k=1; k<=interval; ++k)  {
         cfs = data[k];
@@ -479,9 +479,9 @@ fprintf(out_file,"%s %i  ", mo[mon-1], year);
      else if (wytotal[col][t] > 50000000)
        fprintf(out_file,"%s", buffer);
      else if (sdis[i][col].datatype_id == 25 )
-       fprintf(out_file,"%10.0f ", RoundValue(wytotal[col][t],1) );
+       fprintf(out_file,"%10.0f ", RoundValue24(wytotal[col][t],1) );
      else
-       fprintf(out_file,"%10.0f ", RoundValue(wytotal[col][t],1) );}
+       fprintf(out_file,"%10.0f ", RoundValue24(wytotal[col][t],1) );}
     fprintf(out_file,"\n\n");}
 if (mon==12) mon=0;
 mon = mon + 1;}

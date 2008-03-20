@@ -175,15 +175,15 @@ return(OK);
 
 
 #define FUNC_NAME "SqlGet24HisData"
-float SqlGet24HisData(int sid, int sdi, int mon, int yr, float *values)
+int SqlGet24HisData(int sid, int sdi, int mon, int yr, double *values)
 {
 int result, success, ind,i,j,mo;
 int month[24], year[24];
-float tmpval[30];
+double tmpval[30];
 
 EXEC SQL BEGIN DECLARE SECTION;
    int sdid = sdi, n, m;
-   float temp;
+   double temp;
    char begdate[50], moddate[50];
 EXEC SQL END DECLARE SECTION;
 
@@ -250,6 +250,7 @@ while(++ind)
 if (( result = SqlErrorHandler (FUNC_NAME, TRUE,
          "Fetch failed\n"))  !=OK)
    {
+     EXEC SQL CLOSE acursor;
      return (ERROR);
    }
    values[ind] = temp;
@@ -294,14 +295,14 @@ return(OK);
 
 
 #define FUNC_NAME "SqlGet24ModData"
-float SqlGet24ModData(int sid, int mrid, int sdi, int mon, int yr, float *values)
+int SqlGet24ModData(int sid, int mrid, int sdi, int mon, int yr, double *values)
 {
 int result, success, ind;
 
 EXEC SQL BEGIN DECLARE SECTION;
    int sdid = sdi;
    int rid = mrid;
-   float temp;
+   double temp;
    char enddate[50], moddate[50];
 EXEC SQL END DECLARE SECTION;
 
@@ -386,14 +387,14 @@ return(OK);
 
 
 #define FUNC_NAME "SqlWYdata"
-int SqlWYdata(int sdi, int sid, char * WYdate, char * date, float * values) 
+int SqlWYdata(int sdi, int sid, char * WYdate, char * date, double * values) 
 {
   int ind, success,result,i,j,mo, diff;
   int month[20], year[20],tmpval[20];
   double x; 
 
   EXEC SQL BEGIN DECLARE SECTION;
-    float temp;
+    double temp;
     int   begmo,num_mo,sdid = sdi,n,m;
     char  begWY[50], begyear[50];
   EXEC SQL END DECLARE SECTION;

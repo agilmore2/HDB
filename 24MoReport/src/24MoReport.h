@@ -26,7 +26,7 @@
 #define TIMELENGTH 30
 typedef struct   {
 			char  column_head[50];
-			float values[40];
+			double values[40];
 		} columndata;
 
 typedef struct  {
@@ -42,4 +42,16 @@ typedef struct   {
 struct  heading {
 			char column[MAX_NO_COLS][20];
 	         };
+
+
+double RoundValue24(double value, int round_amount) ;
+double ConvertCFS_AF ( int scale, char * date, double * values );
+int PowerReport (int model_run);
+int SqlCheckModelRunId(int model_run);
+int SqlGet24HisData(int sid, int sdi, int mon, int yr, double *values);
+int SqlGet24ModData(int sid, int mrid, int sdi, int mon, int yr, double *values);
+int SqlGetSystemRunDate(int model_run, char * sysDate);
+int SqlGetSDI(int x, int y, int * sdi);
+int SqlGetModelRunDate(int model_run,int * mon,int * yr, char * runDate, int * prob);
+int SqlWYdata(int sdi, int sid, char * WYdate, char * date, double * values) ;
 

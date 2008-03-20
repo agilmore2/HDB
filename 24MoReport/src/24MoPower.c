@@ -17,12 +17,12 @@ int PowerReport (int model_run)
 time_t  clock;
 char  TimeString[TIMELENGTH];
 
-float Mead, Moh, Hav, total=0, wytotal[MAX_NO_COLS][40];
+double Mead, Moh, Hav, total=0, wytotal[MAX_NO_COLS][40];
 int  begmo, col, year, index, yow;
 int  success, m, i, j, k, tmp=1000;
 int h2ocol[N_OF_POWER];
-float  energy[N_OF_POWER][37],af[N_OF_POWER][37],data[15], temp[50];
-float   cfs;
+double  energy[N_OF_POWER][37],af[N_OF_POWER][37],data[15], temp[50];
+double   cfs;
 int  t, sdi, interval, mon, yr, prob;
 ids  sdis[N_OF_POWER][MAX_NO_COLS];
 char sysDate[25],begWY[50], newdate[50], the_date[50], begdate[50], moddate[50];
@@ -52,13 +52,13 @@ in_file = fopen(POW_FILE,"r");
   h2ocol[UBPOWER] = 6;
 
 /*Get System Run Date */
-if ((success = SqlGetSystemRunDate(model_run,&sysDate)) !=OK)  {
+if ((success = SqlGetSystemRunDate(model_run,sysDate)) !=OK)  {
   PrintError("Could not get system date\n");
   exit(ERROR); }
 
 
 /* Get Model Run Date from model table */
-if ((success = SqlGetModelRunDate(model_run,&mon, &yr,&runDate,&prob)) !=OK)  {
+if ((success = SqlGetModelRunDate(model_run,&mon, &yr,runDate,&prob)) !=OK)  {
   PrintError("Could not get model run date\n");
   exit(ERROR); }
 
@@ -84,7 +84,7 @@ if ((success = SqlGetSDI(sdis[j][i].datatype_id, sdis[j][i].site_id, &sdi))
 sdis[j][i].site_datatype_id = sdi;
 
 /* Fetch History data from table */
-SqlGet24HisData(sdis[j][i].site_id, sdi, mon, yr, &h2opages[j][i].values);
+SqlGet24HisData(sdis[j][i].site_id, sdi, mon, yr, h2opages[j][i].values);
 
 if (sdis[j][i].datatype_id==13){
   for (t=1; t<=12; ++t)
@@ -97,7 +97,7 @@ if (sdis[j][i].site_datatype_id ==2087)
    Hav = h2opages[j][i].values[12];
 
 /* Fetch model data from m_table */
-SqlGet24ModData(sdis[j][i].site_id, model_run, sdi, mon, yr, &h2opages[j][i].values);
+SqlGet24ModData(sdis[j][i].site_id, model_run, sdi, mon, yr, h2opages[j][i].values);
 
 /* Doing change in storage computation*/
 if (sdis[j][i].datatype_id == 47 || sdis[j][i].datatype_id==1)  {
@@ -260,7 +260,7 @@ fprintf(out_file,"%s %i  ", mo[mon-1], year);
        { sprintf(begWY,"10/1/%d", yow - 1);
          interval = mon +2;}
       success = SqlWYdata(sdis[i][j].site_datatype_id, 
-	sdis[i][j].site_id, begWY, begdate, &data);
+	sdis[i][j].site_id, begWY, begdate, data);
       if (mon >= 10)
 	interval = mon - 10;
       else
@@ -362,7 +362,7 @@ if (t == 1)  {
        interval = mon + 2;
     }
   success = SqlWYdata(sdis[UBPOWER][j].site_datatype_id,
-     sdis[UBPOWER][j].site_id, begWY, begdate, &data);
+     sdis[UBPOWER][j].site_id, begWY, begdate, data);
   for (k=1; k<=interval; ++k)
      total = total + data[k];
   wytotal[j][t] = h2opages[UBPOWER][j].values[t] + total;}
