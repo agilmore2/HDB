@@ -1,4 +1,4 @@
-float bom_space_reqd[12] = { 5350.0, 
+double bom_space_reqd[12] = { 5350.0, 
                          1500.0,
                          1500.0,
                          1500.0,
