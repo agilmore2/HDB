@@ -36,7 +36,7 @@ double RoundValue24(double value, int round_amount)
     temp_value = temp_value * round_amount;
     difference = (double) (value - temp_value);
  
-    if (difference <= rounding_cutoff)
+    if (difference < rounding_cutoff)
     { /* round down */
 value = (double) temp_value;
         return (value);

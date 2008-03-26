@@ -224,7 +224,9 @@ fprintf(out_file,"%s %i  ", mo[mon-1], year);
        switch (sdis[i][j].site_id)
        {
         case 971:
-          fprintf(out_file,"%10.1f ", 1731 * h2opages[i][j].values[t]);
+/* Using the capacity number written to HDB from RW.  Set by Rule now.  (May 9, 2005 - LS)
+/*          fprintf(out_file,"%10.1f ", 1861 * h2opages[i][j].values[t]);*/
+          fprintf(out_file,"%10.1f ", h2opages[i][j].values[t]);
           break;
         case 972:
 /* Davis MW changed 6/10/03 per e-mail from Larry Karr at request of George Kraft*/
@@ -389,4 +391,3 @@ fprintf(out_file,"\f");
 
 
 } /* End of Program */
-
