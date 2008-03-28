@@ -20,9 +20,8 @@
 
 double RoundValue24(double value, int round_amount) 
 {
-    int temp_value;
-    double difference;
-    double rounding_cutoff;
+    double temp_value;
+    double rounding;
     /* round_amount must be 1 or a factor of ten, or this fails to round */
     if ( (round_amount != 1) && (round_amount % 10 != 0) )
     {
@@ -30,22 +29,16 @@ double RoundValue24(double value, int round_amount)
         return(value);
     }
 
-    rounding_cutoff = ((double) round_amount) / 2;
+    rounding = (double)1 / (double)2;
 
-    temp_value = (int) (value / round_amount);
+    if (value < 0) {
+       temp_value = (long) ((value / (double)round_amount) - rounding);
+    }
+    else {
+       temp_value = (long) ((value / (double)round_amount) + rounding);
+    }
     temp_value = temp_value * round_amount;
-    difference = (double) (value - temp_value);
- 
-    if (difference < rounding_cutoff)
-    { /* round down */
-value = (double) temp_value;
-        return (value);
-    }
-    else
-    {                               /* round up   */
-value = (double) (temp_value + round_amount);
-        return ( value);
-    }
+    return (temp_value);
 }
 
 
@@ -73,7 +66,12 @@ if (success != OK)
   else
    days = 31;
 
-*values = (*values * 1.9835 * days);
+  /* 86400 = number of seconds in a day
+     43560 = square feet in an acre
+     so AF/day from cfs =
+     ft^3/s * 86400 s/day * acre/43560 ft^2 = acre ft / day
+  */
+  *values = (*values * 86400.0/43560.0 * days);
 
 }
 
@@ -500,3 +498,38 @@ printf("Output written to 24MoReport.out\n");
 SqlDisconnectAll();
 
 }
+
+
+/* comment out old version of Round function*/
+/*
+double RoundValue24(double value, int round_amount) 
+{
+    int temp_value;
+    double difference;
+    double rounding_cutoff;*/
+    /* round_amount must be 1 or a factor of ten, or this fails to round */
+/*    if ( (round_amount != 1) && (round_amount % 10 != 0) )
+    {
+        printf("Illegal rounding amount: %d\n", round_amount);
+        return(value);
+    }
+
+    rounding_cutoff = ((double) round_amount) / 2;
+
+    temp_value = (int) (value / round_amount);
+    temp_value = temp_value * round_amount;
+    difference = (double) (value - temp_value);
+ 
+    if (difference < rounding_cutoff)
+    { */ /* round down */
+       /*       value = (double) temp_value;
+        return (value);
+    }
+    else
+    {                               /* round up   */
+       /*
+       value = (double) (temp_value + round_amount);
+        return ( value);
+    }
+}
+*/
