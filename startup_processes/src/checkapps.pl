@@ -102,7 +102,7 @@ sub startup_cp($) {
   foreach my $cp (@$cps) {
     my $app = lc($cp);
     $app =~ s/\W//g;
-    my $logfile = "$decdir/log/" . $app. ".log";
+    my $logfile = "$ENV{HDB_ENV}/log/" . $app. ".log";
 
 # debug level 1, to logfile as specified
     my @args =
@@ -117,16 +117,16 @@ sub startup_cp($) {
 #this function is from perldoc perlipc, with a few additions for real use
 sub daemonize {
   local $SIG{CHLD} = 'IGNORE';
-  my $appfile = "$decdir/log/" . pop();
+  my $appfile = "$ENV{HDB_ENV}/log/" . pop();
 
   defined( my $pid = fork() ) or die "Can't fork: $!";
   return if $pid; # if we are parent, finished with launch
   setsid() or die "Can't start a new session: $!";
   open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
-  open STDOUT, ">$ENV{HDB_ENV}/logs/$appfile$$.out"
-    or die "Can't write stdout to $ENV{HDB_ENV}/log/$appfile$$.out: $!";
-  open STDERR, ">$ENV{HDB_ENV}/logs/$appfile$$.err"
-    or die "Can't write stderr to $ENV{HDB_ENV}/log/$appfile$$.err: $!";
+  open STDOUT, ">$appfile$$.out"
+    or die "Can't write stdout to $appfile$$.out: $!";
+  open STDERR, ">$appfile$$.err"
+    or die "Can't write stderr to $appfile$$.err: $!";
   
   print "in child $appfile\n";
   exec (@_);
