@@ -124,8 +124,9 @@ sub daemonize {
   setsid() or die "Can't start a new session: $!";
   open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
   open STDOUT, ">$ENV{HDB_ENV}/logs/$appfile$$.out"
-    or die "Can't write to /dev/null: $!";
-  open STDERR, ">$ENV{HDB_ENV}/logs/$appfile$$.err" or die "Can't dup stdout: $!";
+    or die "Can't write stdout to $ENV{HDB_ENV}/logs/$appfile$$.out: $!";
+  open STDERR, ">$ENV{HDB_ENV}/logs/$appfile$$.err"
+    or die "Can't write stderr to $ENV{HDB_ENV}/logs/$appfile$$.err: $!";
   
   print "in child $appfile\n";
   exec (@_);
