@@ -45,7 +45,7 @@ sub read_table ($$$) {
   my @table;
   
   my $file = $site . "coeff.dat";
-  open INFILE, $file;
+  open INFILE, $file or die "can't open $file! $!";
   my @data = <INFILE>;
   chomp @data;
   
