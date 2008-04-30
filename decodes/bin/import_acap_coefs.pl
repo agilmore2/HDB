@@ -20,7 +20,7 @@ $verstring =~ s/ \$//;
 my $progname = basename($0);    
 chomp $progname;
 
-my ( $accountfile, $hdbuser, $hdbpass, $debug, $sitearg, $sdiarg );
+my ( $accountfile, $hdbuser, $hdbpass, $test, $sitearg, $sdiarg );
 
 #store decodes dir of HDB environment for use
 my $decdir = "$ENV{HDB_ENV}/decodes";
@@ -38,7 +38,7 @@ sub process_coef ($$$) {
   process_rating( $hdb, $sdi, @table );
 }
 
-#download the rating file
+#read the rating file
 sub read_table ($$$) {
   my $site    = shift;
 
@@ -57,11 +57,8 @@ sub read_table ($$$) {
   return @table;
 }
 
-#check the returned rating against filesystem stored version
-# and update the database and write a new file if different.
-# have to compare the actual table rather than header on the
-# table because it changes (at least the shifted date) every day
-# FIXME: compare new rating against database stored version instead
+#find rating ids for the three coefficients
+# update the ratings from the file table
 sub process_rating ($$$) {
   my $hdb      = shift;
   my $sdi     = shift;
@@ -79,9 +76,6 @@ sub process_rating ($$$) {
   if ($rating) {
    update_rating( $hdb, $rating, 3,\@table );
   }
-  
-   
-  
 }
 
 #delete old rating data
@@ -159,7 +153,7 @@ sub modify_rating_point ($$@) {
     $sth->bind_param(1,$rating);
     $sth->bind_param(2,$_[0]);    
     $sth->bind_param(3,$_[1]);
-    $sth->execute if (!$debug);
+    $sth->execute if (!$test);
   };    # semicolon here because of use of eval
 
   if (@$)    #error occurred
@@ -190,8 +184,8 @@ sub process_args (@) {
         print "file not found or unreadable: $accountfile\n";
         exit 1;
       }
-    } elsif ( $arg =~ /-d/ ) {    # get debug flag
-      $debug = 1;
+    } elsif ( $arg =~ /-t/ ) {    # get testing flag
+      $test = 1;
     } elsif ( $arg =~ /-i/ ) {    # get site name
       if ( defined($sitearg) ) {
         print STDERR "only one -i site allowed!\n";
@@ -232,14 +226,16 @@ sub usage {
   print STDERR <<"ENDHELP";
 $progname $verstring [ -h | -v ] | [ options ]
 Script to read in ACAPS files
-Example: $progname -a <accountfile> 
+Example: $progname -a <accountfile> -i <short res name> -s <sdi for Pool Elevation>
+$progname -a ~/.hdb_user_file -i powe -s 1928
+
 
   -h               : This help
   -v               : Version
   -a <accountfile> : HDB account access file (REQUIRED or both below)
   -u <hdbusername> : HDB application user name (account file or REQUIRED)
   -p <hdbpassword> : HDB password (account file or REQUIRED)
-  -d               : Debugging output
+  -t               : Test only, do not alter database
   -s               : SDI for specified site
   -i <fileabbrev>  : Filename abbrev to read
 ENDHELP
