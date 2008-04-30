@@ -1,0 +1,59 @@
+This should be installed under your HDB root directory.
+
+This directory should contain the files
+INSTALL
+checkapps.pl
+hdbprocs
+
+The library requirements for this tool are similar to the usgs2hdb.pl data
+loader. If this is running on the system, no other library changes should be
+necessary. If you are not running the usgs2hdb.pl loader, you will need the
+following Perl Libraries:
+DBI, DBD-Oracle, Hdb.
+
+Hdb.pm is available from Andrew Gilmore <agilmore@uc.usbr.gov>.
+
+To allow this tool, and other hdb tools that use this same method of logging
+in, create a file in the dba user's unix home directory named .app_user_login,
+containing the three lines (corrected for your database):
+username app_user
+password hdb2
+database hdb2
+
+Fix permissions so no other users can read this file:
+chmod og-rwx .app_user_login
+
+Then configure the application:
+
+Edit hdbprocs, and change the value of HDB_ENV to point to the root directory
+of your HDB installation (i.e. the directory containing bin, oracle_script,
+etc...) Change the value of HDB_DBA to the unix username of the HDB DBA
+account, eg uchdba 
+
+In the database, each routing spec and computation process that should be
+started automatically should have a property named autostart with a value of Y.
+This can be set in the Decodes Editor GUI for routing specs, and in the
+Computation Editor GUI for computations.
+
+Run the script:
+hdbprocs start to start the applications,
+hdbprocs stop to stop them,
+hdbprocs reload to stop and start and
+hdbprocs status to find if they are running or not
+
+To make the system always start up the indicated processes,
+make a copy of this file in the system startup directories. 
+This will require root priviledges:
+cp hdbprocs /etc/init.d
+
+For Solaris:
+also make links to the correct startup and shutdown directories:
+ln -s /etc/init.d/hdbprocs /etc/rc3.d/S99hdbprocs
+ln -s /etc/init.d/hdbprocs /etc/rc1.d/K01hdbprocs
+ln -s /etc/init.d/hdbprocs /etc/rc0.d/K01hdbprocs
+ln -s /etc/init.d/hdbprocs /etc/rcS.d/K01hdbprocs
+
+For Red Hat Enterprise Linux, running
+'chkconfig --add hdbprocs
+should be enough.
+
