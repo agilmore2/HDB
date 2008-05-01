@@ -1,5 +1,15 @@
 /* set the sql*plus environment up so that
    a good data file is created
+set pagesize 50000  -- no page breaks
+set newpage none -- no page header
+set linesize 255 -- no line breaks
+set verify off -- don't repeat back variable subsitutions
+set feedback off -- don't report rows selected
+set trimspool on -- don't fill in to linesize with blanks (!!)
+set echo off -- don't echo commands
+set heading off -- no line headers
+set termout off -- don't write data to the screen
+
  */
 set pagesize 50000
 set newpage none
@@ -22,33 +32,23 @@ spool nwsdata.dat
 -- this just puts this text in the file
 prompt # Daily data
 
-select  '"'||b.site_common_name||'"'||'|'||'"'||c.datatype_common_name||'"'||'|'
-||'"'||to_char(d.start_date_time,'YYYY-MM-DD')||'"'||'|'||round(d.value,2) data
-from hdb_site_datatype a, hdb_site b, hdb_datatype c, r_day d
+select  '"'||map.primary_site_code||'"|"'||map.primary_data_code||'"|"'||
+to_char(day.start_date_time,'YYYY-MM-DD')||'"|'||round(day.value,2) data
+from hdb_site_datatype sd, ref_ext_site_data_map map,
+     hdb_ext_data_source eds, r_day day
 where
 -- Join section
-a.datatype_id = c.datatype_id and 
-a.site_datatype_id = d.site_datatype_id and
-a.site_id = b.site_id and
+day.site_datatype_id = map.hdb_site_datatype_id and
+sd.site_datatype_id = map.hdb_site_datatype_id and
+map.ext_data_source_id = eds.ext_data_source_id and
+eds.ext_data_source_name = 'HDB NWS Daily Update' and
 -- Date selection section
- (d.start_date_time >= sysdate - 30 or -- last x days of data
-  (d.start_date_time >= sysdate - 120 and -- plus the last y days
-  d.date_time_loaded >= sysdate - 20)) and -- that have changed in the last z days
--- site and datatype selection section
-((b.site_id in (451,716,719,720,721,722,723,1065,1301,1302,1303,1304,1482,1483) and c.datatype_id = 19) or
- (b.site_id in (924,951,955) and c.datatype_id in (17,49)) or
- (b.site_id = 959 and c.datatype_id in (17,29)) or
- (b.site_id in (912,925,927,928,930,931,932,936,938,939,944,945,948,949,952,956,957,958,960,961,963) and c.datatype_id in (17,29,42,49)) or
- (b.site_id in (933,934,935,940,941,942,946,947,953,958,962,964) and  c.datatype_id in (17,25,29,42,49)) or
- (b.site_id = 913 and c.datatype_id in (17,25,29,33,39,40,42,43,46,49,1197)) or
- (b.site_id = 914 and c.datatype_id in (17,25,29,31,33,39,40,42,46,49,1197)) or
- (b.site_id = 915 and c.datatype_id in (17,29,31,33,39,40,42,43,46,49,1197)) or
- (b.site_id = 916 and c.datatype_id in (17,25,29,39,40,42,43,46,49,1197)) OR
- (b.site_id in (917,919) and c.datatype_id in (15,17,25,29,33,39,40,42,43,46,49,1197)) or
- (b.site_id = 920 and c.datatype_id in (17,25,29,33,42,49,123)) )
+ (day.start_date_time >= sysdate - 30 or -- last x days of data
+  (day.start_date_time >= sysdate - 120 and -- plus the last y days
+  day.date_time_loaded >= sysdate - 20)) -- that have changed in the last z days
 -- sort section, get all sites and their datatypes together, then 
 -- order by date ascending
-order by b.site_id, c.datatype_id, d.start_date_time
+order by sd.site_id, sd.datatype_id, day.start_date_time
 ;
 
 /* Monthly Query. Format is same as above
@@ -56,26 +56,45 @@ order by b.site_id, c.datatype_id, d.start_date_time
  
 prompt # Monthly end of period storage data
 
-select  '"'||b.site_common_name||'"'||'|'||'"'||c.datatype_common_name||'"'||'|'
-||'"'||to_char(d.end_date_time-1,'YYYY-MM-DD')||'"'||'|'||round(d.value,2) data
-from hdb_site_datatype a, hdb_site b, hdb_datatype c, r_month d
-where 
--- join section
-a.datatype_id = c.datatype_id and 
-a.site_datatype_id = d.site_datatype_id and
-a.site_id = b.site_id and
+select  '"'||map.primary_site_code||'"|"'||map.primary_data_code||'"|"'||
+to_char(add_months(month.start_date_time,1)-1,'YYYY-MM-DD')||'"|'||round(month.value,2) data
+from hdb_site_datatype sd, ref_ext_site_data_map map,
+     hdb_ext_data_source eds, r_month month
+where
+-- Join section
+month.site_datatype_id = map.hdb_site_datatype_id and
+sd.site_datatype_id = map.hdb_site_datatype_id and
+map.ext_data_source_id = eds.ext_data_source_id and
+eds.ext_data_source_name = 'HDB NWS Monthly Update' and
 -- Date selection section
- (d.start_date_time >= add_months(sysdate,-4)  or -- last x months of data ( will only return x-1 months except at end of month)
-  (d.start_date_time >= add_months(sysdate,-13) and -- plus the last y months of data
-  d.date_time_loaded >= sysdate - 20)) and -- that have changed in the last z days
--- site and datatype selection section
-(b.site_id in (924,951,955,959,912,925,927,928,930,931,932,936,938,939,944,
-               945,948,949,952,956,957,958,960,961,963,933,934,935,940,941,
-               942,946,947,953,958,962,964,913,914,915,916,917,919,920) and
- c.datatype_id = 17)
+ (month.start_date_time >= add_months(sysdate,-4)  or -- last x months of data ( will only return x-1 months except at end of month)
+  (month.start_date_time >= add_months(sysdate,-13) and -- plus the last y months of data
+   month.date_time_loaded >= sysdate - 20)) -- that have changed in the last z days
 -- sort section, get all sites and their datatypes together, then 
 -- order by date ascending
- order by b.site_id, c.datatype_id, d.start_date_time
+ order by sd.site_id, sd.datatype_id, month.start_date_time
+ ;
+
+
+prompt # Hourly Powell Elevations, Al Martinelli 524-5710, ext 263
+
+select  '"'||map.primary_site_code||'"|"'||map.primary_data_code||'"|"'||
+to_char(hour.start_date_time+1/24,'YYYY-MM-DD HH24:MI')||'"|'||round(hour.value,2) data
+from hdb_site_datatype sd, ref_ext_site_data_map map,
+     hdb_ext_data_source eds, r_hour hour
+where
+-- Join section
+hour.site_datatype_id = map.hdb_site_datatype_id and
+sd.site_datatype_id = map.hdb_site_datatype_id and
+map.ext_data_source_id = eds.ext_data_source_id and
+eds.ext_data_source_name = 'HDB NWS Hourly Update' and
+-- Date selection section
+ (hour.start_date_time >= trunc(sysdate-4,'DD')  or -- last 3 days of data 
+  (hour.start_date_time >= sysdate-14 and -- plus the last 2 weeks of data
+   hour.date_time_loaded >= trunc(sysdate - 3, 'DD'))) -- that have changed in the last 2 days
+-- sort section, get all sites and their datatypes together, then 
+-- order by date ascending
+ order by sd.site_id, sd.datatype_id, hour.start_date_time
  ;
  
  spool off;
