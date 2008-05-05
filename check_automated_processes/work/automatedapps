@@ -1,5 +1,6 @@
 dataloader=$HDB_ENV/dataloader/work/archives/dataloader.err
-derivation=$HDB_ENV/log/derivation.err
+#derivation application no longer needed as of April 24
+#derivation=$HDB_ENV/log/derivation.err
 usgs2hdb=$HDB_ENV/usgs2hdb/src/usgs2hdb.err
 guntemps=$HDB_ENV/gun_temps/src/get_load_guntemps.err
 nwsdata=$HDB_ENV/nws_data/src/get_load_nwsdata.err
