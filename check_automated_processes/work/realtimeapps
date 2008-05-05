@@ -1,2 +1,5 @@
+AVM/SCADA=AVM/SCADA
+Ratings="USGS Ratings"
+CP_Derivations=Derivation_process_
 DFMloader=hmRealtimeJava.sh
 SCADA CSV Loader=poll4csv.pl
