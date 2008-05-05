@@ -106,7 +106,7 @@ sub startup_cp($) {
 
 # debug level 1, to logfile as specified
     my @args =
-      ( "$decdir/bin/compproc", "-d", "1", "-l", $logfile, "-a", "\"$cp\"" );
+      ( "$decdir/bin/compproc", "-a", "\"$cp\"", "-d", "1", "-l", $logfile );
       
     print "Starting up $cp\n";
       
