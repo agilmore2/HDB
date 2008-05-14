@@ -102,11 +102,11 @@ sub startup_cp($) {
   foreach my $cp (@$cps) {
     my $app = lc($cp);
     $app =~ s/\W//g;
-    my $logfile = "$ENV{HDB_ENV}/log/" . $app. ".log";
+    my $logfile = "$ENV{HDB_ENV}/log/" . $app. "$$.log";
 
 # debug level 1, to logfile as specified
     my @args =
-      ( "$decdir/bin/compproc", "-a", "\"$cp\"", "-d", "1", "-l", $logfile );
+      ( "$decdir/bin/compproc", "-a", "\"$cp\"", "-d", "1", "-Y", "America/Phoenix", "-l", $logfile );
       
     print "Starting up $cp\n";
       
