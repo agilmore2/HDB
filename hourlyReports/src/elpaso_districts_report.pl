@@ -145,7 +145,7 @@ select
 date_time,
 lpad(to_char(round(a.value,2)),22) val1,b.value val2,c.value val3,d.value val4
 from data a, data b, data c, data d,
-table(dates_between(trunc(sysdate - 7,'DD'),sysdate,15)) dates
+table(date_table(trunc(sysdate - 7,'DD'),sysdate,15)) dates
 where
  dates.date_time = a.start_date_time(+) and
  dates.date_time = b.start_date_time(+) and
