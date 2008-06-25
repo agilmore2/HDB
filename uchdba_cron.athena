@@ -107,6 +107,10 @@
 #
 27 11 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/hourlyReports/work; ../src/wapa_gcmrc_report.pl -a $HOME/.app_user_login >> $HDB_ENV/hourlyReports/work/wapagcmrc.out 2> $HDB_ENV/hourlyReports/work/wapagcmrc.err
 #
+# Transfer Daily Gunnison reservoir data to State of Colorado
+#
+04 06 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/dailyReports/src; ./codwr_report.pl -a $HOME/.app_user_login >> $HDB_ENV/dailyReports/src/codwrreport.out 2> $HDB_ENV/dailyReports/src/codwrreport.err
+#
 # Transfer Daily (and monthly running total) Powell Release to WAPA/Montrose
 #
 14 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/xferftp/src; ./xfermail_montrose.sh >> $HDB_ENV/xferftp/src/xfermail_montrose.out 2> $HDB_ENV/xferftp/src/xfermail_montrose.err
