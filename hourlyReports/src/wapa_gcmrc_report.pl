@@ -6,7 +6,8 @@
 #
 #(grab all data for defined sites/datatypes 
 #   from yesterday
-#   and write them to a file named wapa_dateoflookback.dat)
+#   send in an email to the defined parties,
+#   grep out 'GLEN' and ftp to GCMRC
 #
 #check to see if there are any updates to data for the period from 40 days ago
 #  to the beginning of the lookback period (yesterday)
@@ -115,17 +116,19 @@ where
 ";
 
 # update the date loaded time
-my $updatetimesql = "update ref_loading_application_data
-set last_retrieval = '$current_time'
-where loading_application_id = 
+my $updatetimesql = "update ref_loading_application_prop
+set prop_value = '$current_time'
+where prop_name = 'last_retrieval' and
+loading_application_id = 
 (select loading_application_id from
 hdb_loading_application 
 where loading_application_name = '$app_name')";
 
 # get the time that last application ran
-my $lasttimesql = "select last_retrieval last_timestamp
-from ref_loading_application_data a, hdb_loading_application b
-where a.loading_application_id = b.loading_application_id and
+my $lasttimesql = "select prop_value last_timestamp
+from ref_loading_application_prop a, hdb_loading_application b
+where prop_name = 'last_retrieval' and 
+ a.loading_application_id = b.loading_application_id and
  b.loading_application_name = '$app_name'";
  
 my $last_timestamp = @{$hdb->dbh->selectcol_arrayref("$lasttimesql")}[0];
@@ -245,28 +248,7 @@ sub usage {
 insert into hdb_loading_application values(null, 'HDB WAPA/GCMRC Update',null,
 'Reporting application for data from r_hour for WAPA and GCMRC');
 
-CREATE TABLE ref_loading_application_data
-(
-        LOADING_APPLICATION_ID NUMBER NOT NULL,
-        LAST_RETRIEVAL DATE  -- Null means no retrieval yet.
-)
-tablespace HDB_data
-;
-
--- primary key for table cp_comp_proc_lock
-alter table ref_loading_application_data  add constraint rlad_loading_appl_id_pk 
-primary key (loading_application_id) 
-using index tablespace hdb_idx;
-
---  foreign key loading_application_id
-alter table ref_loading_application_data add constraint rlad_loading_appl_id_pk 
-foreign key (loading_application_id) 
-references hdb_loading_application (loading_application_id);
-
-grant select,update,insert on ref_loading_application_data to app_user;
-create public synonym ref_loading_application_data for ref_loading_application_data;
-
-insert into ref_loading_application_data values(53,sysdate);
+insert into ref_loading_application_prop values(53,'last_retrieval',sysdate);
 
 insert into hdb_ext_data_source
 values (
