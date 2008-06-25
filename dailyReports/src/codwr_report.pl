@@ -184,6 +184,32 @@ sub usage {
 }
 
 
+sub do_mail {
+  my $sql  = shift;
+  my $subject = shift;
+
+  my $data = $hdb->dbh->selectcol_arrayref("$sql");
+
+  # get the array that $data refers to
+  my @output = @$data;
+
+  #mail this data to CODWR
+  my $mailcmd = $mail;
+
+  if ( !$testing ) {
+    #set up mail command
+    $mailcmd = $mailcmd . " -s " . $subject . " -c " . $cc . " \'" . $to . "\'";
+  }
+
+  if ( $#output > 0 ) {
+    open MAIL, "|$mailcmd" or $hdb->hdbdie("unable to open mail: $!\n");
+    print MAIL @output;
+    print MAIL "\n";
+    close MAIL;
+  }
+}
+
+
 =item DDL/DML to generate metadata to drive this report:
 
 
@@ -215,28 +241,3 @@ create_site_data_map(36,'Crystal','AF',0,1716,'day',null,null,null,'Y',null,null
 create_site_data_map(36,'Crystal','REL',0,1869,'day',null,null,null,'Y',null,null);
 end;
 =cut
-
-sub do_mail {
-  my $sql  = shift;
-  my $subject = shift;
-
-  my $data = $hdb->dbh->selectcol_arrayref("$sql");
-
-  # get the array that $data refers to
-  my @output = @$data;
-
-  #mail this data to CODWR
-  my $mailcmd = $mail;
-
-  if ( !$testing ) {
-    #set up mail command
-    $mailcmd = $mailcmd . " -s " . $subject . " -c " . $cc . " \'" . $to . "\'";
-  }
-
-  if ( $#output > 0 ) {
-    open MAIL, "|$mailcmd" or $hdb->hdbdie("unable to open mail: $!\n");
-    print MAIL @output;
-    print MAIL "\n";
-    close MAIL;
-  }
-}
