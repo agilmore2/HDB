@@ -39,27 +39,41 @@ sub main {
   my $hdb = Hdb->new;
 
   #connect to database
-  if ( defined($accountfile) ) {
-    $hdb->connect_from_file($accountfile);
-  } else {
-    my $dbname;
-    if ( !defined( $dbname = $ENV{HDB_LOCAL} ) ) {
-      $hdb->hdbdie("Environment variable HDB_LOCAL not set...\n");
-    }
+  # Be tricky here, check if errors occur. If they do, sleep for 60 seconds and try again.
+  my $failcount = 0;
+  $|=1; # set autoflushing of output, allows user to see output sooner.
+  for (;$failcount<10; $failcount++) {
+    eval {
+      if ( defined($accountfile) )
+      {
+        $hdb->connect_from_file($accountfile);
+      } else {
+        my $dbname;
+        if ( !defined( $dbname = $ENV{HDB_LOCAL} ) ) {
+          $hdb->hdbdie("Environment variable HDB_LOCAL not set...\n");
+        }
 
-    #create connection to database
-    $hdb->connect_to_db( $dbname, $hdbuser, $hdbpass );
+        #create connection to database
+        $hdb->connect_to_db( $dbname, $hdbuser, $hdbpass );
+      }
+    };
+    if ($@) {print "Attempt to connect failed:\n$@\n";sleep 60}
+    else {last;}
   }
-
-# read information about routing specs and computation processes from db
+  if ($failcount == 10) {
+    die "Unable to connect to database, giving up!\n";
+  }
+  
+  # read information about routing specs and computation processes from db
   my $rss = read_rs($hdb);
   my $cps = read_cp($hdb);
 
-# mode is command line arg, one of start, status, stop
+  # mode is command line arg, one of start, status, stop
   if ( $mode eq 'start' ) {
+
     #disconnect from db
     undef $hdb;
-    
+
     startup_rs($rss);
     startup_cp($cps);
   } elsif ( $mode eq 'status' ) {
@@ -68,6 +82,7 @@ sub main {
   } elsif ( $mode eq 'stop' ) {
     stop_rs( $hdb, $rss );
     stop_cp( $hdb, $cps );
+
     #sleep to make sure that routing specs finish
     sleep 10;
   } else {
@@ -82,7 +97,6 @@ sub startup_rs($) {
 
   foreach my $rs (@$rss) {
 
-
     my $app = lc($rs);
     $app =~ s/\W//g;
 
@@ -92,7 +106,7 @@ sub startup_rs($) {
       ( "$decdir/bin/rs", "-e", "-k", "$decdir/lockdir/$rs.lock", "\"$rs\"" );
 
     print "Starting up $rs\n";
-    daemonize(@args,$app);
+    daemonize( @args, $app );
   }
 }
 
@@ -102,15 +116,16 @@ sub startup_cp($) {
   foreach my $cp (@$cps) {
     my $app = lc($cp);
     $app =~ s/\W//g;
-    my $logfile = "$ENV{HDB_ENV}/log/" . $app. "$$.log";
+    my $logfile = "$ENV{HDB_ENV}/log/" . $app . "$$.log";
 
-# debug level 1, to logfile as specified
-    my @args =
-      ( "$decdir/bin/compproc", "-a", "\"$cp\"", "-d", "1", "-Y", "America/Denver", "-l", $logfile );
-      
+    # debug level 1, to logfile as specified
+    my @args = ( "$decdir/bin/compproc", "-a","\"$cp\"",
+                 "-d","1", "-Y","America/Denver",
+                 "-l", $logfile );
+
     print "Starting up $cp\n";
-      
-    daemonize(@args,$app);
+
+    daemonize( @args, $app );
   }
 }
 
@@ -120,16 +135,16 @@ sub daemonize {
   my $appfile = "$ENV{HDB_ENV}/log/" . pop();
 
   defined( my $pid = fork() ) or die "Can't fork: $!";
-  return if $pid; # if we are parent, finished with launch
+  return if $pid;    # if we are parent, finished with launch
   setsid() or die "Can't start a new session: $!";
   open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
   open STDOUT, ">$appfile$$.out"
     or die "Can't write stdout to $appfile$$.out: $!";
   open STDERR, ">$appfile$$.err"
     or die "Can't write stderr to $appfile$$.err: $!";
-  
+
   print "in child $appfile\n";
-  exec (@_);
+  exec(@_);
 }
 
 sub stop_rs ($$) {
@@ -152,9 +167,9 @@ sub stop_cp ($$) {
   my $hdb = shift;
   my $cps = shift;
 
-# use provided stopcomp script to remove lock/heartbeat from db
-# while compproc is actually computing, will not check for heartbeat
-# otherwise will be checking every second
+  # use provided stopcomp script to remove lock/heartbeat from db
+  # while compproc is actually computing, will not check for heartbeat
+  # otherwise will be checking every second
   foreach my $cp (@$cps) {
     system( "$decdir/bin/stopcomp", "-a", "\"$cp\"" );
   }
@@ -185,10 +200,10 @@ sub check_rs ($$) {
 #before starting a new instance.
 #A lock file is “busy” if it exists and has been touched within the last 20 seconds."
 
-      if ( $timediff < 21
-           and (    $rs_stat->{Status} eq 'Running'
-                 or $rs_stat->{Status} eq 'Waiting' )
-        )
+      if ($timediff < 21
+          and (    $rs_stat->{Status} eq 'Running'
+               or $rs_stat->{Status} eq 'Waiting' )
+         )
       {
         printf "Routing Spec $rs is up, last run %.2f seconds ago.\n",
           $timediff;
@@ -217,15 +232,15 @@ sub check_cp ($$) {
   b.loading_application_name = '$cp'"
     );
 
-# last touch of heartbeat, in fractional days
+    # last touch of heartbeat, in fractional days
     my $heartbeat = $heartbeats->[0][0];
 
-# pid of controlling script for CP 
+    # pid of controlling script for CP
     my $pid = $heartbeats->[0][1];
 
     if ( !defined($heartbeat) ) {
       print "Comp Proc $cp is down: No heartbeat in database\n";
-    } elsif ( $heartbeat < 2 / 60 / 60 / 24) {
+    } elsif ( $heartbeat < 2 / 60 / 60 / 24 ) {
 
       #heartbeat is less than two seconds old, CP is looking for work
       print "Comp Proc $cp is up, looking for work.\n";
