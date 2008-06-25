@@ -50,7 +50,8 @@
 # Run derivation application every hour except 9 and 10 pm, to allow backups
 # without hanging the derivation application.
 #
-05 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,23 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/derivation/src; derivation app_user uchdb2 >$HDB_ENV/log/derivation.err 2>&1
+# disabled 4/28/2008! Hurrah!
+#05 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,23 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/derivation/src; derivation app_user uchdb2 >$HDB_ENV/log/derivation.err 2>&1
 #
 # Compress last year's SCADA crsp_ files on February 1
 #
@@ -64,6 +65,9 @@
 #
 00 10 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/check_data_consistency/work; ../src/check_consistency.pl 40
 #
+# Cleanup script for Partial computations, and to keep datatypes syncronized
+#
+07 01 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/dailyReports/src; ./daily_cleanup.sh
 #*********************************************************************
 # OUTPUT PROCESSES FROM HDB
 #*********************************************************************
@@ -79,7 +83,7 @@
 #
 # Transfer 15 minute data from HDB for El Paso
 #
-10 6,10,15 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/hourlyReports/src; ./elpaso_districts_report.pl -a $HOME/.app_user_login >> $HDB_ENV/hourlyReports/src/elpaso_report.out 2> $HDB_ENV/hourlyReports/src/elpaso_report.err 
+12 5,6,7,8,9,10,11,12,13,14,15,16,17,18,19 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/hourlyReports/src; ./elpaso_districts_report.pl -a $HOME/.app_user_login >> $HDB_ENV/hourlyReports/src/elpaso_report.out 2> $HDB_ENV/hourlyReports/src/elpaso_report.err 
 #
 # Transfer NIIP diversion data to ftp site for Keller Blisner
 #
@@ -87,7 +91,7 @@
 #
 # Transfer data about Lake Powell to ftp site for general consumption
 #
-09 10 * * 1 csh -c "source /wrg/home/uchdba/.cshrc; cd /wrg/hdb/HDB2_applications/xferftp/src; ./xferftp_lakepowelldata.sh" >> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_lakepowelldata.out 2> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_lakepowelldata.err
+09 10 * * * csh -c "source /wrg/home/uchdba/.cshrc; cd /wrg/hdb/HDB2_applications/xferftp/src; ./xferftp_lakepowelldata.sh" >> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_lakepowelldata.out 2> /wrg/hdb/HDB2_applications/xferftp/src/xferftp_lakepowelldata.err
 #
 # Transfer two files for Corps of Engineers in Sacramento about 
 # Starvation and Jordanelle (and a BUNCH more sites)
