@@ -40,7 +40,7 @@
 #
 # Run Archive Loader for current water year
 #
-35 06,07,08,09,10,11,12,13,14,16 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/dataloader/work/archives; ./hmArchiveJava.sh >> $HDB_ENV/dataloader/work/archives/dataloader.log 2>$HDB_ENV/dataloader/work/archives/dataloader.err
+35 04,05,06,07,08,09,10,11,12,13,14,16 * * * . $HOME/.bashrc_hdb2_prod; . $HDB_ENV/.bashrc_hdb_app; cd $HDB_ENV/dataloader/work/archives; ./hmArchiveJava.sh >> $HDB_ENV/dataloader/work/archives/dataloader.log 2>$HDB_ENV/dataloader/work/archives/dataloader.err
 #
 # Run Archive Loader for previous water year, need to run it
 # every day in October, November, December
