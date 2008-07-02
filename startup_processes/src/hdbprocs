@@ -15,6 +15,15 @@ test -x /etc/init.d/functions && . /etc/init.d/functions
 #
 HDB_ENV=/wrg/hdb/HDB2_applications; export HDB_ENV;
 HDB_DBA=uchdba
+
+# fix issue with Linux systems where su is limited to wheel group members
+if [ `whoami` = $HDB_DBA ]
+then
+  command="sh -c"
+else
+  command="su - $HDB_DBA -c"
+fi
+
 #
 #================================
 
@@ -26,18 +35,18 @@ prog="HDB Processes"
 
 start() {
     echo -n $"Starting $prog: "
-	su - $HDB_DBA -c "$HDB_ENV/startup_processes/src/checkapps.pl -a ~$HDB_DBA/.app_user_login start"
+	$command "$HDB_ENV/startup_processes/src/checkapps.pl -a ~$HDB_DBA/.app_user_login start"
 	echo
 }
 
 stop() {
 	echo -n $"Stopping $prog: "
-	su - $HDB_DBA -c "$HDB_ENV/startup_processes/src/checkapps.pl -a ~$HDB_DBA/.app_user_login stop"
+	$command "$HDB_ENV/startup_processes/src/checkapps.pl -a ~$HDB_DBA/.app_user_login stop"
 	echo
 }
 
 status() {
-	su - $HDB_DBA -c "$HDB_ENV/startup_processes/src/checkapps.pl -a ~$HDB_DBA/.app_user_login status"
+	$command "$HDB_ENV/startup_processes/src/checkapps.pl -a ~$HDB_DBA/.app_user_login status"
 }
 
 #
