@@ -32,21 +32,22 @@ test -x $HDB_ENV/startup_processes/src/checkapps.pl || exit 0
 
 RETVAL=0
 prog="HDB Processes"
-
+script="$HDB_ENV/startup_processes/src/checkapps.pl"
+auth="-a ~$HDB_DBA/.app_user_login"
 start() {
-    echo -n $"Starting $prog: "
-	$command "$HDB_ENV/startup_processes/src/checkapps.pl -a ~$HDB_DBA/.app_user_login start"
+	echo -n $"Starting $prog: "
+	$command $script $auth start
 	echo
 }
 
 stop() {
 	echo -n $"Stopping $prog: "
-	$command "$HDB_ENV/startup_processes/src/checkapps.pl -a ~$HDB_DBA/.app_user_login stop"
+	$command $script $auth stop
 	echo
 }
 
 status() {
-	$command "$HDB_ENV/startup_processes/src/checkapps.pl -a ~$HDB_DBA/.app_user_login status"
+	$command $script $auth status
 }
 
 #
