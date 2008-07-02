@@ -32,7 +32,7 @@ test -x $HDB_ENV/startup_processes/src/checkapps.pl || exit 0
 
 RETVAL=0
 prog="HDB Processes"
-script="$HDB_ENV/startup_processes/src/checkapps.pl -a $HOME/.app_user_login"
+script='$HDB_ENV/startup_processes/src/checkapps.pl -a $HOME/.app_user_login'
 start() {
 	echo -n $"Starting $prog: "
 	$command "$script start"
