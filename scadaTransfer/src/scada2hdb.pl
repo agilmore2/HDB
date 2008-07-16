@@ -178,6 +178,7 @@ READ: while ($line = <INFILE>)
 
   #process additional data
   #calculate head from reservoir elevation - tailbay
+  # No longer do the total release calculation, let the CP do that!
   # and total release as turbine release +spillway + hollow_jet(bypass)
   # check that dates match.
   # use two digits of accuracy, since that is all the SCADA reports for
@@ -199,31 +200,32 @@ READ: while ($line = <INFILE>)
     }
 # expect the fields turbine, spillway, and hollow_jet releases in that order,
 # warn if not
-  } elsif ($fields[6] eq "turbine_release") {
-    @prevdate=@value_date;
-    $rel=$value;
-
-  } elsif ($fields[6] eq "spillway_release") {
-    if (@value_date != @prevdate or $seenspill==1) {
-      warn "data not in expected order, release not calculated!\n";
-    } else {
-      $rel+=$value;
-      $seenspill=1;
-    }
-
-  } elsif ($fields[6] eq "hollow_jet_release") {
-    if (@value_date != @prevdate or $seenspill==0) {
-      die "data not in expected order, release not calculated! Exiting!\n";
-    } else {
-      $rel+=$value;
-      $seenspill=0;
-      $rel=sprintf("%.2f",$rel);
-      if (defined($scada_map->{$fields[5].",total_release"}->{sdi})) {
-        insert_values($scada_map->{$fields[5].",total_release"},
-                      \@value_date, $rel);
-      }
-    }
   }
+#   elsif ($fields[6] eq "turbine_release") {
+#    @prevdate=@value_date;
+#    $rel=$value;
+#
+#  } elsif ($fields[6] eq "spillway_release") {
+#    if (@value_date != @prevdate or $seenspill==1) {
+#      warn "data not in expected order, release not calculated!\n";
+#    } else {
+#      $rel+=$value;
+#      $seenspill=1;
+#    }
+#
+#  } elsif ($fields[6] eq "hollow_jet_release") {
+#    if (@value_date != @prevdate or $seenspill==0) {
+#      die "data not in expected order, release not calculated! Exiting!\n";
+#    } else {
+#      $rel+=$value;
+#      $seenspill=0;
+#      $rel=sprintf("%.2f",$rel);
+#      if (defined($scada_map->{$fields[5].",total_release"}->{sdi})) {
+#        insert_values($scada_map->{$fields[5].",total_release"},
+#                      \@value_date, $rel);
+#      }
+#    }
+#  }
 }
 
 
