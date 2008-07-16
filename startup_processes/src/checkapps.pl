@@ -159,6 +159,7 @@ sub stop_rs ($$) {
     } else {
       print "Stopping Routing Spec $rs\n";
       unlink("$decdir/lockdir/$rs.lock");
+      unlink("$decdir/lockdir/$rs.lock");
     }
   }
 }
