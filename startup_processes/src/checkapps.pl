@@ -143,6 +143,9 @@ sub daemonize {
   open STDERR, ">$appfile$$.err"
     or die "Can't write stderr to $appfile$$.err: $!";
 
+  #set environment variable TZ to handle Java default timezone issues
+  $ENV{TZ}="America/Phoenix";
+
   print "in child $appfile\n";
   exec(@_);
 }
