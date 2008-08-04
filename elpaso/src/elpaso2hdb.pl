@@ -58,7 +58,7 @@ open (INFILE, "$ARGV[0]") || die "Error: couldn't open input file $ARGV[0]";
 
 my ($i, $line);
 # skip past opening junk
-for ($i = 0; $i < 53; $i++)
+for ($i = 0; $i < 52; $i++)
   { $line = <INFILE>; }
 
 # get date of data
