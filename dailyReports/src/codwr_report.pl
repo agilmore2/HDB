@@ -108,8 +108,8 @@ where
  trunc(a.start_date_time,'DD') = to_date('$yesterday','YYYYMMDD') and
  b.hdb_site_datatype_id = a.site_datatype_id and
  b.ext_data_source_id = c.ext_data_source_id and
- c.ext_data_source_name = '$app_name' 
-
+ c.ext_data_source_name = '$app_name'  and
+ b.is_active_y_n = 'Y' -- SJ disabled per Erik Knight 8/18
  order by b.primary_site_code, b.primary_data_code, a.start_date_time
 ";
 
@@ -150,7 +150,8 @@ where
  a.date_time_loaded >= to_date('$last_timestamp')-(1/(24*60)) and
  b.hdb_site_datatype_id = a.site_datatype_id and
  b.ext_data_source_id = c.ext_data_source_id and
- c.ext_data_source_name = '$app_name' 
+ c.ext_data_source_name = '$app_name' and
+ b.is_active_y_n = 'Y' -- SJ disabled per Erik Knight 8/18
 
  order by b.primary_site_code, b.primary_data_code, a.start_date_time
 ";
