@@ -47,7 +47,7 @@ if (defined ($testing) && $testing eq "-d") {
   $testing=1;
 } else {
   $testing=0;
-  $ftp = Net::FTP->new("d5ftp.usbr.gov")
+  $ftp = Net::FTP->new("ftp.usbr.gov")
     or die "Cannot connect to ftp site: $@";
   $ftp->login("agilmore","march28")
     or die "Cannot login ", $ftp->message;
