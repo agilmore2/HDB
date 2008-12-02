@@ -115,8 +115,9 @@ sub startup_cp($) {
 
   foreach my $cp (@$cps) {
     my $app = lc($cp);
+    my $date = `date +%Y%m%d`;
     $app =~ s/\W//g;
-    my $logfile = "$ENV{HDB_ENV}/log/" . $app . "$$.log";
+    my $logfile = "$ENV{HDB_ENV}/log/" . $app . "$date.log";
 
     # debug level 1, to logfile as specified
     my @args = ( "$decdir/bin/compproc", "-a","\"$cp\"",
