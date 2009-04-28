@@ -13,7 +13,7 @@
 #define OBJECTTYPE_NAME_LENGTH  33
 #define OBJECTTYPE_TAG_LENGTH    6
 #define QUALITY_FLAG_LENGTH      3
-#define SITE_NAME_LENGTH        65
+#define SITE_NAME_LENGTH       240
 
 /* Changed from length of 26; HDB never uses more than 
    21 char date, and truncating the length simplifies
