@@ -84,6 +84,7 @@
 921 17 1000 1 EOM Storage 1000 Ac-Ft
 921 42 1000 1 Hoover Release 1000 Ac-Ft
 922 31 1000 1 Side inflow 1000 Ac-Ft
+922 25 1000 1 Evap Losses 1000 Ac-Ft
 922 39 1000 1 Power Release 1000 Ac-Ft
 922 36 1000 1 Spill Release 1000 Ac-Ft
 922 42 1000 1 Total Release 1000 Ac-Ft
@@ -92,6 +93,7 @@
 922 17 1000 1 EOM Storage 1000 Ac-Ft
 922 42 1000 1 Davis Release 1000 Ac-Ft
 923 31 1000 1 Side Inflow 1000 Ac-Ft
+923 25 1000 1 Evap Losses 1000 Ac-Ft
 923 42 1000 1 Total Release 1000 Ac-Ft
 923 42 1000 2 Total Release 1000 CFS
 692 19 1000 1 MWD Diversion 1000 Ac-Ft
