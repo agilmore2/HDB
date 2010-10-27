@@ -31,14 +31,14 @@ UPPER(primary_data_code) = UPPER('&&pcode') and
 hdb_site_datatype_id IS NOT NULL and
 /*-- interval = 'day' and*/
 rownum = 1;
-/*select hm_site_code, hm_pcode, to_char(site_datatype_id) sdi from
+/* select hm_site_code, hm_pcode, to_char(site_datatype_id) sdi from
 ref_hm_site_pcode
 where
 hm_site_code = UPPER('&&site_code') and
 hm_pcode = UPPER('&&pcode') and
 site_datatype_id IS NOT NULL and
 hm_filetype = 'A'
-;*/
+; */
 
 /* find HDB names for site and datatype for sdi */
 column site_common_name new_value name;
@@ -114,7 +114,7 @@ from r_day a
 where a.site_datatype_id = &sdi
 and a.start_date_time between '01-oct-&beginyear' and last_day('01-sep-&year');
 
-/*get statistics for each month.
+/* get statistics for each month.
   Only ave and sum are in here, the min and max are calculated by the compute
   statements lower down */
 select to_char(avg(a.value),'&numformat') janave, to_char(sum(a.value),'&sumformat') jansum
@@ -182,7 +182,7 @@ and a.start_date_time between '01-dec-&beginyear' and last_day('01-dec-&beginyea
 ttitle center "site: &&name(&&site_code) datatype: &&datatype(&&pcode) sdi: &&sdi in &&unit" skip -
        center "Water Year October &beginyear to September &year";
 
-/*bottom title, this is where the monthly average and sum statistics and the
+/* bottom title, this is where the monthly average and sum statistics and the
   statistics for the whole yearare reported*/
 
 btitle left 'Ave&octave&novave&decave&janave&febave&marave&aprave&mayave&junave&julave&augave&sepave' skip -
@@ -204,7 +204,7 @@ column oct heading "Oct" justify right;
 column nov heading "Nov" justify right;
 column dec heading "Dec" justify right;
 
-/*at bottom of report, compute max and mins. These are lexical,
+/* at bottom of report, compute max and mins. These are lexical,
   because the columns are now character strings due to number format.
   Cannot control what order these statements show up!
   have to do sum elsewhere because cannot include number formats in
@@ -229,46 +229,59 @@ break on report;
 set termout on;
 
 /* at last, the QUERY!*/
+
+with mydata as (
+select start_date_time,value
+from r_day where
+site_datatype_id = &&sdi and
+start_date_time between '01-oct-&&beginyear'
+and '30-sep-&&year' )
 select days.day day,
 /* note that j, k, l are first, to get oct, nov, dec values in front
    everywhere else, these tables are done in order */
-to_char(j.value,'&numformat') oct, to_char(k.value,'&numformat') nov,
+to_char(j.value,'&&numformat') oct, to_char(k.value,'&numformat') nov,
 to_char(l.value,'&numformat') dec, to_char(a.value,'&numformat') jan,
 to_char(b.value,'&numformat') feb, to_char(c.value,'&numformat') mar,
 to_char(d.value,'&numformat') apr, to_char(e.value,'&numformat') may,
 to_char(f.value,'&numformat') jun, to_char(g.value,'&numformat') jul,
 to_char(h.value,'&numformat') aug, to_char(i.value,'&numformat') sep
 from 
-r_day a, r_day b, r_day c, r_day d,
-r_day e, r_day f, r_day g, r_day h,
-r_day i, r_day j, r_day k, r_day l,
+(select * from mydata where
+trunc(start_date_time,'MM')= '01-jan-&year') a,
+(select * from mydata where
+trunc(start_date_time,'MM')= '01-feb-&year') b,
+(select * from mydata where
+trunc(start_date_time,'MM')= '01-mar-&year') c,
+(select * from mydata where
+trunc(start_date_time,'MM')= '01-apr-&year') d,
+(select * from mydata where
+trunc(start_date_time,'MM')= '01-may-&year') e,
+(select * from mydata where
+trunc(start_date_time,'MM')= '01-jun-&year') f,
+(select * from mydata where
+trunc(start_date_time,'MM')= '01-jul-&year') g,
+(select * from mydata where
+trunc(start_date_time,'MM')= '01-aug-&year') h,
+(select * from mydata where
+trunc(start_date_time,'MM')= '01-sep-&year') i,
+(select * from mydata where
+trunc(start_date_time,'MM')= '01-oct-&beginyear') j,
+(select * from mydata where
+trunc(start_date_time,'MM')= '01-nov-&beginyear') k,
+(select * from mydata where
+trunc(start_date_time,'MM')= '01-dec-&beginyear') l,
+
 /* this COOL subquery just returns numbers 1 through 31
    there may be a better way to do this. */
-(select 0+rownum day from r_day 
-where rownum <= 31) days
+
+( select 0+rownum day from r_day 
+where rownum <= 31 ) days
+
 where
+
 /* notice the outer joins. These allow any time to not have a value, and
    a null will show up in the right places
    any faster to put all of this in one statement? */
-a.site_datatype_id(+) = &sdi and b.site_datatype_id(+) = &sdi and
-c.site_datatype_id(+) = &sdi and d.site_datatype_id(+) = &sdi and
-e.site_datatype_id(+) = &sdi and f.site_datatype_id(+) = &sdi and
-g.site_datatype_id(+) = &sdi and h.site_datatype_id(+) = &sdi and
-i.site_datatype_id(+) = &sdi and j.site_datatype_id(+) = &sdi and
-k.site_datatype_id(+) = &sdi and l.site_datatype_id(+) = &sdi and
-/* if I use to_char(x,'yyyy') instead, this query is way too slow*/
-a.start_date_time (+) between '01-jan-&year' and last_day('01-jan-&year') and
-b.start_date_time (+) between '01-feb-&year' and last_day('01-feb-&year') and
-c.start_date_time (+) between '01-mar-&year' and last_day('01-mar-&year') and
-d.start_date_time (+) between '01-apr-&year' and last_day('01-apr-&year') and
-e.start_date_time (+) between '01-may-&year' and last_day('01-may-&year') and
-f.start_date_time (+) between '01-jun-&year' and last_day('01-jun-&year') and
-g.start_date_time (+) between '01-jul-&year' and last_day('01-jul-&year') and
-h.start_date_time (+) between '01-aug-&year' and last_day('01-aug-&year') and
-i.start_date_time (+) between '01-sep-&year' and last_day('01-sep-&year') and
-j.start_date_time (+) between '01-oct-&beginyear' and last_day('01-oct-&beginyear') and
-k.start_date_time (+) between '01-nov-&beginyear' and last_day('01-nov-&beginyear') and
-l.start_date_time (+) between '01-dec-&beginyear' and last_day('01-dec-&beginyear') and
 /*finally, get the days in order*/
 to_char(a.start_date_time(+),'DD') = days.day and
 to_char(b.start_date_time(+),'DD') = days.day and
@@ -282,6 +295,6 @@ to_char(i.start_date_time(+),'DD') = days.day and
 to_char(j.start_date_time(+),'DD') = days.day and
 to_char(k.start_date_time(+),'DD') = days.day and
 to_char(l.start_date_time(+),'DD') = days.day 
-order by day;
+order by days.day;
 
 quit;
