@@ -36,18 +36,25 @@ main();  #at end of file to allow all subroutines to be prototyped.
 # specifications to determine the sites to
 # retrieve ratings for.
 # FIXME: JUST USGS sites from telemetry, instead of Realtime web loader
+# fix to only get sites that have an SDI for STAGE by M Bogner 16 Feb 2011
 # This is copy from the original get_usgs_ratings.pl made to work
 # with the IBWC website 
 sub read_usgs_sites ($) {
   my $hdb = shift;
 
+#  this query was change by M. Bogner 16-FEB-2011 to only get sites that have SDIs for STAGE
+#  this quy uses a hard coded 65 datatype_id
   my $sites = $hdb->dbh->selectcol_arrayref(
-    "select distinct b.primary_site_code siteno from
-hdb_ext_data_source a, ref_ext_site_data_map b
-where 
-a.ext_data_source_id = b.ext_data_source_id and
-a.ext_data_source_name = '$data_source' and
-b.is_active_y_n = 'Y'
+    "select distinct a.primary_site_code siteno
+from ref_ext_site_data_map a, hdb_ext_data_source b,
+hdb_site_datatype c, hdb_site_datatype d
+where
+b.ext_data_source_name = '$data_source' and
+b.ext_data_source_id = a.ext_data_source_id and
+a.hdb_site_datatype_id = c.site_datatype_id and
+d.site_id = c.site_id and
+d.datatype_id = 65 and
+a.is_active_y_n = 'Y'
 order by siteno"
   );
 
