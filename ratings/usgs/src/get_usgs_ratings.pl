@@ -4,7 +4,11 @@ use warnings;
 use strict;
 
 #use libraries from HDB environment (Solaris only except for HDB.pm)
-use lib "$ENV{HDB_ENV}/perlLib/lib";
+#use lib "$ENV{HDB_ENV}/perlLib/lib";
+# previous line commented out by M. Bogner 03-March-2011 and replaced with line below
+# this line will utilize an environment setting to determine either 32 or 64 bit libraries
+# so that the program will run on either solaris or Linux
+use lib "$ENV{PERL_ENV}/lib";
 
 use Hdb;
 
