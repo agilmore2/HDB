@@ -1,7 +1,20 @@
 #!/bin/csh
 #Script to handle transfer of files to Mary Frantz WAPA
 
-mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_05FEB04.dat
-mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_05FEB05.dat
-mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_05FEB06.dat
+mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_06OCT20.dat
+mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_06OCT21.dat
+mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_06OCT22.dat
+mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_06OCT23.dat
+mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_06OCT24.dat
+mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_06OCT25.dat
+mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_06OCT26.dat
+mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_06OCT27.dat
+mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_06OCT28.dat
+mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_06OCT29.dat
+mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_06OCT30.dat
+mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_06OCT31.dat
+mailx -s 'Colorado River Storage Project Data' frantz@wapa.gov < crsp_06NOV01.dat
+
+
+
 

@@ -1,6 +1,0 @@
-#!/bin/bash
-date=`/usr/local/bin/date -d'last month' +%y%h |tr -s '[:lower:]' '[:upper:]'`
-for i in crsp_$date??.dat 
-do
-    \mv $i old_files
-done
