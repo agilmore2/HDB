@@ -1,7 +1,4 @@
-#!/usr/bin/perl
-# the perl change was for move to isis
-# removed the ! on the following line
-#/usr/local/bin/perl
+#!/usr/local/bin/perl
 
 #insert HDB library
 

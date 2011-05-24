@@ -1,9 +1,4 @@
-#!/usr/bin/perl
-#  the above line was replaces by M. Bogner on 21-MARCH-2001 for the
-# move to ISIS from Athena.  AThena is to be decommissioned so all perl
-#programs must be made to be able to run on ISIS
-# the old line is below with an additional # at the front
-##!/usr/local/bin/perl
+#!/usr/local/bin/perl
 
 use Date::Calc qw(Month_to_Text Add_Delta_DHMS);
 use File::Basename;
