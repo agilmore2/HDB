@@ -1,8 +1,13 @@
+#!/usr/bin/perl -w
+#  changed perl lib by M.bogner 3.19.2011 to run on Linux box
 #!/usr/local/bin/perl -w
 
 #insert HDB library
 
-use lib "$ENV{HDB_ENV}/perlLib/lib";
+#  changed to use New PERL_ENV environment variable by M.bogner 3.19.2011 to run on Linux box
+use lib "$ENV{PERL_ENV}/lib";
+#use lib "$ENV{HDB_ENV}/perlLib/lib";
+
 # Don't need?
 #use lib "$ENV{HDB_ENV}/perlLib/lib/i386-linux";
 use Hdb;
