@@ -2,7 +2,9 @@
 
 #insert HDB library
 
-use lib "$ENV{HDB_ENV}/perlLib/lib";
+# the following line was modified by M. bogner on 25-MARCH-2011 to use the new 64 bit perl libraries
+# modified to move perl code to work on ISIS
+use lib "$ENV{PERL_ENV}/lib";
 
 # don't need this?
 #use lib "$ENV{HDB_ENV}/perlLib/lib/sun4-solaris";
