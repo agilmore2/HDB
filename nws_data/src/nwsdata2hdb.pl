@@ -1,9 +1,14 @@
 #!/usr/local/bin/perl -w
+# the following line was changed by M. Bogner for the AThena to ISIS move
+#!/usr/bin/perl -w
+##!/usr/local/bin/perl -w
 
 #insert HDB library
 
-use lib "$ENV{HDB_ENV}/perlLib/lib";
-# Don't need
+# the following line was changed by M. Bogner March 2011 for the AThena to ISIS move
+# uses different PERL Libraries for ISIS compatibility
+use lib "$ENV{PERL_ENV}/lib";
+# Don't need for ISIS
 #use lib "$ENV{HDB_ENV}/perlLib/lib/i386-linux";
 
 use Hdb;
