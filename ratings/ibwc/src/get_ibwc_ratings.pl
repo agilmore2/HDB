@@ -1,10 +1,12 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 
 use warnings;
 use strict;
 
 #use libraries from HDB environment (Solaris only except for HDB.pm)
-use lib "$ENV{HDB_ENV}/perlLib/lib";
+# the following line was changed by M. Bogner 3/3/2011 to use the new PERL Environment
+# this Perl variable is set in .cshrc_hdb_app
+use lib "$ENV{PERL_ENV}/lib";
 
 use Hdb;
 
@@ -86,7 +88,12 @@ sub retrieve_rating_table ($$$) {
   my $request = shift;
 
   my $file = $site . ".rdb";
-  my $url  = "ftp://guest8:guest8\@66.85.17.138/PUBLICWAD/rdb_files/$file";
+#  my $url  = "ftp://guest8:guest8\@66.85.17.138/PUBLICWAD/rdb_files/$file";
+#  my $url  = "ftp://WAD_User:US!bwcW@d\@63.96.218.88/PUBLICWAD/rdb_files/$file";
+  my $userPass  = 'WAD_User:US!bwcW!d';
+  my $url  =  "ftp://" . $userPass . "\@63.96.218.8/rdb/$file";
+
+print "URL: $url \n";
 
   $request->uri($url);
 
@@ -188,8 +195,8 @@ sub update_rating ($$$) {
 
   foreach (@$rat) {
     chomp;
-#    print STDERR "$_\n";
-# since this is a windows file theer are carraige returns in it
+#   print STDERR "$_\n";
+# since this is a windows file there are carraige returns in it
 # add sed command to remove carraige return  by M. Bogner 04222010
     s/\r//;
 
@@ -210,7 +217,9 @@ sub update_rating ($$$) {
     } elsif (/[^\d\s*.-]/) {
       $hdb->hdbdie("malformed rdb file! $_\n");
     } else {    #now handle actual rating
-      modify_rating_point( $hdb, $rating, split /\t/ );
+      modify_rating_point( $hdb, $rating, split );
+      # this line changed by M Bogner 7-March-2011 because the file seemed to change the whitespace
+      #modify_rating_point( $hdb, $rating, split /\t/ );
     }
   }
 }
@@ -255,6 +264,8 @@ sub find_agen_sdi ($$) {
   d.datatype_id = 65"; #hardcoded Gage Height here, UG!
 
   my ( $agen_id, $sdi);
+
+#print "SQL: $querysql \n";
 
   eval {
     my $result = $hdb->dbh->selectall_arrayref($querysql);
@@ -344,7 +355,7 @@ sub modify_rating_point ($$@) {
          begin ratings.modify_rating_point(?,?,?);
          end;" );
     }
-    my $param2 = substr($_[0],1);
+    my $param2 = substr($_[0],0);
     my $param3 = substr($_[2],0);
 #    print STDERR "RATING=$rating 2=$param2 3=$param3\n";
     $sth->bind_param(1,$rating);
@@ -395,7 +406,11 @@ sub compare_rating ($$$) {    #returns 1 if arrays are equal, 0 if not
   return 0 unless @newrat == @$dbrat;    # same len?
   while (@newrat) {
     my ($db_indep, $db_dep) = @{pop(@$dbrat)}[1,2]; # hoorah for perl ref and array syntax!
-    my ($web_indep, $web_dep) = (split '\t', pop(@newrat))[0,2]; # same!
+ #  print STDERR "DBDEP: $db_indep DB_DEPEND: $db_dep \n";
+    #my ($web_indep, $web_dep) = (split '\t', pop(@newrat))[0,2]; # same!
+# changed by M bogner 03-07/2011 because the format changed from tab to spaces
+    my ($web_indep, $web_dep) = (split ' ', pop(@newrat))[0,2]; # same!
+ #  print STDERR "INDEP: $web_indep DEPEND: $web_dep \n";
     return 0 if $web_indep != $db_indep and $web_dep != $db_dep; #possible floating point issues
   }
   return 1;

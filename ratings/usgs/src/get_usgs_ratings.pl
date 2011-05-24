@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 
 use warnings;
 use strict;
@@ -58,6 +58,7 @@ a.hdb_site_datatype_id = c.site_datatype_id and
 d.site_id = c.site_id and
 d.datatype_id = 65 and
 a.is_active_y_n = 'Y'
+and a.primary_site_code not in ('08284200')
 order by siteno"
   );
 
