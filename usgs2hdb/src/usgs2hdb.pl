@@ -3,11 +3,13 @@
 use strict;
 use warnings;
 
+# the following line was changed by M. Bogner for the AThena to ISIS move
+# below line changed by M. Bogner March 2011 to use 64 Bit Perl Libraries
 #use libraries from HDB environment (Solaris only except for HDB.pm)
-use lib "$ENV{HDB_ENV}/perlLib/lib";
+use lib "$ENV{PERL_ENV}/lib";
 
 #this next is for solaris only, but won't hurt Linux
-use lib "$ENV{HDB_ENV}/perlLib/lib/sun4-solaris";
+#use lib "$ENV{HDB_ENV}/perlLib/lib/sun4-solaris";
 
 use LWP::UserAgent;
 use Date::Calc qw(Delta_DHMS Add_Delta_Days Month_to_Text Decode_Date_EU Today);
@@ -461,6 +463,8 @@ a.ext_data_source_name = '$title{$flowtype}'";
 
   my $data_code_list;
 
+# print STDERR $get_data_code_statement;
+
   eval {
     $sth = $hdb->dbh->prepare($get_data_code_statement);
     $sth->execute;
@@ -536,7 +540,7 @@ sub insert_values {
                       ?, ?, /* validation, collection system id */
                       $load_app_id,
                       $usgs_site->{meth_id},$usgs_site->{comp_id},
-                      'Y');/*do update? */
+                      'Y',null,hdb_utilities.is_date_in_dst(?,'MDT','MST'));/*do update? */
   END;";
 
   eval {
@@ -614,6 +618,7 @@ sub insert_values {
         $modsth->bind_param( 2, $value );
         $modsth->bind_param( 3, $valid_code );
         $modsth->bind_param( 4, $coll_id );
+        $modsth->bind_param( 5, $value_date );
         $modsth->execute;
 
         if ( !defined($first_date) ) {    # mark that data has changed
