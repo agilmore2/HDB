@@ -36,11 +36,11 @@ fi
 day=`echo $2 | cut -c4-5`
 month=`echo $2 | cut -c1-2`
 year=`echo $2 | cut -c7-8`
-#echo $day 
-#echo $month 
-#echo $year
+echo $day 
+echo $month 
+echo $year
 junk=`echo $year$month$day`
-#echo $junk
+echo $junk
 
 touch colorado.report
 touch riogrand.report

@@ -1,4 +1,7 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/perl -w
+# the line below was chnaged to the above by M. Bogner for the move to isis
+#
+##!/usr/local/bin/perl -w
 
 use Date::Calc qw(:all);
 

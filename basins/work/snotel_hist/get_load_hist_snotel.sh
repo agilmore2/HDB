@@ -48,7 +48,8 @@ then
 	echo ' '
 	echo '     Initiating load of data into UCHDB'
 	. $HDB_ENV/.bashrc_hdb_app
-	$HDB_ENV/bin/basins app_user uchdb2 snotel.dat
+# the following line was changed by M. Bogner on 25-MARCH-2011 for isis move and the change to 64 bit bin
+	$HDB_ENV/bin64/basins app_user uchdb2 snotel.dat
 else 
   	echo '     Files appear to have different dates -> check the following files for date consistency'
   	echo ' ' 

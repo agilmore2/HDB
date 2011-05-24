@@ -1,4 +1,8 @@
 #!/bin/bash
+#  M. Bogner on 29-March 2009 added the following  2 lines to cleanup before this thing is run
+rm *.txt
+rm junk
+#
 touch junk
 $HDB_ENV/basins/work/get_snotel.sh
 newest=`ls -t |head -1`
@@ -33,7 +37,8 @@ then
 	echo ' '
 	echo '     Initiating load of data into UCHDB'
 	. $HDB_ENV/.bashrc_hdb_app
-	$HDB_ENV/bin/basins app_user uchdb2 snotel.dat
+# following was changed by M. Bogner 24-MARCH 2011 for ISIS move test
+	$HDB_ENV/bin64/basins app_user uchdb2 snotel.dat
 else 
   	echo '     Files appear to have different dates -> check the following files for date consistency'
   	echo ' ' 
