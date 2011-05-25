@@ -1,9 +1,9 @@
-# hdbLib makefile64
+# hdbLib makefile
 # $Id$:
 
-include ../../Environ.10
+include ../../Environ
 
-OBJDIR = $(HDB_ENV)/hdbLib/obj64
+OBJDIR = $(HDB_ENV)/hdbLib/obj
 INCLUDES = -I$(HDB_APP_INCLUDE)
 LIBS = $(HDB_LIBS) -lm -ldl
 CFLAGS = -ansi -Wall -c -g -DANSIPROTO $(INCLUDES)

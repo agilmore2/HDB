@@ -1,7 +1,7 @@
 #  The version for use with C and INGRES follows:
 
-include ../../Environ.10
-include make_include64
+include ../../Environ
+include make_include
 
 ######################### Directives ###############################
 

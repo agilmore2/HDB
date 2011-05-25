@@ -5,19 +5,19 @@ include make_include64
 
 ######################### Directives ###############################
 
-TARGET = $(HDB_APP_BIN)/res_data
+TARGET = $(HDB_APP_BIN)/site_data
 OBJS = \
-		$(OBJDIR)/res_data.o
+		$(OBJDIR)/site_data.o
 
 main: $(TARGET)
 
-clean: 
-	rm -f  $(TARGET)  $(OBJS)
+clean:
+	rm -f $(TARGET)  $(OBJS)
 
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) $(LIBS) -o $(TARGET)
 
-$(OBJDIR)/res_data.o: \
-					res_data.pc 
-	proc iname=res_data.pc include=$(HDB_APP_INCLUDE)
-	$(CC) $(CFLAGS) -c res_data.c -o $@
+$(OBJDIR)/site_data.o: \
+					site_data.pc 
+	proc iname=site_data.pc include=$(HDB_APP_INCLUDE)
+	$(CC) $(CFLAGS) -c site_data.c -o $@

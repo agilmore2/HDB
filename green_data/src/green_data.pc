@@ -1,3 +1,6 @@
+/* stdlib.h added by M. Bogner, Sutron Corporation  05-MAY-2011 to recompile on Linux machine  */
+
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "dbutils.h"

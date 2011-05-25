@@ -1,9 +1,9 @@
-# utilsLib makefile64
+# utilsLib makefile
 # $Id$
 
-include ../../Environ.10
+include ../../Environ
 
-OBJDIR=	$(HDB_ENV)/utilsLib/obj64
+OBJDIR=	$(HDB_ENV)/utilsLib/obj
 INCLUDES = -I$(HDB_APP_INCLUDE)
 LIBS = $(HDB_LIBS) -lm -ldl
 CFLAGS = -ansi -Wall -g -DANSIPROTO $(INCLUDES)

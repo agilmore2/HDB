@@ -9,6 +9,9 @@
 
 /*PART 1  INITIALIZATION AND SETUP*/
 
+/*  stdlib.h added by M. Bogner, Sutron Corporation to make program work for move to Linux  */
+
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "dbutils.h"

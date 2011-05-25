@@ -35,7 +35,7 @@ use English '-no_match_vars';
 $OUTPUT_FIELD_SEPARATOR="\n";
 
 #use libraries from HDB environment (Solaris only except for HDB.pm)
-use lib "$ENV{HDB_ENV}/perlLib/lib";
+use lib "$ENV{PERL_ENV}/lib";
 
 use Hdb;
 
@@ -178,7 +178,7 @@ my $mailcmd = $mail;
 if (!$testing) {
   #grep for GLEN, and ftp it to GCMRC
   my @glen = grep {/GLEN/} @output;
-  open GLEN, "|ncftpput -o useCLNT=0 -f gcqaccount.dat -c glen_$yesterday.dat"
+  open GLEN, "|ncftpput -o useCLNT=0 -f gcqaccount.dat -c /gcmrc/glen_$yesterday.dat",
   or $hdb->hdbdie("ftp failed! $!");
   
 #  open GLEN, ">glen_$yesterday.dat";
@@ -221,7 +221,7 @@ if (!$testing) {
 
   my @glen = grep {/GLEN/} @output;
 
-  open GLEN, "|ncftpput -o useCLNT=0 -f gcqaccount.dat -c glen_update_$yesterday.dat" 
+  open GLEN, "|ncftpput -o useCLNT=0 -f gcqaccount.dat -c /gcmrc/glen_update_$yesterday.dat",
   or $hdb->hdbdie("ftp failed! $!");
 
 # open GLEN, ">glen_update_$yesterday.dat";

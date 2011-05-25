@@ -1,8 +1,9 @@
 /*This is res_data using a cursor*/
 /*Edited by rclayton 8/10/99*/
 
+/* stldlib.h library added by M. Bogner for move to Linux  */
 
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "dbutils.h"

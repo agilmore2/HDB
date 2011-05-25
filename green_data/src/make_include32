@@ -1,0 +1,7 @@
+CC = gcc
+APPDIR = $(HDB_ENV)/green_data
+OBJDIR = $(APPDIR)/obj
+INCLUDES = -I$(HDB_APP_INCLUDE)
+LIBS = $(HDB_LIBS) -lm -ldl
+CFLAGS = -ansi -Wall -g -DANSIPROTO -DDEBUG $(INCLUDES)
+

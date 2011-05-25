@@ -2,7 +2,8 @@
 /*Edited by rclayton 8/10/99*/
 
 
-
+/* modified to add stdlib.h to run on Linux box 06-MAY-2011 by M. Bogner, Sutron Corp  */
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "dbutils.h"
