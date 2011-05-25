@@ -1,14 +1,20 @@
-dataloader=$HDB_ENV/dataloader/work/archives/dataloader.err
-#derivation application no longer needed as of April 24
-#derivation=$HDB_ENV/log/derivation.err
 nwsdata=$HDB_ENV/nws_data/src/get_load_nwsdata.err
 codwr2hdb=$HDB_ENV/codwr2hdb/src/codwr2hdb.err
-elpaso=$HDB_ENV/elpaso/src/get_load_elpaso.err
 get_load_snotel=$HDB_ENV/basins/work/get_load_snotel.err
-#run_hist_snotel=$HDB_ENV/basins/work/snotel_hist/run_40day_snotel.err
 mimedecode=$HDB_ENV/readAVM/work/mime.err
 readAVM=$HDB_ENV/readAVM/work/readAVM.err
 hourlyReport=$HDB_ENV/hourlyReports/work/wapagcmrc.err
 ElPasoReport=$HDB_ENV/hourlyReports/src/elpaso_report.err
 usgs2hdb=$HDB_ENV/usgs2hdb/src/usgs2hdb.err
 guntemps=$HDB_ENV/gun_temps/src/get_load_guntemps.err
+#
+# The following apps were once active but have been deactivated or removed totally
+# From the system
+#
+#dataloader=$HDB_ENV/dataloader/work/archives/dataloader.err
+#derivation application no longer needed as of April 24
+#derivation=$HDB_ENV/log/derivation.err
+# the elpaso load was something loading into test database. removed by M. bogner
+#elpaso=$HDB_ENV/elpaso/src/get_load_elpaso.err
+#run_hist_snotel=$HDB_ENV/basins/work/snotel_hist/run_40day_snotel.err
+

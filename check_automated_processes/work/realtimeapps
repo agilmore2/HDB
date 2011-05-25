@@ -1,5 +1,7 @@
 AVM/SCADA=AVM/SCADA
 Ratings="USGS Ratings"
 CP_Derivations=Derivation_process_
-DFMloader=hmRealtimeJava.sh
 SCADA CSV Loader=poll4csv.pl
+# the following apps were once active but have been removed
+#Realtime data loader dhut off when Hydromet went away
+#DFMloader=hmRealtimeJava.sh
