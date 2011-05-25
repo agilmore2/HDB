@@ -36,15 +36,16 @@ a.site_id = b.site_id and
   d.date_time_loaded >= sysdate - 20)) and -- that have changed in the last z days
 -- site and datatype selection section
 ((b.site_id in (451,716,719,720,721,722,723,1065,1301,1302,1303,1304,1482,1483) and c.datatype_id = 19) or
- (b.site_id in (924,951,955) and c.datatype_id in (17,49)) or
+ (b.site_id in (951,955) and c.datatype_id in (17,49)) or
  (b.site_id = 959 and c.datatype_id in (17,29)) or
- (b.site_id in (912,925,927,928,930,931,932,936,938,939,944,945,948,949,952,956,957,958,960,961,963) and c.datatype_id in (17,29,42,49)) or
+ (b.site_id in (912,924,925,927,928,930,931,932,936,938,939,944,945,948,949,952,956,957,958,960,961,963) and c.datatype_id in (17,29,42,49)) or
  (b.site_id in (933,934,935,940,941,942,946,947,953,958,962,964) and  c.datatype_id in (17,25,29,42,49)) or
  (b.site_id = 913 and c.datatype_id in (17,25,29,33,39,40,42,43,46,49,1197)) or
  (b.site_id = 914 and c.datatype_id in (17,25,29,31,33,39,40,42,46,49,1197)) or
  (b.site_id = 915 and c.datatype_id in (17,29,31,33,39,40,42,43,46,49,1197)) or
  (b.site_id = 916 and c.datatype_id in (17,25,29,39,40,42,43,46,49,1197)) OR
- (b.site_id in (917,919) and c.datatype_id in (15,17,25,29,33,39,40,42,43,46,49,1197)) or
+ (b.site_id in (917,919) and c.datatype_id in (15,17,25,29,33,39,40,42,43,46,49,1197,1632)) or
+ (b.site_id = 3240 and c.datatype_id in (1211,99)) or
  (b.site_id = 920 and c.datatype_id in (17,25,29,33,42,49,123)) )
 -- sort section, get all sites and their datatypes together, then 
 -- order by date ascending

@@ -33,7 +33,7 @@ use English '-no_match_vars';
 $OUTPUT_FIELD_SEPARATOR="\n";
 
 #use libraries from HDB environment (Solaris only except for HDB.pm)
-use lib "$ENV{HDB_ENV}/perlLib/lib";
+use lib "$ENV{PERL_ENV}/lib";
 
 use Hdb;
 
@@ -223,7 +223,7 @@ insert into hdb_ext_data_source
 values (
  36, 'HDB CODWR Update', 7,null,
 7,null,null,null,
-'mailto: Wayne Schieldt <Wayne.Schieldt@state.co.us>, Dan Crabtree <dcrabtree@uc.usbr.gov>, Erik Knight <eknight@uc.usbr.gov>, Bob.hurford@state.co.us, Laura.kalafus@state.co.us',
+'mailto: Dan Crabtree <dcrabtree@usbr.gov>, Erik Knight <eknight@usbr.gov>, Bob.hurford@state.co.us, Dan Crabtree <dan.crabtree@bresnan.net>,Robert Hurford <bhurford@montrose.net>,Gina Dearcos <gina.dearcos@state.co.us>',
 null);
 
 --Other datatypes?
