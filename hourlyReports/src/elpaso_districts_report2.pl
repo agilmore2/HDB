@@ -187,10 +187,16 @@ print OUTPUT @output;
 print OUTPUT "\n";
 close OUTPUT;
 
-  unless ($testing) {
-    $ftp->put($outfile)
-      or die "put failed ", $ftp->message;
-  }
+# the following code block was commented out by M. Bogner Sutron Corporation
+# the ftp put does not work when the code was attempted on ISIS linux server
+#  so the code will no longer ftp the dat files over and instead this perl program
+# is called from a bash shell script and the files are ftp'd from that shell script
+#  this block commented out by M. bogner 27-May-2011
+
+#  unless ($testing) {
+#    $ftp->put($outfile)
+#      or die "put failed ", $ftp->message;
+#  }
 }
 
 $ftp->quit unless $testing;
