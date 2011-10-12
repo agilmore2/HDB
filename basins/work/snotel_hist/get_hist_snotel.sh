@@ -61,13 +61,30 @@ touch colo.report
 \rm -f nm$junk.txt
 \rm -f co$junk.txt
 
-ncftpget -o useCLNT=0 -e snotel_hist.err -p $FTP_PASSWD $FTP_HOST . \
-$FTP_DIR/colorado/wy$1/cl$junk.txt \
-$FTP_DIR/riogrande/wy$1/rg$junk.txt \
-$FTP_DIR/ut/wy$1/ut$junk.txt \
-$FTP_DIR/wy/wy$1/wy$junk.txt \
-$FTP_DIR/nm/wy$1/nm$junk.txt \
-$FTP_DIR/co/wy$1/co$junk.txt
+# the following was created by M. Bogner, Sutron Corporation on 12-OCT-2011
+# this code creates a file of a list of ftp url's that wget will use to go get
+# the file is originally deleted and ftp files are added with the echo command
+# then the wget program is used with this file as the input 
+
+rm historical_list.out
+echo 'ftp://'$FTP_HOST$FTP_DIR/colorado/wy$1/cl$junk.txt  >> historical_list.out
+echo 'ftp://'$FTP_HOST$FTP_DIR/riogrande/wy$1/rg$junk.txt  >> historical_list.out
+echo 'ftp://'$FTP_HOST$FTP_DIR/ut/wy$1/ut$junk.txt  >> historical_list.out
+echo 'ftp://'$FTP_HOST$FTP_DIR/wy/wy$1/wy$junk.txt  >> historical_list.out
+echo 'ftp://'$FTP_HOST$FTP_DIR/nm/wy$1/nm$junk.txt  >> historical_list.out
+echo 'ftp://'$FTP_HOST$FTP_DIR/co/wy$1/co$junk.txt  >> historical_list.out
+wget -i historical_list.out
+
+# the following was totally commented out by M. Bogner, Sutron Corporation on 12-OCT-2011
+# this did not work and was replaced with the section of code above it
+#wget -i snotel.lst
+#ncftpget -o useCLNT=0 -e snotel_hist.err -p $FTP_PASSWD $FTP_HOST . \
+#$FTP_DIR/colorado/wy$1/cl$junk.txt \
+#$FTP_DIR/riogrande/wy$1/rg$junk.txt \
+#$FTP_DIR/ut/wy$1/ut$junk.txt \
+#$FTP_DIR/wy/wy$1/wy$junk.txt \
+#$FTP_DIR/nm/wy$1/nm$junk.txt \
+#$FTP_DIR/co/wy$1/co$junk.txt
 
 stat=$?
 #if [ $stat -ne 0 ] 
