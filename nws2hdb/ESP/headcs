@@ -1,0 +1,17 @@
+#!/usr/bin/perl -w
+
+use strict;
+#use lib '/home/tmiller/perl/pm/grflib/perl';
+use lib '/wsg/HDB/apps/perlLib/lib';
+use NWSRFS;
+
+foreach my $file (@ARGV)
+{
+   my $cs = NWSRFS->open($file);
+   my @x = $cs->raw();
+   print "$file\n";
+   for (my $k=0;$k<@x;$k++)
+   {
+      printf "%2d : $x[$k]\n" , $k;
+   }
+}

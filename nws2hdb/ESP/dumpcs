@@ -1,0 +1,17 @@
+#!/usr/bin/perl -w
+
+use strict;
+#use lib '/home/tmiller/perl/pm/grflib/perl';
+use lib '/wsg/HDB/apps/perlLib/lib';
+use NWSRFS;
+
+foreach my $file (@ARGV)
+{
+   my $cs = NWSRFS->open($file);
+   my %q = $cs->get24(0);
+   print "$file\n";
+   foreach my $date (sort keys %q)
+   {
+       print "$date $q{$date}\n";
+   }
+}
