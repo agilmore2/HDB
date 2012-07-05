@@ -1,5 +1,6 @@
 *.err
 *.log
+*.dat
 co.txt
 colorado.txt
 nm.txt
