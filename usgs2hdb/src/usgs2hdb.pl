@@ -4,13 +4,9 @@ use strict;
 use warnings;
 
 #use libraries from HDB environment (HDB.pm here)
-use lib "$ENV{HDB_ENV}/perlLib/lib";
-
 # the following line was changed by M. Bogner for the AThena to ISIS move
 # below line changed by M. Bogner March 2011 to use 64 Bit Perl Libraries
-if (defined $ENV{PERL_ENV}) {
-use lib "$ENV{PERL_ENV}/lib";
-}
+use lib ( defined $ENV{PERL_ENV} ? "$ENV{PERL_ENV}/lib" : "$ENV{HDB_ENV}/perlLib/lib" );
 
 use LWP::UserAgent;
 use Date::Calc qw(Delta_DHMS Add_Delta_Days Month_to_Text Decode_Date_EU Today);
