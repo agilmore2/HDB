@@ -45,7 +45,7 @@ my ( $load_app_id, $agen_id, $validation,
 my $agen_abbrev = "USGS";
 
 #flowtype defines the title of the datasource, and we retrieve all other
-# data corresponding to that source from the database
+# data corresponding to that hdb_ext_data_source row from the database
 
 my %title;
 $title{u} = 'USGS Unit Values (Realtime)';
@@ -53,7 +53,7 @@ $title{d} = 'USGS Daily Values (Provisional/Official)';
 
 #======================================================================
 #parse arguments
-process_args(@ARGV); # uses globals, bad!
+process_args(@ARGV); # uses globals, ick.
 
 =head2 FORMAT
 
@@ -512,6 +512,7 @@ sub insert_values {
   my ( $line, @row );
   my $valid_code = $validation;
   my $coll_id    = $collect_id;
+  my $timezone = undef;
 
   # SQL statements
 
@@ -542,7 +543,7 @@ sub insert_values {
                       $load_app_id,
                       $usgs_site->{meth_id},$usgs_site->{comp_id},
                       'Y',null, /*do update?, data flags */
-                      hdb_utilities.is_date_in_dst(?,'MDT','MST')); /*time zone, should read from file?*/
+                      ?); /*time zone, read from file*/
   END;";
 
   eval {
@@ -558,6 +559,7 @@ sub insert_values {
 
       #value date is already in required format
       $value_date = $row[2];
+      $timezone = $row[3];
 
       $value = $row[ $usgs_site->{column} ];
 
@@ -620,7 +622,7 @@ sub insert_values {
         $modsth->bind_param( 2, $value );
         $modsth->bind_param( 3, $valid_code );
         $modsth->bind_param( 4, $coll_id );
-        $modsth->bind_param( 5, $value_date );
+        $modsth->bind_param( 5, $timezone );
         $modsth->execute;
 
         if ( !defined($first_date) ) {    # mark that data has changed
