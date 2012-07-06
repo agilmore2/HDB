@@ -3,13 +3,12 @@
 use strict;
 use warnings;
 
+#use libraries from HDB environment (HDB.pm here)
+use lib "$ENV{HDB_ENV}/perlLib/lib";
+
 # the following line was changed by M. Bogner for the AThena to ISIS move
 # below line changed by M. Bogner March 2011 to use 64 Bit Perl Libraries
-#use libraries from HDB environment (Solaris only except for HDB.pm)
 use lib "$ENV{PERL_ENV}/lib";
-
-#this next is for solaris only, but won't hurt Linux
-#use lib "$ENV{HDB_ENV}/perlLib/lib/sun4-solaris";
 
 use LWP::UserAgent;
 use Date::Calc qw(Delta_DHMS Add_Delta_Days Month_to_Text Decode_Date_EU Today);
@@ -25,17 +24,19 @@ my $verstring = '$Revision$';
 $verstring =~ s/^\$Revision: //;
 $verstring =~ s/ \$//;
 
-#check to see command line usage.
+#Used in usage and hdb_loading_application lookup.
 my $progname = basename($0);
 chomp $progname;
 
+#globals for command line options
 my $insertflag = 1;
 my $overwrite  = 'null';
-
-my ( $readfile, $accountfile, $runagg, $printurl, $debug, $flowtype, $compression );
-my ( $hdbuser, $hdbpass, @site_num_list );
-
+my ( $readfile, $accountfile, $printurl, $debug, $flowtype );
+my ( $compression, $hdbuser, $hdbpass );
 my ( $begindatestr, $enddatestr);
+
+#global array of usgs site ids, populated from command line or database
+my ( @site_num_list );
 
 #global variables read from database in get_app_ids
 my ( $load_app_id, $agen_id, $validation,
@@ -310,7 +311,7 @@ hdb_loading_application where loading_application_name = '$load_app_name'";
       unless ($stuff) {
         warn("Data source definition for USGS Official not found!\n");
         print(
-"Official data will not be labeled with USGS Official collection system\.n" );
+"Official data will not be labeled with USGS Official collection system.\n" );
         $official_collect_id = $collect_id;
       }
       $sth->finish();
@@ -383,7 +384,7 @@ sub build_web_request {
   my $ua = LWP::UserAgent->new;
   $ua->agent( "$agen_abbrev Streamflow -> US Bureau of Reclamation HDB dataloader: "
               . $ua->agent );
-  $ua->from('agilmore@uc.usbr.gov');
+  $ua->from('agilmore@usbr.gov');
   $ua->timeout(600);
   my $request = HTTP::Request->new();
   $request->method('GET');
@@ -540,7 +541,8 @@ sub insert_values {
                       ?, ?, /* validation, collection system id */
                       $load_app_id,
                       $usgs_site->{meth_id},$usgs_site->{comp_id},
-                      'Y',null,hdb_utilities.is_date_in_dst(?,'MDT','MST'));/*do update? */
+                      'Y',null, /*do update?, data flags */
+                      hdb_utilities.is_date_in_dst(?,'MDT','MST')); /*time zone, should read from file?*/
   END;";
 
   eval {
