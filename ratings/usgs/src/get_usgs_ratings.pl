@@ -90,14 +90,17 @@ sub retrieve_rating_table ($$$) {
   my $ua      = shift;
   my $request = shift;
 
-  my $file = $site . ".rdb";
-  my $url  = "http://waterdata.usgs.gov/nwisweb/data/exsa_rat/$file";
+  my $file = $site . ".exsa.rdb";
+  my $url  = "http://waterdata.usgs.gov/nwisweb/data/ratings/exsa/USGS.$file";
 
   $request->uri($url);
 
   # this next function actually gets the data
   my $response = $ua->simple_request($request);
 
+  if ($debug) {
+      print $url."\n";
+  }
   # check result
   if ( $response->is_success ) {
     my $status = $response->status_line;
