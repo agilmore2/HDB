@@ -4,11 +4,9 @@ use warnings;
 use strict;
 
 #use libraries from HDB environment (Solaris only except for HDB.pm)
-#use lib "$ENV{HDB_ENV}/perlLib/lib";
-# previous line commented out by M. Bogner 03-March-2011 and replaced with line below
-# this line will utilize an environment setting to determine either 32 or 64 bit libraries
-# so that the program will run on either solaris or Linux
-use lib "$ENV{PERL_ENV}/lib";
+use lib "$ENV{HDB_ENV}/perlLib/lib";
+#or use this at UC
+#use lib "$ENV{PERL_ENV}/lib";
 
 use Hdb;
 
@@ -47,6 +45,7 @@ main();  #at end of file to allow all subroutines to be prototyped.
 sub read_usgs_sites ($) {
   my $hdb = shift;
 
+#don't ignore UC specific site
   my $sites = $hdb->dbh->selectcol_arrayref(
     "select distinct a.primary_site_code siteno
 from ref_ext_site_data_map a, hdb_ext_data_source b,
@@ -58,7 +57,7 @@ a.hdb_site_datatype_id = c.site_datatype_id and
 d.site_id = c.site_id and
 d.datatype_id = 65 and
 a.is_active_y_n = 'Y'
-and a.primary_site_code not in ('08284200')
+--and a.primary_site_code not in ('08284200')
 order by siteno"
   );
 
