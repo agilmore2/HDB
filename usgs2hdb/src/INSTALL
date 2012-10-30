@@ -1,0 +1,21 @@
+To run the usgs2hdb.pl loader, the following items need to be configured:
+
+*General Perl Libraries
+Either the following vendor supplied RPMs should be installed on the system:
+perl-libwww-perl
+perl-Compress-Zlib
+perl-Date-Calc
+perl-DBI
+or these libraries and their dependencies must be installed via CPAN. The RPMs are much, much easier.
+Additionally, a perl-DBD-Oracle rpm must be installed, or the DBD::Oracle perl library must be installed via CPAN. Redhat now provides a perl-DBD-Oracle rpm in a separate repository, as Judy and I found, but it is for Oracle 11. I have an Oracle 10 version available.
+
+*HDB specific library
+Further, the HDB specific Hdb.pm perl library must be available for use. The usgs2hdb.pl script sets a library path of $HDB_ENV/perlLib/lib to help find this.
+
+*Database login information
+Lastly, the usgs2hdb.pl script uses either:
+-u and -p options for username and password and gets the database name from the HDB_LOCAL environment variable, or
+-a for an account definition file.
+
+By convention, this is stored in the user’s home directory, and must have a mode of go-r or more restrictive because it stores login information. A filename of .<username>_login is used by convention.
+
