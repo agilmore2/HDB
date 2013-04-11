@@ -7,10 +7,14 @@ use POSIX 'setsid';
 use File::Basename;
 
 #use libraries from HDB environment (Solaris only except for HDB.pm)
-use lib "$ENV{HDB_ENV}/perlLib/lib";
+# Line below changed by M. Bogner 01-APRIL-2011 to account for ISIS move and 64 bit Perl Libraries
+use lib "$ENV{PERL_ENV}/lib";
+#use lib "$ENV{HDB_ENV}/perlLib/lib";
 
 #this next is for solaris only, but won't hurt Linux
-use lib "$ENV{HDB_ENV}/perlLib/lib/sun4-solaris";
+# following line removed for ISIS move by M. Bogner since this line not needed for linux and
+# this program failed compile on Linux
+#use lib "$ENV{HDB_ENV}/perlLib/lib/sun4-solaris";
 
 use Hdb;
 
@@ -116,6 +120,7 @@ sub startup_cp($) {
   foreach my $cp (@$cps) {
     my $app = lc($cp);
     my $date = `date +%Y%m%d`;
+    chomp $date;
     $app =~ s/\W//g;
     my $logfile = "$ENV{HDB_ENV}/log/" . $app . "$date.log";
 
