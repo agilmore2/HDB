@@ -1,0 +1,1 @@
+. /home/echdba/.profile; cd /wrg/HDB/apps/ncwcd2hdb/src; ./ncwcd2hdb.pl -a /home/echdba/.app_user_login -n 15 > /wrg/HDB/apps/ncwcd2hdb/src/ncwcd2hdb.log 2> /wrg/HDB/apps/ncwcd2hdb/src/ncwcd2hdb.err
