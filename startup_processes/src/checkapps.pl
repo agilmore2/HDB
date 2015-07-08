@@ -9,7 +9,7 @@ use File::Basename;
 #use libraries from HDB environment (Solaris only except for HDB.pm)
 # Line below changed by M. Bogner 01-APRIL-2011 to account for ISIS move and 64 bit Perl Libraries
 use lib "$ENV{PERL_ENV}/lib";
-#use lib "$ENV{HDB_ENV}/perlLib/lib";
+use lib "$ENV{HDB_ENV}/perlLib/lib";
 
 #this next is for solaris only, but won't hurt Linux
 # following line removed for ISIS move by M. Bogner since this line not needed for linux and
@@ -30,7 +30,7 @@ chomp $progname;
 my ( $accountfile, $hdbuser, $hdbpass, $debug );
 
 #store decodes dir of HDB environment for use
-my $decdir = "$ENV{HDB_ENV}/decodes";
+my $decdir = "$ENV{DECODES_INSTALL_DIR}";
 
 main();
 
@@ -107,7 +107,9 @@ sub startup_rs($) {
  # write lock file. Log and stat files go to default location ($decdir/routstat)
 
     my @args =
-      ( "$decdir/bin/rs", "-e", "-k", "$decdir/lockdir/$rs.lock", "\"$rs\"" );
+      ( "$decdir/bin/rs", "-e", 
+#	                  "-d", "1", 
+                          "-k", "$decdir/lockdir/$rs.lock", "\"$rs\"" );
 
     print "Starting up $rs\n";
     daemonize( @args, $app );
@@ -116,18 +118,28 @@ sub startup_rs($) {
 
 sub startup_cp($) {
   my $cps = shift;
+  my @args;
 
   foreach my $cp (@$cps) {
     my $app = lc($cp);
     my $date = `date +%Y%m%d`;
-    chomp $date;
     $app =~ s/\W//g;
+    chomp $date;
     my $logfile = "$ENV{HDB_ENV}/log/" . $app . "$date.log";
 
+    #If this is the compdepends proc, start it differently.
+    if ($app eq "compdepends") {
+	@args = ( "$decdir/bin/compdepends",
+#                  "-d","1",
+                  "-Y","America/Denver",
+                  "-l", $logfile );
+    } else {
     # debug level 1, to logfile as specified
-    my @args = ( "$decdir/bin/compproc", "-a","\"$cp\"",
-                 "-d","1", "-Y","America/Denver",
-                 "-l", $logfile );
+	@args = ( "$decdir/bin/compproc", "-a","\"$cp\"",
+#                  "-d","1",
+                  "-Y","America/Denver",
+                  "-l", $logfile );
+    }
 
     print "Starting up $cp\n";
 
