@@ -1,7 +1,5 @@
-AVM/SCADA=AVM/SCADA
-Ratings="USGS Ratings"
 CP_Derivations=Derivation_process_
-SCADA CSV Loader=poll4csv.pl
-# the following apps were once active but have been removed
-#Realtime data loader dhut off when Hydromet went away
-#DFMloader=hmRealtimeJava.sh
+Ratings=Ratings
+#Run command to check availability, if a 0 is returned, it is down:
+LRGS/DECODES=`rs -e DailyTest |wc -l`
+LDM=`ps -fuldm |grep ldmd|wc -l`
