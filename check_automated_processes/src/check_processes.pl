@@ -3,14 +3,42 @@
 use strict;
 use English;
 
-# check on all the crontab applications
-open INFILE, 'automatedapps' or die "can't open input file: $!";
-
 my ($app,$errfile,$expectfile,$cmdname,$ps,$line,@dirent,$HDB_ENV);
 my $DEBUG = 0;
 my $status = 0;
-my $subject = "Subject: Failure Detected in Automated uchdb2 Process\n";
+my $subject = "Failure Detected in Automated $ENV{'HDB_LOCAL'} Process";
 my ($output, $result);
+
+# check on the realtime applications
+open INFILE, 'realtimeapps' or die "can't open input file: $!";
+while (<INFILE>)
+{
+  next if (/^#/);
+
+  chomp;
+  ($app,$cmdname) = split '=';
+
+  if ($cmdname =~ /^\`/) { 
+    #run command specified, any number in the output other than 0 is success
+    $line = eval $cmdname;
+    chomp $line;
+    if ($line == 0) { # wc returned a zero
+	$output .= "\nRealtime application down: $app\n";
+	$status = 1;
+    }
+  } else {
+    $ps = `ps -fu$ENV{'USER'} |grep $cmdname|grep -v grep`;
+    if (!$ps) {
+      $output .= "\nRealtime application down: $app\n";
+      $status = 1;
+    }
+  }
+}
+
+close INFILE;
+
+# check on all the crontab applications
+open INFILE, 'automatedapps' or die "can't open input file: $!";
 
 while (<INFILE>)
 {
@@ -65,24 +93,9 @@ as of               : $errfiletime\n";
 
 close INFILE;
 
-# check on the realtime applications
-open INFILE, 'realtimeapps' or die "can't open input file: $!";
-while (<INFILE>)
-{
-  next if (/^#/);
-
-  chomp;
-  ($app,$cmdname) = split '=';
-  $ps = `ps -fuuchdba|grep $cmdname|grep -v grep`;
-  if (!$ps) {
-    $output .= "\nRealtime application down: $app\n";
-    $status = 1;
-  }
-}
-
 if ($status && !$DEBUG) {
-  open MAIL, "|mail -t $ENV{HDB_NOTIFY_EMAIL}";
-  print MAIL $subject, $output;
+  open MAIL, "|mail -s '$subject' $ENV{HDB_NOTIFY_EMAIL}";
+  print MAIL $output;
 
   close MAIL;
 }
