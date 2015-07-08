@@ -2,12 +2,10 @@
 
 #insert HDB library
 
-# the following line was modified by M. bogner on 25-MARCH-2011 to use the new 64 bit perl libraries
-# modified to move perl code to work on ISIS
-use lib "$ENV{PERL_ENV}/lib";
+use lib "$ENV{HDB_ENV}/perlLib/lib";
 
 # don't need this?
-#use lib "$ENV{HDB_ENV}/perlLib/lib/sun4-solaris";
+use lib "$ENV{HDB_ENV}/perlLib/lib/sun4-solaris";
 
 use LWP::UserAgent;
 use Date::Calc qw(Delta_DHMS Decode_Date_EU Today Add_Delta_Days);
@@ -448,7 +446,7 @@ sub build_web_request {
   $ua->agent(
          "$agen_abbrev Streamflow -> US Bureau of Reclamation HDB dataloader: "
            . $ua->agent );
-  $ua->from('agilmore@uc.usbr.gov');
+  $ua->from("$ENV{HDB_XFER_EMAIL}");
   my $request = HTTP::Request->new();
   $request->method('GET');
   return ( $ua, $request );
@@ -496,32 +494,6 @@ order by codwr_id";
   return $hashref;
 }
 
-sub check_value {
-  my ($check_date)       = $_[0];
-  my ($site_datatype_id) = $_[1];
-  my ( $sth, $value );
-
-  my $check_data_statement = "select value from r_base
-where start_date_time = ? and site_datatype_id = ? and interval = 'instant'";
-
-  eval {
-    $sth = $hdb->dbh->prepare($check_data_statement);
-    $sth->bind_param( 1, $check_date );
-    $sth->bind_param( 2, $site_datatype_id );
-
-    $sth->execute;
-    $sth->bind_col( 1, \$value );
-    $sth->fetch;
-    $sth->finish();
-  };
-
-  if ($@) {    # something screwed up
-    print "$hdb->dbh->errstr, $@\n";
-    die "Errors occurred during selection of data already in database.\n";
-  }
-  return ($value);
-}
-
 sub insert_values {
   my @data       = @{ $_[0] };
   my $codwr_site = $_[1];
@@ -559,7 +531,8 @@ Required information missing in insert_values()!\n"
                       $agen_id,null,'$validation',/*agen, overwrite, validation*/
                       $collect_id,$load_app_id,
                       $codwr_site->{meth_id},$codwr_site->{comp_id},
-                      'Y');                 /*do update? */
+                     'Y',null,                  /*do update?, data flags */
+                      HDB_UTILITIES.IS_DATE_IN_DST(?,'CST','MST')); /* timezone for CODWR, they present in localtime */
     END;";
 
   eval {
@@ -575,44 +548,30 @@ Required information missing in insert_values()!\n"
       $value_date = $fields[0];
       $value      = $fields[$column];
 
-      # find the previous value, if any for this point
-      undef $old_val;
-      $old_val = check_value( $value_date, $cur_sdi );
-
-      # check if value is known
-      if ( !defined $value or $value eq '' ) {
-        print "data missing: $cur_sdi, date $value_date\n" if defined($debug);
-        next;
-      } elsif ( $value =~ m/[^0-9\.]/ ) {    # check for other text, complain
-        print "data corrupted: $cur_sdi, date $value_date: $value\n";
-        $codwr_site->{error_code} = $value;
-        next;
-      } elsif ( defined($old_val) and $old_val == $value ) {
-        next;    # source and database are same, do nothing
-      } elsif ( !defined($old_val) or $old_val != $value ) {
-
 # update or insert, source and database differ (or database value does not exist)
         if ( defined($debug) ) {
-          if ( !defined($old_val) ) {
-            print
-"modifying for $cur_sdi, date $value_date, value $value, old_val = undef\n";
-          } else {
-            print
-"modifying for $cur_sdi, date $value_date, value $value, old_val = $old_val\n";
-          }
+	    print "modifying for $cur_sdi, date $value_date, value $value\n";
         }
 
-        #modify
+       # check if value is known
+       if ( !defined $value or $value eq '' ) {
+         print "data missing: $cur_sdi, date $value_date\n" if defined($debug);
+         next;
+       } elsif ( $value =~ m/[^0-9\.]/ ) {    # check for other text, complain
+         print "data corrupted: $cur_sdi, date $value_date: $value\n";
+         $codwr_site->{error_code} = $value;
+       } else {       #modify
         $modsth->bind_param( 1, $cur_sdi );
         $modsth->bind_param( 2, $value_date );
         $modsth->bind_param( 3, $value );
+        $modsth->bind_param( 4, $value_date );
         $modsth->execute;
 
         if ( !defined($first_date) ) {    # mark that data has changed
           $first_date = $value_date;
         }
         $updated_date = $value_date;
-      }
+      } 
     }
     $modsth->finish;
 
