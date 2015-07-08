@@ -3,9 +3,8 @@
 use warnings;
 use strict;
 
-
 #use libraries from HDB environment (Solaris only except for HDB.pm)
-#use lib "$ENV{HDB_ENV}/perlLib/lib";
+use lib "$ENV{HDB_ENV}/perlLib/lib";
 # previous line commented out by M. Bogner 03-March-2011 and replaced with line below
 # this line will utilize an environment setting to determine either 32 or 64 bit libraries
 # so that the program will run on either solaris or Linux
@@ -32,9 +31,7 @@ my $decdir = "$ENV{HDB_ENV}/ratings/usgs/src";
 
 #the ugly globals...
 my $agen_abbrev      = 'USGS';
-# modified below by M. Bogner 04/04/2012 to use a new unique set of external mappings for getting USGS rating tables`
-my $data_source      = 'USGS RATING TABLES';
-#my $data_source      = 'USGS Unit Values (Realtime)';
+my $data_source      = 'USGS Unit Values (Realtime)';
 #my $data_source      = 'USGS Daily Values (Provisional/Official)';
 my $usgs_rating_type = 'Shift Adjusted Stage Flow';
 
@@ -50,15 +47,19 @@ main();  #at end of file to allow all subroutines to be prototyped.
 sub read_usgs_sites ($) {
   my $hdb = shift;
 
-# query below modified to no longer have to go get the 65 datatype for the mapping since mapping table will be used now
-# modified by M. bogner 04/04/2011 per R. Clayton request
+#don't ignore UC specific site
   my $sites = $hdb->dbh->selectcol_arrayref(
     "select distinct a.primary_site_code siteno
-from ref_ext_site_data_map a, hdb_ext_data_source b
+from ref_ext_site_data_map a, hdb_ext_data_source b,
+hdb_site_datatype c, hdb_site_datatype d
 where
 b.ext_data_source_name = '$data_source' and
 b.ext_data_source_id = a.ext_data_source_id and
+a.hdb_site_datatype_id = c.site_datatype_id and
+d.site_id = c.site_id and
+d.datatype_id = 65 and
 a.is_active_y_n = 'Y'
+--and a.primary_site_code not in ('08284200')
 order by siteno"
   );
 
@@ -96,10 +97,8 @@ sub retrieve_rating_table ($$$) {
 # the URL to USGS rating tables was discovered to have changed to a new location on 10/10/2012
 # both the file name and the URL needed to be modified accordingly
 # changed done by M. Bogner on 10/10/2012
-  my $file = "USGS." . $site . ".exsa.rdb";
-  my $url  = "http://waterdata.usgs.gov/nwisweb/data/ratings/exsa/$file";
-
-  print $url."\n";
+  my $file = $site . ".exsa.rdb";
+  my $url  = "http://waterdata.usgs.gov/nwisweb/data/ratings/exsa/USGS.$file";
 
   $request->uri($url);
 
@@ -123,7 +122,7 @@ sub retrieve_rating_table ($$$) {
 sub build_web_request () {
   my $ua = LWP::UserAgent->new;
   $ua->agent('USGS Rating Table Retrieval for US Bureau of Reclamation HDB: '); #will append lwp version to this with space
-  $ua->from('agilmore@uc.usbr.gov');
+  $ua->from('$ENV{HDB_XFER_EMAIL}');
   $ua->timeout(600);
   my $request = HTTP::Request->new();
   $request->method('GET');
@@ -256,12 +255,15 @@ sub find_agen_sdi ($$) {
   my $hdb  = shift;
   my $site = shift;
 
-# query modified by M. Bogner 04/04/2012 to use a unique sdi list from mapping table solely for USGS rating tables
-  my $querysql = "select b.agen_id, a.hdb_site_datatype_id
-  from ref_ext_site_data_map a, hdb_ext_data_source b
+  my $querysql = "select b.agen_id, d.site_datatype_id
+  from ref_ext_site_data_map a, hdb_ext_data_source b,
+  hdb_site_datatype c, hdb_site_datatype d
   where primary_site_code = '$site' and
   b.ext_data_source_id = a.ext_data_source_id and
-  b.ext_data_source_name = '$data_source'";
+  b.ext_data_source_name = '$data_source' and
+  a.hdb_site_datatype_id = c.site_datatype_id and
+  d.site_id = c.site_id and
+  d.datatype_id = 65"; #hardcoded Gage Height here, UG!
 
   my ( $agen_id, $sdi);
 
@@ -400,7 +402,7 @@ sub compare_rating ($$$) {    #returns 1 if arrays are equal, 0 if not
   while (@newrat) {
     my ($db_indep, $db_dep) = @{pop(@$dbrat)}[1,2]; # hoorah for perl ref and array syntax!
     my ($web_indep, $web_dep) = (split '\t', pop(@newrat))[0,2]; # same!
-    return 0 if $web_indep != $db_indep and $web_dep != $db_dep; #possible floating point issues
+    return 0 if $web_indep != $db_indep or $web_dep != $db_dep; #possible floating point issues
   }
   return 1;
 }
