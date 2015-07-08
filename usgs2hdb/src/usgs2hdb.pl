@@ -382,7 +382,7 @@ sub build_web_request {
   my $ua = LWP::UserAgent->new;
   $ua->agent( "$agen_abbrev Streamflow -> US Bureau of Reclamation HDB dataloader: "
               . $ua->agent );
-  $ua->from('agilmore@usbr.gov');
+  $ua->from('$ENV{HDB_XFER_EMAIL}');
   $ua->timeout(600);
   my $request = HTTP::Request->new();
   $request->method('GET');
@@ -531,6 +531,8 @@ sub insert_values {
     );
   }
 
+
+#modified to NOT do DST adjustments
   my $modify_data_statement = "
   BEGIN
     modify_r_base($usgs_site->{sdi},'$usgs_site->{interval}',
@@ -998,6 +1000,7 @@ sub process_dates {
       print
 "Instantaneous data from USGS currently only available WY2007 onward.\n
 Large amounts of instantaneous data may be slow to load.\n";
+    
     }
 
     if ( @$begindate and @$enddate ) {
