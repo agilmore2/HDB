@@ -31,7 +31,9 @@ my $decdir = "$ENV{HDB_ENV}/ratings/usgs/src";
 
 #the ugly globals...
 my $agen_abbrev      = 'USGS';
-my $data_source      = 'USGS Unit Values (Realtime)';
+# modified below by M. Bogner 04/04/2012 to use a new unique set of external mappings for getting USGS rating tables`
+my $data_source      = 'USGS RATING TABLES';
+#my $data_source      = 'USGS Unit Values (Realtime)';
 #my $data_source      = 'USGS Daily Values (Provisional/Official)';
 my $usgs_rating_type = 'Shift Adjusted Stage Flow';
 
@@ -47,19 +49,15 @@ main();  #at end of file to allow all subroutines to be prototyped.
 sub read_usgs_sites ($) {
   my $hdb = shift;
 
-#don't ignore UC specific site
+# query below modified to no longer have to go get the 65 datatype for the mapping since mapping table will be used now
+# modified by M. bogner 04/04/2011 per R. Clayton request
   my $sites = $hdb->dbh->selectcol_arrayref(
     "select distinct a.primary_site_code siteno
-from ref_ext_site_data_map a, hdb_ext_data_source b,
-hdb_site_datatype c, hdb_site_datatype d
+from ref_ext_site_data_map a, hdb_ext_data_source b
 where
 b.ext_data_source_name = '$data_source' and
 b.ext_data_source_id = a.ext_data_source_id and
-a.hdb_site_datatype_id = c.site_datatype_id and
-d.site_id = c.site_id and
-d.datatype_id = 65 and
 a.is_active_y_n = 'Y'
---and a.primary_site_code not in ('08284200')
 order by siteno"
   );
 
@@ -255,15 +253,12 @@ sub find_agen_sdi ($$) {
   my $hdb  = shift;
   my $site = shift;
 
-  my $querysql = "select b.agen_id, d.site_datatype_id
-  from ref_ext_site_data_map a, hdb_ext_data_source b,
-  hdb_site_datatype c, hdb_site_datatype d
+# query modified by M. Bogner 04/04/2012 to use a unique sdi list from mapping table solely for USGS rating tables
+  my $querysql = "select b.agen_id, a.hdb_site_datatype_id
+  from ref_ext_site_data_map a, hdb_ext_data_source b
   where primary_site_code = '$site' and
   b.ext_data_source_id = a.ext_data_source_id and
-  b.ext_data_source_name = '$data_source' and
-  a.hdb_site_datatype_id = c.site_datatype_id and
-  d.site_id = c.site_id and
-  d.datatype_id = 65"; #hardcoded Gage Height here, UG!
+  b.ext_data_source_name = '$data_source'";
 
   my ( $agen_id, $sdi);
 
