@@ -1,0 +1,34 @@
+TECHNICAL CHANGELOG
+
+0.1.9   2013/04/24
+    Fill labels:
+        Added comma-delimited thousands
+        Added units ('ac.ft.')
+        Added spaces around the '/'
+        Changed underlying drawing mechanism to draw background underneath without slicing other text
+
+    Config File:
+        Added support for single dynamic teacup-sizing function
+        Added point-sizing config option
+        Added point-color config option
+        Added line-color config option
+        Added font-size and font-face options to the config file
+
+0.1.14  2013/04/25
+    Config File:
+        Added support for different indicator-line widths
+        Added timestamp location parameter
+
+    Teacups:
+        Changed outlines from blue to black.
+            Also considered increasing line width, but decided against this due to visual concerns.
+        Changed units from "ac.ft." to "acft."
+        Replaced "Full" with "full"
+
+    Added a crude position tester to the main method of drawing.py. This can be used to import a config file and view sample output from it immediately, without hitting a database or using any real data. Useful for quickly fine-tuning attribute placement.
+
+
+
+TODO:
+    
+    
