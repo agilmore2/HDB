@@ -996,8 +996,8 @@ sub process_dates {
     if ( $numdays > 31
       and $flowtype eq 'u' ) {
       print
-"Number of days (argument to -n) must be 31 or less for realtime data.\n";
-      usage();
+"Instantaneous data from USGS currently only available WY2007 onward.\n
+Large amounts of instantaneous data may be slow to load.\n";
     }
 
     if ( @$begindate and @$enddate ) {
