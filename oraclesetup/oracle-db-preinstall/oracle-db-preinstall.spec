@@ -24,7 +24,7 @@ Requires(pre):/etc/redhat-release
 Requires:procps module-init-tools ethtool initscripts 
 Requires:bc bind-utils nfs-utils util-linux-ng pam
 Requires:xorg-x11-utils xorg-x11-xauth 
-Requires:smartmontools
+Requires:smartmontools elfutils-libelf-devel
 
 # Per orabug 20063241
 Requires:psmisc
