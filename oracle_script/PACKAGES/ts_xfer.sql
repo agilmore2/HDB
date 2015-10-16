@@ -300,10 +300,10 @@ procedure GET_DATA
 BEGIN
   -- validate inputs
   BEGIN
-    SELECT site_datatype_id
-    INTO temp_num
+    execute immediate '
+    SELECT site_datatype_id    
     FROM hdb_site_datatype
-    WHERE site_datatype_id = sdi;
+    WHERE site_datatype_id = :sdi' INTO temp_num USING sdi;
   EXCEPTION WHEN others THEN
     deny_action('TS_XFER.GET_DATA invalid SITE_DATATYPE_ID: ' || sdi);
   END;  
@@ -313,10 +313,10 @@ BEGIN
   end if;
 
   BEGIN
+    execute immediate '
     SELECT interval_name
-    INTO temp_inter
     FROM hdb_interval
-    WHERE interval_name = interval;
+    WHERE interval_name = :interval'  INTO temp_inter USING interval  ;
 
   EXCEPTION WHEN others THEN
     deny_action('TS_XFER.GET_DATA invalid INTERVAL: ' || interval);
@@ -324,14 +324,14 @@ BEGIN
 
   CASE real_or_model 
   WHEN 'R_' THEN
-    GET_REAL_DATA (sdi, start_date, end_date, interval, dates, ts_values, mri_or_interval);
+    GET_REAL_DATA (sdi, start_date, end_date, interval, dates, ts_values, mri_or_interval)  ;
   WHEN 'M_' THEN
   -- validate inputs
     BEGIN
-      SELECT model_run_id
-      INTO temp_num
+      execute immediate '
+      SELECT model_run_id      
       FROM ref_model_run
-      WHERE model_run_id = mri_or_interval; --default 15 might trip folks up here
+      WHERE model_run_id = :mri_or_interval' INTO temp_num USING mri_or_interval; --default 15 might trip folks up here
     EXCEPTION WHEN others THEN
       deny_action('TS_XFER.GET_DATA invalid MODEL_RUN_ID: ' || mri_or_interval);
     END;
@@ -342,7 +342,7 @@ BEGIN
   END CASE;
 
   END GET_DATA;
-
+  
 END TS_XFER;
 
 /
