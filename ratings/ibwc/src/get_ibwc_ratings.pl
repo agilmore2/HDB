@@ -6,7 +6,7 @@ use strict;
 #use libraries from HDB environment (Solaris only except for HDB.pm)
 # the following line was changed by M. Bogner 3/3/2011 to use the new PERL Environment
 # this Perl variable is set in .cshrc_hdb_app
-use lib "$ENV{PERL_ENV}/lib";
+use lib "$ENV{HDB_ENV}/perlLib/lib";
 
 use Hdb;
 
@@ -90,13 +90,14 @@ sub retrieve_rating_table ($$$) {
   my $file = $site . ".rdb";
 #  my $url  = "ftp://guest8:guest8\@66.85.17.138/PUBLICWAD/rdb_files/$file";
 #  my $url  = "ftp://WAD_User:US!bwcW@d\@63.96.218.88/PUBLICWAD/rdb_files/$file";
-  my $userPass  = 'WAD_User:US!bwcW!d';
-  my $url  =  "ftp://" . $userPass . "\@63.96.218.8/rdb/$file";
+  my $userPass  = 'BoR_User:wr!\?THIu';
+#  my $url  =  "ftp://" . $userPass . "\@63.96.218.8/IBWC/rdb/$file";
+  my $url  =  "ftp://63.96.218.8/IBWC/rdb/$file";
 
 print "URL: $url \n";
 
   $request->uri($url);
-
+  $request->authorization_basic( 'BoR_User','wr!?THIu' );
   # this next function actually gets the data
   my $response = $ua->simple_request($request);
 
