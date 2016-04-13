@@ -91,6 +91,7 @@ sub dbh
   return $self->{dbh};
 }
 
+=over 2
 =item hdbdie()
 
 Call hdbdie to rollback uncommitted database changes and disconnect from the database:
@@ -349,4 +350,5 @@ sub get_SDI
 
 1;
 
-
+=back
+=cut
