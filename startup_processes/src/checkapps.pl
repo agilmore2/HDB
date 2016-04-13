@@ -201,6 +201,8 @@ sub stop_cp ($$) {
     system( "$decdir/bin/stopcomp", "-a", "\"$cp\"" );
   }
 
+  # wait for processes to detect and exit.
+  sleep 5;
   my @runningpids;
   foreach my $pid (@$pids) {
     #check which pids are still running
