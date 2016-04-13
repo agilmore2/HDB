@@ -10,11 +10,13 @@
 # Source function library.
 test -x /etc/init.d/functions && . /etc/init.d/functions
 
-
 #============= CHANGE THESE ===============
 #
 HDB_ENV=/wrg/hdb/HDB2_applications; export HDB_ENV;
 HDB_DBA=uchdba
+
+#
+#==========================================
 
 # fix issue with Linux systems where su is limited to wheel group members
 if [ `whoami` = $HDB_DBA ]
@@ -24,14 +26,11 @@ else
   command="su - $HDB_DBA -c"
 fi
 
-#
-#================================
-
-
 test -x $HDB_ENV/startup_processes/src/checkapps.pl || exit 0
 
 RETVAL=0
 prog="HDB Processes"
+#script with NON-interpolated $HOME variable so will pick up HDB user's home
 script='$HDB_ENV/startup_processes/src/checkapps.pl -a $HOME/.app_user_login'
 start() {
 	echo -n $"Starting $prog: "
