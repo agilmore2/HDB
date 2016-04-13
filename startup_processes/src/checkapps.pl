@@ -8,7 +8,7 @@ use File::Basename;
 
 #use libraries from HDB environment (Solaris only except for HDB.pm)
 # Line below changed by M. Bogner 01-APRIL-2011 to account for ISIS move and 64 bit Perl Libraries
-use lib "$ENV{PERL_ENV}/lib";
+#use lib "$ENV{PERL_ENV}/lib";
 use lib "$ENV{HDB_ENV}/perlLib/lib";
 
 #this next is for solaris only, but won't hurt Linux
@@ -39,6 +39,10 @@ sub main {
   #parse arguments
   my $mode = process_args(@ARGV);    # uses globals, bad!
 
+  if ( ! -x "$decdir/bin/compproc" ) {
+    die "OPENDCS Installation not found, compproc not at $decdir/bin/compproc\n";
+  }
+
   #HDB database interface
   my $hdb = Hdb->new;
 
@@ -56,7 +60,6 @@ sub main {
         if ( !defined( $dbname = $ENV{HDB_LOCAL} ) ) {
           $hdb->hdbdie("Environment variable HDB_LOCAL not set...\n");
         }
-
         #create connection to database
         $hdb->connect_to_db( $dbname, $hdbuser, $hdbpass );
       }
@@ -189,11 +192,38 @@ sub stop_cp ($$) {
   my $hdb = shift;
   my $cps = shift;
 
+  print "Checking which computations to stop:\n";
+  my $pids = check_cp($hdb,$cps);
   # use provided stopcomp script to remove lock/heartbeat from db
   # while compproc is actually computing, will not check for heartbeat
   # otherwise will be checking every second
   foreach my $cp (@$cps) {
     system( "$decdir/bin/stopcomp", "-a", "\"$cp\"" );
+  }
+
+  my @runningpids;
+  foreach my $pid (@$pids) {
+    #check which pids are still running
+    system("ps -p $pid >/dev/null");
+    if ( $? == -1 ) {
+      print "failed to execute ps: $!\n";
+    } elsif ( ( $? >> 8 ) == 0 ) {    # this gives exit value for system call
+      push @runningpids, $pid;
+      print "Found running pid $pid!\n";
+    }
+  }
+  if (@runningpids) {
+    sleep 30; #is 30 seconds long enough to wait for really long running computations?
+    foreach my $pid (@runningpids) {
+	print "Last resort! Killing pid $pid and child processes\n";
+	system("kill $pid >/dev/null"); #kill shell process
+	system("pkill -f java.*-DPPID=$pid >/dev/null"); #kill java processes with right command line
+    }
+    sleep 5; #Give some time to allow processes to gracefully exit, then show no mercy!
+    foreach my $pid (@runningpids) {
+      system("kill -9 $pid >/dev/null"); #kill shell process
+      system("pkill -9 -f java.*-DPPID=$pid >/dev/null"); #kill java processes with right command line
+    }
   }
 }
 
@@ -244,7 +274,7 @@ sub check_cp ($$) {
   #check heartbeat existence and age
   my $hdb = shift;
   my $cps = shift;
-
+  my @pids;
   #read status from db
   foreach my $cp (@$cps) {
     my $heartbeats = $hdb->dbh->selectall_arrayref(
@@ -282,8 +312,11 @@ sub check_cp ($$) {
         printf "Comp Proc $cp is up, process id $pid found, %.2f days old.\n",
           $heartbeat;
       }
+      #store pid for use with stop
+      push @pids, $pid;
     }
   }
+  return \@pids;
 }
 
 sub read_rs($) {
@@ -380,7 +413,7 @@ sub process_args {
 
   if ( !defined($mode) ) {
     print STDERR
-      "Error, program mode unspecified, one of start,status,stop required.";
+      "Error, program mode unspecified, one of start,status,stop required.\n";
     usage();
   }
 
