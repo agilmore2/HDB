@@ -1,0 +1,1 @@
+. /home/uchdba/.profile; cd /wrg/HDB/apps/nmose2hdb/src; ./nmose2hdb.pl -a /home/echdba/.app_user_login -n 15 > /wrg/HDB/apps/nmose2hdb/src/nmose2hdb.log 2> /wrg/HDB/apps/nmose2hdb/src/nmose2hdb.err
