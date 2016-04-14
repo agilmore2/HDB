@@ -206,7 +206,7 @@ sub stop_cp ($$) {
   my @runningpids;
   foreach my $pid (@$pids) {
     #check which pids are still running
-    system("ps -p $pid >/dev/null");
+    system("ps -p $pid &>/dev/null");
     if ( $? == -1 ) {
       print "failed to execute ps: $!\n";
     } elsif ( ( $? >> 8 ) == 0 ) {    # this gives exit value for system call
@@ -218,13 +218,13 @@ sub stop_cp ($$) {
     sleep 30; #is 30 seconds long enough to wait for really long running computations?
     foreach my $pid (@runningpids) {
 	print "Last resort! Killing pid $pid and child processes\n";
-	system("kill $pid >/dev/null"); #kill shell process
-	system("pkill -f java.*-DPPID=$pid >/dev/null"); #kill java processes with right command line
+	system("kill $pid &>/dev/null"); #kill shell process
+	system("pkill -f java.*-DPPID=$pid &>/dev/null"); #kill java processes with right command line
     }
     sleep 5; #Give some time to allow processes to gracefully exit, then show no mercy!
     foreach my $pid (@runningpids) {
-      system("kill -9 $pid >/dev/null"); #kill shell process
-      system("pkill -9 -f java.*-DPPID=$pid >/dev/null"); #kill java processes with right command line
+      system("kill -9 $pid &>/dev/null"); #kill shell process
+      system("pkill -9 -f java.*-DPPID=$pid &>/dev/null"); #kill java processes with right command line
     }
   }
 }
