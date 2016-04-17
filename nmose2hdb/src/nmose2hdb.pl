@@ -83,9 +83,6 @@ Day,DischargeAvg (cfs)
 02/07/2016,2.183418
 02/08/2016,2.156009
 
-Problems:
-Only one site at a time can be retrieved
-
 =cut
 
 
@@ -99,7 +96,7 @@ if ( defined($readfile) ) {
 } else {    # attempt to get data from web page
   foreach my $a_id ( keys %$_sites ) {
     my ($data);
-    read_from_web( $a_id, \$data );
+    read_from_web( $a_id, $_sites->{$a_id}->{type}, \$data );
 
     process_data( \$data, $a_id );
 
@@ -298,7 +295,7 @@ sub parse_data {
 }
 
 sub process_data {
-  my $csv      = $_[0];
+  my $csv  = $_[0];
   my $a_id = $_[1];
 
   return if (!defined ($csv)) or ($csv eq 0);    # no data?
@@ -343,10 +340,11 @@ sub process_data {
   }
 }
 
-sub build_url ($$$) {
+sub build_url ($$$$) {
   my $site_code  = $_[0];
-  my $begin_date = $_[1];
-  my $end_date   = $_[2];
+  my $type_code  = $_[1];
+  my $begin_date = $_[2];
+  my $end_date   = $_[3];
 
 #this url is generated from the NMOSE website, when the CSV button is clicked
 # Exact URL is started with data stored in description field in hdb_ext_data_source table, but
@@ -359,12 +357,13 @@ sub build_url ($$$) {
 # specify report format,CSV ascending	  : rptFormat=CSV&sort=asc
 # specify start and end dates             : sDate=MM/DD/YYYY&eDate=MM/DD/YYYY
 # specify site				  : id=190
-# retrieval from database included site ids
+# retrieval from database included site ids and type
 
   my $parameters = "&sDate=$begin_date&eDate=$end_date";
 
   $parameters .= "&id=$site_code";
-
+  $parameters .= "&type=$type_code";
+  
   # url described by database, retrieved in get_app_ids()
 
   return $url . $parameters;
@@ -403,18 +402,23 @@ sub get_sites {
     $id_limit_clause = "b.primary_site_code in ( '$commalist' ) and";
   }
 
+  #retrieve ids. type is new, and is specified in the 
+  #ref_ext_site_data_map_keyval table, key_name = 'type', key_value = 'G' or 'S' or...
+  #Defaults to 'S' if it is not specified.
   my $get_id_statement =
     "select b.primary_site_code a_id, b.primary_data_code data_code,
  b.hdb_interval_name interval, b.hdb_method_id meth_id,
  b.hdb_computation_id comp_id, b.hdb_site_datatype_id sdi,
- d.site_id, d.site_name
+ d.site_id, d.site_name, nvl(f.key_value,'S') type
 from hdb_site_datatype a, ref_ext_site_data_map b,
-hdb_site d, hdb_ext_data_source e
+hdb_site d, hdb_ext_data_source e, ref_ext_site_data_map_keyval f
 where a.site_datatype_id = b.hdb_site_datatype_id and
 b.is_active_y_n = 'Y' and $id_limit_clause 
 a.site_id = d.site_id and
 b.ext_data_source_id = e.ext_data_source_id and
-e.ext_data_source_name = '$datasource'
+e.ext_data_source_name = '$datasource' and
+f.mapping_id(+) = b.mapping_id and
+f.key_name(+) = 'type'
 order by a_id";
 
   $hdb->dbh->{FetchHashKeyName} = 'NAME_lc';
@@ -581,9 +585,10 @@ sub read_from_file {
 
 sub read_from_web {
   my $a_id = shift;
-  my $data     = shift;
+  my $type = shift; 
+  my $data = shift;
 
-  my $url = build_url( $a_id, $begindatestr, $enddatestr );
+  my $url = build_url( $a_id, $type, $begindatestr, $enddatestr );
 
   if ( defined($printurl) or defined($debug) ) {
     print "$url\n";
