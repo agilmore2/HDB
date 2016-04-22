@@ -2,7 +2,7 @@
 
 #insert HDB library
 
-use lib "$ENV{HDB_ENV}/perlLib/lib";
+use lib ( defined $ENV{PERL_ENV} ? "$ENV{PERL_ENV}/lib" : "$ENV{HDB_ENV}/perlLib/lib" );
 
 use LWP::UserAgent;
 use Date::Calc qw(Delta_DHMS Decode_Date_EU Today Add_Delta_Days);
