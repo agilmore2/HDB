@@ -137,13 +137,13 @@ $progname [ -h | -v ] | [ options ]
 Watches a specified directory for filenames beginning with a pattern every 60
 seconds. Runs scada2hdb.pl on matching files, then moves the file to the
 archives subdirectory.
-Example: $progname -d <directory> -u <user_name> -p <hdbpassword> -f <pattern>
+Example: $progname -d <directory> -a <accountfile> -f <pattern>
 
   -h               : This help
   -v               : Version
   -a <accountfile> : HDB account login file (REQUIRED)
   -f <filename pattern>    : file pattern to watch for csv files(REQUIRED)
-  -d <directory>   : directory to watch for files with right pattern (REQUIRED_
+  -d <directory>   : directory to watch for files with right pattern (REQUIRED)
 ENDHELP
 
   exit (1);
