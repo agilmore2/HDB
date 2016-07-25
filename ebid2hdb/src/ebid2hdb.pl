@@ -4,8 +4,9 @@
 
 use lib ( defined $ENV{PERL_ENV} ? "$ENV{PERL_ENV}/lib" : "$ENV{HDB_ENV}/perlLib/lib" );
 
-use LWP::UserAgent;
-use LWP::Debug qw(+conns); 
+#use LWP::UserAgent;
+#use LWP::Debug qw(+conns); 
+use WWW::Mechanize;
 use Date::Calc qw(Delta_DHMS Decode_Date_EU Today Add_Delta_Days);
 use File::Basename;
 use Data::Dumper;
@@ -280,7 +281,6 @@ sub parse_data {
 
 #just check that CSV file is in right format
   my $row = shift @array;
-  $row = shift @array;
   chomp $row;
   
   if (!($row =~ /Reading,Receive,Value,Unit,Quality.*/))
@@ -307,7 +307,7 @@ sub process_data {
   #check that this site is defined completely from database
   if (    !defined( $_sites->{$a_id}->{sdi} )
        or !defined( $_sites->{$a_id}->{site_id} )
-       or !defined( $_sites->{$a_id}->{data_code} ) )
+       or !defined( $_sites->{$a_id}->{dev_code} ) )
   {
     $hdb->hdbdie(
              "site or sdi or data code not defined for id: $a_id!\n");
@@ -385,14 +385,12 @@ sub build_site_num_list {
 }
 
 sub build_web_request {
-  my $ua = LWP::UserAgent->new;
+  my $ua = WWW::Mechanize->new;
   $ua->agent(
          "$agen_abbrev Streamflow -> US Bureau of Reclamation HDB dataloader: "
            . $ua->agent );
-  $ua->from('$ENV{HDB_XFER_EMAIL}');
-  my $request = HTTP::Request->new();
-  $request->method('GET');
-  return ( $ua, $request );
+  $ua->from("$ENV{HDB_XFER_EMAIL}");
+  return ( $ua );
 }
 
 # we use the generic mapping to get the site and datacode ids
@@ -503,7 +501,7 @@ Required information missing in insert_values()!\n"
        } elsif ( $value =~ m/[^0-9\.]/ ) {    # check for other text, complain
          print "data corrupted: $cur_sdi, date $value_date: $value\n";
          $_site->{error_code} = $value;
-       } elsif ( $value_date =~ m/[^0-9\/]/ ) {    # check for other text, complain
+       } elsif ( $value_date =~ m/[^-0-9\/: ]/ ) {    # check for bad chars in date, complain
          print "date corrupted: $cur_sdi, date $value_date: $value\n";
          $_site->{error_code} = "Bad date";
        } else {       #modify
@@ -595,11 +593,12 @@ sub read_from_web {
     print "$url\n";
   }
 
-  my ( $ua, $request ) = build_web_request();
-  $request->uri($url);
+  my ( $ua ) = build_web_request();
 
-  # this next function actually gets the data
-  my $response = $ua->request($request);
+  # this next function actually gets the data, twice. The first time gets the right cookies, and
+  # gets redirected to the home page. The second time actually gets the data we want. There's got to be a better way?
+  my $response = $ua->get($url);
+  $response = $ua->get($url);
 
   print Dumper($response) if $debug;
 
