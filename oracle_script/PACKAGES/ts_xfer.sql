@@ -1,4 +1,84 @@
-create or replace package body TS_XFER as
+--------------------------------------------------------
+--  File created - Friday-October-09-2015   
+--------------------------------------------------------
+--------------------------------------------------------
+--  DDL for Package TS_XFER
+--------------------------------------------------------
+
+  CREATE OR REPLACE PACKAGE "TS_XFER" as
+/*  PACKAGE TS_XFER is designed to contain fast methods for timeseries
+    writing and retrieval
+
+    Created by A. Gilmore October 2015
+*/
+	/* declare the associative array table types for this package   */
+
+TYPE number_array is table of NUMBER;
+TYPE date_array is table of DATE; -- overriding main date_array date object array
+
+procedure GET_REAL_DATA 
+(
+  sdi IN NUMBER 
+, start_date IN DATE 
+, end_date IN DATE
+, interval IN HDB_INTERVAL.INTERVAL_NAME%type 
+, dates OUT date_array
+, ts_values OUT number_array
+, inst_interval IN NUMBER DEFAULT 15 --interval for r_instant data
+);
+
+procedure GET_MODEL_DATA
+(
+  sdi IN NUMBER 
+, start_date IN DATE 
+, end_date IN DATE
+, interval in HDB_INTERVAL.INTERVAL_NAME%type
+, dates OUT date_array
+, ts_values OUT number_array
+, mri in REF_MODEL_RUN.MODEL_RUN_ID%type
+);
+ 
+-- the above two do little or no validation, as it would repeat what is in get_data
+-- calling the above directly will be a bit faster as they avoid sdi. interval.
+-- and mri table lookups.
+
+-- get_date
+-- given site_datatype_id, begin and end dates, an interval,
+--       optional real or modeled indicator, and timeseries interval in minutes
+-- return a correlated array of dates and values containing all the dates in 
+-- the range, and any missing values as null
+--
+-- checks for valid site_datatype_id, end date after begin date,
+-- interval, and model_run_id if modeled data
+
+
+procedure GET_DATA
+(
+  sdi IN NUMBER 
+, start_date IN DATE 
+, end_date IN DATE
+, interval in HDB_INTERVAL.INTERVAL_NAME%type
+, dates OUT date_array
+, ts_values OUT number_array
+, real_or_model IN VARCHAR2 default 'R_'
+, mri_or_interval in NUMBER default 15
+);
+
+END TS_XFER;
+
+/
+
+  GRANT EXECUTE ON "TS_XFER" TO "SAVOIR_FAIRE";
+  GRANT EXECUTE ON "TS_XFER" TO "APP_ROLE";
+  CREATE OR REPLACE PUBLIC SYNONYM TS_XFER FOR TX_XFER;
+--------------------------------------------------------
+--  File created - Friday-October-09-2015   
+--------------------------------------------------------
+--------------------------------------------------------
+--  DDL for Package Body TS_XFER
+--------------------------------------------------------
+
+  CREATE OR REPLACE PACKAGE BODY "TS_XFER" as
 
 procedure GET_REAL_DATA
 (
@@ -220,10 +300,10 @@ procedure GET_DATA
 BEGIN
   -- validate inputs
   BEGIN
-    SELECT site_datatype_id
-    INTO temp_num
+    execute immediate '
+    SELECT site_datatype_id    
     FROM hdb_site_datatype
-    WHERE site_datatype_id = sdi;
+    WHERE site_datatype_id = :sdi' INTO temp_num USING sdi;
   EXCEPTION WHEN others THEN
     deny_action('TS_XFER.GET_DATA invalid SITE_DATATYPE_ID: ' || sdi);
   END;  
@@ -233,10 +313,10 @@ BEGIN
   end if;
 
   BEGIN
+    execute immediate '
     SELECT interval_name
-    INTO temp_inter
     FROM hdb_interval
-    WHERE interval_name = interval;
+    WHERE interval_name = :interval'  INTO temp_inter USING interval  ;
 
   EXCEPTION WHEN others THEN
     deny_action('TS_XFER.GET_DATA invalid INTERVAL: ' || interval);
@@ -244,14 +324,14 @@ BEGIN
 
   CASE real_or_model 
   WHEN 'R_' THEN
-    GET_REAL_DATA (sdi, start_date, end_date, interval, dates, ts_values, mri_or_interval);
+    GET_REAL_DATA (sdi, start_date, end_date, interval, dates, ts_values, mri_or_interval)  ;
   WHEN 'M_' THEN
   -- validate inputs
     BEGIN
-      SELECT model_run_id
-      INTO temp_num
+      execute immediate '
+      SELECT model_run_id      
       FROM ref_model_run
-      WHERE model_run_id = mri_or_interval; --default 15 might trip folks up here
+      WHERE model_run_id = :mri_or_interval' INTO temp_num USING mri_or_interval; --default 15 might trip folks up here
     EXCEPTION WHEN others THEN
       deny_action('TS_XFER.GET_DATA invalid MODEL_RUN_ID: ' || mri_or_interval);
     END;
@@ -262,5 +342,66 @@ BEGIN
   END CASE;
 
   END GET_DATA;
-
+  
 END TS_XFER;
+
+/
+DROP TYPE t_tf_tab;
+DROP TYPE t_tf_row;
+
+
+CREATE TYPE t_tf_row AS OBJECT (
+  row_dates DATE,
+  row_values NUMBER
+);
+/
+
+CREATE TYPE t_tf_tab IS TABLE OF t_tf_row;
+/
+
+
+
+-- Build a pipelined table function.
+CREATE OR REPLACE FUNCTION get_ts_xfer_data (p_sdi IN NUMBER,p_sdate IN date,p_edate IN date,p_interval IN VARCHAR2,p_REAL_OR_MODEL IN VARCHAR2,p_MRI_OR_INTERVAL IN number) RETURN t_tf_tab PIPELINED AS
+
+  SDI NUMBER;
+  START_DATE DATE;
+  END_DATE DATE;
+  INTERVAL VARCHAR2(16);
+  DATES TS_XFER.DATE_ARRAY;
+  TS_VALUES TS_XFER.NUMBER_ARRAY;
+  REAL_OR_MODEL VARCHAR2(200);
+  MRI_OR_INTERVAL NUMBER;
+BEGIN
+  SDI := p_sdi;
+  START_DATE := p_sdate; 
+  END_DATE := p_edate;
+  INTERVAL := p_interval;
+  REAL_OR_MODEL := p_REAL_OR_MODEL;
+  MRI_OR_INTERVAL := p_MRI_OR_INTERVAL;
+
+  TS_XFER.GET_DATA(
+    SDI => SDI,
+    START_DATE => START_DATE,
+    END_DATE => END_DATE,
+    INTERVAL => INTERVAL,
+    DATES => DATES,
+    TS_VALUES => TS_VALUES,
+    REAL_OR_MODEL => REAL_OR_MODEL,
+    MRI_OR_INTERVAL => MRI_OR_INTERVAL
+  );
+ 
+FOR indx IN 1 .. DATES.COUNT 
+        LOOP
+    --DBMS_OUTPUT.PUT_LINE(DATES(indx) || ' ' || TS_VALUES(indx));
+    PIPE ROW(t_tf_row(DATES(indx), TS_VALUES(indx)));  
+        END LOOP;
+  RETURN;
+END;
+/
+
+  GRANT EXECUTE ON "GET_TS_XFER_DATA" TO "SAVOIR_FAIRE";
+  GRANT EXECUTE ON "GET_TS_XFER_DATA" TO "APP_ROLE";
+  CREATE OR REPLACE PUBLIC SYNONYM GET_TS_XFER_DATA FOR GET_TS_XFER_DATA;
+
+
