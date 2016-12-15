@@ -18,7 +18,7 @@ use Data::Dumper;
 use Hdb;
 
 #Version Information
-my $verstring = '$Revision$';
+my $verstring = '$Revision: 1.56 $';
 $verstring =~ s/^\$Revision: //;
 $verstring =~ s/ \$//;
 
@@ -532,7 +532,6 @@ sub insert_values {
   }
 
 
-#modified to NOT do DST adjustments
   my $modify_data_statement = "
   BEGIN
     modify_r_base($usgs_site->{sdi},'$usgs_site->{interval}',
