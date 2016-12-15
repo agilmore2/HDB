@@ -11,8 +11,6 @@ use LWP::UserAgent;
 use Date::Calc qw(Delta_DHMS Decode_Date_EU Today Add_Delta_Days);
 use File::Basename;
 use Data::Dumper;
-use HTML::TableExtract;
-use HTML::TokeParser;
 
 use Hdb;
 
