@@ -361,7 +361,8 @@ sub build_url ($$$$) {
   # specify start and end dates: data_start=YYYY-MM-DD+HH:MI:SS&data_end=YYYY-MM-DD+HH:MI:SS
   # retrieval from database included site ids and datatypes 
   # need to work out if URL needs to be html entity encoded to handle spaces in timestamps, or can use ISO 8601. No.
-
+  # The timezone parameter in the URL is a lie, no matter what you put in, you'll get America/Denver out.
+  
   my $parameters = "&data_start=$begin_date&data_end=$end_date";
 
   $parameters .= "&site_id=$site_code";
@@ -474,7 +475,7 @@ Required information missing in insert_values()!\n"
                       $collect_id,$load_app_id,
                       $_site->{meth_id},$_site->{comp_id},
                       'Y',?,                  /*do update?, data flags */
-                      'America/Denver');  /* timezone info */
+                      hdb_utilities.is_date_in_dst(?,'MDT','MST'));  /* timezone info. TODO: rethink is_date_in_dst for the November case and this data*/
     END;";
 
   eval {
@@ -509,6 +510,7 @@ Required information missing in insert_values()!\n"
         $modsth->bind_param( 2, $value_date );
         $modsth->bind_param( 3, $value );
         $modsth->bind_param( 4, $data_flags );
+        $modsth->bind_param( 5, $value_date );#Repeated date for dst computation
 	
         $modsth->execute;
 
