@@ -31,6 +31,11 @@ my ( $accountfile, $hdbuser, $hdbpass, $debug );
 
 #store decodes dir of HDB environment for use
 my $decdir = "$ENV{DECODES_INSTALL_DIR}";
+my $lockdir = "$decdir/lockdir";
+#OPENDCS 6: user properties and writable data moved out of distribution
+if ( -e "$ENV{HDB_ENV}/opendcs_user/lockdir" ) {
+    $lockdir = "$ENV{HDB_ENV}/opendcs_user/lockdir";
+}
 
 main();
 
@@ -112,7 +117,7 @@ sub startup_rs($) {
     my @args =
       ( "$decdir/bin/rs", "-e", 
 #	                  "-d", "1", 
-                          "-k", "$decdir/lockdir/$rs.lock", "\"$rs\"" );
+                          "-k", "$lockdir/$rs.lock", "\"$rs\"" );
 
     print "Starting up $rs\n";
     daemonize( @args, $app );
@@ -178,12 +183,12 @@ sub stop_rs ($$) {
 # method for stopping Routing Specs is removing optional lock file created at startup
 
   foreach my $rs (@$rss) {
-    if ( !-e "$decdir/lockdir/$rs.lock" ) {
-      print "Cannot stop $rs, $decdir/lockdir/$rs.lock file not found!\n";
+    if ( !-e "$lockdir/$rs.lock" ) {
+      print "Cannot stop $rs, $lockdir/$rs.lock file not found!\n";
     } else {
       print "Stopping Routing Spec $rs\n";
-      unlink("$decdir/lockdir/$rs.lock");
-      unlink("$decdir/lockdir/$rs.lock");
+      unlink("$lockdir/$rs.lock");
+      unlink("$lockdir/$rs.lock");
     }
   }
 }
@@ -236,7 +241,7 @@ sub check_rs ($$) {
 
   #find lock and stat files
   foreach my $rs (@$rss) {
-    if ( !-e "$decdir/lockdir/$rs.lock" and !-e "$decdir/routstat/$rs.stat" ) {
+    if ( !-e "$lockdir/$rs.lock" and !-e "$decdir/routstat/$rs.stat" ) {
       print "Routing Spec $rs is down, no lock or status file\n";
     } else {
       my $rs_stat = read_rs_stat($rs);
