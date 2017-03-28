@@ -32,9 +32,11 @@ my ( $accountfile, $hdbuser, $hdbpass, $debug );
 #store decodes dir of HDB environment for use
 my $decdir = "$ENV{DECODES_INSTALL_DIR}";
 my $lockdir = "$decdir/lockdir";
+my $statdir = "$decdir/routstat";
 #OPENDCS 6: user properties and writable data moved out of distribution
 if ( -e "$ENV{HDB_ENV}/opendcs_user/lockdir" ) {
     $lockdir = "$ENV{HDB_ENV}/opendcs_user/lockdir";
+    $statdir = "$ENV{HDB_ENV}/opendcs_user/routstat";
 }
 
 main();
@@ -112,7 +114,7 @@ sub startup_rs($) {
     my $app = lc($rs);
     $app =~ s/\W//g;
 
- # write lock file. Log and stat files go to default location ($decdir/routstat)
+ # write lock file. Log and stat files go to default location ($decdir/routstat or $userdir/routstat)
 
     my @args =
       ( "$decdir/bin/rs", "-e", 
@@ -241,7 +243,7 @@ sub check_rs ($$) {
 
   #find lock and stat files
   foreach my $rs (@$rss) {
-    if ( !-e "$lockdir/$rs.lock" and !-e "$decdir/routstat/$rs.stat" ) {
+    if ( !-e "$lockdir/$rs.lock" and !-e "$statdir/$rs.stat" ) {
       print "Routing Spec $rs is down, no lock or status file\n";
     } else {
       my $rs_stat = read_rs_stat($rs);
@@ -358,7 +360,7 @@ sub read_cp($) {
 sub read_rs_stat ($) {
   my $rs = shift;
 
-  open STATFILE, "$decdir/routstat/$rs.stat";
+  open STATFILE, "$statdir/$rs.stat";
   my @lines = <STATFILE>;
   close STATFILE;
   my %rs_stat;
