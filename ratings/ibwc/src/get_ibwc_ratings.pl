@@ -412,7 +412,7 @@ sub compare_rating ($$$) {    #returns 1 if arrays are equal, 0 if not
 # changed by M bogner 03-07/2011 because the format changed from tab to spaces
     my ($web_indep, $web_dep) = (split ' ', pop(@newrat))[0,2]; # same!
  #  print STDERR "INDEP: $web_indep DEPEND: $web_dep \n";
-    return 0 if $web_indep != $db_indep and $web_dep != $db_dep; #possible floating point issues
+    return 0 if $web_indep != $db_indep or $web_dep != $db_dep; #possible floating point issues
   }
   return 1;
 }
