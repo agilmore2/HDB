@@ -1,11 +1,28 @@
 --------------------------------------------------------
---  File created - Friday-October-09-2015   
---------------------------------------------------------
---------------------------------------------------------
---  DDL for Package TS_XFER
+--  DDL for Type NUMBER_ARRAY
 --------------------------------------------------------
 
-  CREATE OR REPLACE PACKAGE "TS_XFER" as
+  CREATE OR REPLACE TYPE "ECODBA"."NUMBER_ARRAY" as table of number;
+
+/
+
+  GRANT EXECUTE ON "ECODBA"."NUMBER_ARRAY" TO PUBLIC;
+  CREATE OR REPLACE PUBLIC SYNONYM "NUMBER_ARRAY" FOR "ECODBA"."NUMBER_ARRAY";
+
+--------------------------------------------------------
+--  DDL for Type DATEARRAY
+--------------------------------------------------------
+
+  CREATE OR REPLACE TYPE "ECODBA"."DATEARRAY" as table of date;
+
+/
+
+  GRANT EXECUTE ON "ECODBA"."DATEARRAY" TO PUBLIC;
+  CREATE OR REPLACE PUBLIC SYNONYM "DATEARRAY" FOR "ECODBA"."DATEARRAY";
+ 
+
+
+CREATE OR REPLACE PACKAGE          "TS_XFER" as
 /*  PACKAGE TS_XFER is designed to contain fast methods for timeseries
     writing and retrieval
 
@@ -13,8 +30,9 @@
 */
 	/* declare the associative array table types for this package   */
 
-TYPE number_array is table of NUMBER;
-TYPE date_array is table of DATE; -- overriding main date_array date object array
+--TYPE number_array is table of NUMBER;
+--TYPE date_array is table of DATE; -- overriding main date_array date object array
+
 
 procedure GET_REAL_DATA 
 (
@@ -22,7 +40,7 @@ procedure GET_REAL_DATA
 , start_date IN DATE 
 , end_date IN DATE
 , interval IN HDB_INTERVAL.INTERVAL_NAME%type 
-, dates OUT date_array
+, dates OUT datearray
 , ts_values OUT number_array
 , inst_interval IN NUMBER DEFAULT 15 --interval for r_instant data
 );
@@ -33,11 +51,11 @@ procedure GET_MODEL_DATA
 , start_date IN DATE 
 , end_date IN DATE
 , interval in HDB_INTERVAL.INTERVAL_NAME%type
-, dates OUT date_array
+, dates OUT datearray
 , ts_values OUT number_array
 , mri in REF_MODEL_RUN.MODEL_RUN_ID%type
 );
- 
+
 -- the above two do little or no validation, as it would repeat what is in get_data
 -- calling the above directly will be a bit faster as they avoid sdi. interval.
 -- and mri table lookups.
@@ -58,14 +76,45 @@ procedure GET_DATA
 , start_date IN DATE 
 , end_date IN DATE
 , interval in HDB_INTERVAL.INTERVAL_NAME%type
-, dates OUT date_array
+, dates OUT datearray
 , ts_values OUT number_array
 , real_or_model IN VARCHAR2 default 'R_'
 , mri_or_interval in NUMBER default 15
 );
 
-END TS_XFER;
+-- Write data procedures for 2016 HDB Support Task
+-- initially written by Andrew Gilmore Dec 2016
 
+procedure WRITE_REAL_DATA
+(
+  sdi IN NUMBER
+, INTERVAL IN hdb_interval.interval_name%TYPE
+, dates IN datearray
+, ts_values IN number_array
+, agen_id NUMBER
+, overwrite_flag VARCHAR2
+, VALIDATION CHAR
+, COLLECTION_SYSTEM_ID NUMBER
+, LOADING_APPLICATION_ID NUMBER
+, METHOD_ID NUMBER
+, computation_id NUMBER
+, do_update_y_n VARCHAR2
+, data_flags IN VARCHAR2 DEFAULT NULL
+, TIME_ZONE IN VARCHAR2 DEFAULT NULL
+);
+
+procedure WRITE_MODEL_DATA
+(
+  sdi IN NUMBER
+, INTERVAL IN hdb_interval.interval_name%TYPE
+, dates IN datearray
+, ts_values IN number_array
+, model_run_id IN NUMBER
+, do_update_y_n IN VARCHAR2
+);
+
+
+END TS_XFER;
 /
 
   GRANT EXECUTE ON "TS_XFER" TO "SAVOIR_FAIRE";
@@ -78,7 +127,7 @@ END TS_XFER;
 --  DDL for Package Body TS_XFER
 --------------------------------------------------------
 
-  CREATE OR REPLACE PACKAGE BODY "TS_XFER" as
+CREATE OR REPLACE PACKAGE BODY          "TS_XFER" as
 
 procedure GET_REAL_DATA
 (
@@ -86,7 +135,7 @@ procedure GET_REAL_DATA
 , start_date IN DATE 
 , end_date IN DATE
 , interval in HDB_INTERVAL.INTERVAL_NAME%type 
-, dates OUT date_array
+, dates OUT DATEARRAY
 , ts_values OUT number_array
 , inst_interval IN NUMBER DEFAULT 15 --interval for r_instant, r_other data
 ) is
@@ -97,89 +146,89 @@ procedure GET_REAL_DATA
     where r_instant.site_datatype_id(+) = sdi and
     r_instant.start_date_time(+) = instants.date_time
     order by instants.date_time;
-    
+
   CURSOR hour (sdi in NUMBER, start_date in DATE, end_date in DATE) is
     select hours.date_time, r_hour.value from r_hour,
     table (dates_between(start_date, end_date, 'hour')) hours
     where r_hour.site_datatype_id(+) = sdi and
     r_hour.start_date_time(+) = hours.date_time
    order by hours.date_time;
-     
+
   CURSOR day (sdi in NUMBER, start_date in DATE, end_date in DATE) is
     select days.date_time, r_day.value from r_day,
     table (dates_between(start_date, end_date, 'day')) days
     where r_day.site_datatype_id(+) = sdi and
     r_day.start_date_time(+) = days.date_time
     order by days.date_time;
-    
+
   CURSOR month (sdi in NUMBER, start_date in DATE, end_date in DATE) is
     select months.date_time, r_month.value from r_month,
     table (dates_between(start_date, end_date, 'month')) months
     where r_month.site_datatype_id(+) = sdi and
     r_month.start_date_time(+) = months.date_time
     order by months.date_time;
-    
+
   CURSOR year (sdi in NUMBER, start_date in DATE, end_date in DATE) is
     select years.date_time, r_year.value from r_year,
     table (dates_between(start_date, end_date, 'year')) years
     where r_year.site_datatype_id(+) = sdi and
     r_year.start_date_time(+) = years.date_time
     order by years.date_time;
-    
+
   CURSOR wy (sdi in NUMBER, start_date in DATE, end_date in DATE) is
     select wys.date_time, r_wy.value from r_wy,
     table (dates_between(start_date, end_date, 'wy')) wys
     where r_wy.site_datatype_id(+) = sdi and
     r_wy.start_date_time(+) = wys.date_time
     order by wys.date_time;
-    
+
   CURSOR other (sdi in NUMBER, start_date in DATE, end_date in DATE) is
     select others.date_time, r_other.value from r_other,
     table (instants_between(start_date, end_date, inst_interval)) others
     where r_other.site_datatype_id(+) = sdi and
     r_other.start_date_time(+) = others.date_time
     order by others.date_time;    
-    
+
 --  val NUMBER;
 
   BEGIN
-  
+
     CASE interval
     WHEN 'instant' THEN
       OPEN instant (sdi,start_date,end_date);
       FETCH instant BULK COLLECT into dates,ts_values;
       CLOSE instant;
-      
+
     WHEN 'hour' THEN
       OPEN HOUR (sdi,start_date,end_date);
       FETCH HOUR BULK COLLECT into dates,ts_values;
       CLOSE HOUR;
-      
+
     WHEN 'day' THEN
       OPEN day (sdi,start_date,end_date);
       FETCH day BULK COLLECT into dates,ts_values;
       CLOSE day;
-      
+
     WHEN 'month' THEN
       OPEN month (sdi,start_date,end_date);
       FETCH month BULK COLLECT into dates,ts_values;
       CLOSE month;
-      
+
     WHEN 'year' THEN
       OPEN year (sdi,start_date,end_date);
       FETCH year BULK COLLECT into dates,ts_values;
       CLOSE year;
-      
+
     WHEN 'wy' THEN
       OPEN wy (sdi,start_date,end_date);
       FETCH wy BULK COLLECT into dates,ts_values;
       CLOSE wy;
-      
+
     WHEN 'other' THEN
       OPEN other (sdi,start_date,end_date);
       FETCH other BULK COLLECT into dates,ts_values;
       CLOSE other;
-  
+
     END CASE;
 
 --testing   
@@ -188,7 +237,7 @@ procedure GET_REAL_DATA
 --        val:= val +1;
 --      end loop;
 --      deny_action('Numbers: '|| val);
-      
+
 
   END GET_REAL_DATA;
 
@@ -198,7 +247,7 @@ procedure GET_MODEL_DATA
 , start_date IN DATE 
 , end_date IN DATE
 , interval IN HDB_INTERVAL.INTERVAL_NAME%type
-, dates OUT date_array
+, dates OUT DATEARRAY
 , ts_values OUT number_array
 , mri IN REF_MODEL_RUN.MODEL_RUN_ID%type
 ) is
@@ -210,7 +259,7 @@ procedure GET_MODEL_DATA
     m_hour.start_date_time(+) = hours.date_time and
     m_hour.model_run_id(+) = mri
     order by hours.date_time;
-     
+
   CURSOR day (sdi in NUMBER, start_date in DATE, end_date in DATE) is
     select days.date_time, m_day.value from m_day,
     table (dates_between(start_date, end_date, 'day')) days
@@ -218,7 +267,7 @@ procedure GET_MODEL_DATA
     m_day.start_date_time(+) = days.date_time and
     m_day.model_run_id(+) = mri
     order by days.date_time;
-    
+
   CURSOR month (sdi in NUMBER, start_date in DATE, end_date in DATE) is
     select months.date_time, m_month.value from m_month,
     table (dates_between(start_date, end_date, 'month')) months
@@ -226,7 +275,7 @@ procedure GET_MODEL_DATA
     m_month.start_date_time(+) = months.date_time and
     m_month.model_run_id(+) = mri
     order by months.date_time;
-    
+
   CURSOR year (sdi in NUMBER, start_date in DATE, end_date in DATE) is
     select years.date_time, m_year.value from m_year,
     table (dates_between(start_date, end_date, 'year')) years
@@ -234,7 +283,7 @@ procedure GET_MODEL_DATA
     m_year.start_date_time(+) = years.date_time and
     m_year.model_run_id(+) = mri
     order by years.date_time;
-    
+
   CURSOR wy (sdi in NUMBER, start_date in DATE, end_date in DATE) is
     select wys.date_time, m_wy.value from m_wy,
     table (dates_between(start_date, end_date, 'wy')) wys
@@ -255,28 +304,28 @@ procedure GET_MODEL_DATA
       OPEN HOUR (sdi,start_date,end_date);
       FETCH HOUR BULK COLLECT into dates,ts_values;
       CLOSE HOUR;
-      
+
     WHEN 'day' THEN
       OPEN day (sdi,start_date,end_date);
       FETCH day BULK COLLECT into dates,ts_values;
       CLOSE day;
-      
+
     WHEN 'month' THEN
       OPEN month (sdi,start_date,end_date);
       FETCH month BULK COLLECT into dates,ts_values;
       CLOSE month;
-      
+
     WHEN 'year' THEN
       OPEN year (sdi,start_date,end_date);
       FETCH year BULK COLLECT into dates,ts_values;
       CLOSE year;
-      
+
     WHEN 'wy' THEN
       OPEN wy (sdi,start_date,end_date);
       FETCH wy BULK COLLECT into dates,ts_values;
       CLOSE wy;
 
-  
+
     END CASE;
 
   END GET_MODEL_DATA;
@@ -288,22 +337,22 @@ procedure GET_DATA
 , start_date IN DATE 
 , end_date IN DATE
 , interval IN HDB_INTERVAL.INTERVAL_NAME%type
-, dates OUT date_array
+, dates OUT DATEARRAY
 , ts_values OUT number_array
 , real_or_model IN VARCHAR2 default 'R_'
 , mri_or_interval IN NUMBER default 15 --
 ) is
-    
+
   temp_num NUMBER;
   temp_inter HDB_INTERVAL.INTERVAL_NAME%type;
 
 BEGIN
   -- validate inputs
   BEGIN
-    execute immediate '
-    SELECT site_datatype_id    
+    SELECT site_datatype_id
+    INTO temp_num
     FROM hdb_site_datatype
-    WHERE site_datatype_id = :sdi' INTO temp_num USING sdi;
+    WHERE site_datatype_id = sdi;
   EXCEPTION WHEN others THEN
     deny_action('TS_XFER.GET_DATA invalid SITE_DATATYPE_ID: ' || sdi);
   END;  
@@ -313,10 +362,10 @@ BEGIN
   end if;
 
   BEGIN
-    execute immediate '
     SELECT interval_name
+    INTO temp_inter
     FROM hdb_interval
-    WHERE interval_name = :interval'  INTO temp_inter USING interval  ;
+    WHERE interval_name = interval;
 
   EXCEPTION WHEN others THEN
     deny_action('TS_XFER.GET_DATA invalid INTERVAL: ' || interval);
@@ -324,28 +373,87 @@ BEGIN
 
   CASE real_or_model 
   WHEN 'R_' THEN
-    GET_REAL_DATA (sdi, start_date, end_date, interval, dates, ts_values, mri_or_interval)  ;
+    GET_REAL_DATA (sdi, start_date, end_date, interval, dates, ts_values, mri_or_interval);
   WHEN 'M_' THEN
   -- validate inputs
     BEGIN
-      execute immediate '
-      SELECT model_run_id      
+      SELECT model_run_id
+      INTO temp_num
       FROM ref_model_run
-      WHERE model_run_id = :mri_or_interval' INTO temp_num USING mri_or_interval; --default 15 might trip folks up here
+      WHERE model_run_id = mri_or_interval; --default 15 might trip folks up here
     EXCEPTION WHEN others THEN
       deny_action('TS_XFER.GET_DATA invalid MODEL_RUN_ID: ' || mri_or_interval);
     END;
- 
+
     GET_MODEL_DATA (sdi, start_date, end_date, interval, dates, ts_values, mri_or_interval);
   ELSE
     deny_action('Invalid real_or_model selector: ' || real_or_model);
   END CASE;
 
-  END GET_DATA;
-  
-END TS_XFER;
+END GET_DATA;
 
+PROCEDURE write_real_data
+(
+  sdi IN NUMBER
+, INTERVAL IN hdb_interval.interval_name%TYPE
+, dates IN DATEARRAY
+, ts_values IN number_array
+, agen_id NUMBER
+, overwrite_flag VARCHAR2
+, VALIDATION CHAR
+, COLLECTION_SYSTEM_ID NUMBER
+, LOADING_APPLICATION_ID NUMBER
+, METHOD_ID NUMBER
+, computation_id NUMBER
+, do_update_y_n VARCHAR2
+, data_flags IN VARCHAR2 DEFAULT NULL
+, TIME_ZONE IN VARCHAR2 DEFAULT NULL
+) IS
+   items       NUMBER;
+  -- validate inputs
+BEGIN
+  IF dates.count() != ts_values.count() THEN
+     deny_action('TS_XFER.WRITE_REAL_DATA arrays must contain equal number of items!');
+  END IF;
+
+  begin  /* begin block for HDB stored Procedures exceptions */
+			items := dates.count();
+			FOR i IN 1..items loop	    
+					modify_r_base (sdi,INTERVAL,dates(i),NULL,ts_values(i),agen_id,
+          overwrite_flag,validation,collection_system_id,loading_application_id,
+					method_id,computation_id,do_update_y_n, data_flags, time_zone);
+			END loop;
+  end;
+END write_real_data;       
+
+PROCEDURE write_model_data
+(
+  sdi IN NUMBER
+, INTERVAL IN hdb_interval.interval_name%TYPE
+, dates IN DATEARRAY
+, ts_values IN number_array
+, model_run_id IN NUMBER
+, do_update_y_n IN VARCHAR2
+) IS
+   items       NUMBER;
+BEGIN
+  -- validate inputs, most validations are performed by modify_ procedures
+  -- potential improvement to validate once instead for every row?
+  IF dates.count() != ts_values.count() THEN
+     deny_action('TS_XFER.WRITE_MODEL_DATA arrays must contain equal number of items!');
+  END IF;
+
+  begin  /* begin block for HDB stored Procedures exceptions */
+			items := dates.count();
+			FOR i IN 1..items loop	    
+					modify_m_table(model_run_id,sdi,dates(i),null,ts_values(i),INTERVAL,do_update_y_n);
+			END loop;
+  end;  
+END write_model_data;
+
+END ts_xfer;
 /
+
 DROP TYPE t_tf_tab;
 DROP TYPE t_tf_row;
 
@@ -368,8 +476,8 @@ CREATE OR REPLACE FUNCTION get_ts_xfer_data (p_sdi IN NUMBER,p_sdate IN date,p_e
   START_DATE DATE;
   END_DATE DATE;
   INTERVAL VARCHAR2(16);
-  DATES TS_XFER.DATE_ARRAY;
-  TS_VALUES TS_XFER.NUMBER_ARRAY;
+  DATES DATEARRAY;
+  TS_VALUES NUMBER_ARRAY;
   REAL_OR_MODEL VARCHAR2(200);
   MRI_OR_INTERVAL NUMBER;
 BEGIN
@@ -403,5 +511,4 @@ END;
   GRANT EXECUTE ON "GET_TS_XFER_DATA" TO "SAVOIR_FAIRE";
   GRANT EXECUTE ON "GET_TS_XFER_DATA" TO "APP_ROLE";
   CREATE OR REPLACE PUBLIC SYNONYM GET_TS_XFER_DATA FOR GET_TS_XFER_DATA;
-
 
