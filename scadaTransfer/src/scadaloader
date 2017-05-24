@@ -1,4 +1,10 @@
-#!/sbin/sh -h
+#!/bin/sh 
+#   This SCADA LOADER file has been modified to run on ISIS  by M. Bogner 21-MARCH-2011
+#
+# chkconfig: 345 99 1
+# description: SCADA Loader Process
+# processname: poll4csv.pl
+
 #h  This script is used to start or stop the HDB XA21 SCADA dataloader
 #h  
 #h  Usage: scadaloader [-h] <start | stop | status>
@@ -19,6 +25,9 @@ HDB_ENV=/wrg/hdb/HDB2_applications
 exec=`basename $0`
 usage='(echo ; echo "Usage: $exec [-h] <start | stop | status>" ; echo )'
 
+SCADA_XFERDIR=$HDB_ENV/scadaTransfer/work
+#or this for aplx003
+#SCADA_XFERDIR=$HDB_ENV/scadaTransfer/work/dev
 
 # Check command line argument.
 if test $# -eq 0 ; then
@@ -37,7 +46,7 @@ help() # [prefix]
 
 status_hdb_loader()
 {
-    pid=`pgrep poll4csv.pl`
+    pid=`pgrep -f poll4csv.pl`
     if [ -z "$pid" ]
     then
 	echo "ERROR! SCADA Polling script is not running!"
@@ -51,11 +60,11 @@ status_hdb_loader()
 start_hdb_loader()
 {
 echo "Starting hdb scada loader in directory:"
-echo "     $HDB_ENV/scadaTransfer/work"
+echo "     $SCADA_XFERDIR"
 echo "Enter uchdba password if requested:"
 /bin/su - uchdba -c "source $HDB_ENV/.cshrc_hdb_app; \
-		cd $HDB_ENV/scadaTransfer/work; \
-		nohup ../src/poll4csv.pl -a /wrg/home/uchdba/.app_user_login \
+		cd $SCADA_XFERDIR; \
+		nohup perl ../src/poll4csv.pl -a /wrg/home/uchdba/.app_user_login \
                   -f 'csv_.*[0-9]$' \
                   -d . >&poll4csv.out &"
 
@@ -68,8 +77,15 @@ stop_hdb_loader()
 #should dynamically find this
 
 echo "Stopping hdb scada loader"
-/bin/su - uchdba -c "source $HDB_ENV/.cshrc_hdb_app; \
-	            pkill -U uchdba poll4csv.pl"
+    kpid=`pkill -f poll4csv -U uchdba -n`
+    if [ -z "$kpid" ]
+    then
+	echo "OK: SCADA Polling script is STOPPED!"
+    else
+	echo "ERROR: SCADA Polling Stopping script!"
+    fi
+#/bin/su - uchdba -c "source $HDB_ENV/.cshrc_hdb_app; \
+#	             pkill -f poll4csv -U uchdba -n"
 }
 
 # Parse command line options.

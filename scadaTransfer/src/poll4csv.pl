@@ -71,6 +71,9 @@ while (1) {
   if (@files) {
     sleep 10; # wait for gefrx to finish checking the file before moving it!
     foreach $file (@files) {
+      #copy file for development system to load, chdir to $polldir done above
+      system("cp $file dev/");
+
       my @program=("perl","../src/parsecsv.pl","-f","$polldir/$file");
       system (@program) == 0 or die "Failed to run parsecsv.pl!\n $!";
 
