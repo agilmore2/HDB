@@ -7,7 +7,7 @@ use lib ( defined $ENV{PERL_ENV} ? "$ENV{PERL_ENV}/lib" : "$ENV{HDB_ENV}/perlLib
 #use LWP::UserAgent;
 #use LWP::Debug qw(+conns); 
 use WWW::Mechanize;
-use Date::Calc qw(Delta_DHMS Decode_Date_EU Today Add_Delta_Days);
+use Date::Calc qw(Delta_DHMS Decode_Date_EU Today Add_Delta_Days Add_Delta_DHMS);
 use File::Basename;
 use Data::Dumper;
 
@@ -362,6 +362,8 @@ sub build_url ($$$$) {
   # retrieval from database included site ids and datatypes 
   # need to work out if URL needs to be html entity encoded to handle spaces in timestamps, or can use ISO 8601. No.
   # The timezone parameter in the URL is a lie, no matter what you put in, you'll get America/Denver out.
+
+  # https://onerain.ebid-nm.org/export/csv.php?tz=America%252FDenver&format_datetime=%25Y-%25m-%25d+%25H:%25i:%25S&mime=txt&data_start=2017-05-20%252000:00:00&data_end=2017-05-21%252023:59:59&site_id=757&device_id=5
   
   my $parameters = "&data_start=$begin_date&data_end=$end_date";
 
@@ -491,9 +493,9 @@ Required information missing in insert_values()!\n"
       ($value_date,$value,$data_flags) = (split /,/,$row) [0,2,4];
 
 # update or insert, source and database differ (or database value does not exist)
-        if ( defined($debug) ) {
-	    print "modifying for $cur_sdi, date $value_date, value $value\n";
-        }
+       if ( defined($debug) ) {
+         print "modifying for $cur_sdi, date $value_date, value $value\n";
+       }
 
        # check if value is known
        if ( !defined $value or $value eq '' ) {
@@ -506,19 +508,24 @@ Required information missing in insert_values()!\n"
          print "date corrupted: $cur_sdi, date $value_date: $value\n";
          $_site->{error_code} = "Bad date";
        } else {       #modify
-        $modsth->bind_param( 1, $cur_sdi );
-        $modsth->bind_param( 2, $value_date );
-        $modsth->bind_param( 3, $value );
-        $modsth->bind_param( 4, $data_flags );
-        $modsth->bind_param( 5, $value_date );#Repeated date for dst computation
+	       #round date minutes to nearest 15, per https://hdbsupport.precisionwre.com/helpdesk/tickets/382
+         $value_date = round_15($value_date);
+         if ( defined($debug) ) {
+           print "rounded date: $value_date\n";
+         }
+         $modsth->bind_param( 1, $cur_sdi );
+         $modsth->bind_param( 2, $value_date );
+         $modsth->bind_param( 3, $value );
+         $modsth->bind_param( 4, $data_flags );
+         $modsth->bind_param( 5, $value_date );#Repeated date for dst computation
 	
-        $modsth->execute;
+         $modsth->execute;
 
-        if ( !defined($first_date) ) {    # mark that data has changed
-          $first_date = $value_date;
-        }
-        $updated_date = $value_date;
-      } 
+         if ( !defined($first_date) ) {    # mark that data has changed
+           $first_date = $value_date;
+         }
+         $updated_date = $value_date;
+       } 
     }
     $modsth->finish;
 
@@ -685,3 +692,18 @@ sub process_dates {
 
   return ( $begindatestr, $enddatestr );
 }
+
+sub round_15($) {
+    my $value_date = shift;
+    my ($date,$time) = split(/ /,$value_date);
+    my ($year,$month,$day) = split(/-/,$date);
+    my ($hour,$minute,$sec) = split(/:/,$time);
+
+    #add 7.5 minutes, then truncate to nearest 15
+    my @newdate = Add_Delta_DHMS($year,$month,$day,$hour,$minute,$sec, 0,0,7,30);
+    $newdate[4]=15*int($newdate[4]/15);
+
+    return sprintf( "%4d-%02d-%02d %02d:%02d:00",@newdate[0..4]); #zero out seconds    
+}
+   
+
