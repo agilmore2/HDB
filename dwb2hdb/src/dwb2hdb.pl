@@ -182,13 +182,73 @@ if (!($date =~ /^\d{1,2}\/\d{1,2}\/\d{2}(\d\d)?/)) {
   $hdb->hdbdie("Failed to find date in inputfile. Date string is $date.\n");
 }
 
+=Data Format
+#Hacked to handle silently missing data like the following:
+#Usual Dillon River Flows:
+Colorado&nbsp;River at&nbsp;Dotsero<br>
+Dillon<br>
+80<br>
+39<br>
+0<br>
+0.00<br>
+0<br>
+1.92<br>
+2973<br>
+3108<br>
+Williams&nbsp;Fork<br>
+#Broken Flows where Dotsero daily flow is missing, need to add one to the row number
+#after temp and precip is read from Dec-Jan 2017: 
+Colorado&nbsp;River at&nbsp;Dotsero<br>
+Dillon<br>
+19<br>
+-2<br>
+0.16<br>
+0.28<br>
+3<br>
+0.86<br>
+946<br>
+Williams&nbsp;Fork<br>
+#Broken Flows where Dillon max temp is missing, need to add one to row number before
+#reading temp and precip from August, 18 2017:
+Colorado&nbsp;River at&nbsp;Dotsero<br>
+Dillon<br>
+32<br>
+0<br>
+1.36<br>
+0<br>
+1.96<br>
+1687<br>
+1714<br>
+Williams&nbsp;Fork<br>
+
+#Obviously broken. Three cases:
+#1. 8 data rows between Dillon and Williams Fork = OK
+#2. 7 data rows, second to last is >100 = Missing Temp. Can't know which one, assume max?
+#3. 7 data rows, second to last is <100 = Missing Flow.
+=cut
+
 while ( defined( $data[0] ) ) 
 {
     #find site in file, used as key into siterows for counting rows
     #used to check that the row defined is desired data into %$sites hashref
     #skips data until a site with requested data is found.
     my $site = read_header (\@data); 
-
+    my $inc = 0;
+    
+    if ($site =~ /^Dillon/ and
+        $siterows{$site} == 8 and # we are at Max Temp
+        $data[7] =~ /^Williams/) {
+    #Special processing for broken data
+        if ((substr $data[5], 0, -4) >50) { #nominal Dotsero flow >50, could be avg month precip
+            #assume missing max Dillon temp, add one to row count
+            $siterows{$site}++; #count rows seen for this site.
+        } else {
+            #need to increment siterows after site section is read
+            $inc = 1;
+        }
+    }
+    
+#iterate through rows for specific site name while rows represent data
     while (defined ($data[0]) and 
 	   $data[0] =~ /^[-\d.,T]/) {  
 #allow negatives, leading periods and "T"race precip
@@ -209,6 +269,9 @@ while ( defined( $data[0] ) )
 	$siterows{$site}++; #count rows seen for this site.
 	shift @data; #remove processed line from @data
     }
+    
+    $siterows{$site} += $inc; #potentially increase siterow to handle missing data
+    $inc = 0;
 }
 
 # print error messages for all sites that no or bad data was returned 
