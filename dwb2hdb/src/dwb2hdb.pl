@@ -197,7 +197,7 @@ Dillon<br>
 3108<br>
 Williams&nbsp;Fork<br>
 #Broken Flows where Dotsero daily flow is missing, need to add one to the row number
-#after temp and precip is read from Dec-Jan 2017: 
+#after temp and precip is read from Dec-Jan 2017:
 Colorado&nbsp;River at&nbsp;Dotsero<br>
 Dillon<br>
 19<br>
@@ -223,8 +223,8 @@ Williams&nbsp;Fork<br>
 
 #Obviously broken. Three cases:
 #1. 8 data rows between Dillon and Williams Fork = OK
-#2. 7 data rows, second to last is >100 = Missing Temp. Can't know which one, assume max?
-#3. 7 data rows, second to last is <100 = Missing Flow.
+#2. 7 data rows, second to last is >50 = Missing Temp. Can't know which one, assume max
+#3. 7 data rows, second to last is <50 = Missing Flow.
 =cut
 
 while ( defined( $data[0] ) ) 
