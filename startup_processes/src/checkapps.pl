@@ -118,7 +118,8 @@ sub startup_rs($) {
 
     my @args =
       ( "$decdir/bin/rs", "-e", 
-#	                  "-d", "1", 
+	#	                  "-d", "1",
+	                  "-o", "$statdir/$rs.status",
                           "-k", "$lockdir/$rs.lock", "\"$rs\"" );
 
     print "Starting up $rs\n";
@@ -336,8 +337,8 @@ sub read_rs($) {
 routingspec a, routingspecproperty b
 where 
 a.id = b.routingspecid and
-b.name = 'autostart' and
-b.value = 'Y'"
+b.prop_name = 'autostart' and
+b.prop_value = 'Y'"
   );
 
   return $rs_to_start;
