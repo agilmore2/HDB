@@ -5,8 +5,11 @@ use strict;
 
 #use libraries from HDB environment (Solaris only except for HDB.pm)
 # this Perl variable is set in .cshrc_hdb_app
-use lib "$ENV{PERL_ENV}/lib";
-
+if (defined ($ENV{PERL_ENV})) {
+	use lib "$ENV{PERL_ENV}/lib";
+} else {
+	use lib "ENV{HDB_ENV}/perlLib";
+}
 use Hdb;
 
 use LWP::UserAgent;
@@ -21,10 +24,10 @@ $verstring =~ s/ \$//;
 my $progname = basename($0);    
 chomp $progname;
 
-my ( $accountfile, $hdbuser, $hdbpass, $debug, $sitearg );
+my ( $accountfile, $hdbuser, $hdbpass, $debug, $sitearg, $readfile );
 
 #store decodes dir of HDB environment for use
-my $decdir = "$ENV{HDB_ENV}/ratings/usbr/src";
+my $decdir = "$ENV{HDB_ENV}/ratings/usbr";
 
 #the ugly globals...
 my $agen_abbrev      = 'USBR';
@@ -33,127 +36,36 @@ my $usgs_rating_type = 'Shift Adjusted Stage Flow';
 
 main();  #at end of file to allow all subroutines to be prototyped.
 
-# currently depend on the Realtime website download
-# specifications to determine the sites to
-# retrieve ratings for.
-# FIXME: JUST USGS sites from telemetry, instead of Realtime web loader
-# fix to only get sites that have an SDI for STAGE by M Bogner 16 Feb 2011
-# This is copy from the original get_usgs_ratings.pl made to work
-# with the IBWC website 
-sub read_usgs_sites ($) {
-  my $hdb = shift;
-
-#  this query was change by M. Bogner 16-FEB-2011 to only get sites that have SDIs for STAGE
-#  this quy uses a hard coded 65 datatype_id
-#
-#  This query modified to no longer require a datatype_id of 65
-# modified by M. Bogner as per conversation with R. Clayton on 04/03/2012
-#
-  my $sites = $hdb->dbh->selectcol_arrayref(
-    "select distinct a.primary_site_code siteno
-from ref_ext_site_data_map a, hdb_ext_data_source b
-where
-b.ext_data_source_name = '$data_source' and
-b.ext_data_source_id = a.ext_data_source_id and
-a.is_active_y_n = 'Y'
-order by siteno"
-  );
-
-#  my $sites = $hdb->dbh->selectcol_arrayref(
-#    "select distinct a.primary_site_code siteno
-#from ref_ext_site_data_map a, hdb_ext_data_source b,
-#hdb_site_datatype c, hdb_site_datatype d
-#where
-#b.ext_data_source_name = '$data_source' and
-#b.ext_data_source_id = a.ext_data_source_id and
-#a.hdb_site_datatype_id = c.site_datatype_id and
-#d.site_id = c.site_id and
-#d.datatype_id = 65 and
-#a.is_active_y_n = 'Y'
-#order by siteno"
-#  );
-
-  return $sites;
-}
-
 # in a loop over the list of sites
 # get the rating table and process it.
-sub process_usgs_sites ($$) {
+sub process_usbr_file ($) {
   my $hdb   = shift;
-  my $sites = shift;
-
-  my ( $ua, $request ) = build_web_request();
-
-  foreach my $site (@$sites) {
-    my $response = retrieve_rating_table( $site, $ua, $request );
-    if ( $response->is_success ) {
-      process_rating( $hdb, $site, $response );
-    } else {
-      die("Error reading from $agen_abbrev web page, cannot continue\n");
-    }
-  }
+  my $content = open_rating_table();
+  my $rating = process_rating($hdb, $content);
+  print "$0: $readfile read successfully: rating_id $rating updated successfully.\n";
 }
 
-#download the rating file
-sub retrieve_rating_table ($$$) {
-  my $site    = shift;
-  my $ua      = shift;
-  my $request = shift;
+#open the rating file
+sub open_rating_table ($) {
+  open NEWRAT, "<", $readfile or die "Could not open file $readfile";
+  my @response = <NEWRAT>;
+  close NEWRAT;
 
-  my $file = $site . ".rdb";
-#  my $url  = "ftp://guest8:guest8\@66.85.17.138/PUBLICWAD/rdb_files/$file";
-#  my $url  = "ftp://WAD_User:US!bwcW@d\@63.96.218.88/PUBLICWAD/rdb_files/$file";
-#  my $userPass  = 'WAD_User:US!bwcW!d';
-#  my $userPass  = 'jzyu\@usbr.gov:4yuzhenda';
-  my $userPass  = 'jzyu%40usbr.gov:4yuzhenda';
-#  my $url  =  "ftp://" . $userPass . "\@63.96.218.8/rdb/$file";
-  my $url  =  "ftp://" . $userPass . "\@ftp.usbr.gov/UC_Rating/$file";
-
-print "URL: $url \n";
-
-  $request->uri($url);
-
-  # this next function actually gets the data
-  my $response = $ua->simple_request($request);
-
-  # check result
-  if ( $response->is_success ) {
-    my $status = $response->status_line;
-    print "Data read from $agen_abbrev for site $site: $status\n";
-  } else {    # ($response->is_error)
-    printf STDERR $response->error_as_HTML;
-  }
-  return $response;
+  return \@response;
 }
 
-# setup the request.
-sub build_web_request () {
-  my $ua = LWP::UserAgent->new;
-  $ua->agent('USBOR Rating Table Retrieval for US Bureau of Reclamation HDB: '); #will append lwp version to this with space
-  $ua->from('agilmore@uc.usbr.gov');
-  $ua->timeout(600);
-  my $request = HTTP::Request->new();
-  $request->method('GET');
-  return ( $ua, $request );
-}
-
-#check the returned rating against filesystem stored version
+#check the returned rating against database stored version
 # and update the database and write a new file if different.
 # have to compare the actual table rather than header on the
 # table because it changes (at least the shifted date) every day
-# FIXME: compare new rating against database stored version instead
-sub process_rating ($$$) {
+sub process_rating ($$) {
   my $hdb      = shift;
-  my $site     = shift;
-  my $response = shift;
+  my $newrat   = shift;
 
-  #write out new file, regardless of any real changes.
-  open NEWRAT, ">$decdir/data/$site.rdb";
-  print NEWRAT $response->content;
-  close NEWRAT;
+  my @barerat = grep( !/^#/, @$newrat );
 
-  my @newrat = split /\n/, $response->content;
-  my @barerat = grep( !/^#/, @newrat );
+  my $file = (split /\//,$readfile) [-1];
+  my $site = (split /\./,$file) [0];
 
   my $rating = find_rating( $hdb, $site );    
 
@@ -164,13 +76,15 @@ sub process_rating ($$$) {
       return;
     } else {
       #clean up old rating
-      delete_rating_points($hdb,$rating);
+      delete_rating_points($hdb,$rating) unless $debug;
     }
   } else {
-     $rating = create_site_rating( $hdb, $site);
+     print "No rating found for $site!\nCreating new rating!\n";
+     $rating = create_site_rating( $hdb, $site) unless $debug;
   }
   #update database, pass in already split rating with comments
-  update_rating( $hdb, $rating, \@newrat );
+  update_rating( $hdb, $rating, $newrat ) unless $debug;
+  return $rating;
 }
 
 #delete old rating data
@@ -249,10 +163,12 @@ sub find_rating ($$) {
   my $sdi; 
   ( undef, $sdi ) = find_agen_sdi( $hdb, $site );
 
+  my $sql = "select ratings.find_site_rating('$usgs_rating_type',$sdi,null) from dual";
+
   eval {
     $rating_id =
       $hdb->dbh->selectcol_arrayref( #ugly global var here...
-            "select ratings.find_site_rating('$usgs_rating_type',$sdi,null) from dual")->[0];
+            $sql)->[0];
   };
 
   if (@$)    #error occurred
@@ -381,6 +297,10 @@ sub modify_rating_point ($$@) {
          begin ratings.modify_rating_point(?,?,?);
          end;" );
     }
+    if (!(defined $_[0] and $_[0] =~ /\d/ and $_[2] =~ /\d/)) {
+        return; #blank parameter!
+    }
+
     my $param2 = substr($_[0],0);
     my $param3 = substr($_[2],0);
 #    print STDERR "RATING=$rating 2=$param2 3=$param3\n";
@@ -454,6 +374,12 @@ sub process_args (@) {
       usage();
     } elsif ( $arg =~ /-v/ ) {    # print version
       version();
+    } elsif ( $arg =~ /-f/ ) {    # get file to read from
+      $readfile = shift;
+      if ( !-r $readfile ) {
+        print "file not found or unreadable: $readfile\n";
+        exit 1;
+      }
     } elsif ( $arg =~ /-a/ ) {    # get database login file
       $accountfile = shift;
       if ( !-r $accountfile ) {
@@ -513,7 +439,7 @@ Example: $progname -a <accountfile>
   -u <hdbusername> : HDB application user name (account file or REQUIRED)
   -p <hdbpassword> : HDB password (account file or REQUIRED)
   -d               : Debugging output
-  -i <usgsno>      : Get rating for one site
+  -f <filename>    : File to read from
 ENDHELP
 
   exit(1);
@@ -544,12 +470,6 @@ sub main {
     #create connection to database
     $hdb->connect_to_db( $dbname, $hdbuser, $hdbpass );
   }
-  my $sites;
-  if ($sitearg) {
-    $sites->[0] = $sitearg;
-  } else {
-    $sites = read_usgs_sites ($hdb);
-  }
 
-  process_usgs_sites ($hdb, $sites) ;
+  process_usbr_file ($hdb) ;
 }
