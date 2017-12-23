@@ -1,0 +1,32 @@
+#
+# Start Oracle
+# (Note: the environment variables are set in /etc/profile.d/oracle.sh)
+#
+START_ORACLE="no"
+#
+# Owner of Oracle installation (oracle/webdb will be started as that user)
+#
+ORA_OWNER=oracle
+#
+# Only done if START_ORACLE is "yes": start listener
+# to allow other computers to connect to the database
+#
+START_LISTENER="yes"
+#
+# Only if START_ORACLE is "yes": start Oracle
+# Enterprise Manager (if installed)
+#
+START_ISQL="no"
+#
+# Only if START_ORACLE is "yes": start Oracle
+# Enterprise Manager (if installed)
+#
+START_ENT_MANAGE="no"
+# start the Oracle HTTP Server that comes bundled with
+# Oracle Application Server, separate ORACLE_HOME
+# Not sure this works yet...
+START_ORA_APACHE="no"
+ORACLE_HTTP_HOME=/ora/oracle/product/10.2.0/http_1
+# 
+# could add others as needed
+#
