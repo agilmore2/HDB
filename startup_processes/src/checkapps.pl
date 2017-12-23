@@ -361,7 +361,7 @@ sub read_cp($) {
 sub read_rs_stat ($) {
   my $rs = shift;
 
-  open STATFILE, "$statdir/$rs.stat";
+  open STATFILE, "$statdir/$rs.status";
   my @lines = <STATFILE>;
   close STATFILE;
   my %rs_stat;
