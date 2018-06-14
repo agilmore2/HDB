@@ -24,7 +24,7 @@ chomp $progname;
 
 #the following are global variables, these are set by command line arguments
 my $insertflag = 1;
-my ( $readfile, $runagg, $printurl, $debug, $accountfile );
+my ( $readfile, $runagg, $printurl, $debug, $accountfile, $flowtype);
 my ( $hdbuser, $hdbpass, @site_num_list );
 
 #HDB database interface
@@ -32,7 +32,10 @@ my ( $hdbuser, $hdbpass, @site_num_list );
 my $hdb;
 
 #global datasource name, used in get_app_ids
-my $datasource = "Colorado Division of Water Resources (CODWR)";
+my $datasource;
+my %title;
+$title{u} = 'Colorado Division of Water Resources (CODWR)';
+$title{d} = 'Colorado Division of Water Resources (CODWR) Daily Values';
 
 #global variables read from database in get_app_ids
 my ( $load_app_id, $agen_id, $validation, $url, $collect_id );
@@ -173,6 +176,8 @@ sub process_args {
       $debug = 1;
     } elsif ( $arg =~ /-i/ ) {    # get codwr id, split possible id,id,id
       push @site_num_list, split /,/, shift;
+    } elsif ( $arg =~ /-l/ ) {    # get flow type
+      $flowtype = shift;
     } elsif ( $arg =~ /-u/ ) {    # get hdb user
       $hdbuser = shift;
     } elsif ( $arg =~ /-p/ ) {    # get hdb passwd
@@ -214,6 +219,21 @@ sub process_args {
     usage();
   }
 
+  #handle flowtype, unit or daily
+  #realtime, provisional, or official used to be these,
+  #but the USGS merged the sources for Official and Provisional
+  #check if flowtype is defined, if not, we assume realtime
+  if ( !defined($flowtype) ) {
+    $flowtype = 'u';
+  }
+
+  if ( !( $flowtype =~ /^[ud]$/ ) ) {
+    print "Error, invalid flow type defined: '$flowtype'\n";
+    print "Specify (-l) one of u or d (unit (instantaneous) or daily)\n";
+    usage();
+  }
+  $datasource = $title{$flowtype};
+  
   return process_dates( \@enddate, \@begindate, $numdays );
 }
 
@@ -430,6 +450,12 @@ sub build_url ($$$) {
       $interval = 3;
   } else {
       $hdb->hdbdie("Unrecognized interval $int_name for CODWR loader, only daily and below supported");
+  }
+
+  if (($int_name eq 'day' and $flowtype eq 'u') or
+      ($int_name eq 'instant' and $flowtype eq 'd')) {
+      $hdb->hdbdie("Interval $int_name does not match selected loader source (-l $flowtype)
+Check generic mapping against instant/daily selection, instant is default!");
   }
 
   my $parameters = "INTERVAL=$interval&START=$begin_date&END=$end_date";
@@ -664,6 +690,7 @@ Example: $progname -u app_user -p <hdbpassword> -i AZOTUNNM
   -n               : number of days to load
   -b <DD-MON-YYYY> : Begin date for data retrieval
   -e <DD-MON-YYYY> : End date for data retrieval
+  -l <u,d>         : Specify flow type: instanteous ("unit value", default),or daily
 ENDHELP
 
   exit(1);
