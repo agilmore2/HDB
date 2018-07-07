@@ -1,0 +1,3 @@
+APPDIR = $(HDB_ENV)/usgs2hdb
+SRCDIR = $(APPDIR)/src
+
