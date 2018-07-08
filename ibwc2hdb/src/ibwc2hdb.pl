@@ -264,7 +264,11 @@ hdb_loading_application where loading_application_name = '$load_app_name'";
 sub skip_comments {
   my $data = shift;
 
-  shift @$data if $data->[0] eq 'ALL DATA ARE PROVISIONAL AND SUBJECT TO REVISION';
+  if ($data->[0] eq 'ALL DATA ARE PROVISIONAL AND SUBJECT TO REVISION') {
+      shift @$data;
+  } else {
+    $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
+  }
 
   return ();
 }
@@ -278,19 +282,20 @@ sub read_header {
   my @headers = split / /, $header;
   if (!($headers[0] =~ /[[:digit:]]{8,}/ )) {
     print "@headers\n";
-    $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
   }
   my $ibwc_no = $headers[0];
 
+  #DISABLE this because sometimes the retrieved file does not use the same id as it is retrieved from!
   # check that ibwc_no is sane, i.e. contains only digits:
-  if ( $ibwc_no =~ /[^[:digit:]]/ ) {
-    print STDERR
-      "Warning! '$ibwc_no' does not appear to be a valid $agen_abbrev site number!\n";
-    return 0; #Go to next site retrieval
+  if ( $ibwc_no =~ /[^\d]/ ) {
+    #may be returning alpha id that doesn't match, but is right site
+#    print STDERR
+#      "Warning! '$ibwc_no' does not appear to be a valid $agen_abbrev site number!\n";
+#    return 0; #Go to next site retrieval
+  } else { #only chop if starts with number
+      #chop 2 digit HUC off of front of ID in file to match IWBC id
+      $ibwc_no = substr $ibwc_no, 2;
   }
-
-  #chop 2 digit HUC off of ID in file to match IWBC id
-  $ibwc_no = substr $ibwc_no, 2;
   
   shift @$data; #skip "    Date     Time " header
   my $timezone = unpack("A18", shift @$data); #pull timezone out of "     MST       Stage (m)          Discharge (cms)  ..." header
@@ -300,17 +305,6 @@ sub read_header {
   #set found data for this ibwc no
   $ibwc_sites->{$ibwc_no}->{found_data} = 1;
   $ibwc_sites->{$ibwc_no}->{timezone} = $timezone;
-
-  #check that this site is defined completely from database
-  if (    !defined( $ibwc_sites->{$ibwc_no}->{sdi} )
-       or !defined( $ibwc_sites->{$ibwc_no}->{site_id} )
-       or !defined( $ibwc_sites->{$ibwc_no}->{data_code} ) )
-  {
-    $hdb->hdbdie(
-             "site or sdi or data code not defined for ibwc id: $ibwc_no!\n");
-  }
-
-  # For IBWC, only pull discharge, and it is fixed width.
 
   return ($ibwc_no);
 }
@@ -329,11 +323,21 @@ sub process_data {
 
   if ( defined($input_ibwc_no)
        and $input_ibwc_no ne $ibwc_no )
-  {                            #different station found
-    $hdb->hdbdie("$input_ibwc_no was not returned by web query! Exiting.");
+  {                            #different id, so copy into right site
+      foreach my $key (keys %{$ibwc_sites->{$ibwc_no}}) { $ibwc_sites->{$input_ibwc_no}->{$key} = $ibwc_sites->{$ibwc_no}->{$key}}
+#    $hdb->hdbdie("$input_ibwc_no was not returned by web query! Exiting.");
   }
 
-  my $ibwc_site = $ibwc_sites->{$ibwc_no};
+  my $ibwc_site = $ibwc_sites->{$input_ibwc_no};
+
+  #check that this site is defined completely from database
+  if (    !defined( $ibwc_site->{sdi} )
+       or !defined( $ibwc_site->{site_id} )
+       or !defined( $ibwc_site->{data_code} ) )
+  {
+    $hdb->hdbdie(
+             "site or sdi or data code not defined for ibwc id: $input_ibwc_no!\n");
+  }
 
   # put data into database, handing site id
   # function returns date of first value and last value updated
@@ -342,16 +346,16 @@ sub process_data {
   if ( defined($insertflag) ) {
 
     #tell user something, so they know it is working
-    print "Working on $agen_abbrev gage number: $ibwc_no\n";
+    print "Working on $agen_abbrev gage number: $input_ibwc_no\n";
     ( $first_date, $updated_date, $rows_processed ) = 
        insert_values( $data, $ibwc_site );
 
 #report results of insertion, and report error codes to STDERR
     if ( !defined($first_date) ) {
-      print "No data updated for $ibwc_site->{site_name}, $ibwc_no\n";
+      print "No data updated for $ibwc_site->{site_name}, $input_ibwc_no\n";
     } else {
       print
-"Data processed from $first_date to $updated_date for $ibwc_sites->{$ibwc_no}->{site_name}, $ibwc_no\n";
+"Data processed from $first_date to $updated_date for $ibwc_sites->{$input_ibwc_no}->{site_name}, $input_ibwc_no\n";
       print "Number of rows from $agen_abbrev processed: $rows_processed\n";
     }
   }
