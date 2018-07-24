@@ -604,7 +604,7 @@ sub insert_values {
           if defined($debug);
         $usgs_site->{error_code}=$value;
         next;
-      } elsif ( $value =~ m/[^0-9\.]/ ) {    # check for other text, complain
+      } elsif ( $value =~ m/[^-0-9\.]/ ) {    # check for other text, complain
         print
 "value field not recognized: $usgs_site->{sdi}, date $value_date: $value\n"
            if defined($debug);
