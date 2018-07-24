@@ -207,7 +207,7 @@ sub process_args {
 
   # if user specified codwr gage ids, chop off last comma
   if (@site_num_list) {
-    if ( grep ( /[^A-Z]/, @site_num_list ) ) {
+    if ( grep ( /[^[:digit][:upper:]]/, @site_num_list ) ) {
       die "ERROR: @site_num_list\ndoes not look like $agen_abbrev id.\n";
     }
   }
@@ -233,7 +233,7 @@ sub process_args {
     usage();
   }
   $datasource = $title{$flowtype};
-  
+
   return process_dates( \@enddate, \@begindate, $numdays );
 }
 
@@ -344,8 +344,8 @@ sub read_header {
   my (@firstrow) = split /\t/, $data->[0];
   my $codwr_no = $firstrow[0];
 
-  # check that codwr_no is sane, i.e. contains only upper case letters:
-  if ( $codwr_no =~ /[^[:upper:]]/ ) {
+  # check that codwr_no is sane, i.e. contains only upper case letters or numbers:
+  if ( $codwr_no =~ /[^[:upper:][:digit:]]/ ) {
     print STDERR
       "Warning! '$codwr_no' does not appear to be a valid $agen_abbrev site number!\n";
     $hdb->hdbdie("Assuming data retrieved is garbage and giving up!\n");
