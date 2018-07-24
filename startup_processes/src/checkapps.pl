@@ -113,12 +113,14 @@ sub startup_rs($) {
 
     my $app = lc($rs);
     $app =~ s/\W//g;
-
+    my $date = `date +%Y%m%d`;
+    chomp $date;
  # write lock file. Log and stat files go to default location ($decdir/routstat or $userdir/routstat)
 
     my @args =
       ( "$decdir/bin/rs", "-e", 
 	#	                  "-d", "1",
+                          "-l", "$ENV{HDB_ENV}/log/" . $app . "$date.log",
 	                  "-o", "$statdir/$rs.status",
                           "-k", "$lockdir/$rs.lock", "\"$rs\"" );
 
@@ -141,6 +143,11 @@ sub startup_cp($) {
     #If this is the compdepends proc, start it differently.
     if ($app eq "compdepends") {
 	@args = ( "$decdir/bin/compdepends",
+#                  "-d","1",
+                  "-Y","America/Denver",
+                  "-l", $logfile );
+    } elsif ($app eq "dcpmon") {
+        @args = ( "$ENV{HDB_ENV}/OPENDCS/dcpmon/dcpmon_start.sh",
 #                  "-d","1",
                   "-Y","America/Denver",
                   "-l", $logfile );
