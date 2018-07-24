@@ -207,7 +207,7 @@ sub process_args {
 
   # if user specified codwr gage ids, chop off last comma
   if (@site_num_list) {
-    if ( grep ( /[^[:digit][:upper:]]/, @site_num_list ) ) {
+    if ( grep ( /[^[:upper:][:digit:]]/, @site_num_list ) ) {
       die "ERROR: @site_num_list\ndoes not look like $agen_abbrev id.\n";
     }
   }
