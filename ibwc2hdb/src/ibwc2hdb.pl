@@ -31,22 +31,19 @@ my ( $hdbuser, $hdbpass, @site_num_list );
 # global because used in several sub routines
 my $hdb;
 
-#global datasource name, used in get_app_ids
-my $datasource;
-my %title;
-$title{u} = 'Colorado Division of Water Resources (CODWR)';
-$title{d} = 'Colorado Division of Water Resources (CODWR) Daily Values';
-
 #global variables read from database in get_app_ids
-my ( $load_app_id, $agen_id, $validation, $url, $collect_id );
-my $agen_abbrev = "CODWR";
+my ( $load_app_id, $agen_id, $validation,
+     $url, $collect_id );
+     
+my $agen_abbrev      = 'IBWC';
+my $datasource      = 'IBWC Unit Values (Realtime)';
 
 #global hash reference containing meta data about sites
 # initialized by get_codwr_sites below, and referenced throughout
-my ($codwr_sites);
+my ($ibwc_sites);
 
-#global date string representations for use in retrieving data
-my ( $begindatestr, $enddatestr ) = process_args(@ARGV);
+# No dates can be specified
+process_args(@ARGV);
 
 $hdb = Hdb->new();
 if ( defined($accountfile) ) {
@@ -65,49 +62,39 @@ if ( defined($accountfile) ) {
 $hdb->set_approle();
 
 #Set date format to the format used by their website
-$hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI'")
-  or die "Unable to set NLS_DATE_FORMAT to ISO \n";
+$hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'MM/DD/YYYY   HH24:MI'")
+  or die "Unable to set NLS_DATE_FORMAT to IBWC Text format\n";
 
 get_app_ids();
 
 if (@site_num_list) {
-  $codwr_sites = get_codwr_sites(@site_num_list);
+  $ibwc_sites = get_ibwc_sites(@site_num_list);
 } else {
-  $codwr_sites = get_codwr_sites();
-  (@site_num_list) = build_site_num_list($codwr_sites);
+  $ibwc_sites = get_ibwc_sites();
+  (@site_num_list) = build_site_num_list($ibwc_sites);
 }
 
 =head1 FORMAT
 
-The data is expected in tab delimited format. Example:
+The data is expected in fixed width format. Example:
 
-#---------------------------- Provisional Data -------------------------------
-#This system is maintained by the Colorado Division of Water Resources.
-#Contact: Colorado Division of Water Resources (303) 866-3581
-#
-#All data presented on the Colorado Surface Water Conditions web site are 
-#provisional and subject to revision. Data users are cautioned to consider
-#carefully the provisional nature of the information before using it for 
-#decisions that concern personal or public safety or the conduct of business
-#that involves substantial monetary or operational consequences.
-#
-#Data is returned in TAB delimited format. Data miners may find help on automating
-#queries and formatting parameters at http://www.dwr.state.co.us/help
-##Gaging Station: FLORIDA RIVER BELOW LEMON RESERVOIR (FLOBLECO)
-#Retrieved: 1/25/2007 12:06
-#-----------------------------------------------------------------------------
-Station 	Date/Time	DISCHRG (cfs)
-FLOBLECO	2006-01-22 00:00	10.9
-FLOBLECO	2006-01-23 00:00	10.7
-FLOBLECO	2006-01-24 00:00	10.7
+ALL DATA ARE PROVISIONAL AND SUBJECT TO REVISION
+08363300 Rio Grande at Hayner's Bridge
+    Date     Time                                                  Precip
+             MST       Stage (m)          Discharge (cms)        (Accum-mm)
+07/07/2018   09:45       1.761                                          
+07/07/2018   09:30       1.764                                          
+07/07/2018   09:15       1.763                                          
+07/07/2018   09:00       1.765                47.40                     
+07/07/2018   08:45       1.764                47.30                     
+07/07/2018   08:30       1.765                47.40                     
+07/07/2018   08:15       1.761                47.10                     
+07/07/2018   08:00       1.761                47.10                44.00
 
 Problems:
-Name of the flow column changes from
-DISCHRG to DISCHRG1 to DISCHRG2 to DISCHRG3
 Only one site at a time can be retrieved
-GOES randomly timed data is on a different page than
-normal self-timed data?
-
+Metric
+Fixed width???
 =cut
 
 
@@ -117,12 +104,12 @@ if ( defined($readfile) ) {
 
   process_data( \@data );
 
-} else {    # attempt to get data from CODWR web page
-  foreach my $codwr_no ( keys %$codwr_sites ) {
+} else {    # attempt to get data from IBWC web page
+  foreach my $ibwc_no ( keys %$ibwc_sites ) {
     my (@data);
-    read_from_web( $codwr_no, \@data );
+    read_from_web( $ibwc_no, \@data );
 
-    process_data( \@data, $codwr_no );
+    process_data( \@data, $ibwc_no );
 
     undef(@data);    #needed to reinitialize @data in every loop?
   }    # end of foreach site loop
@@ -130,14 +117,14 @@ if ( defined($readfile) ) {
 
 # print error messages for all sites that no or bad data was returned 
 my @data_errors;
-foreach my $codwr_no ( keys %$codwr_sites ) {
-  my $codwr_site = $codwr_sites->{$codwr_no};
-  if ( !defined( $codwr_site->{found_data} ) ) {
+foreach my $ibwc_no ( keys %$ibwc_sites ) {
+  my $ibwc_site = $ibwc_sites->{$ibwc_no};
+  if ( !defined( $ibwc_site->{found_data} ) ) {
     push @data_errors,
-"No data found for site: $codwr_site->{site_name}, $codwr_no\n";
-  } elsif (defined($codwr_site->{error_code})) {
+"No data found for site: $ibwc_site->{site_name}, $ibwc_no\n";
+  } elsif (defined($ibwc_site->{error_code})) {
     push @data_errors,
-"Bad data seen for site: $codwr_site->{site_name}, $codwr_no: $codwr_site->{error_code}\n";
+"Bad data seen for site: $ibwc_site->{site_name}, $ibwc_no: $ibwc_site->{error_code}\n";
   }
 }
 
@@ -148,8 +135,6 @@ exit 0;
 #End main program, subroutines below
 
 sub process_args {
-  my ( $numdays, $begindate, $enddate, @begindate, @enddate );
-
   while (@_) {
     my $arg = shift;
     if ( $arg =~ /-h/ ) {    # print help
@@ -174,28 +159,12 @@ sub process_args {
       $printurl = 1;
     } elsif ( $arg =~ /-d/ ) {    # get debug flag
       $debug = 1;
-    } elsif ( $arg =~ /-i/ ) {    # get codwr id, split possible id,id,id
+    } elsif ( $arg =~ /-i/ ) {    # get ibwc id, split possible id,id,id
       push @site_num_list, split /,/, shift;
-    } elsif ( $arg =~ /-l/ ) {    # get flow type
-      $flowtype = shift;
     } elsif ( $arg =~ /-u/ ) {    # get hdb user
       $hdbuser = shift;
     } elsif ( $arg =~ /-p/ ) {    # get hdb passwd
       $hdbpass = shift;
-    } elsif ( $arg =~ /-n/ ) {    # get number of days
-      $numdays = shift();
-    } elsif ( $arg =~ /-b/ ) {    # get begin date
-      $begindate = shift();
-      if ( not @begindate = Decode_Date_EU($begindate) ) {
-        print "Error in begin date specified: $begindate\n";
-        usage();
-      }
-    } elsif ( $arg =~ /-e/ ) {    # get end date
-      $enddate = shift();
-      if ( not @enddate = Decode_Date_EU($enddate) ) {
-        print "Error in end date specified: $enddate\n";
-        usage();
-      }
     } elsif ( $arg =~ /-.*/ ) {    # Unrecognized flag, print help.
       print STDERR "Unrecognized flag: $arg\n";
       usage();
@@ -205,9 +174,9 @@ sub process_args {
     }
   }
 
-  # if user specified codwr gage ids, chop off last comma
+  # if user specified ibwc gage ids, chop off last comma
   if (@site_num_list) {
-    if ( grep ( /[^[:digit][:upper:]]/, @site_num_list ) ) {
+    if ( grep ( /[^0-9]/, @site_num_list ) ) {
       die "ERROR: @site_num_list\ndoes not look like $agen_abbrev id.\n";
     }
   }
@@ -219,22 +188,7 @@ sub process_args {
     usage();
   }
 
-  #handle flowtype, unit or daily
-  #realtime, provisional, or official used to be these,
-  #but the USGS merged the sources for Official and Provisional
-  #check if flowtype is defined, if not, we assume realtime
-  if ( !defined($flowtype) ) {
-    $flowtype = 'u';
-  }
-
-  if ( !( $flowtype =~ /^[ud]$/ ) ) {
-    print "Error, invalid flow type defined: '$flowtype'\n";
-    print "Specify (-l) one of u or d (unit (instantaneous) or daily)\n";
-    usage();
-  }
-  $datasource = $title{$flowtype};
-
-  return process_dates( \@enddate, \@begindate, $numdays );
+  return;
 }
 
 sub get_app_ids {
@@ -310,9 +264,10 @@ hdb_loading_application where loading_application_name = '$load_app_name'";
 sub skip_comments {
   my $data = shift;
 
-  # remove leading comments and comments between sites
-  while ( substr( $data->[0], 0, 1 ) eq '#' ) {
-    shift @$data;
+  if ($data->[0] eq 'ALL DATA ARE PROVISIONAL AND SUBJECT TO REVISION') {
+      shift @$data;
+  } else {
+    $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
   }
 
   return ();
@@ -324,79 +279,65 @@ sub read_header {
 
   #save header record, for use in finding data column
   my $header = shift @$data;
-  my @headers = split /\t/, $header;
-  if (!($headers[0] =~ /Station/ )) {
+  my @headers = split / /, $header;
+  if (!($headers[0] =~ /[[:digit:]]{8,}/ )) {
     print "@headers\n";
-    $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
   }
+  my $ibwc_no = $headers[0];
 
-  #check to see if no data at all, blank line
-  if (!defined($data->[0])  
-       or ( $data->[0] eq '' )
-       or ( substr( $data->[0], 0, 1 ) eq '#' ) )
-  {
-    shift @$data;
-    return 0;    #no data, next station please!
+  #DISABLE this because sometimes the retrieved file does not use the same id as it is retrieved from!
+  # check that ibwc_no is sane, i.e. contains only digits:
+  if ( $ibwc_no =~ /[^\d]/ ) {
+    #may be returning alpha id that doesn't match, but is right site
+#    print STDERR
+#      "Warning! '$ibwc_no' does not appear to be a valid $agen_abbrev site number!\n";
+#    return 0; #Go to next site retrieval
+  } else { #only chop if starts with number
+      #chop 2 digit HUC off of front of ID in file to match IWBC id
+      $ibwc_no = substr $ibwc_no, 2;
   }
-
-  # now we have data, mark data as found in CODWR ID
+  
+  shift @$data; #skip "    Date     Time " header
+  my $timezone = unpack("A18", shift @$data); #pull timezone out of "     MST       Stage (m)          Discharge (cms)  ..." header
+  $timezone =~ s/\s//g;
+  # now we have data, mark data as found in IBWC ID
   # assume that the format holds, and the id is in second column
-  my (@firstrow) = split /\t/, $data->[0];
-  my $codwr_no = $firstrow[0];
+  #set found data for this ibwc no
+  $ibwc_sites->{$ibwc_no}->{found_data} = 1;
+  $ibwc_sites->{$ibwc_no}->{timezone} = $timezone;
 
-  # check that codwr_no is sane, i.e. contains only upper case letters or numbers:
-  if ( $codwr_no =~ /[^[:upper:][:digit:]]/ ) {
-    print STDERR
-      "Warning! '$codwr_no' does not appear to be a valid $agen_abbrev site number!\n";
-    $hdb->hdbdie("Assuming data retrieved is garbage and giving up!\n");
-  }
-
-  #set found data for this codwr no
-  $codwr_sites->{$codwr_no}->{found_data} = 1;
-
-  #check that this site is defined completely from database
-  if (    !defined( $codwr_sites->{$codwr_no}->{sdi} )
-       or !defined( $codwr_sites->{$codwr_no}->{site_id} )
-       or !defined( $codwr_sites->{$codwr_no}->{data_code} ) )
-  {
-    $hdb->hdbdie(
-             "site or sdi or data code not defined for codwr id: $codwr_no!\n");
-  }
-
-  #find the column in the header that contains the right data code
-  my $col = 1;
-  until ( $headers[ $col++ ] =~ /$codwr_sites->{$codwr_no}->{data_code}/ ) {
-    if ( !defined( $headers[$col] ) ) {
-      print STDERR "Not found: '$codwr_sites->{$codwr_no}->{data_code}' in:\n";
-      print STDERR "@headers\n";
-      print STDERR "Cannot find value column code from header!\n";
-      $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
-    }
-  }
-
-  #variable defining which column to read values from
-  $codwr_sites->{$codwr_no}->{column} = $col - 1;
-
-  return ($codwr_no);
+  return ($ibwc_no);
 }
 
 sub process_data {
   my $data           = $_[0];
-  my $input_codwr_no = $_[1];
+  my $input_ibwc_no = $_[1];
 
-  skip_comments($data);
+  chop(@$data); #sent in \r\n, so need to remove \r. \n handled by split in response or chomp in read_from_file.
 
-  my $codwr_no = read_header($data);
+  skip_comments($data); 
 
-  return if $codwr_no eq 0;    # no station found
+  my $ibwc_no = read_header($data);
 
-  if ( defined($input_codwr_no)
-       and $input_codwr_no ne $codwr_no )
-  {                            #different station found
-    $hdb->hdbdie("$input_codwr_no was not returned by web query! Exiting.");
+  return if $ibwc_no eq 0;    # no station found
+
+  if ( defined($input_ibwc_no)
+       and $input_ibwc_no ne $ibwc_no )
+  {                            #different id, so copy into right site
+      foreach my $key (keys %{$ibwc_sites->{$ibwc_no}}) { $ibwc_sites->{$input_ibwc_no}->{$key} = $ibwc_sites->{$ibwc_no}->{$key}}
+#    $hdb->hdbdie("$input_ibwc_no was not returned by web query! Exiting.");
   }
 
-  my $codwr_site = $codwr_sites->{$codwr_no};
+  my $ibwc_site = $ibwc_sites->{$input_ibwc_no};
+
+  #check that this site is defined completely from database
+  if (    !defined( $ibwc_site->{sdi} )
+       or !defined( $ibwc_site->{site_id} )
+       or !defined( $ibwc_site->{data_code} ) )
+  {
+    $hdb->hdbdie(
+             "site or sdi or data code not defined for ibwc id: $input_ibwc_no!\n");
+  }
 
   # put data into database, handing site id
   # function returns date of first value and last value updated
@@ -405,61 +346,31 @@ sub process_data {
   if ( defined($insertflag) ) {
 
     #tell user something, so they know it is working
-    print "Working on $agen_abbrev gage number: $codwr_no\n";
+    print "Working on $agen_abbrev gage number: $input_ibwc_no\n";
     ( $first_date, $updated_date, $rows_processed ) = 
-       insert_values( $data, $codwr_site );
+       insert_values( $data, $ibwc_site );
 
 #report results of insertion, and report error codes to STDERR
     if ( !defined($first_date) ) {
-      print "No data updated for $codwr_site->{site_name}, $codwr_no\n";
+      print "No data updated for $ibwc_site->{site_name}, $input_ibwc_no\n";
     } else {
       print
-"Data processed from $first_date to $updated_date for $codwr_sites->{$codwr_no}->{site_name}, $codwr_no\n";
+"Data processed from $first_date to $updated_date for $ibwc_sites->{$input_ibwc_no}->{site_name}, $input_ibwc_no\n";
       print "Number of rows from $agen_abbrev processed: $rows_processed\n";
     }
   }
 }
 
-sub build_url ($$$) {
+sub build_url ($) {
   my $site_code  = $_[0];
-  my $begin_date = $_[1];
-  my $end_date   = $_[2];
 
-#this url is generated from http://www.dwr.state.co.us/help.aspx
 # parts of the url:
-# program generating the result  : http://www.dwr.state.co.us/SurfaceWater/data/export_tabular.aspx
-# specify site                            : ID=$_[0]
-# specify discharge(these codes change!)  : MTYPE=$_[1]
-# specify instant, hourly, or daily       : INTERVAL=1 (instant, 2 hourly, or 3 daily)
-# specify start and end dates             : START=YYYY-MM-DD&END=YYYY-MM-DD
+# Website generating the result           : https://ibwc.gov/wad
+# specify site                            : $_[0]
+# specify ASCII?                          : _a.txt
+# No provision for data codes or time range
 
-  # retrieval from database included data_codes for the various discharge
-  # column ids
-
-  $hdb->hdbdie("Site id $_[0] not recognized, no datacode known!\n")
-      unless ( defined $codwr_sites->{ $_[0] }->{data_code} );
-
-  #Handle interval
-  my $interval;
-  my $int_name = $codwr_sites->{ $_[0] }->{interval};
-  if ($int_name eq 'instant') {
-      $interval = 1;
-  } elsif ($int_name eq 'hour') {
-      $interval = 2;
-  } elsif ($int_name eq 'day') {
-      $interval = 3;
-  } else {
-      $hdb->hdbdie("Unrecognized interval $int_name for CODWR loader, only daily and below supported");
-  }
-
-  if (($int_name eq 'day' and $flowtype eq 'u') or
-      ($int_name eq 'instant' and $flowtype eq 'd')) {
-      $hdb->hdbdie("Interval $int_name does not match selected loader source (-l $flowtype)
-Check generic mapping against instant/daily selection, instant is default!");
-  }
-
-  my $parameters = "INTERVAL=$interval&START=$begin_date&END=$end_date";
-  $parameters .= "&ID=$_[0]&MTYPE=$codwr_sites->{$_[0]}->{data_code}";
+  my $parameters .= "/$_[0]_a.txt";
 
   # url described by database, retrieved in get_app_ids()
 
@@ -467,12 +378,12 @@ Check generic mapping against instant/daily selection, instant is default!");
 }
 
 sub build_site_num_list {
-  my $codwr_sites = $_[0];
-  my ( $codwr_num, @site_num_list );
+  my $ibwc_sites = $_[0];
+  my ( $ibwc_num, @site_num_list );
 
   #build list of sites to grab data for
-  foreach $codwr_num ( keys %$codwr_sites ) {
-    push @site_num_list, $codwr_num;
+  foreach $ibwc_num ( keys %$ibwc_sites ) {
+    push @site_num_list, $ibwc_num;
   }
 
   return @site_num_list;
@@ -490,7 +401,7 @@ sub build_web_request {
 }
 
 # we appropriate the SCS id field for the CO DWR site ids.
-sub get_codwr_sites {
+sub get_ibwc_sites {
   my $id_limit_clause = '';
 
   # join arguments with "','" to make quoted string comma delimited list
@@ -499,8 +410,8 @@ sub get_codwr_sites {
     $id_limit_clause = "b.primary_site_code in ( '$commalist' ) and";
   }
 
-  my $get_codwr_no_statement =
-    "select b.primary_site_code codwr_id, b.primary_data_code data_code,
+  my $get_ibwc_no_statement =
+    "select b.primary_site_code ibwc_id, b.primary_data_code data_code,
  b.hdb_interval_name interval, b.hdb_method_id meth_id,
  b.hdb_computation_id comp_id, b.hdb_site_datatype_id sdi,
  d.site_id, d.site_name
@@ -511,16 +422,16 @@ b.is_active_y_n = 'Y' and $id_limit_clause
 a.site_id = d.site_id and
 b.ext_data_source_id = e.ext_data_source_id and
 e.ext_data_source_name = '$datasource'
-order by codwr_id";
+order by ibwc_id";
 
   $hdb->dbh->{FetchHashKeyName} = 'NAME_lc';
 
   my $hashref;
 
-  print $get_codwr_no_statement. "\n" if defined($debug);
+  print $get_ibwc_no_statement. "\n" if defined($debug);
 
   eval {
-    $hashref = $hdb->dbh->selectall_hashref( $get_codwr_no_statement, 1 );
+    $hashref = $hdb->dbh->selectall_hashref( $get_ibwc_no_statement, 1 );
   };
 
   if ($@) {    # something screwed up
@@ -559,12 +470,8 @@ where start_date_time = ? and site_datatype_id = ? and interval = 'instant'";
 
 sub insert_values {
   my @data       = @{ $_[0] };
-  my $codwr_site = $_[1];
-  my $cur_sdi    = $codwr_site->{sdi};
-
-  #fixed the url encoding to only retrieve one
-  # parameter, so no longer need this, but could need it again
-  my $column = 1;
+  my $ibwc_site = $_[1];
+  my $cur_sdi    = $ibwc_site->{sdi};
 
   my $numrows    = 0;
   my $first_date = undef;
@@ -572,15 +479,15 @@ sub insert_values {
   my ( $dummy, $row,        @fields );
   my ( $old_val, $old_source );
 
-  if (    !defined( $codwr_site->{interval} )
+  if (    !defined( $ibwc_site->{interval} )
        or !defined($agen_id)
        or !defined($load_app_id)
        or !defined($collect_id)
-       or !defined( $codwr_site->{meth_id} )
-       or !defined( $codwr_site->{comp_id} ) )
+       or !defined( $ibwc_site->{meth_id} )
+       or !defined( $ibwc_site->{comp_id} ) )
   {
     $hdb->hdbdie(
-"Unable to write data to database for $codwr_site->{site_name}
+"Unable to write data to database for $ibwc_site->{site_name}
 Required information missing in insert_values()!\n"
     );
   }
@@ -589,13 +496,13 @@ Required information missing in insert_values()!\n"
 
   my $modify_data_statement = "
     BEGIN
-        modify_r_base(?,'$codwr_site->{interval}',/*sdi, interval, */
+        modify_r_base(?,'$ibwc_site->{interval}',/*sdi, interval, */
                       ?,null,?, /*start_date_time,null end_date_time, value*/
                       $agen_id,null,'$validation',/*agen, overwrite, validation*/
                       $collect_id,$load_app_id,
-                      $codwr_site->{meth_id},$codwr_site->{comp_id},
-                     'Y',null,                  /*do update?, data flags */
-                      HDB_UTILITIES.IS_DATE_IN_DST(?,'CST','MST')); /* timezone for CODWR, they present in localtime */
+                      $ibwc_site->{meth_id},$ibwc_site->{comp_id},
+                      'Y',null,                  /*do update?, data flags */
+                      '$ibwc_site->{timezone}'); /* timezone for IBWC, they present in localtime */
     END;";
 
   eval {
@@ -605,11 +512,11 @@ Required information missing in insert_values()!\n"
     # insert or update or do nothing for each datapoint;
     foreach $row (@data) {
       $numrows++;
-      # throw away first column, which is station id repeated
-      ( $dummy, @fields ) = split /\t/, $row;
 
-      $value_date = $fields[0];
-      $value      = $fields[$column];
+      #07/07/2018   08:00       1.761                47.10                44.00
+      # First floating point is stage, second is discharge if present, third could be precip or....
+      ($value_date,$dummy,$value) = unpack ("a18 A18 A18", $row); #need to keep spaces in date/time field. Rest of spaces can be dropped
+      $value =~ s/^\s+|\s+$//g; #remove all other whitespace too
 
       # find the previous value, if any for this point
       undef $old_val;
@@ -621,7 +528,7 @@ Required information missing in insert_values()!\n"
         next;
       } elsif ( $value =~ m/[^0-9\.]/ ) {    # check for other text, complain
         print "data corrupted: $cur_sdi, date $value_date: $value\n";
-        $codwr_site->{error_code} = $value;
+        $ibwc_site->{error_code} = $value;
         next;
       } elsif ( defined($old_val) and $old_val == $value ) {
         next;    # source and database are same, do nothing
@@ -641,7 +548,6 @@ Required information missing in insert_values()!\n"
         $modsth->bind_param( 1, $cur_sdi );
         $modsth->bind_param( 2, $value_date );
         $modsth->bind_param( 3, $value );
-        $modsth->bind_param( 4, $value_date );
         $modsth->execute;
 
         if ( !defined($first_date) ) {    # mark that data has changed
@@ -680,16 +586,13 @@ Example: $progname -u app_user -p <hdbpassword> -i AZOTUNNM
   -v               : Version
   -u <hdbusername> : HDB application user name (REQUIRED)
   -p <hdbpassword> : HDB password (REQUIRED)
-  -i <codwr_id>    : $agen_abbrev gage id to look for. Must be in HDB. More than one
+  -i <ibwc_id>    : $agen_abbrev gage id to look for. Must be in HDB. More than one
                      may be specified with -i id1,id2 or -i id1 -i id2
                      If none specified, will load all gages set up in HDB.
   -t               : Test retrieval, but do not insert data into DB
   -f <filename>    : Filename instead of live web
   -w               : Web address (URL developed to get $agen_abbrev data)
   -d               : Debugging output
-  -n               : number of days to load
-  -b <DD-MON-YYYY> : Begin date for data retrieval
-  -e <DD-MON-YYYY> : End date for data retrieval
   -l <u,d>         : Specify flow type: instanteous ("unit value", default),or daily
 ENDHELP
 
@@ -717,10 +620,10 @@ sub read_from_file {
 }
 
 sub read_from_web {
-  my $codwr_no = shift;
+  my $ibwc_no = shift;
   my $data     = shift;
 
-  my $url = build_url( $codwr_no, $begindatestr, $enddatestr );
+  my $url = build_url( $ibwc_no);
 
   if ( defined($printurl) or defined($debug) ) {
     print "$url\n";
@@ -748,66 +651,4 @@ sub read_from_web {
     $hdb->hdbdie("Error reading from $agen_abbrev web page, cannot continue\n");
   }
   return;
-}
-
-sub process_dates {
-  my $enddate   = shift;
-  my $begindate = shift;
-  my $numdays   = shift;
-
-  #Truth table and results for numdays, begindate and enddate
-  # errors are all defined, only enddate defined.
-  # everything else gets fixed up.
-  # Num Days | Beg Date | End Date | Result
-  # nothing defined                   error
-  #  def                              end date = now, beg date = enddate-numdays
-  #  def        def                   end date = beg date + numdays
-  #             def                   end date = now, check max num days?
-  #             def         def       ok
-  #                         def       error, what is beg date?
-  #  def                    def       beg date = end date - numdays
-  #  def        def         def       error, not checking to see if consistent
-  #
-  #  We end up with a begin date and an end date
-  if ( defined($numdays) ) {
-    if ( $numdays =~ m/\D/ ) {
-      print "Number of days (argument to -n) must be numeric.\n";
-      usage();
-    }
-
-    if ( @$begindate and @$enddate ) {
-      print "Error, overspecified dates, all of -n, -b, -e specified!\n";
-      exit 1;
-    } elsif (@$begindate) {
-      @$enddate = Add_Delta_Days( @$begindate, $numdays );
-    } elsif (@$enddate) {
-      @$begindate = Add_Delta_Days( @$enddate, -$numdays );
-    } else {
-      @$enddate = Today();
-      @$begindate = Add_Delta_Days( @$enddate, -$numdays );
-    }
-  } else {
-    if ( @$begindate and @$enddate ) {
-
-      #do nothing, we're good
-    } elsif (@$begindate) {
-      @$enddate = Today();
-    } elsif (@$enddate) {
-      print "Error, cannot specify only end date!\n";
-      exit 1;
-    } else {
-      print "Error, dates are unspecified!\n";
-      usage();
-    }
-  }
-
-  if ( !@$begindate or !@$enddate ) {
-    print "Error, dates not specifed or error parsing dates!\n";
-    exit(1);
-  }
-
-  my $begindatestr = sprintf( "%4d-%02d-%02d", @$begindate );
-  my $enddatestr   = sprintf( "%4d-%02d-%02d", @$enddate );
-
-  return ( $begindatestr, $enddatestr );
 }

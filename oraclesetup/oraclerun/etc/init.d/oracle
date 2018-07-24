@@ -1,0 +1,187 @@
+#!/bin/sh
+# Copyright (c) 1995-2001 SuSE GmbH Nuernberg, Germany.
+# Copyright (c) 2001 Dax Kelson, Guru Labs L.C.
+#
+# Startup script for Oracle 12c on Red Hat Enterprise Linux 7 and clones
+#
+# Hacked by Andrew Gilmore <andrew@precisionwre.com>
+# Author: Dax Kelson <dax@gurulabs.com>
+#	- Cleanups, reorganization
+# 	- Modified for Red Hat Linux 7 and 8
+# 	- Based on Suse script
+#		-Michael Hasenstein <feedback@suse.de>
+#
+# Edit the /etc/sysconfig/oracle file to control which services are started.
+# Edit the /etc/oratab file to control which databases are started. 
+# Database entries in the oratab file appear in the following format: 
+#    ORACLE_SID:ORACLE_HOME:{Y|N}
+# where Y or N specifies whether you want the dbstart and dbshut
+# scripts to start up and shut down the database.
+
+# chkconfig: - 85 15
+# description: Oracle 12c Database
+# config: /etc/oratab
+# config: /etc/sysconfig/oracle
+# config: /etc/profile.d/oracle.sh
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# pull in sysconfig settings
+if [ -f /etc/sysconfig/oracle ]; then
+	. /etc/sysconfig/oracle
+else
+	ORA_OWNER="oracle"
+	START_ORACLE="no"
+	START_LISTENER="yes"
+	START_ISQL="no"
+	START_ENT_MANAGE="no"
+	START_ORA_APACHE="no"
+fi
+
+RETVAL=0
+
+setOraEnv() {
+# get and check environment (e.g. ORACLE_HOME)
+test -f /etc/profile.d/oracle.sh && . /etc/profile.d/oracle.sh
+if [ -z "$ORACLE_HOME" -o ! -d $ORACLE_HOME -o -z "$ORACLE_SID" ]; then
+  echo "Cannot find ORACLE_HOME directory, or ORACLE_SID not set."
+  echo -n "Environment settings are wrong? Check /etc/profile.d/oracle.sh"
+  failure $"Checking Oracle environment"
+  exit 1
+fi
+}
+
+start() {
+      test $START_ORACLE = "yes" || exit 0
+      setOraEnv
+
+      # the database will not start if no entries in /etc/oratab are "Y"
+      grep -s -q ":Y" /etc/oratab >&/dev/null || {
+  	echo -n "No entries in /etc/oratab are Y"
+  	failure $"Checking /etc/oratab"
+  	exit 1
+      }
+
+      if [ ! -f $ORACLE_HOME/bin/dbstart -o -z "$ORA_OWNER" ]; then
+  	echo "No such file: \$ORACLE_HOME/bin/dbstart"
+  	echo -n "Oracle could not be found (ORACLE_HOME wrong?)" 
+  	failure $"Checking for $ORACLE_HOME/bin/dbstart"
+  	exit 1
+      fi
+
+#could add other items to start here
+
+      echo -n $"Starting Oracle: "
+      daemon --user $ORA_OWNER $ORACLE_HOME/bin/dbstart $ORACLE_HOME
+      RET1=$?
+      if [ "${START_LISTENER:-no}" = "yes" ] && [ -x $ORACLE_HOME/bin/lsnrctl ]; then
+                daemon --user $ORA_OWNER $ORACLE_HOME/bin/lsnrctl start
+                RET2=$?
+      fi
+      if [ "${START_ENT_MANAGE:-no}" = "yes" ] && [ -x $ORACLE_HOME/bin/emctl ]; then
+                daemon --user $ORA_OWNER $ORACLE_HOME/bin/emctl start dbconsole
+                RET3=$?
+      fi
+      if [ "${START_ISQL:-no}" = "yes" ] && [ -x $ORACLE_HOME/bin/isqlplusctl ]; then
+                daemon --user $ORA_OWNER $ORACLE_HOME/bin/isqlplusctl start
+                RET4=$?
+      fi
+      if [ "${START_ORA_APACHE:-no}" = "yes" ] && [ -x $ORACLE_HTTP_HOME/opmn/bin/opmnctl startproc ias-component=HTTP_Server ]; then
+                daemon --user $ORA_OWNER $ORACLE_HTTP_HOME/opmn/bin/opmnctl startproc ias-component=HTTP_Server
+                RET5=$?
+      fi
+      if [ $RET1 -eq 0 ] && [ ${RET2:-0} -eq 0 ] && [ ${RET3:-0} -eq 0 ] && [ ${RET4:-0} -eq 0 ] && [ ${RET5:-0} -eq 0 ]; then
+                touch /var/lock/subsys/oracle
+                echo_success
+		echo
+                return 0
+      else
+		failure
+		echo
+		return 1
+      fi
+
+      # start iAS
+      # (to be done)
+}
+
+stop() {
+      test $START_ORACLE = "yes" || exit 0
+      setOraEnv
+
+      echo -n "Stopping Oracle: "
+
+      # the database will not stop if no entries in /etc/oratab are "Y"
+      grep -s -q ":Y" /etc/oratab >&/dev/null || {
+  	echo -n "No entries in /etc/oratab are Y"
+  	failure $"Checking /etc/oratab"
+  	exit 1
+      }
+
+      if [ ! -f $ORACLE_HOME/bin/dbshut -o -z "$ORA_OWNER" ]; then
+  	echo "No such file: \$ORACLE_HOME/bin/dbstart"
+  	echo -n "Oracle could not be found (ORACLE_HOME wrong?)" 
+  	failure $"Checking for $ORACLE_HOME/bin/dbshut"
+  	exit 1
+      fi
+
+      if [ "${START_ORA_APACHE:-no}" = "yes" ] && [ -x $ORACLE_HTTP_HOME/opmn/bin/opmnctl startproc ias-component=HTTP_Server ]; then
+                daemon --user $ORA_OWNER $ORACLE_HTTP_HOME/opmn/bin/opmnctl stopproc ias-component=HTTP_Server
+                RET5=$?
+      fi
+      if [ "${START_ENT_MANAGE:-no}" = "yes" ] && [ -x $ORACLE_HOME/bin/emctl ]; then
+                su - $ORA_OWNER -c "$ORACLE_HOME/bin/emctl stop dbconsole" > /dev/null 2>&1
+                RET4=$?
+      fi
+      if [ "${START_ISQL:-no}" = "yes" ] && [ -x $ORACLE_HOME/bin/isqlplusctl ]; then
+                daemon --user $ORA_OWNER $ORACLE_HOME/bin/isqlplusctl stop
+                RET3=$?
+      fi
+      #may not work if a password is set on the listener
+      if [ "${START_LISTENER:-no}" = "yes" ] && [ -x $ORACLE_HOME/bin/lsnrctl ]; then
+                su - $ORA_OWNER -c "$ORACLE_HOME/bin/lsnrctl stop" > /dev/null 2>&1
+                RET2=$?
+      fi
+      su - $ORA_OWNER -c "$ORACLE_HOME/bin/dbshut" > /dev/null 2>&1
+      RET1=$?
+      if [ $RET1 -eq 0 ] && [ ${RET2:-0} -eq 0 ] && [ ${RET3:-0} -eq 0 ] && [ ${RET4:-0} -eq 0 ] && [ ${RET5:-0} -eq 0 ]; then
+		rm -f /var/lock/subsys/oracle
+                success
+		echo
+                return 0
+      else
+		failure
+		echo
+		return 1
+      fi
+
+      # stop iAS
+      # (to be done)
+}
+
+restart() {
+        test $START_ORACLE = "yes" || exit 0
+        stop
+        sleep 2 #just to give a little time to settle
+        start
+}
+
+case "$1" in
+  start)
+      start
+      ;;
+  stop)
+      stop
+      ;;
+  restart)
+      restart
+      ;;
+  condrestart)
+      [ -f /var/lock/subsys/oracle ] && restart || :
+      ;;
+  *)
+      echo "Usage: $0 {start|stop|restart|condrestart}"
+      exit 1
+esac
+exit $?

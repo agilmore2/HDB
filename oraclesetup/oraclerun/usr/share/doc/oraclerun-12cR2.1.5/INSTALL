@@ -1,0 +1,7 @@
+After installation, you MUST edit your /etc/profile.d/oracle.* files to
+correctly define your ORACLE_HOME and ORACLE_SID variables.
+
+If you want your Oracle DB to automatically start on system boot,
+enable it in /etc/sysconfig/oracle.
+
+Andrew Gilmore (shamelessly stolen from Dax Kelson, Guru Labs)
