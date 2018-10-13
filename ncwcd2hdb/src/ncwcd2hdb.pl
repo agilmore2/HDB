@@ -596,7 +596,7 @@ ENDHELP
 }
 
 sub version {
-  my $verstring = '$Revision$';
+  my $verstring = '$Revision: 1.1 $';
   $verstring =~ s/^\$Revision: //;
   $verstring =~ s/\$//;
 
