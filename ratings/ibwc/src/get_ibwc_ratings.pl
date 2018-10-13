@@ -12,6 +12,7 @@ use Hdb;
 
 use LWP::UserAgent;
 use File::Basename;
+use Data::Dumper;
 
 #Version Information
 my $verstring = '$Revision$';
@@ -22,7 +23,7 @@ $verstring =~ s/ \$//;
 my $progname = basename($0);    
 chomp $progname;
 
-my ( $accountfile, $hdbuser, $hdbpass, $debug, $sitearg );
+my ( $accountfile, $hdbuser, $hdbpass, $debug, $sitearg, $readfile );
 
 #store decodes dir of HDB environment for use
 my $decdir = "$ENV{HDB_ENV}/ratings/ibwc/src";
@@ -69,16 +70,33 @@ sub process_usgs_sites ($$) {
   my $hdb   = shift;
   my $sites = shift;
 
-  my ( $ua, $request ) = build_web_request();
+  if ($readfile) {
+    my $site = $$sites[0]; #use first site
+    my $ratarr = open_rating_table();
+    my $content = join ('',@$ratarr); #turn array read in from file into string again
+    my $rating = process_rating($hdb, $site, $content) unless $debug;
+    print "$0: $readfile read successfully: rating_id $rating updated successfully.\n" unless $debug;
+  } else {
+    my ( $ua, $request ) = build_web_request();
 
-  foreach my $site (@$sites) {
-    my $response = retrieve_rating_table( $site, $ua, $request );
-    if ( $response->is_success ) {
-      process_rating( $hdb, $site, $response );
-    } else {
-      die("Error reading from $agen_abbrev web page, cannot continue\n");
+    foreach my $site (@$sites) {
+      my $response = retrieve_rating_table( $site, $ua, $request );
+      if ( $response->is_success ) {
+        process_rating( $hdb, $site, $response->content) unless $debug;
+      } else {
+        die("Error reading from $agen_abbrev web page, cannot continue\n");
+      }
     }
   }
+}
+
+#open the rating file
+sub open_rating_table () {
+  open NEWRAT, "<", $readfile or die "Could not open file $readfile";
+  my @response = <NEWRAT>;
+  close NEWRAT;
+
+  return \@response;
 }
 
 #download the rating file
@@ -130,14 +148,14 @@ sub build_web_request () {
 sub process_rating ($$$) {
   my $hdb      = shift;
   my $site     = shift;
-  my $response = shift;
+  my $content  = shift;
 
   #write out new file, regardless of any real changes.
   open NEWRAT, ">$decdir/data/$site.rdb";
-  print NEWRAT $response->content;
+  print NEWRAT $content;
   close NEWRAT;
 
-  my @newrat = split /\n/, $response->content;
+  my @newrat = split /\n/, $content;
   my @barerat = grep( !/^#/, @newrat );
 
   my $rating = find_rating( $hdb, $site );    
@@ -146,7 +164,7 @@ sub process_rating ($$$) {
     if (compare_rating($hdb, $rating, \@barerat )) {
       #actual ratings are the same, no update required, we're done;
       print "No change in rating for $site\n";
-      return;
+      return $rating;
     } else {
       #clean up old rating
       delete_rating_points($hdb,$rating);
@@ -156,6 +174,7 @@ sub process_rating ($$$) {
   }
   #update database, pass in already split rating with comments
   update_rating( $hdb, $rating, \@newrat );
+  return $rating;
 }
 
 #delete old rating data
@@ -428,6 +447,12 @@ sub process_args (@) {
       usage();
     } elsif ( $arg =~ /-v/ ) {    # print version
       version();
+    } elsif ( $arg =~ /-f/ ) {    # get file to read from
+      $readfile = shift;
+      if ( !-r $readfile ) {
+        print "file not found or unreadable: $readfile\n";
+        exit 1;
+      }
     } elsif ( $arg =~ /-a/ ) {    # get database login file
       $accountfile = shift;
       if ( !-r $accountfile ) {
@@ -455,6 +480,12 @@ sub process_args (@) {
     }
   }
 
+  if ( defined($readfile) and !defined($sitearg) )
+  {
+    print STDERR "Error: Must specify site when reading file!\n";
+    usage();
+  }
+  
   if ( !defined($accountfile)
        and ( !defined($hdbuser) || !defined($hdbpass) ) )
   {
@@ -487,7 +518,8 @@ Example: $progname -a <accountfile>
   -u <hdbusername> : HDB application user name (account file or REQUIRED)
   -p <hdbpassword> : HDB password (account file or REQUIRED)
   -d               : Debugging output
-  -i <usgsno>      : Get rating for one site
+  -f <filename>    : File to read from
+  -i <ibwcno>      : Get rating for one site (REQUIRED when using -f)
 ENDHELP
 
   exit(1);
