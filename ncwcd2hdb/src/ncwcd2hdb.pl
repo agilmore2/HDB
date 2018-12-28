@@ -370,6 +370,8 @@ sub build_url ($$$) {
 # Exact URL is started with data stored in comment field in hdb_ext_data_source table, but
 # it looks something like:
 # https://rest.ncwcd.org:3650/NWDATA/getData/username/password/fd/dg/4060/QME/DAY/YYYY-MM-DD/YYYY-MM-DD/RECLAMAT
+# Old: https://rest.ncwcd.org:3650/NWDATA/getData/BOR_Gilmore/dd50a8e8-59c1-4314-935c-bcafe82da124/fd/dg/
+# New: https://rest.ncwcd.org:3650/NWDATA/getData/TMiller/92d8d0ba-32cf-4a0a-a0ec-8a50bdd3a56b/fd/dg/
 # parts of the url:
 # program generating the result (from HDB):  https://rest.ncwcd.org:3650/NWDATA/getData/username/password/fd/dg/
 # specify site                            : 4060/
