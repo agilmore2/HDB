@@ -117,7 +117,9 @@ sub process_current_conditions ($$) {
 	    $hdb->dbh->commit;
 	    
 	    my $rating_table = retrieve_shift_curve( $ua, $req, $scname);
-	    process_rating( $hdb, $site, $rating_table, 'Stage Shift' );
+	    if ($rating_table) {
+		process_rating( $hdb, $site, $rating_table, 'Stage Shift' );
+	    }
         } elsif ($cs =~ m/\d+/){ # Single shift!
 	    print STDERR "CURRENT SHIFT VALUE: $cs\n";
 	    my $sth = $hdb->dbh->prepare( # update single shift value
@@ -186,10 +188,12 @@ sub process_cdwr_sites ($$) {
 
     foreach my $site (keys %$sites) {
 	print STDERR "PROCESSING SITE WITH RATING TABLES:  $site\n";
-	#rtname set by get current conditions
+        #rtname set by get current conditions
 	if (defined($sites->{$site}->{rtname})) { #don't ask for rating table when have no name, will gladly send you 50K random rows
 	    my $rating_table = retrieve_rating_table( $ua, $req, $sites->{$site}->{rtname});
-	    process_rating( $hdb, $site, $rating_table, 'Stage Flow' );
+	    if ($rating_table) {
+		process_rating( $hdb, $site, $rating_table, 'Stage Flow' );
+	    }
 	}
     }
 }
@@ -270,6 +274,7 @@ sub retrieve_table ($$$$) {
         return undef unless grep { /$name/ } values %{$results[0]}; #check for table name in values of first element, table name is part of json result
     } else {    # ($response->is_error)
 	printf STDERR $response->error_as_HTML;
+	return undef;
     }
     my @splitrat2 = map { [ $_->{X}, $_->{Y} ] } @results;
     return \@splitrat2;
