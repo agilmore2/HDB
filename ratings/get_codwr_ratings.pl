@@ -1,17 +1,34 @@
 #!/usr/bin/perl
 
+# This is a loader for CODWR ratings using their REST web service mandated on October 1, 2018.
+# Written by Andrew Gilmore
+
+#Developed under contract with the Bureau of Reclamation, 2018
+
+#Licensed under the Apache License, Version 2.0 (the "License");
+#you may not use this file except in compliance with the License.
+#You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+#Unless required by applicable law or agreed to in writing, software
+#distributed under the License is distributed on an "AS IS" BASIS,
+#WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#See the License for the specific language governing permissions and
+#limitations under the License.
+
 use warnings;
 use strict;
 
-#use libraries from HDB environment (Solaris only except for HDB.pm)
-use lib "$ENV{HDB_ENV}/perlLib/lib";
+#use libraries from HDB environment (Solaris only except for HDB.pm and Ratings.pm)
+use lib "$ENV{HDB_ENV}/perlLib64/lib";
 
 use Hdb;
 use Ratings;
 
 use LWP::UserAgent;
 use File::Basename;
-use SOAP::Lite;
+use JSON qw(from_json);
 
 #Version Information
 my $verstring = '$Revision$';
@@ -24,13 +41,11 @@ chomp $progname;
 
 my ( $accountfile, $hdbuser, $hdbpass, $debug, $sitearg, $dataarg );
 
-#store decodes dir of HDB environment for use
-my $decdir = "$ENV{HDB_ENV}/ratings/codwr/src";
-
-#XML Source
-my $NS =  'http://www.dwr.state.co.us/';
-my $URI = 'http://www.dwr.state.co.us/SMS_WebService';
-my $SERV= 'http://www.dwr.state.co.us/SMS_WebService/ColoradoWaterSMS.asmx';
+#Rest URLs
+my $resturl = 'http://dnrweb.state.co.us/DWR/DwrApiService/api/v2/telemetrystations/';
+my $stat    = 'telemetrydecodesettings?format=json&apiKey=PQWK6ExfREAbSivycMJbLztmNPlUJWby';
+my $rt      = 'telemetryratingtable?format=json&apiKey=PQWK6ExfREAbSivycMJbLztmNPlUJWby';
+my $sc      = 'telemetryshiftcurve?format=json&apiKey=PQWK6ExfREAbSivycMJbLztmNPlUJWby';
 
 #the ugly globals...
 my $agen_abbrev      = 'CDWR';
@@ -55,21 +70,54 @@ order by siteno",
 	);
 
     return $sites;
-		     }
+}
 
 # Loop over the list of sites and get current conditons and process current shift curve
-sub get_current_conditions ($$) {
+sub process_current_conditions ($$) {
     my $hdb   = shift;
     my $sites = shift;
 
-    my ( $soap ) = build_soap_request();
+    my ( $ua, $req ) = build_rest_request();
     
     foreach my $site (keys %$sites) {
-	my ($cs,$rt,$sc,$wm) = retrieve_current_conditions( $soap, $site, $sites->{$site}->{datacode});
+	my ($res,$cs,$rtname,$scname) = retrieve_current_conditions( $ua, $req, $site, $sites->{$site}->{datacode});
+	$sites->{$site}->{rtname} = $rtname;
 	print STDERR "$agen_abbrev SITE: $site ";
-	if (!defined($cs)) {
+	if (!defined($res)) {
 	    print STDERR "no data returned\n";
 	    next;
+	} elsif (!defined($cs)){ #returns undef when no current shift
+	    print STDERR "PROCESSING SITE WITH SHIFT CURVE\n";
+
+	    my $sth = $hdb->dbh->prepare( # update variable/single shift setting
+					  "BEGIN
+      MERGE INTO cp_comp_property CCP 
+      USING (SELECT  CC.COMPUTATION_ID from CP_COMPUTATION CC, CP_COMP_TS_PARM CCTP,
+      HDB_SITE_DATATYPE HSD, HDB_SITE HS
+      where HS.SITE_COMMON_NAME = '$site'
+                  and HSD.site_id = HS.SITE_ID
+                  and HSD.datatype_id = 18
+                  and HSD.site_datatype_id = CCTP.site_datatype_id
+                  and CCTP.ALGO_ROLE_NAME = 'dep'
+                  and CCTP.INTERVAL = 'instant'
+                  and CCTP.TABLE_SELECTOR = 'R_'
+                  and CC.ALGORITHM_ID = 29
+                  and CC.LOADING_APPLICATION_ID = 47
+                  and CC.computation_id = CCTP.computation_id
+      ) CV
+      ON (ccp.computation_id  = CV.computation_id and 
+      ccp.prop_name = 'variableShift')
+      WHEN MATCHED THEN UPDATE SET CCP.PROP_VALUE = 'true' 
+           WHERE CCP.PROP_VALUE = 'false'
+      WHEN NOT MATCHED THEN INSERT
+      (CCP.COMPUTATION_ID,CCP.PROP_NAME,CCP.PROP_VALUE)
+      VALUES (CV.computation_id,'variableShift','true');
+      END;");
+	    $sth->execute;
+	    $hdb->dbh->commit;
+	    
+	    my $rating_table = retrieve_shift_curve( $ua, $req, $scname);
+	    process_rating( $hdb, $site, $rating_table, 'Stage Shift' );
         } elsif ($cs =~ m/\d+/){ # Single shift!
 	    print STDERR "CURRENT SHIFT VALUE: $cs\n";
 	    my $sth = $hdb->dbh->prepare( # update single shift value
@@ -124,39 +172,6 @@ sub get_current_conditions ($$) {
       END;");
 	    $sth->execute;
 	    $hdb->dbh->commit;
-
-	} elsif ($cs eq 'SC'){ 
-	    print STDERR "PROCESSING SITE WITH SHIFT CURVE\n";
-
-	    my $sth = $hdb->dbh->prepare( # update variable/single shift setting
-					  "BEGIN
-      MERGE INTO cp_comp_property CCP 
-      USING (SELECT  CC.COMPUTATION_ID from CP_COMPUTATION CC, CP_COMP_TS_PARM CCTP,
-      HDB_SITE_DATATYPE HSD, HDB_SITE HS
-      where HS.SITE_COMMON_NAME = '$site'
-                  and HSD.site_id = HS.SITE_ID
-                  and HSD.datatype_id = 18
-                  and HSD.site_datatype_id = CCTP.site_datatype_id
-                  and CCTP.ALGO_ROLE_NAME = 'dep'
-                  and CCTP.INTERVAL = 'instant'
-                  and CCTP.TABLE_SELECTOR = 'R_'
-                  and CC.ALGORITHM_ID = 29
-                  and CC.LOADING_APPLICATION_ID = 47
-                  and CC.computation_id = CCTP.computation_id
-      ) CV
-      ON (ccp.computation_id  = CV.computation_id and 
-      ccp.prop_name = 'variableShift')
-      WHEN MATCHED THEN UPDATE SET CCP.PROP_VALUE = 'true' 
-           WHERE CCP.PROP_VALUE = 'false'
-      WHEN NOT MATCHED THEN INSERT
-      (CCP.COMPUTATION_ID,CCP.PROP_NAME,CCP.PROP_VALUE)
-      VALUES (CV.computation_id,'variableShift','true');
-      END;");
-	    $sth->execute;
-	    $hdb->dbh->commit;
-	    
-	    my $rating_table = retrieve_shift_curve( $soap, $site, $sites->{$site}->{datacode});
-	    process_rating( $hdb, $site, $rating_table, 'Stage Shift' );
 	} else {
 	    print STDERR "Unrecogized status: $cs returned, skipping!\n"
 	}
@@ -167,91 +182,108 @@ sub process_cdwr_sites ($$) {
     my $hdb   = shift;
     my $sites = shift;
 
-    my ( $soap ) = build_soap_request();
+    my ( $ua, $req ) = build_rest_request();
 
     foreach my $site (keys %$sites) {
 	print STDERR "PROCESSING SITE WITH RATING TABLES:  $site\n";
-	my $rating_table = retrieve_rating_table( $soap, $site, $sites->{$site}->{datacode});
-	process_rating( $hdb, $site, $rating_table, 'Stage Flow' );
+	#rtname set by get current conditions
+	if (defined($sites->{$site}->{rtname})) { #don't ask for rating table when have no name, will gladly send you 50K random rows
+	    my $rating_table = retrieve_rating_table( $ua, $req, $sites->{$site}->{rtname});
+	    process_rating( $hdb, $site, $rating_table, 'Stage Flow' );
+	}
     }
 }
 #Retrive current conditions
-sub retrieve_current_conditions ($$$) {
-    my $soap     = shift;
+sub retrieve_current_conditions ($$$$) {
+    my $ua       = shift;
+    my $req      = shift;
     my $site     = shift;
     my $datacode = shift;
     
-    my $methodSoap = SOAP::Data->name('GetSMSCurrentConditions')->attr({xmlns=>$NS});
-    my @params;
-    push(@params, SOAP::Data->name("Abbrev"=>$site));
-    push(@params, SOAP::Data->name("Variable"=>$datacode));
-    my $som = $soap->call($methodSoap=>@params);
-    my @status = $som->valueof('//GetSMSCurrentConditionsResult/CurrentCondition');
-    my($res);
-    my($cs,$csd,$rt,$rtd,$sc,$scd,$wm);
-    foreach $res (@status) {
-	if (defined($res->{currentShift})) {
-	    $cs = $res->{currentShift};
-	} else { $cs = 'DNE'; }
-	if ($res->{currentShiftEffectiveDate}){
-	    $csd = "(" . $res->{currentShiftEffectiveDate} . ")";
-	} else { $csd = 'DNE'; }
-	if ($res->{ratingTable}) {
-	    $rt = $res->{ratingTable};
-	} else { $rt = 'DNE'; }
-	chomp $rt;
-	if ($res->{currentRatingTableEffectiveDate}) {
-	    $rtd = "(" . $res->{currentRatingTableEffectiveDate} . ")";
-	} else { $rtd = 'DNE'; }
-	if ($res->{shiftCurve}) {
-	    $sc = $res->{shiftCurve};
-	} else { $sc = 'DNE'; }
-	chomp $sc;
-	if ($res->{currentShiftCurveEffectiveDate}) {
-	    $scd = "(" . $res->{currentShiftCurveEffectiveDate} . ")";
-	} else { $scd = 'DNE'; }
-	if ($res->{webMessage}) {
-	    $wm = $res->{webMessage};
-	} else { $wm = 'DNE'; }
-	return $cs,$rt,$sc,$wm;					}
-				 }
+    my $params   = $stat . "&abbrev=$site&parameter=$datacode";
+    my $url = $resturl . $params;
+    $req->uri($url);
+    my $response = $ua->simple_request($req);
+
+    if ($debug) {
+	print $url."\n";
+    }
+    # check result
+    my ($status,$cs,$rtname,$scname);
+    if ( $response->is_success ) {
+	$status = $response->status_line;
+	print "Data read from $agen_abbrev for site $site: $status\n";
+	my $content = from_json($response->content);
+	my @results = @{$content->{'ResultList'}};
+	
+	$cs = $results[0]{'current_shift'};
+	$rtname = $results[0]{'rating_table_name'};
+	$scname = $results[0]{'shift_curve_name'};
+    } else {    # ($response->is_error)
+	printf STDERR $response->error_as_HTML;
+    }
+#returns undef $status if error
+    return $status,$cs,$rtname,$scname;
+}
+
 #download the shift curve
 sub retrieve_shift_curve ($$$) {
-    my $soap     = shift;
-    my $site     = shift;
-    my $datacode = shift;
+    my $ua       = shift;
+    my $req      = shift;
+    my $scname   = shift;
     
-    my $methodSoap = SOAP::Data->name('GetSMSCurrentShiftCurve')->attr({xmlns=>$NS});
-    my @params;
-    push(@params, SOAP::Data->name("Abbrev"=>$site));
-    push(@params, SOAP::Data->name("Variable"=>$datacode));
-    my $som = $soap->call($methodSoap=>@params);
-    my @results = $som->valueof('//GetSMSCurrentShiftCurveResult/curvePoints/ShiftCurvePoint');
-    my @splitrat2 = map { [ $_->{x}, $_->{y} ]} @results;
-    return \@splitrat2;
-			  }
+    my $params   = $sc . "&shiftcurvename=$scname";
+    my $url = $resturl . $params;
+    return retrieve_table($ua, $req, $url, $scname);
+}
+
 #download the rating table
 sub retrieve_rating_table ($$$) {
-    my $soap     = shift;
-    my $site     = shift;
-    my $datacode = shift;
+    my $ua       = shift;
+    my $req      = shift;
+    my $rtname   = shift;
     
-    my $methodSoap = SOAP::Data->name('GetSMSCurrentRatingTable')->attr({xmlns=>$NS});
-    my @params;
-    push(@params, SOAP::Data->name("Abbrev"=>$site));
-    push(@params, SOAP::Data->name("Variable"=>$datacode));
-    my $som = $soap->call($methodSoap=>@params);
-    my @results = $som->valueof('//GetSMSCurrentRatingTableResult/tablePoints/RatingTablePoint');
-    my @splitrat = map { [ $_->{x}, $_->{y} ]} @results;
-    return \@splitrat;
-			   }
+    my $params   = $rt . "&ratingtablename=$rtname";
+    my $url = $resturl . $params;
+    return retrieve_table($ua, $req, $url, $rtname);
+}
+
+sub retrieve_table ($$$$) {
+    my $ua   = shift;
+    my $req  = shift;
+    my $url  = shift;
+    my $name = shift;
+
+    $req->uri($url);
+    my $response = $ua->simple_request($req);
+
+    if ($debug) {
+	print $url."\n";
+    }
+    # check result
+    my ($status,@results);
+    if ( $response->is_success ) {
+	$status = $response->status_line;
+	print "Data read from $agen_abbrev for curve $name: $status\n";
+	my $content = from_json($response->content);
+	@results = @{$content->{'ResultList'}};	# $content is a hash pointer. ResultList value is an array
+        return undef unless grep { /$name/ } values %{$results[0]}; #check for table name in values of first element, table name is part of json result
+    } else {    # ($response->is_error)
+	printf STDERR $response->error_as_HTML;
+    }
+    my @splitrat2 = map { [ $_->{X}, $_->{Y} ] } @results;
+    return \@splitrat2;
+}
+
 # setup the request.
-sub build_soap_request () {
-    my $soap = SOAP::Lite
-	-> uri($NS)
-	-> on_action( sub {sprintf '%s%s', @_ } )
-	-> proxy($SERV);
-    return ( $soap );
+sub build_rest_request () {
+    my $ua = LWP::UserAgent->new;
+    $ua->agent("CODWR Rating Table Retrieval for Bureau of Reclamation HDB: ");
+    $ua->from("$ENV{HDB_XFER_EMAIL}");
+    $ua->timeout(600);
+    my $request = HTTP::Request->new();
+    $request->method('GET');
+    return ( $ua, $request );
 }
 #check the returned rating against filesystem stored version
 # and update the database and write a new file if different.
@@ -296,7 +328,7 @@ sub update_rating ($$$) {
     foreach (@$rating_table) {
         modify_rating_point( $hdb, $rating,($_->[0],$_->[1]));
     }
-		   }
+}
 
 sub process_args (@) {
     my $mode;
@@ -316,14 +348,16 @@ sub process_args (@) {
 		exit 1;
 	    }
 	} elsif ( $arg =~ /-i/ ) {    # get debug flag
-	    if ( defined($sitearg) ) {
+ 	    if ( defined($sitearg) ) {
 		print STDERR "only one -i site allowed!\n";
 		&usage;
 	    }
 	    $sitearg = shift;
 	} elsif ( $arg =~ /-d/ ) {    # get debug flag
-	    if ( defined($dataarg) ) {
-		print STDERR "only one -i site allowed!\n";
+	    $debug = 1;
+	} elsif ( $arg =~ /-l/ ) {    # get parameter code
+ 	    if ( defined($dataarg) ) {
+		print STDERR "only one -l data code allowed!\n";
 		&usage;
 	    }
 	    $dataarg = shift;
@@ -340,6 +374,15 @@ sub process_args (@) {
 	}
     }
 
+    if ( defined($sitearg)
+	 and ( !defined($dataarg)) )
+    {
+	print STDERR
+	    "ERROR: Required: datacode (-l) if -i sitecode is used\n";
+	usage();
+    }
+
+    
     if ( !defined($accountfile)
 	 and ( !defined($hdbuser) || !defined($hdbpass) ) )
     {
@@ -362,8 +405,9 @@ Example: $progname -a <accountfile>
 -a <accountfile> : HDB account access file (REQUIRED or both below)
 -u <hdbusername> : HDB application user name (account file or REQUIRED)
 -p <hdbpassword> : HDB password (account file or REQUIRED)
+-l <datacode>    : Parameter for site
+-i <codwrid>     : Get rating for one site
 -d               : Debugging output
--i <usgsno>      : Get rating for one site
 ENDHELP
 
 exit(1);
@@ -400,8 +444,8 @@ sub main {
     } else {
 	$sites = read_cdwr_sites ($hdb);
     }
-    #conncet to codwr and download current conditons
-    get_current_conditions ($hdb, $sites) ;
-    #connect to codwr and download rating table and shift curves
+    #conncet to codwr and download current conditions and shift curves
+    process_current_conditions ($hdb, $sites) ;
+    #connect to codwr and download rating tables
     process_cdwr_sites ($hdb, $sites) ;
 }
