@@ -21,7 +21,11 @@ use warnings;
 use strict;
 
 #use libraries from HDB environment (Solaris only except for HDB.pm and Ratings.pm)
-use lib "$ENV{HDB_ENV}/perlLib64/lib";
+if (-d "$ENV{HDB_ENV}/perlLib64/lib") {
+    use lib "$ENV{HDB_ENV}/perlLib64/lib";
+} else {
+    use lib "$ENV{HDB_ENV}/perlLib/lib";
+}
 
 use Hdb;
 use Ratings;
