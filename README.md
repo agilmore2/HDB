@@ -14,7 +14,7 @@ The historical apps are almost all Pro*C based. The only one of these still runn
 ### How do I get set up? ###
 
 * Need correct set of Perl, python, Pro*C libraries to build it all.
-* Perl loader documentation is a current HDB task to be completed this year
+* Generic and Perl loader documentation was completed and is available at hydrodb.net and on the admin@hydrodb.net Google Drive.
 * This repository also contains build scripts for HDB database that are out of date. We will be figuring out how to update them.
 * Regression tests have not yet been added from the few that do exist at ECAO
 * This is not the OpenDCS repository, that will be added separately.
