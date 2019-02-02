@@ -423,10 +423,10 @@ a.site_id = d.site_id and
 b.ext_data_source_id = e.ext_data_source_id and
 b.primary_data_code not like 'Stage (m)%' and
 e.ext_data_source_name = '$datasource' and
-f.ext_data_source_id(+) = e.ext_data_source_id and
+f.ext_data_source_id(+) = b.ext_data_source_id and
 f.primary_site_code(+) = b.primary_site_code and
 f.is_active_y_n(+) = 'Y' and 
-f.primary_data_code(+) like 'Stage (m)%' and
+f.primary_data_code(+) like 'Stage (m)%'
 order by ibwc_id";
 
   $hdb->dbh->{FetchHashKeyName} = 'NAME_lc';
@@ -579,13 +579,13 @@ sub write_value() {
   # check if value is known
   if ( !defined $value or $value eq '' ) {
     print "data missing: $cur_sdi, date $value_date\n" if defined($debug);
-    next;
+    return;
   } elsif ( $value =~ m/[^0-9\.]/ ) {    # check for other text, complain
     print "data corrupted: $cur_sdi, date $value_date: $value\n";
     $ibwc_site->{error_code} = $value;
-    next;
+    return;
   } elsif ( defined($old_val) and $old_val == $value ) {
-    next;    # source and database are same, do nothing
+    return;    # source and database are same, do nothing
   } elsif ( !defined($old_val) or $old_val != $value ) {
   #update or insert, source and database differ (or database value does not exist)
     if ( defined($debug) ) {
