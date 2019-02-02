@@ -518,17 +518,17 @@ Required information missing in insert_values()!\n"
       # First floating point is stage, second is discharge if present, third could be precip or....
       ($value_date,$stage,$value) = unpack ("a18 A18 A18", $row); #need to keep spaces in date/time field. Rest of spaces can be dropped
 
-      $value *= 35.3146672;
+      $value /= 0.3048^3; #1/35.31466...
       #data is in CMS, and has two decimal places of accuracy, so round to
-      #nearest tenth
+      #nearest tenth cfs
       $value = sprintf("%.1f",$value);
       write_value($modsth,$value_date,$flow_sdi,$value,$ibwc_site);
-      
+
       if (defined($stage_sdi)) {
         $stage /= 0.3048;
-        #data is in CMS, and has two decimal places of accuracy, so round to
-        #nearest tenth
-        $stage = sprintf("%.2f",$stage);
+        #data is in m, and has three decimal places of accuracy, so round to
+        #nearest thousandth foot
+        $stage = sprintf("%.3f",$stage);
         write_value($modsth,$value_date,$stage_sdi,$stage,$ibwc_site);
       }
 	      
@@ -564,7 +564,6 @@ sub write_value() {
   my $cur_sdi    = shift;
   my $value      = shift;
   my $ibwc_site  = shift;
-  my $factor     = shift;
 
   $value =~ s/^\s+|\s+$//g; #remove all other whitespace too
 
