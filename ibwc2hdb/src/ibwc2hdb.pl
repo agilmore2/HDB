@@ -35,8 +35,8 @@ my $hdb;
 my ( $load_app_id, $agen_id, $validation,
      $url, $collect_id );
      
-my $agen_abbrev      = 'IBWC';
-my $datasource      = 'IBWC Unit Values (Realtime)';
+my $agen_abbrev     = 'IBWC';
+my $datasource      = 'IBWC Daily Loader';
 
 #global hash reference containing meta data about sites
 # initialized by get_codwr_sites below, and referenced throughout
@@ -530,7 +530,14 @@ Required information missing in insert_values()!\n"
         print "data corrupted: $cur_sdi, date $value_date: $value\n";
         $ibwc_site->{error_code} = $value;
         next;
-      } elsif ( defined($old_val) and $old_val == $value ) {
+      }
+
+      $value *= 35.3146672;
+      #data is in CMS, and has two decimal places of accuracy, so round to
+      #nearest tenth
+      $value = sprintf("%.1f",$value);
+
+      if ( defined($old_val) and $old_val == $value ) {
         next;    # source and database are same, do nothing
       } elsif ( !defined($old_val) or $old_val != $value ) {
 # update or insert, source and database differ (or database value does not exist)
