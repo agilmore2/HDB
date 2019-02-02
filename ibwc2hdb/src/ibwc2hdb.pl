@@ -471,12 +471,13 @@ where start_date_time = ? and site_datatype_id = ? and interval = 'instant'";
 sub insert_values {
   my @data       = @{ $_[0] };
   my $ibwc_site = $_[1];
-  my $cur_sdi    = $ibwc_site->{sdi};
-
+  my $flow_sdi    = $ibwc_site->{sdi};
+  my $stage_sdi   = $ibwc_site->{stage_sdi};
+  
   my $numrows    = 0;
   my $first_date = undef;
   my ( $value, $value_date, $updated_date );
-  my ( $dummy, $row,        @fields );
+  my ( $stage, $row,        @fields );
   my ( $old_val, $old_source );
 
   if (    !defined( $ibwc_site->{interval} )
@@ -515,47 +516,18 @@ Required information missing in insert_values()!\n"
 
       #07/07/2018   08:00       1.761                47.10                44.00
       # First floating point is stage, second is discharge if present, third could be precip or....
-      ($value_date,$dummy,$value) = unpack ("a18 A18 A18", $row); #need to keep spaces in date/time field. Rest of spaces can be dropped
-      $value =~ s/^\s+|\s+$//g; #remove all other whitespace too
-
-      # find the previous value, if any for this point
-      undef $old_val;
-      $old_val = check_value( $value_date, $cur_sdi );
-
-      # check if value is known
-      if ( !defined $value or $value eq '' ) {
-        print "data missing: $cur_sdi, date $value_date\n" if defined($debug);
-        next;
-      } elsif ( $value =~ m/[^0-9\.]/ ) {    # check for other text, complain
-        print "data corrupted: $cur_sdi, date $value_date: $value\n";
-        $ibwc_site->{error_code} = $value;
-        next;
-      } elsif ( defined($old_val) and $old_val == $value ) {
-        next;    # source and database are same, do nothing
-      } elsif ( !defined($old_val) or $old_val != $value ) {
-# update or insert, source and database differ (or database value does not exist)
-        if ( defined($debug) ) {
-          if ( !defined($old_val) ) {
-            print
-"modifying for $cur_sdi, date $value_date, value $value, old_val = undef\n";
-          } else {
-            print
-"modifying for $cur_sdi, date $value_date, value $value, old_val = $old_val\n";
-          }
-        }
-
-        #modify
-        $modsth->bind_param( 1, $cur_sdi );
-        $modsth->bind_param( 2, $value_date );
-        $modsth->bind_param( 3, $value );
-        $modsth->execute;
-
-        if ( !defined($first_date) ) {    # mark that data has changed
-          $first_date = $value_date;
-        }
-        $updated_date = $value_date;
+      ($value_date,$stage,$value) = unpack ("a18 A18 A18", $row); #need to keep spaces in date/time field. Rest of spaces can be dropped
+      write_value($modsth,$value_date,$flow_sdi,$value,$ibwc_site);
+      if (defined($stage_sdi)) {
+        write_value($modsth,$value_date,$stage_sdi,$stage,$ibwc_site);
       }
+	      
+      if ( !defined($first_date) ) {    # mark that data has changed
+          $first_date = $value_date;
+      }
+      $updated_date = $value_date;
     }
+  
     $modsth->finish;
 
   };    # semicolon here because of use of eval
@@ -576,6 +548,48 @@ Required information missing in insert_values()!\n"
   return ( $first_date, $updated_date, $numrows );
 }
 
+sub write_value() {
+  my $modsth     = shift;
+  my $value_date = shift;
+  my $cur_sdi    = shift;
+  my $value      = shift;
+  my $ibwc_site  = shift;
+
+  $value =~ s/^\s+|\s+$//g; #remove all other whitespace too
+
+  # find the previous value, if any for this point
+  my $old_val;
+  $old_val = check_value( $value_date, $cur_sdi );
+
+  # check if value is known
+  if ( !defined $value or $value eq '' ) {
+    print "data missing: $cur_sdi, date $value_date\n" if defined($debug);
+    next;
+  } elsif ( $value =~ m/[^0-9\.]/ ) {    # check for other text, complain
+    print "data corrupted: $cur_sdi, date $value_date: $value\n";
+    $ibwc_site->{error_code} = $value;
+    next;
+  } elsif ( defined($old_val) and $old_val == $value ) {
+    next;    # source and database are same, do nothing
+  } elsif ( !defined($old_val) or $old_val != $value ) {
+  #update or insert, source and database differ (or database value does not exist)
+    if ( defined($debug) ) {
+      if ( !defined($old_val) ) {
+          print "modifying for $cur_sdi, date $value_date, value $value, old_val = undef\n";
+      } else {
+        print "modifying for $cur_sdi, date $value_date, value $value, old_val = $old_val\n";
+      }
+    }
+
+    #modify
+    $modsth->bind_param( 1, $cur_sdi );
+    $modsth->bind_param( 2, $value_date );
+    $modsth->bind_param( 3, $value );
+    $modsth->execute;
+  }
+  return;
+}
+  
 sub usage {
   print STDERR <<"ENDHELP";
 $progname [ -h | -v ] | [ options ]
