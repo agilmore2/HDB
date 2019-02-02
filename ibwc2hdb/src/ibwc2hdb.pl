@@ -35,8 +35,8 @@ my $hdb;
 my ( $load_app_id, $agen_id, $validation,
      $url, $collect_id );
      
-my $agen_abbrev      = 'IBWC';
-my $datasource      = 'IBWC Unit Values (Realtime)';
+my $agen_abbrev     = 'IBWC';
+my $datasource      = 'IBWC Daily Loader';
 
 #global hash reference containing meta data about sites
 # initialized by get_codwr_sites below, and referenced throughout
@@ -517,8 +517,18 @@ Required information missing in insert_values()!\n"
       #07/07/2018   08:00       1.761                47.10                44.00
       # First floating point is stage, second is discharge if present, third could be precip or....
       ($value_date,$stage,$value) = unpack ("a18 A18 A18", $row); #need to keep spaces in date/time field. Rest of spaces can be dropped
+
+      $value *= 35.3146672;
+      #data is in CMS, and has two decimal places of accuracy, so round to
+      #nearest tenth
+      $value = sprintf("%.1f",$value);
       write_value($modsth,$value_date,$flow_sdi,$value,$ibwc_site);
+      
       if (defined($stage_sdi)) {
+        $stage /= 0.3048;
+        #data is in CMS, and has two decimal places of accuracy, so round to
+        #nearest tenth
+        $stage = sprintf("%.2f",$stage);
         write_value($modsth,$value_date,$stage_sdi,$stage,$ibwc_site);
       }
 	      
@@ -554,6 +564,7 @@ sub write_value() {
   my $cur_sdi    = shift;
   my $value      = shift;
   my $ibwc_site  = shift;
+  my $factor     = shift;
 
   $value =~ s/^\s+|\s+$//g; #remove all other whitespace too
 
