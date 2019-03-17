@@ -7,10 +7,7 @@
 
 # below library changed by M .Bogner on 03.11.2011 to attempt move to Linus 64 bit libraries
 # and still be able to use this on a 32 bit Solaris machine
-use lib "$ENV{PERL_ENV}/lib";
-#use lib "$ENV{HDB_ENV}/perlLib/lib";
-# Don't need?
-#use lib "$ENV{HDB_ENV}/perlLib/lib/i386-linux";
+use lib "$ENV{HDB_ENV}/perlLib/lib";
 use Hdb;
 
 use Date::Calc qw(:all);
@@ -235,7 +232,7 @@ READ: while ($line = <INFILE>)
 }
 
 
-$hdb->dbh->disconnect();
+#$hdb->dbh->disconnect();
 
 #End main program, subroutines below
 

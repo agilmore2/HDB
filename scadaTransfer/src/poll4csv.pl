@@ -3,10 +3,13 @@
 use warnings;
 use strict;
 use File::Basename;
+use File::Copy "mv";
 
 my $verstring = '$Revision$ ';
 $verstring =~ s/^\$Revision: //;
 $verstring =~ s/ \$//;
+
+my $appdir = $ENV{"HDB_ENV"};
 
 #check to see command line usage.
 my $progname = basename($0);
@@ -50,7 +53,7 @@ if (!defined($pattern)) {
   usage();
 }
 
-$archivedir=$polldir . "/old_csv";
+$archivedir=$appdir . "/scadaTransfer/work/old_csv";
 
 chdir $polldir;
 
@@ -71,10 +74,8 @@ while (1) {
   if (@files) {
     sleep 10; # wait for gefrx to finish checking the file before moving it!
     foreach $file (@files) {
-      #copy file for development system to load, chdir to $polldir done above
-      system("cp $file dev/");
 
-      my @program=("perl","../src/parsecsv.pl","-f","$polldir/$file");
+      my @program=("perl","$appdir/scadaTransfer/src/parsecsv.pl","-f","$polldir/$file");
       system (@program) == 0 or die "Failed to run parsecsv.pl!\n $!";
 
       #read the directory again to find all crsp_20* files 
@@ -87,19 +88,19 @@ while (1) {
 
       # now for each crsp file created by parsecsv.pl, run the loading script
       foreach $crspfile (@crspfiles) {
-        my @program=("perl","../src/scada2hdb.pl","-a",$accountfile,"-f","$polldir/$crspfile");
+        my @program=("perl","$appdir/scadaTransfer/src/scada2hdb.pl","-a",$accountfile,"-f","$polldir/$crspfile");
         system (@program) == 0 or die "Failed to run scada2hdb.pl!\n $!";
       # move processed crspfile to old_files
         $newcrspfile=$crspfile;
-        while (-e "$polldir/old_files/$newcrspfile") {
+        while (-e "$appdir/scadaTransfer/work/old_files/$newcrspfile") {
           $newcrspfile =~ s/dat$/update.dat/;
         }
-        rename "$polldir/$crspfile", "$polldir/old_files/$newcrspfile" or
+        mv "$polldir/$crspfile", "$appdir/scadaTransfer/work/old_files/$newcrspfile" or
            die "Failed to move file: $crspfile\n$!\n";
       }
 
       #now move processed csv file to command line specified directory
-      rename "$polldir/$file","$archivedir/$file" or
+      mv "$polldir/$file","$archivedir/$file" or
          die "Failed to move file: $file\n$!\n";
 
       #get the date for all of the crsp files created by parsecsv

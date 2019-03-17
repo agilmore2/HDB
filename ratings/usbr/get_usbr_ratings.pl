@@ -8,7 +8,7 @@ use strict;
 if (defined ($ENV{PERL_ENV})) {
 	use lib "$ENV{PERL_ENV}/lib";
 } else {
-	use lib "ENV{HDB_ENV}/perlLib";
+	use lib "$ENV{HDB_ENV}/perlLib/lib";
 }
 use Hdb;
 

@@ -18,16 +18,16 @@
 #################################################################################
 
 #Set HDB_ENV here, so we can run this as a init daemon
-HDB_ENV=/wrg/hdb/HDB2_applications
-
+HDB_ENV=/wrg/hdb/apps
+APP_USER=app_user
 
 # Display usage.
 exec=`basename $0`
 usage='(echo ; echo "Usage: $exec [-h] <start | stop | status>" ; echo )'
 
-SCADA_XFERDIR=$HDB_ENV/scadaTransfer/work
+#SCADA_XFERDIR=$HDB_ENV/scadaTransfer/work
 #or this for aplx003
-#SCADA_XFERDIR=$HDB_ENV/scadaTransfer/work/dev
+SCADA_XFERDIR=$HDB_ENV/scadaTransfer/work/dev
 
 # Check command line argument.
 if test $# -eq 0 ; then
@@ -61,10 +61,9 @@ start_hdb_loader()
 {
 echo "Starting hdb scada loader in directory:"
 echo "     $SCADA_XFERDIR"
-echo "Enter uchdba password if requested:"
-/bin/su - uchdba -c "source $HDB_ENV/.cshrc_hdb_app; \
-		cd $SCADA_XFERDIR; \
-		nohup perl ../src/poll4csv.pl -a /wrg/home/uchdba/.app_user_login \
+/bin/su - $APP_USER -c ". $HDB_ENV/bashrc_hdb_app; \
+                       cd $SCADA_XFERDIR; \
+		nohup perl ../../src/poll4csv.pl -a /wrg/hdb/apps/.app_user_login \
                   -f 'csv_.*[0-9]$' \
                   -d . >&poll4csv.out &"
 
@@ -77,14 +76,14 @@ stop_hdb_loader()
 #should dynamically find this
 
 echo "Stopping hdb scada loader"
-    kpid=`pkill -f poll4csv -U uchdba -n`
+    kpid=`pkill -f poll4csv -U $APP_USER -n`
     if [ -z "$kpid" ]
     then
 	echo "OK: SCADA Polling script is STOPPED!"
     else
 	echo "ERROR: SCADA Polling Stopping script!"
     fi
-#/bin/su - uchdba -c "source $HDB_ENV/.cshrc_hdb_app; \
+#/bin/su - $APP_USER -c "source $HDB_ENV/.cshrc_hdb_app; \
 #	             pkill -f poll4csv -U uchdba -n"
 }
 

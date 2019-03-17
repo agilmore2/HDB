@@ -1,10 +1,10 @@
 # hdbLib makefile64
 # $Id$:
 
-include ../../Environ.10
+include ../../Environ.12
 
 OBJDIR = $(HDB_ENV)/hdbLib/obj64
-INCLUDES = -I$(HDB_APP_INCLUDE)
+INCLUDES = -I$(HDB_APP_INCLUDE)  -I$(ORACLE_HOME)/precomp/public -I$(ORACLE_HOME)/rdbms/public
 LIBS = $(HDB_LIBS) -lm -ldl
 CFLAGS = -ansi -Wall -c -g -DANSIPROTO $(INCLUDES)
 

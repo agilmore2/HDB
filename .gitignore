@@ -1,0 +1,13 @@
+*.out
+*.err
+*.log
+*.dat
+*~
+.dba_user_login
+.ncftp
+.tstool
+.app_user_login
+*.lis
+*.rdb
+obj64
+*.png

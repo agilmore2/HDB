@@ -1,7 +1,7 @@
 # utilsLib makefile64
 # $Id$
 
-include ../../Environ.10
+include ../../Environ.12
 
 OBJDIR=	$(HDB_ENV)/utilsLib/obj64
 INCLUDES = -I$(HDB_APP_INCLUDE)

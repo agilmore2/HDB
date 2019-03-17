@@ -78,7 +78,7 @@ if (@site_num_list) {
 
 The data is expected in CVS format. Example:
 
-Reading,Receive,Value,Unit,Quality
+Reading,Receive,Value,Unit,Data Quality
 2016-07-22 23:40:00,2016-07-22 23:40:03,5.35,ft,A
 2016-07-22 23:10:03,2016-07-22 23:10:07,5.34,ft,A
 2016-07-22 22:39:58,2016-07-22 22:40:01,5.34,ft,A
@@ -283,7 +283,7 @@ sub parse_data {
   my $row = shift @array;
   chomp $row;
   
-  if (!($row =~ /Reading,Receive,Value,Unit,Quality.*/))
+  if (!($row =~ /Reading,Receive,Value,Unit,Data Quality.*/))
   {
       $hdb->hdbdie(
              "File not in expected format: $row\n"); 

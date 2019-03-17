@@ -1,1 +1,0 @@
-lp -dbr40025 -o nobanner $1 

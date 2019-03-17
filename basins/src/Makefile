@@ -1,7 +1,7 @@
 # basins makefile64
 # $Id$
 
-include ../../Environ.10
+include ../../Environ.12
 
 OBJDIR = $(HDB_ENV)/basins/obj64
 INCLUDES= -I$(HDB_APP_INCLUDE)

@@ -12,8 +12,8 @@ test -x /etc/init.d/functions && . /etc/init.d/functions
 
 #============= CHANGE THESE ===============
 #
-HDB_ENV=/wrg/hdb/HDB2_applications; export HDB_ENV;
-HDB_DBA=uchdba
+HDB_ENV=/wrg/hdb/apps; export HDB_ENV;
+HDB_DBA=app_user
 
 #
 #==========================================
