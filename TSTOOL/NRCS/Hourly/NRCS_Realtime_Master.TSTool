@@ -1,0 +1,18 @@
+# TSTool command file used to expand and run template that downloads Snotel data from the NRCS AWDB webservice
+#
+# Read the data loader configuration table from HDB
+#
+ReadTableFromDataStore(DataStore="uchdb2",DataStoreTable="REF_EXT_SITE_DATA_MAP",TableID="DataLoaderConfiguration")
+#
+# Split the table into separate tables, one column each.
+# Single column tables are seen as lists by the templating engine.
+#
+CopyTable(TableID="DataLoaderConfiguration",NewTableID="ExtDataSourceIDs",IncludeColumns="EXT_DATA_SOURCE_ID")
+CopyTable(TableID="DataLoaderConfiguration",NewTableID="PrimarySiteCodes",IncludeColumns="PRIMARY_SITE_CODE")
+CopyTable(TableID="DataLoaderConfiguration",NewTableID="PrimaryDataCodes",IncludeColumns="PRIMARY_DATA_CODE")
+CopyTable(TableID="DataLoaderConfiguration",NewTableID="HDBSiteDatatypeIDs",IncludeColumns="HDB_SITE_DATATYPE_ID")
+CopyTable(TableID="DataLoaderConfiguration",NewTableID="HDBIntervalNames",IncludeColumns="HDB_INTERVAL_NAME")
+CopyTable(TableID="DataLoaderConfiguration",NewTableID="IsActiveYNs",IncludeColumns="IS_ACTIVE_Y_N")
+#
+ExpandTemplateFile(InputFile="NRCS_Realtime_Template.txt",OutputFile="NRCS_Realtime_Expanded.TSTool")
+RunCommands(InputFile="NRCS_Realtime_Expanded.TSTool",ExpectedStatus=Success,ShareDataStores=Share)

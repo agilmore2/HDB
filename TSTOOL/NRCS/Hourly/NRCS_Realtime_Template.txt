@@ -1,0 +1,34 @@
+<#compress>
+<#-- Template to download SNOTEL data from NRCS AWDB Webservice in real time-->
+
+SetInputPeriod(InputStart="CurrentToHour - 72Hour",InputEnd="CurrentToHour")
+<#setting number_format="#####">
+
+<#-- Loop through all the rows in the input table -->
+<#list ExtDataSourceIDs as ExtDataSourceID>
+  <#-- Pull out the values from each column for that row -->
+  <#assign PrimarySiteCode = PrimarySiteCodes[ExtDataSourceID_index]>
+  <#assign PrimaryDataCode = PrimaryDataCodes[ExtDataSourceID_index]>
+  <#assign HDBSiteDatatypeID = HDBSiteDatatypeIDs[ExtDataSourceID_index]>
+  <#assign HDBIntervalName = HDBIntervalNames[ExtDataSourceID_index]>
+  <#assign IsActiveYN = IsActiveYNs[ExtDataSourceID_index]>
+  
+  <#-- Only write out the commands if this row is an active NRCS station -->
+  <#if ExtDataSourceID == 65 && IsActiveYN == "Y">
+    #
+    # Downloading ${PrimaryDataCode} from NRCS Site ${PrimarySiteCode} to HDB SDI ${HDBSiteDatatypeID}
+    #
+    <#-- Check to see if this station should be written as hourly or irregular -->
+    <#if HDBIntervalName == "hour">
+        ReadNrcsAwdb(DataStore="NrcsAwdb",Interval=Irregular,Stations="${PrimarySiteCode}",Networks="SNTL",Elements="${PrimaryDataCode}",Alias="${PrimarySiteCode}-${PrimaryDataCode}")
+        ChangeInterval(TSList=AllMatchingTSID,TSID="${PrimarySiteCode}-${PrimaryDataCode}",Alias="%A_Hourly",NewInterval=1Hour,OldTimeScale=INST,NewTimeScale=INST)
+        SetFromTS(TSList=AllMatchingTSID,TSID="${PrimarySiteCode}-${PrimaryDataCode}_Hourly",IndependentTSList=AllMatchingTSID,IndependentTSID="${PrimarySiteCode}-${PrimaryDataCode}",TransferHow=ByDateTime,HandleMissingHow="SetOnlyMissingValues")
+        WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="${PrimarySiteCode}-${PrimaryDataCode}_Hourly",SiteDataTypeID=${HDBSiteDatatypeID},Agency="NRCS")
+    <#elseif HDBIntervalName == "instant">
+        ReadNrcsAwdb(DataStore="NrcsAwdb",Interval=Irregular,Stations="${PrimarySiteCode}",Networks="SNTL",Elements="${PrimaryDataCode}",Alias="${PrimarySiteCode}-${PrimaryDataCode}")
+        WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="${PrimarySiteCode}-${PrimaryDataCode}",SiteDataTypeID=${HDBSiteDatatypeID},Agency="NRCS")
+    </#if>
+  </#if>
+</#list>
+</#compress>
+
