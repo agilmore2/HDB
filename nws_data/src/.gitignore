@@ -1,3 +1,4 @@
 *.log
 *.err
 data4usbr.unl
+marker.delete
