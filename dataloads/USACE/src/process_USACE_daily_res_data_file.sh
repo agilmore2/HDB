@@ -10,13 +10,13 @@
 # modified by M. Bogner, 15-FEB-2012 to shut off the zipping of the file for future storage
 
 # assign working data location
-USACE_FILES=$HDB_ENV/usace2hdb/cespa_work; export USACE_FILES;
+USACE_FILES=$HDB_ENV/dataloads/USACE/cespa_work; export USACE_FILES;
 # assign the name of the FTP file Location
 USACE_FTP_LOC=UC_ALB_COE;  export USACE_FTP_LOC;
 # assign the location for storing processed data files
-USACE_DATA_LOC=$HDB_ENV/usace2hdb/cespa_data; export USACE_DATA_LOC;
+USACE_DATA_LOC=$HDB_ENV/dataloads/USACE/cespa_data; export USACE_DATA_LOC;
 # assign the location for storing processed data files
-USACE_RES_DATA_PROP=$HDB_ENV/usace2hdb/src/usace_reservoir_data.property; export USACE_RES_DATA_PROP;
+USACE_RES_DATA_PROP=$HDB_ENV/dataloads/USACE/src/usace_reservoir_data.property; export USACE_RES_DATA_PROP;
 # assign the ftp login file to use for this ftp access
 UCHDBA_FTP_LOGIN=$HOME/.ftp_login_file; export UCHDBA_FTP_LOGIN;
 
@@ -42,7 +42,7 @@ echo $USACE_RES_DATA_PROP
 # add the following sftp command to get the files from secure.usbr.gov
 sftp -oBatchMode=yes jzyu@usbr.gov@secure.usbr.gov<<EOF
 cd UC_ALB_COE
-get *.csv $HDB_ENV/usace2hdb/cespa_work
+get *.csv $USACE_FILES
 bye
 EOF
 # now loop through all the files in the working data directory
