@@ -17,7 +17,7 @@ use English '-no_match_vars';
 $OUTPUT_FIELD_SEPARATOR="\n";
 
 #use libraries from HDB environment (Solaris only except for HDB.pm)
-use lib "$ENV{PERL_ENV}/lib";
+use lib "$ENV{HDB_ENV}/perlLib/lib";
 
 use Hdb;
 use Net::FTP;
@@ -47,12 +47,12 @@ if (defined ($testing) && $testing eq "-d") {
   $testing=1;
 } else {
   $testing=0;
-  $ftp = Net::FTP->new("ftp.usbr.gov")
-    or die "Cannot connect to ftp site: $@";
-  $ftp->login("agilmore","march28")
-    or die "Cannot login ", $ftp->message;
-  $ftp->cwd("elpaso")
-    or die "Cannot change working directory ", $ftp->message;
+#  $ftp = Net::FTP->new("ftp.usbr.gov")
+#    or die "Cannot connect to ftp site: $@";
+#  $ftp->login("agilmore","march28")
+#    or die "Cannot login ", $ftp->message;
+#  $ftp->cwd("elpaso")
+#    or die "Cannot change working directory ", $ftp->message;
 }
 
 #many of these HDB queries use the following syntax:

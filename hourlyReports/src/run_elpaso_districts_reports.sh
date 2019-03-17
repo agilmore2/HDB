@@ -12,5 +12,14 @@
  ./elpaso_districts_report2.pl -a $HOME/.app_user_login
 
 # now ftp the files over to the USBR FTP file server
- ncftpput -u agilmore -p march28 ftp.usbr.gov /elpaso *.dat
+# ncftpput -u agilmore -p march28 ftp.usbr.gov /elpaso *.dat
 
+#this sftp realtime (every 15 minutes) data to secure.usbr.gov
+sftp -oBatchMode=yes jzyu@usbr.gov@secure.usbr.gov<<EOF
+cd elpaso
+put *.dat
+bye
+EOF
+
+#this copy realtime (every 15 minutes) data to c5stagesvr_uc_water
+yes | cp -rf *.dat /wrg/exec/pub/c5stagesvr_uc_water/elpaso_water
