@@ -1,0 +1,6 @@
+*.report
+junk
+hold_dates
+archive/
+temp.sh
+temp.rpt

@@ -1,0 +1,29 @@
+
+## Colorado River Basin:
+wget --no-check-certificate -O colorado.report 'https://wcc.sc.egov.usda.gov/reports/UpdateReport.html?textReport=Upper+Colorado+River+Basin&textRptKey=16&textFormat=SNOTEL+Snow%2FPrecipitation+Update+Report&StateList=Select+a+State&RegionList=16&SpecialList=Select+a+Special+Report&MonthList=THEMONTH&DayList=THEDAY&YearList=THEYEAR&FormatList=N0&OutputFormatList=text&textMonth=THEMONTH&textDay=THEDAY&CompYearList=select+a+year'
+
+## Rio Grande River Basin:
+wget --no-check-certificate -O riogrand.report 'https://wcc.sc.egov.usda.gov/reports/UpdateReport.html?textReport=Rio+Grande+Basin&textRptKey=20&textFormat=SNOTEL+Snow%2FPrecipitation+Update+Report&StateList=Select+a+State&RegionList=20&SpecialList=Select+a+Special+Report&MonthList=THEMONTH&DayList=THEDAY&YearList=THEYEAR&FormatList=N0&OutputFormatList=text&textMonth=THEMONTH&textDay=THEDAY&CompYearList=select+a+year'
+
+## Utah:
+wget --no-check-certificate -O utah.report 'https://wcc.sc.egov.usda.gov/reports/UpdateReport.html?textReport=Utah&textRptKey=11&textFormat=SNOTEL+Snow%2FPrecipitation+Update+Report&StateList=11&RegionList=Select+a+Region+or+Basin&SpecialList=Select+a+Special+Report&MonthList=THEMONTH&DayList=THEDAY&YearList=THEYEAR&FormatList=N0&OutputFormatList=text&textMonth=THEMONTH&textDay=THEDAY&CompYearList=select+a+year'
+
+## New Mexico:
+wget --no-check-certificate -O nmex.report 'https://wcc.sc.egov.usda.gov/reports/UpdateReport.html?textReport=New+Mexico&textRptKey=8&textFormat=SNOTEL+Snow%2FPrecipitation+Update+Report&StateList=8&RegionList=Select+a+Region+or+Basin&SpecialList=Select+a+Special+Report&MonthList=THEMONTH&DayList=THEDAY&YearList=THEYEAR&FormatList=N0&OutputFormatList=text&textMonth=THEMONTH&textDay=THEDAY&CompYearList=select+a+year'
+
+## Colorado:
+wget --no-check-certificate -O colo.report 'https://wcc.sc.egov.usda.gov/reports/UpdateReport.html?textReport=Colorado&textRptKey=5&textFormat=SNOTEL+Snow%2FPrecipitation+Update+Report&StateList=5&RegionList=Select+a+Region+or+Basin&SpecialList=Select+a+Special+Report&MonthList=THEMONTH&DayList=THEDAY&YearList=THEYEAR&FormatList=N0&OutputFormatList=text&textMonth=THEMONTH&textDay=THEDAY&CompYearList=select+a+year'
+
+## covert these web reports to unix format using dos2unix utility
+## also added Nov 6, 2014 by M. Bogner the sed command to change all the text to uppercase
+dos2unix -n colorado.report temp.rpt
+cat temp.rpt | sed 's/\(.*\)/\U\1/' >colorado.report
+dos2unix -n riogrand.report temp.rpt
+cat temp.rpt | sed 's/\(.*\)/\U\1/' >riogrand.report
+dos2unix -n utah.report temp.rpt
+cat temp.rpt | sed 's/\(.*\)/\U\1/' >utah.report
+dos2unix -n nmex.report temp.rpt
+cat temp.rpt | sed 's/\(.*\)/\U\1/' >nmex.report
+dos2unix -n colo.report temp.rpt
+cat temp.rpt | sed 's/\(.*\)/\U\1/' >colo.report
+
