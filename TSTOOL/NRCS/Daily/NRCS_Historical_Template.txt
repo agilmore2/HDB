@@ -1,0 +1,41 @@
+<#compress>
+<#-- Template to download historical SNOTEL data from NRCS AWDB Webservice-->
+
+<#setting number_format="#####">
+
+<#-- Loop through all the rows in the input table -->
+<#list ExtDataSourceIDs as ExtDataSourceID>
+  <#-- Pull out the values from each column for that row -->
+  <#assign PrimarySiteCode = PrimarySiteCodes[ExtDataSourceID_index]>
+  <#assign PrimaryDataCode = PrimaryDataCodes[ExtDataSourceID_index]>
+  <#assign HDBSiteDatatypeID = HDBSiteDatatypeIDs[ExtDataSourceID_index]>
+  <#assign IsActiveYN = IsActiveYNs[ExtDataSourceID_index]>
+  
+  <#-- Only write out the commands if this row is an active NRCS station -->
+  <#if ExtDataSourceID == 62 && IsActiveYN == "Y">
+    #
+    # Downloading ${PrimaryDataCode} from NRCS Site ${PrimarySiteCode} to HDB SDI ${HDBSiteDatatypeID}
+    #
+    <#-- Break up the read/write into sub-periods to prevent errors -->
+    <#list 0..100 as subPeriod>
+        <#assign periodStart = startYear + subPeriodSize * subPeriod>
+        <#assign periodEnd = startYear + subPeriodSize * (subPeriod + 1) - 1>
+        
+        <#-- Check to see if the current subPeriod ends after the current time -->
+        <#if (periodEnd >= currentYear?number)>
+            SetInputPeriod(InputStart="${periodStart}-10-01 00:00",InputEnd="CurrentToMinute")
+        <#else>
+            SetInputPeriod(InputStart="${periodStart}-10-01 00:00",InputEnd="${periodEnd}-12-31 24:00")
+        </#if>
+        ReadNrcsAwdb(DataStore="NrcsAwdb",Interval=Day,Stations="${PrimarySiteCode}",Networks="SNTL",Elements="${PrimaryDataCode}",Alias="${PrimarySiteCode}-${PrimaryDataCode}")
+        WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="${PrimarySiteCode}-${PrimaryDataCode}",SiteDataTypeID=${HDBSiteDatatypeID},Agency="NRCS",WriteProcedure="OLD_WRITE_TO_HDB")
+        <#-- End the sub-period loop when it has reached the last sub-period -->
+        <#if (periodEnd >= currentYear?number)>
+            <#-- Free the time series so that all the small time series don't show up in the listing -->
+            Free(TSList=AllTS)
+            <#break>
+        </#if>
+    </#list>
+  </#if>
+</#list>
+</#compress>
