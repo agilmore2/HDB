@@ -1,14 +1,14 @@
 # SITE SPECIFIC: email of person responsible for data transfers
-HDB_XFER_EMAIL=tmiller@usbr.gov
+HDB_XFER_EMAIL=root@localhost
 export HDB_XFER_EMAIL
-HDB_NOTIFY_EMAIL=clora@usbr.gov,tmiller@usbr.gov,vlee@usbr.gov,pharbauer@usbr.gov
+HDB_NOTIFY_EMAIL=root@localhost
 export HDB_NOTIFY_EMAIL
-HDB_NOTIFY_CASPER_EMAIL=sha-WYA-CCOper@usbr.gov,tmiller@usbr.gov,clora@usbr.gov
-#HDB_NOTIFY_CASPER_EMAIL=kkorkow@usbr.gov,ewalker@usbr.gov,itorske@usbr.gov,jblom@usbr.gov,kjuarezwoodruff@usbr.gov,rbalerio@usbr.gov,rhoskinson@usbr.gov,sjenkins@usbr.gov,teckdahl@usbr.gov,tmiller@usbr.gov,clora@usbr.gov
+HDB_NOTIFY_CASPER_EMAIL=root@localhost
+#HDB_NOTIFY_CASPER_EMAIL=
 export HDB_NOTIFY_CASPER_EMAIL
 
 #SITE SPECIFIC - required for all Oracle applications
-ORACLE_HOME=/ora1/app/oracle/product/11.2.0/db_3
+ORACLE_HOME=/ora1/app/product/12.2/db
 export ORACLE_HOME
 ORACLE_BASE=/ora1/app
 export ORACLE_BASE
@@ -22,25 +22,29 @@ ORACLE_NLS32=$ORACLE_HOME/ocommon/nls/admin/data
 export ORACLE_NLS32
 ORACLE_PAGER=/usr/bin/less
 export ORACLE_PAGER
-ORACLE_SID=ecohdb
+ORACLE_SID=uchdb2t
 export ORACLE_SID
 ORACLE_TERM=xterm
 export ORACLE_TERM
 TNS_ADMIN=$ORACLE_HOME/network/admin
 export TNS_ADMIN
 
-HDB_LOCAL=ecohdb
+HDB_LOCAL=uchdb2t
 export HDB_LOCAL
-HDB_ENV=/wrg/HDB/apps
+HDB_ENV=/wrg/hdb/apps
 export HDB_ENV
 HDB_BIN=$HDB_ENV/bin
 export HDB_BIN
-DECODES_INSTALL_DIR=$HDB_ENV/OPENDCS
+DECODES_INSTALL_DIR=$HDB_ENV/OPENDCS/current
 export DECODES_INSTALL_DIR
 DECODES_BIN=$DECODES_INSTALL_DIR/bin
 export DECODES_BIN
 DCSTOOL_HOME=$DECODES_INSTALL_DIR
 export DCSTOOL_HOME
+DCSTOOL_USERDIR=$HDB_ENV/opendcs_user
+export DCSTOOL_USER
+LRGSHOME=$HDB_ENV/opendcs_user
+export LRGSHOME
 COMP_DIR=$HOME/CP
 export COMP_DIR
 HDB_LIB=$HDB_ENV/lib
@@ -70,11 +74,11 @@ fi
   
 # add to CLASSPATH if it exists, set a new valueif it doesn't
 if [ -n "$CLASSPATH" ] ; then {
- CLASSPATH="$CLASSPATH":$HDB_LIB/dataloader.jar:$HDB_LIB/heclib.jar:$HDB_LIB/jdbcpool-0.99.jar:$HDB_LIB/dcstool.jar:$HDB_LIB/derivation_algorithms.jar:$HDB_LIB/cp_algorithms.jar:$HDB_LIB/ojdbc14.zip:$HDB_LIB/general_algorithms.jar:$HDB_LIB/uc_algorithms.jar
+ CLASSPATH="$CLASSPATH":$HDB_LIB/dataloader.jar:$HDB_LIB/heclib.jar:$HDB_LIB/jdbcpool-0.99.jar:$HDB_LIB/dcstool.jar:$HDB_LIB/derivation_algorithms.jar:$HDB_LIB/cp_algorithms.jar:$HDB_LIB/general_algorithms.jar:$HDB_LIB/uc_algorithms.jar:$ORACLE_HOME/jdbc/lib/ojdbc8.jar
 export CLASSPATH
 }
 else {
-    CLASSPATH=$HDB_LIB/dataloader.jar:$HDB_LIB/heclib.jar:$HDB_LIB/jdbcpool-0.99.jar:$HDB_LIB/dcstool.jar:$HDB_LIB/derivation_algorithms.jar:$HDB_LIB/cp_algorithms.jar:$HDB_LIB/ojdbc14.zip:$HDB_LIB/general_algorithms.jar:$HDB_LIB/uc_algorithms.jar
+    CLASSPATH=$HDB_LIB/dataloader.jar:$HDB_LIB/heclib.jar:$HDB_LIB/jdbcpool-0.99.jar:$HDB_LIB/dcstool.jar:$HDB_LIB/derivation_algorithms.jar:$HDB_LIB/cp_algorithms.jar:$HDB_LIB/general_algorithms.jar:$HDB_LIB/uc_algorithms.jar:$ORACLE_HOME/jdbc/lib/ojdbc8.jar
 export CLASSPATH
 }
 fi
@@ -102,7 +106,7 @@ OUTPUT_DMI_PATH=$HDB_BIN
 export OUTPUT_DMI_PATH
 
 # STATIC - used for defining TSTOOL and FEWS connectivity to HDB
-HDB_DB_ENV_HOST=XXX.XXX.XX.200
+HDB_DB_ENV_HOST=findoutfromECAO
 export HDB_DB_ENV_HOST
 HDB_FEWS_USER=riverside
 export HDB_FEWS_USER
