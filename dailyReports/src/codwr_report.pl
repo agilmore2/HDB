@@ -33,7 +33,7 @@ use English '-no_match_vars';
 $OUTPUT_FIELD_SEPARATOR="\n";
 
 #use libraries from HDB environment (Solaris only except for HDB.pm)
-use lib "$ENV{PERL_ENV}/lib";
+use lib "$ENV{HDB_ENV}/perlLib/lib";
 
 use Hdb;
 

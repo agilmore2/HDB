@@ -1,9 +1,12 @@
 #!/bin/sh
 
-# we then create the new data, and then put it on the server.
-sqlplus -sil $APP_USER/$HDB_LOCAL@$HDB_LOCAL @fetchNWSdata.sql
-ncftpput -o usePASV=0 -e nwsdata.ftperr ftp.cbrfc.noaa.gov /pub/incoming/bor nwsdata.dat
-
-#this put the nwsdata file on our anonymous ftp site for the NRCS to grab
-ncftpput -V -o useCLNT=0 -e NRCSdata.ftperr -f $HDB_ENV/xferftp/src/account.dat /NRCS/ nwsdata.dat
+# we first create the new data file with the sql script
+#
+sqlplus -sl $APP_USER/$HDB_LOCAL@$HDB_LOCAL @fetchNWSdata.sql 
+#
+# we then copy the file to a location where Denver can pick it up
+# and move it to the production web server
+#
+\cp -f nwsdata.dat /wrg/exec/pub/c5stagesvr_uc_water/nws_data_file/.
+#
 
