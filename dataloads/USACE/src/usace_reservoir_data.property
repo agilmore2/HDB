@@ -14,8 +14,6 @@ DRIVER=oracle.jdbc.driver.OracleDriver
 #be sure to enter the correct server name : port : sid 
 # typical examples in our community:
 #URL=jdbc:oracle:thin:@sun1.yak.pn.usbr.gov:1521:pnhdb
-#URL=jdbc:oracle:thin:@hvrwater.lc.usbr.gov:1521:lctest
-#URL=jdbc:oracle:thin:@XXX.XXX.XX.10:1521:uchdb2.uc.usbr.gov
 URL=jdbc:oracle:thin:@ibr4ucrlxhdbt.bor.doi.net:1521:uchdb2t
 
 
@@ -27,7 +25,6 @@ USERNAME=uchdba
 
 #  enter the oracle password for this account  ie
 #PASSWORD=master
-PASSWORD=<PASSWORD>
 
 #  NOTE:  an alternative to entering each of these names correctly is to enter the associated id
 # for each respective lookup table.  In general either method will produce the same results

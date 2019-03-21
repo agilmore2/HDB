@@ -17,8 +17,8 @@ To allow this tool, and other hdb tools that use this same method of logging
 in, create a file in the dba user's unix home directory named .app_user_login,
 containing the three lines (corrected for your database):
 username app_user
-password hdb2
-database hdb2
+password <password>
+database <database TNS alias>
 
 Fix permissions so no other users can read this file:
 chmod og-rwx .app_user_login
