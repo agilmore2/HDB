@@ -615,14 +615,13 @@ Example: $progname -u app_user -p <hdbpassword> -i AZOTUNNM
   -v               : Version
   -u <hdbusername> : HDB application user name (REQUIRED)
   -p <hdbpassword> : HDB password (REQUIRED)
-  -i <ibwc_id>    : $agen_abbrev gage id to look for. Must be in HDB. More than one
+  -i <ibwc_id>     : $agen_abbrev gage id to look for. Must be in HDB. More than one
                      may be specified with -i id1,id2 or -i id1 -i id2
                      If none specified, will load all gages set up in HDB.
   -t               : Test retrieval, but do not insert data into DB
   -f <filename>    : Filename instead of live web
   -w               : Web address (URL developed to get $agen_abbrev data)
   -d               : Debugging output
-  -l <u,d>         : Specify flow type: instanteous ("unit value", default),or daily
 ENDHELP
 
   exit(1);
