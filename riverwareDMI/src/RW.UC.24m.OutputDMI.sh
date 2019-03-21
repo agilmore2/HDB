@@ -27,7 +27,7 @@ cd `dirname $0`
 # gotta be dba or someone with ref_meta_role
 #
 
-sqlplus -S uchdba/<PASSWORD>@uchdb2 <<EOF
+sqlplus -S uchdba/PASSWORD@uchdb2 <<EOF
 alter table hdb_site disable constraint HDB_SITE_FK7;
 delete from ref_db_list where db_site_code = 'YAO';
 commit;
@@ -60,7 +60,7 @@ echo Calling riverwareDMI.Out $1 $2 $3 $4 $5 $6 $7 $8 -f/tmp/rtemp$$
 riverwareDMI.Out $1 $2 $3 $4 $5 $6 $7 $8 -f/tmp/rtemp$$
 
 #now insert YAO back into the db.
-sqlplus -S uchdba/<PASSWORD>@uchdb2 <<EOF
+sqlplus -S uchdba/PASSWORD@uchdb2 <<EOF
 insert into ref_db_list values(3,'yaohdb','YAO',null,null);
 alter table hdb_site enable constraint HDB_SITE_FK7;
 commit;
