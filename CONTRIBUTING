@@ -1,0 +1,25 @@
+# Contributions
+
+## Non-Government
+Contributions to the baseline project from outside the US Federal Government
+should be submitted as a pull request to the [upstream
+project](https://github.com/usbr/hdb) on GitHub.
+
+By submitting a [Pull Request](https://help.github.com/articles/using-pull-requests/)
+to this repository, you agree that you:
+
+1. Own the contribution that you are providing or have obtained permission from
+   the contribution owner
+
+1. Allow your contribution to be licensed under the license of the target
+   project
+
+1. Allow your contribution to be freely distributed to the public
+
+1. Allow the US Government Unlimited Rights to your contribution
+
+## Government
+Contributions from Government agencies require that the government has unlimited
+rights to the contribution, either as work developed by an employee as
+part of their duties, or as the result of a contract granting
+Unlimited Rights to the Government.
