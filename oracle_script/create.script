@@ -187,19 +187,6 @@ echo "Accessing as $dba_name user for type.script"
 sqlplus $dba_name/$passwd  @./TYPES/type.script
 grep ERROR hdb_types.out
 
-# create the decodes schema
-
-echo "Accessing as $dba_name user for createORACLEDecodes.sql"
-sqlplus decodes/decodes  @./SCHEMA/createORACLEDecodes.sql 
-grep ERROR decodes_schema.out
-
-echo "Accessing as $dba_name user for createORACLEDecodesSequences.sql"
-sqlplus decodes/decodes  @./SEQUENCES/createORACLEDecodesSequences.sql
-grep ERROR decodes_sequences.out
-
-echo "Accessing as $dba_name user for set_decodes_privs.sql"
-sqlplus decodes/decodes  @./SCHEMA/set_decodes_privs.sql
-grep ERROR set_decodes_privs.out
 
 # create the HDB Computation Processor tables in HDB schema
 
@@ -239,6 +226,22 @@ grep ERROR hdb_sequences.out
 echo "Accessing as $dba_name user for view.script for second pass"
 sqlplus $dba_name/$passwd  @./VIEWS/view.script
 grep ERROR hdb_views.out
+
+
+# create the decodes schema
+
+echo "Accessing as $dba_name user for createORACLEDecodes.sql"
+sqlplus decodes/decodes  @./SCHEMA/createORACLEDecodes.sql 
+grep ERROR decodes_schema.out
+
+echo "Accessing as $dba_name user for createORACLEDecodesSequences.sql"
+sqlplus decodes/decodes  @./SEQUENCES/createORACLEDecodesSequences.sql
+grep ERROR decodes_sequences.out
+
+echo "Accessing as $dba_name user for set_decodes_privs.sql"
+sqlplus decodes/decodes  @./SCHEMA/set_decodes_privs.sql
+grep ERROR set_decodes_privs.out
+
 
 
 # Create czar syns
