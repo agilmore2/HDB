@@ -139,6 +139,7 @@ grant select,insert,update,delete on cp_algorithm to savoir_faire;
 
 ---------------------------------------------------------------------------
 -- This table represents archive of the algorithm table.
+-- added DB_OFFICE_CODE NUMBER(38,0) by IsmailO 08/2019
 ---------------------------------------------------------------------------
 CREATE TABLE CP_ALGORITHM_ARCHIVE
 (
@@ -148,7 +149,8 @@ CREATE TABLE CP_ALGORITHM_ARCHIVE
 	CMMNT VARCHAR2(1000),
         ARCHIVE_REASON VARCHAR2(10) NOT NULL,
         DATE_TIME_ARCHIVED DATE     NOT NULL,
-        ARCHIVE_CMMNT VARCHAR2(1000)
+        ARCHIVE_CMMNT VARCHAR2(1000),
+	DB_OFFICE_CODE NUMBER(38,0)
 )
 tablespace HDB_data
 ;
@@ -341,6 +343,7 @@ grant select,insert,update,delete on cp_computation to savoir_faire;
 
 ---------------------------------------------------------------------------
 -- This table represents archive of the computation table.
+-- added GROUP_ID and DB_OFFICE_CODE columns by IsmailO on 08/2019
 ---------------------------------------------------------------------------
 CREATE TABLE CP_COMPUTATION_ARCHIVE
 (
@@ -356,7 +359,9 @@ CREATE TABLE CP_COMPUTATION_ARCHIVE
 	EFFECTIVE_END_DATE_TIME DATE NULL,
     ARCHIVE_REASON VARCHAR2(10) NOT NULL,
     DATE_TIME_ARCHIVED DATE     NOT NULL,
-    ARCHIVE_CMMNT VARCHAR2(1000)
+    ARCHIVE_CMMNT VARCHAR2(1000),
+	GROUP_ID	NUMBER(38,0),
+	DB_OFFICE_CODE	NUMBER(38,0)	
 )
 tablespace HDB_data
 ;
@@ -429,6 +434,7 @@ grant select,insert,update,delete on cp_comp_ts_parm to savoir_faire;
 
 ---------------------------------------------------------------------------
 -- This table represents archive of the cp params table.
+-- added DATATYPE_ID,DELTA_T_UNITS,SITE_ID columns by IsmailO on 08/2019
 ---------------------------------------------------------------------------
 CREATE TABLE CP_COMP_TS_PARM_ARCHIVE
 (
@@ -441,7 +447,10 @@ CREATE TABLE CP_COMP_TS_PARM_ARCHIVE
 	MODEL_ID NUMBER DEFAULT NULL,           -- null for real data
     ARCHIVE_REASON VARCHAR2(10) NOT NULL,
     DATE_TIME_ARCHIVED DATE     NOT NULL,
-    ARCHIVE_CMMNT VARCHAR2(1000)
+    ARCHIVE_CMMNT VARCHAR2(1000),
+	DATATYPE_ID	NUMBER(38,0),
+	DELTA_T_UNITS	VARCHAR2(24 BYTE),
+	SITE_ID	NUMBER(38,0)
 ) 
 tablespace HDB_data
 ;

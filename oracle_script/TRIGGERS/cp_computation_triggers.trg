@@ -42,6 +42,8 @@ begin
     This trigger archives any updates to the table
     cp_computation.
     Modified August 28 2012 to adjust the date time loaded back to a simple sysdate
+	    
+    updated to add GROUP_ID,DB_OFFICE_CODE columns in archive table by IsmailO. 08/26/2019
 */
 
 /* for PHASE 3.0 a change in computation will trigger a notification to adress CP_COMP_DEPENDS */
@@ -61,7 +63,9 @@ insert into cp_computation_archive (
    EFFECTIVE_END_DATE_TIME,
    ARCHIVE_REASON,
    DATE_TIME_ARCHIVED,
-   ARCHIVE_CMMNT
+   ARCHIVE_CMMNT,
+   GROUP_ID,
+   DB_OFFICE_CODE
 ) 
 values (                                           
    :old.COMPUTATION_ID,
@@ -75,7 +79,9 @@ values (
    :old.EFFECTIVE_END_DATE_TIME,
    'UPDATE', 
    sysdate,
-   NULL); 
+   NULL,
+   :old.GROUP_ID,
+   :old.DB_OFFICE_CODE); 
 -- the following removed from the archive insert and replaced with simple sysdate
 --   hdb_utilities.mod_date_for_time_zone(sysdate,hdb_utilities.get_db_parameter('SERVER_TIME_ZONE')), 
 
@@ -93,6 +99,8 @@ begin
     This trigger archives any deletes to the table
     cp_computation.
     Modified August 28 2012 to adjust the date time loaded back to a simple sysdate
+	
+    updated to add GROUP_ID,DB_OFFICE_CODE columns in archive table by IsmailO. 08/26/2019
 */
 
   /* for PHASE 3.0 a change in Computation will trigger a notification to address CP_COMP_DEPENDS */
@@ -112,7 +120,9 @@ insert into cp_computation_archive (
    EFFECTIVE_END_DATE_TIME,
    ARCHIVE_REASON,
    DATE_TIME_ARCHIVED,
-   ARCHIVE_CMMNT
+   ARCHIVE_CMMNT,
+   GROUP_ID,
+   DB_OFFICE_CODE
 ) 
 values (                                           
    :old.COMPUTATION_ID,
@@ -126,7 +136,9 @@ values (
    :old.EFFECTIVE_END_DATE_TIME,
    'DELETE',
    sysdate, 
-   NULL); 
+   NULL,
+   :old.GROUP_ID,
+   :old.DB_OFFICE_CODE); 
 -- the following removed from the archive insert and replaced with simple sysdate
 --   hdb_utilities.mod_date_for_time_zone(sysdate,hdb_utilities.get_db_parameter('SERVER_TIME_ZONE')), 
 end;                                                                    

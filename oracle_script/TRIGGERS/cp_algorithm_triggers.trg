@@ -6,6 +6,8 @@ begin
 /*  This trigger created by M.  Bogner  04/04/2006
     This trigger archives any updates to the table
     cp_algorithm.
+	
+	updated to add DB_OFFICE_CODE column in archive table by IsmailO. 08/26/2019
 */
 insert into cp_algorithm_archive (                     
 ALGORITHM_ID,
@@ -14,7 +16,8 @@ EXEC_CLASS,
 CMMNT,
 ARCHIVE_REASON,
 DATE_TIME_ARCHIVED,
-ARCHIVE_CMMNT
+ARCHIVE_CMMNT,
+DB_OFFICE_CODE
 ) 
 values (                                           
 :old.ALGORITHM_ID,
@@ -23,7 +26,8 @@ values (
 :old.CMMNT,
 'UPDATE', 
 sysdate, 
-NULL); 
+NULL,
+:old.DB_OFFICE_CODE); 
 end;                                                                    
 /                                                                                                                       
 show errors trigger cp_algorithm_update;                                                                         
@@ -36,6 +40,8 @@ begin
 /*  This trigger created by M.  Bogner  04/04/2006
     This trigger archives any deletes to the table
     cp_algorithm.
+	
+	updated to add DB_OFFICE_CODE column in archive table by IsmailO. 08/26/2019
 */
 insert into cp_algorithm_archive (                     
 ALGORITHM_ID,
@@ -44,7 +50,8 @@ EXEC_CLASS,
 CMMNT,
 ARCHIVE_REASON,
 DATE_TIME_ARCHIVED,
-ARCHIVE_CMMNT
+ARCHIVE_CMMNT,
+DB_OFFICE_CODE
 ) 
 values (                                           
 :old.ALGORITHM_ID,
@@ -53,7 +60,8 @@ values (
 :old.CMMNT,
 'DELETE', 
 sysdate, 
-NULL); 
+NULL,
+:old.DB_OFFICE_CODE); 
 end;                                                                    
 /                                                                                                                       
 show errors trigger cp_algorithm_delete;                                                                         
