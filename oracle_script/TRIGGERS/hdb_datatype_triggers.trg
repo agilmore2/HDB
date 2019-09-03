@@ -24,3 +24,72 @@ END;
                                                                                 
 .
 /
+
+create or replace trigger hdb_datatype_archive_update                                                                    
+after update on hdb_datatype 
+for each row 
+begin 
+insert into hdb_datatype_archive (  
+DATATYPE_ID,
+DATATYPE_NAME,
+DATATYPE_COMMON_NAME,
+PHYSICAL_QUANTITY_NAME,
+UNIT_ID,
+ALLOWABLE_INTERVALS,
+AGEN_ID,
+CMMNT,
+ARCHIVE_REASON,
+DATE_TIME_ARCHIVED,
+ARCHIVE_CMMNT) 
+values (                                           
+:old.DATATYPE_ID,                                                                                              
+:old.DATATYPE_NAME,                                                                                                 
+:old.DATATYPE_COMMON_NAME,
+:old.PHYSICAL_QUANTITY_NAME,
+:old.UNIT_ID,
+:old.ALLOWABLE_INTERVALS,
+:old.AGEN_ID,
+:old.CMMNT,                                                                                                                                                                                                
+'UPDATE', 
+sysdate, 
+sys_context('USERENV', 'SESSION_USER')
+); 
+end;                                                                    
+/                                                                                                                       
+show errors trigger hdb_datatype_archive_update;  
+/                                                                       
+
+                                                                                                                        
+create or replace trigger hdb_datatype_archive_delete                                                                    
+after delete on hdb_datatype 
+for each row 
+begin 
+insert into hdb_datatype_archive (                     
+DATATYPE_ID,
+DATATYPE_NAME,
+DATATYPE_COMMON_NAME,
+PHYSICAL_QUANTITY_NAME,
+UNIT_ID,
+ALLOWABLE_INTERVALS,
+AGEN_ID,
+CMMNT,
+ARCHIVE_REASON,
+DATE_TIME_ARCHIVED,
+ARCHIVE_CMMNT
+) values (                                           
+:old.DATATYPE_ID,                                                                                              
+:old.DATATYPE_NAME,                                                                                                 
+:old.DATATYPE_COMMON_NAME,
+:old.PHYSICAL_QUANTITY_NAME,
+:old.UNIT_ID,
+:old.ALLOWABLE_INTERVALS,
+:old.AGEN_ID,
+:old.CMMNT,  
+'DELETE', 
+sysdate, 
+sys_context('USERENV', 'SESSION_USER')
+); 
+end;                                                                    
+/                                                                                                                       
+show errors trigger hdb_datatype_archive_delete;  
+/

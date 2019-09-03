@@ -112,6 +112,27 @@ storage (initial 50k
          next 50k
          pctincrease 0);
 
+create table hdb_datatype_archive (                     
+datatype_id                    number(11) NOT NULL  ,     
+datatype_name                  varchar2(240) NOT NULL  ,  
+datatype_common_name           varchar2(64) NOT NULL, 
+physical_quantity_name         varchar2(64) NOT NULL, 
+unit_id                        number(11) NOT NULL  , 
+allowable_intervals            varchar2(16) NOT NULL,
+agen_id                        number(11),
+cmmnt                          varchar2(1000),
+ARCHIVE_REASON		       VARCHAR2(10)     NOT NULL,  
+DATE_TIME_ARCHIVED	       DATE             NOT NULL,        
+ARCHIVE_CMMNT		       VARCHAR2(1000)
+)                                                   
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
+
+
 create table hdb_date_time_unit (
 date_time_unit                 varchar2(10) NOT NULL,
 cmmnt                          varchar2(1000)
@@ -480,6 +501,40 @@ tablespace HDB_data
 storage (initial 60k
          next 60k
          pctincrease 0);
+		 
+
+create table hdb_site_archive (                           
+site_id                        number(11) NOT NULL  ,  
+site_name                      varchar2(240) NOT NULL  , 
+site_common_name               varchar2(240)  NOT NULL, 
+objecttype_id                  number(11) NOT NULL  ,  
+parent_site_id                 number(11) NULL      , 
+parent_objecttype_id           number(11) NULL      ,
+state_id                       number(11) NULL      , 
+basin_id                       number(11) NULL      ,  
+lat                            varchar2(24) NULL      ,
+longi                           varchar2(24) NULL      ,
+hydrologic_unit                varchar2(10) NULL     ,
+segment_no                     number(11) NULL      ,
+river_mile                     float NULL      ,    
+elevation                      float NULL      ,   
+description                    varchar2(560) NULL      ,   
+nws_code                       varchar2(10) NULL      ,   
+scs_id                         varchar2(10) NULL      ,  
+shef_code                      varchar2(8) NULL      ,  
+usgs_id                        varchar2(10) NULL       ,
+db_site_code                   varchar2(3) NOT NULL     ,
+ARCHIVE_REASON		       VARCHAR2(10)     NOT NULL,  
+DATE_TIME_ARCHIVED	       DATE             NOT NULL,        
+ARCHIVE_CMMNT		       VARCHAR2(1000)       
+)                                                     
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 60k
+         next 60k
+         pctincrease 0);
+
 
 CREATE TABLE DECODES_Site_ext
 (
@@ -510,6 +565,23 @@ tablespace HDB_data
 storage (initial 100k
          next 100k
          pctincrease 0);
+		 
+
+create table hdb_site_datatype_archive (                                  
+site_id                        number(11) NOT NULL  ,            
+datatype_id                    number(11) NOT NULL  ,           
+site_datatype_id               number(11) NOT NULL  ,
+ARCHIVE_REASON		       VARCHAR2(10)     NOT NULL,  
+DATE_TIME_ARCHIVED	       DATE             NOT NULL,        
+ARCHIVE_CMMNT		       VARCHAR2(1000)           
+)                                                             
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 100k
+         next 100k
+         pctincrease 0);
+
 
 create table hdb_state (                        
 state_id                       number(11) NOT NULL  ,        

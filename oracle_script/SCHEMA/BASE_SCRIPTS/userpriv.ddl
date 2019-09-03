@@ -137,6 +137,9 @@ grant select on DBA.V_HDB_SITE_DATATYPE_NAME to public;
 grant select on DBA.HDB_DATATYPE_UNIT to public;
 grant select on DBA.DAYS to public;
 grant select on DBA.dba_roles to public;
+GRANT SELECT ON DBA.HDB_SITE_ARCHIVE to PUBLIC;
+GRANT SELECT ON DBA.HDB_DATATYPE_ARCHIVE to PUBLIC;
+GRANT SELECT ON DBA.HDB_SITE_DATATYPE_ARCHIVE to PUBLIC;
 
  */
 spool off
