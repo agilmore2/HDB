@@ -22,7 +22,11 @@ values (
 :old.CMMNT,
 'DELETE',
 sysdate,
-NULL);
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+ );
 end;
 /
 
@@ -50,7 +54,11 @@ values (
 :old.CMMNT,
 'UPDATE',
 sysdate,
-NULL);
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -76,7 +84,11 @@ values (
 :old.PROP_VALUE,
 'DELETE',
 sysdate,
-NULL);
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -102,7 +114,11 @@ values (
 :old.PROP_VALUE,
 'UPDATE',
 sysdate,
-NULL);
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -128,7 +144,11 @@ values (
 :old.PARM_TYPE,
 'DELETE',
 sysdate,
-NULL);
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -155,7 +175,11 @@ values (
 :old.PARM_TYPE,
 'UPDATE',
 sysdate,
-NULL);
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -205,7 +229,10 @@ values (
    :old.EFFECTIVE_END_DATE_TIME,
    'DELETE',
    sysdate,
-   NULL,
+   coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         ),
    :old.GROUP_ID,
    :old.DB_OFFICE_CODE);
 -- the following removed from the archive insert and replaced with simple sysdate
@@ -260,7 +287,10 @@ values (
    :old.EFFECTIVE_END_DATE_TIME,
    'UPDATE',
    sysdate,
-   NULL,
+   coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         ),
    :old.GROUP_ID,
    :old.DB_OFFICE_CODE);
 -- the following removed from the archive insert and replaced with simple sysdate
@@ -291,7 +321,11 @@ values (
    :old.PROP_VALUE,
    'DELETE',
    sysdate,
-   NULL);
+   coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 
 /* now update parent table's date_time_loaded for sql statements issued on this table */
 hdb_utilities.touch_cp_computation(:old.computation_id);
@@ -329,7 +363,11 @@ values (
    :old.PROP_VALUE,
    'UPDATE',
    sysdate,
-   NULL);
+   coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 END IF;
 
 /* now update parent table's date_time_loaded for sql statements issued on this table */
@@ -376,7 +414,10 @@ values (
   :old.MODEL_ID,
   'DELETE',
   sysdate,
-  NULL,
+  coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         ),
   :old.DATATYPE_ID,
   :old.DELTA_T_UNITS,
   :old.SITE_ID);
@@ -431,7 +472,10 @@ values (
   :old.MODEL_ID,
   'UPDATE',
   sysdate,
-  NULL,
+  coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         ),
   :old.DATATYPE_ID,
   :old.DELTA_T_UNITS,
   :old.SITE_ID);
@@ -463,7 +507,11 @@ ARCHIVE_CMMNT) values (
 :old.date_time_loaded,
 'DELETE',
 sysdate,
-NULL);
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -488,7 +536,11 @@ values (
 :old.date_time_loaded,
 'UPDATE',
 sysdate,
-NULL);
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -523,7 +575,11 @@ values (
 :old.date_time_loaded,
 'DELETE',
 sysdate,
-NULL);
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -558,7 +614,11 @@ values (
 :old.date_time_loaded,
 'UPDATE',
 sysdate,
-NULL);
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -583,7 +643,11 @@ values (
 :old.date_time_loaded,
 'DELETE',
 sysdate,
-NULL);
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -608,7 +672,11 @@ values (
 :old.date_time_loaded,
 'UPDATE',
 sysdate,
-NULL);
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -650,7 +718,11 @@ begin
     :old.date_time_loaded,
      'DELETE',
      sysdate,
-    NULL);
+    coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -692,7 +764,11 @@ begin
     :old.date_time_loaded,
      'UPDATE',
      sysdate,
-    NULL);
+    coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -735,7 +811,10 @@ VALUES (
 :old.DATE_TIME_LOADED,
 'DELETE',
 sysdate,
-NULL,
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         ),
 :old.EFFECTIVE_START_DATE_TIME,
 :old.EFFECTIVE_END_DATE_TIME,
 :old.PREPROCESSOR_EQUATION
@@ -781,7 +860,10 @@ VALUES (
 :old.DATE_TIME_LOADED,
 'UPDATE',
 sysdate,
-NULL,
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         ),
 :old.EFFECTIVE_START_DATE_TIME,
 :old.EFFECTIVE_END_DATE_TIME,
 :old.PREPROCESSOR_EQUATION
@@ -809,7 +891,11 @@ begin
     :old.date_time_loaded          ,
      'DELETE',
      sysdate,
-    NULL);
+    coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -833,7 +919,11 @@ begin
     :old.date_time_loaded          ,
      'UPDATE',
      sysdate,
-    NULL);
+    coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -848,7 +938,12 @@ DATE_TIME_LOADED, ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.RATING_ID,
 :old.INDEPENDENT_VALUE,
 :old.DEPENDENT_VALUE,
-:old.date_time_loaded,'DELETE', sysdate, NULL);
+:old.date_time_loaded,'DELETE', sysdate, 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -863,7 +958,12 @@ DATE_TIME_LOADED, ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.RATING_ID,
 :old.INDEPENDENT_VALUE,
 :old.DEPENDENT_VALUE,
-:old.date_time_loaded,'UPDATE', sysdate, NULL);
+:old.date_time_loaded,'UPDATE', sysdate, 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -926,7 +1026,11 @@ begin
     :old.date_time_loaded,
     'DELETE',
      sysdate,
-    NULL);
+    coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -958,7 +1062,11 @@ begin
     :old.date_time_loaded,
      'UPDATE',
      sysdate,
-    NULL);
+    coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -983,7 +1091,12 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.DATE_TIME_LOADED,
 :old.AGEN_ID,
 :old.DESCRIPTION,
-'DELETE', sysdate, NULL);
+'DELETE', sysdate, 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -1008,7 +1121,12 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.DATE_TIME_LOADED,
 :old.AGEN_ID,
 :old.DESCRIPTION,
-'UPDATE', sysdate, NULL);
+'UPDATE', sysdate, 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
  end;
 /
 
@@ -1032,7 +1150,11 @@ begin
     :old.date_time_loaded          ,
      'DELETE',
      sysdate,
-    NULL);
+    coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -1057,7 +1179,11 @@ begin
     :old.date_time_loaded          ,
      'UPDATE',
      sysdate,
-    NULL);
+    coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -1080,7 +1206,11 @@ values (
 :old.date_time_loaded,
 'DELETE',
 sysdate,
-NULL);
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
@@ -1103,11 +1233,17 @@ values (
 :old.date_time_loaded,
 'UPDATE',
 sysdate,
-NULL);
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+);
 end;
 /
 
-========ENSEMBLES====
+
+
+-- ----- ENSEMBLES Archives ------------
 create or replace TRIGGER ref_ensemble_del
 after delete on ref_ensemble for each row begin
 insert into ref_ensemble_archive (
@@ -1122,7 +1258,12 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.AGEN_ID,
 :old.TRACE_DOMAIN,
 :old.CMMNT,
-'DELETE', sysdate, NULL); end;
+'DELETE', sysdate, 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+ ); end;
 /
 
 create or replace TRIGGER ref_ensemble_keyval_del
@@ -1137,7 +1278,12 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.KEY_NAME,
 :old.KEY_VALUE,
 :old.DATE_TIME_LOADED,
-'DELETE', sysdate, NULL); end;
+'DELETE', sysdate, 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+); end;
 /
 
 create or replace TRIGGER ref_ensemble_keyval_upd
@@ -1152,7 +1298,12 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.KEY_NAME,
 :old.KEY_VALUE,
 :old.DATE_TIME_LOADED,
-'UPDATE', sysdate, NULL); end;
+'UPDATE', sysdate, 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+); end;
 /
 
 create or replace TRIGGER ref_ensemble_trace_del
@@ -1169,7 +1320,12 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.TRACE_NUMERIC,
 :old.TRACE_NAME,
 :old.MODEL_RUN_ID,
-'DELETE', sysdate, NULL); end;
+'DELETE', sysdate, 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+); end;
 /
 
 create or replace TRIGGER ref_ensemble_trace_upd
@@ -1186,7 +1342,12 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.TRACE_NUMERIC,
 :old.TRACE_NAME,
 :old.MODEL_RUN_ID,
-'UPDATE', sysdate, NULL); end;
+'UPDATE', sysdate, 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+); end;
 /
 
 create or replace TRIGGER ref_ensemble_upd
@@ -1203,6 +1364,18 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.AGEN_ID,
 :old.TRACE_DOMAIN,
 :old.CMMNT,
-'UPDATE', sysdate, NULL); end;
+'UPDATE', sysdate, 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+          ,sys_context('userenv','session_user')
+         )
+); end;
 /
+
+--update version table
+INSERT INTO TSDB_PROPERTY (PROP_NAME, PROP_VALUE) VALUES ('4.1.2', 'HDB 4.1.2-archives_cmmnt column used for session audits for all archive tables');
+/
+
+--Commit
+commit;
 
