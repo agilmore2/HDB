@@ -55,6 +55,7 @@ start ./PROCEDURES/write_to_hdb.prc;
 start ./PROCEDURES/cp_agg_sum.prc;
 start ./PROCEDURES/mavg_trigger.prc;
 start ./PROCEDURES/modify_site_coef.prc;
+start ./PROCEDURES/get_cgi.prc;
 
 spool off
 exit;
