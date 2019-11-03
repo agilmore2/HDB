@@ -176,9 +176,15 @@ sub connect_to_db {
   my $user = $_[1];
   my $pass=$_[2];
 
-  $self->{dbh} = DBI->connect("dbi:Oracle:$self->{dbname}", $user, $pass,
-			     {RaiseError => 1, AutoCommit => 0 })
-                     or $self->hdbdie($DBI::errstr);
+  if ( ! length($user) ) { #assume external identification, reset dbname and username
+    $self->{dbh} = DBI->connect("dbi:Oracle:", "/", $pass,
+                                {RaiseError => 1, AutoCommit => 0 })
+                   or $self->hdbdie($DBI::errstr);
+  } else {
+    $self->{dbh} = DBI->connect("dbi:Oracle:$self->{dbname}", $user, $pass,
+                                {RaiseError => 1, AutoCommit => 0 })
+                   or $self->hdbdie($DBI::errstr);
+  }
 
   return $self->{dbh};
 }
