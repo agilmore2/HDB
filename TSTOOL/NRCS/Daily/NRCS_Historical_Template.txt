@@ -28,7 +28,7 @@
             SetInputPeriod(InputStart="${periodStart}-10-01 00:00",InputEnd="${periodEnd}-12-31 24:00")
         </#if>
         ReadNrcsAwdb(DataStore="NrcsAwdb",Interval=Day,Stations="${PrimarySiteCode}",Networks="SNTL",Elements="${PrimaryDataCode}",Alias="${PrimarySiteCode}-${PrimaryDataCode}")
-        WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="${PrimarySiteCode}-${PrimaryDataCode}",SiteDataTypeID=${HDBSiteDatatypeID},Agency="NRCS",WriteProcedure="OLD_WRITE_TO_HDB")
+        WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="${PrimarySiteCode}-${PrimaryDataCode}",SiteDataTypeID=${HDBSiteDatatypeID},Agency="NRCS",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
         <#-- End the sub-period loop when it has reached the last sub-period -->
         <#if (periodEnd >= currentYear?number)>
             <#-- Free the time series so that all the small time series don't show up in the listing -->
