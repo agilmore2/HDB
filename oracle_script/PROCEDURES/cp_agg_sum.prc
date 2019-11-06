@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CP_AGG_SUM ( P_IN_SDI NUMBER, P_DATE_TIME DATE,
+create or replace PROCEDURE CP_AGG_SUM( P_IN_SDI NUMBER, P_DATE_TIME DATE,
      P_OUT_SDI NUMBER, P_MMDD VARCHAR2)
 	IS
 
@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CP_AGG_SUM ( P_IN_SDI NUMBER, P_DATE_TIME DATE,
 	 (select DAYS.days,
       sum(rd.value) Over (order by days.days) "RSUM"
 	  from r_day rd,
-      (select c_sdi "SDI", date_time "DAYS" from table(dates_between(c_sdt,c_edt,'day'))) DAYS
+      (select c_sdi "SDI", date_time "DAYS" from table(dates_between(c_sdt,c_edt+1,'day'))) DAYS
 		where  DAYS.days = rd.start_date_time (+)
 		and    DAYS.sdi = rd.site_datatype_id (+)
 		and    DAYS.days <= sysdate ) DAYS2
@@ -56,7 +56,9 @@ CREATE OR REPLACE PROCEDURE CP_AGG_SUM ( P_IN_SDI NUMBER, P_DATE_TIME DATE,
 
 		    /* this summing computation works so write it to the DB  */
 		    /* use the default value 45 to indicate the CP Process was responsible for this data  */
-		    WRITE_TO_HDB (P_OUT_SDI,p1.days,round(p1.rsum,5),'day',45,2,0,null,null);
+		    --deny_action (to_char(P_OUT_SDI)||p1.days||round(p1.rsum,5)||'day');
+
+            WRITE_TO_HDB (P_OUT_SDI,p1.days,round(p1.rsum,5),'day',45,2,0,null,null);
 
 		END LOOP;
 
