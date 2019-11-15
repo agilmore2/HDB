@@ -41,7 +41,7 @@ wget -O $CUWCD_DATA_FILE $CUWCD_DATA_URL
 # if the java routine successfully  processed this file then zip the file to indicate it was processed
 
   echo " Processing CUWCD file: $CUWCD_DATA_FILE "
-#  java -Doracle.jdbc.Trace=true -Djava.util.loggin.config.file=log.properties -Dstart.property=$CUWCD_DATA_PROP dataloader.ProcessUSACEfile $CUWCD_DATA_FILE
+#   java -Doracle.jdbc.Trace=true -Djava.util.logging.config.file=../src/log.properties -Dstart.property=../src/CUWCD_data.property dataloader.ProcessUSACEfile CUWCD_data.2019110320
   java -Dstart.property=$CUWCD_DATA_PROP dataloader.ProcessUSACEfile $CUWCD_DATA_FILE
 
   if [ $? -eq 0 ]
