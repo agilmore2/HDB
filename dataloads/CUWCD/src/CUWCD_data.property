@@ -19,7 +19,8 @@ DRIVER=oracle.jdbc.driver.OracleDriver
 #URL=jdbc:oracle:thin:@140.217.14.10:1521:uchdb2.uc.usbr.gov
 #URL=jdbc:oracle:thin:@140.217.14.10:1521:uchdb2
 #URL=jdbc:oracle:thin:@ibr4ucrlxhdb.bor.doi.net:1521:uchdb2
-URL=jdbc:oracle:thin:@ibr4ucrlxhdbt.bor.doi.net:1521:uchdb2t
+#URL=jdbc:oracle:thin:@ibr4ucrlxhdbt.bor.doi.net:1521:uchdb2t
+URL=jdbc:oracle:thin:@localhost:1521:uchdb2t
 
 
 # The username is the oracle username that will be used to connect to the system
@@ -27,11 +28,11 @@ URL=jdbc:oracle:thin:@ibr4ucrlxhdbt.bor.doi.net:1521:uchdb2t
 # enter the DBNAMEDBA here ie
 #USERNAME=LCHDBA
 #USERNAME=uchdba 
-USERNAME="/" 
+USERNAME=/
 
 #  enter the oracle password for this account  ie
 #PASSWORD=master
-PASSWORD=""
+PASSWORD=
 
 #  NOTE:  an alternative to entering each of these names correctly is to enter the associated id
 # for each respective lookup table.  In general either method will produce the same results
