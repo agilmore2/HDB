@@ -213,6 +213,7 @@ sub stop_cp ($$) {
   # while compproc is actually computing, will not check for heartbeat
   # otherwise will be checking every second
   foreach my $cp (@$cps) {
+    $SIG{CHLD} = 'DEFAULT';
     system( "$decdir/bin/stopcomp", "-a", "\"$cp\"" );
   }
 
@@ -221,6 +222,7 @@ sub stop_cp ($$) {
   my @runningpids;
   foreach my $pid (@$pids) {
     #check which pids are still running
+    $SIG{CHLD} = 'DEFAULT';
     system("ps -p $pid &>/dev/null");
     if ( $? == -1 ) {
       print "failed to execute ps: $!\n";
@@ -318,6 +320,8 @@ sub check_cp ($$) {
       #heartbeat is older, see if pid is running
       # we use the ps command here and check its exit value
       # if it is 0, the command exited sucessfully
+ 
+     $SIG{CHLD} = 'DEFAULT';
       system("ps -p $pid >/dev/null");
       if ( $? == -1 ) {
         print "failed to execute ps: $!\n";
