@@ -87,16 +87,16 @@ int SqlConnect(char *dbName, char* usrname, char* id)
    
    int   result;
    
-   usr = usrname;
+   usr = "/"; /*usrname; Make this change to use external OS auth user */
    uid = id;
 
    /* set the name of the database, and the logical name for the 2nd 
       connection */
    dbstring = dbName;
 
-   /* connect to the specified database, first with an unnamed (default)
-      connection, then with a named connection */
-   EXEC SQL CONNECT :usr IDENTIFIED BY :uid USING :dbstring;
+   /* connect to the specified database with user authenticated externally */
+
+   EXEC SQL CONNECT :usr USING :dbstring;
    result = SqlErrorHandler(FUNC_NAME, FALSE,
 	 "Error connecting to %s.\n\t as %s %s", dbstring, usr, uid);
    if (result != OK)
@@ -148,7 +148,7 @@ int SqlConnectAt(char *dbSiteAlias, char *dbName, char* usrname, char* id)
    
    int   result;
    
-   usr = usrname;
+   usr = "/"; /*usrname; Make this change to use external OS auth user */
    uid = id;
 
    /* set the name of the database and its logical name*/
@@ -157,7 +157,7 @@ int SqlConnectAt(char *dbSiteAlias, char *dbName, char* usrname, char* id)
 
    /* connect to the specified database with a named connection,
       and set the global pointer to the current database. */
-   EXEC SQL CONNECT :usr IDENTIFIED BY :uid AT :dbSite USING :dbstring;
+   EXEC SQL CONNECT :usr USING :dbstring;
    result = SqlErrorHandler(FUNC_NAME, FALSE,
 	 "Error connecting AT %s to %s.\n\t as %s %s", dbSite, dbstring, usr, 
 			    uid);
