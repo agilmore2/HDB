@@ -3,3 +3,13 @@ crsp*.dat
 tty_input
 tty_listen
 tty_listen_b
+gefrx.log.old
+gefrx.log
+old_csv
+old_files
+poll4csv.out
+CVS
+edit_files
+dev
+csv*
+mail_wapa
