@@ -9,6 +9,7 @@
 
 EXEC SQL INCLUDE SQLCA;
 
+/* November 2019 - Andrew Gilmore - Altered to remove all usage of PSSWD_USER, role passwords and multiple DB site logins */
 
 #define MAX_CONNECTIONS 25
 #define DB "db1"
@@ -39,7 +40,7 @@ DATABASE_ALIAS dbconnected_array[MAX_CONNECTIONS];
 int SqlCommit( )
 {
    int result;
-   EXEC SQL AT :current_dbsite COMMIT;
+   EXEC SQL COMMIT;
    if ((result = SqlErrorHandler
 	(FUNC_NAME, FALSE,
 	 "Error in SQL Commit \n")) == ERROR)
@@ -86,16 +87,16 @@ int SqlConnect(char *dbName, char* usrname, char* id)
    
    int   result;
    
-   usr = usrname;
+   usr = "/"; /*usrname; Make this change to use external OS auth user */
    uid = id;
 
    /* set the name of the database, and the logical name for the 2nd 
       connection */
    dbstring = dbName;
 
-   /* connect to the specified database, first with an unnamed (default)
-      connection, then with a named connection */
-   EXEC SQL CONNECT :usr IDENTIFIED BY :uid USING :dbstring;
+   /* connect to the specified database with user authenticated externally */
+
+   EXEC SQL CONNECT :usr USING :dbstring;
    result = SqlErrorHandler(FUNC_NAME, FALSE,
 	 "Error connecting to %s.\n\t as %s %s", dbstring, usr, uid);
    if (result != OK)
@@ -108,10 +109,6 @@ int SqlConnect(char *dbName, char* usrname, char* id)
       return (ERROR);
    }
    EXEC SQL COMMIT;
-
-   /* Make the named connection. */
-   if ((result = SqlConnectAt (DB, dbstring, usrname, id)) == ERROR)
-     return (ERROR);
 
    return (OK);
 }
@@ -151,7 +148,7 @@ int SqlConnectAt(char *dbSiteAlias, char *dbName, char* usrname, char* id)
    
    int   result;
    
-   usr = usrname;
+   usr = "/"; /*usrname; Make this change to use external OS auth user */
    uid = id;
 
    /* set the name of the database and its logical name*/
@@ -160,7 +157,7 @@ int SqlConnectAt(char *dbSiteAlias, char *dbName, char* usrname, char* id)
 
    /* connect to the specified database with a named connection,
       and set the global pointer to the current database. */
-   EXEC SQL CONNECT :usr IDENTIFIED BY :uid AT :dbSite USING :dbstring;
+   EXEC SQL CONNECT :usr USING :dbstring;
    result = SqlErrorHandler(FUNC_NAME, FALSE,
 	 "Error connecting AT %s to %s.\n\t as %s %s", dbSite, dbstring, usr, 
 			    uid);
@@ -224,49 +221,13 @@ int SqlConnectRole(char *dbName, char* userName, char* id, char *roleName)
    user = userName;
    uid = id;
 
-   /* set the name of the database and get the password user*/
+   /* set the name of the database and check for granted role*/
    dbstring = dbName;
    strncpy (dbSite, DB,4);
 
-   psswdUser = NULL;
-   psswdUser = getenv("PSSWD_USER");
-
-   if (psswdUser == NULL)
-   {
-      PrintError("Environment variable PSSWD_USER not set...\n");
-      return(ERROR);
-   }
-
-   /* Connect to the local database as the psswd_user, to get the roleName's
-      if the user (userName) has been granted that role. 
-      Use SqlConnectAt so that global current_dbsite will be set
-      and the two functions called can refer to the global. */
-   
-   if ((result = SqlConnectAt (DB, dbstring, psswdUser, dbstring)) != OK)
-   {
-      return (ERROR);
-   }
-   else
-   {
-      /* First, verify that specified user has been granted the needed
-	 application role. */
-      
-      if ((result = SqlCheckGrantedRole (userName, roleName)) != OK)
-      {
-	 return (ERROR);
-      }
-
-      if ((result = SqlGetRolePsswd (roleName, rolePsswd)) != OK)
-      {
-	 return (ERROR);
-      }
-
-      SqlDisconnectAt(DB);
-
-   }
    /* Now connect as the user for the remainder of the program,
       enabling needed roles.
-      Use SqlConnect to establish both the named and unnamed connection. */
+      Use SqlConnect to establish the unnamed connection. */
    if ((result = SqlConnect (dbstring, user, uid)) != OK)
    {
       return (ERROR);
@@ -274,11 +235,16 @@ int SqlConnectRole(char *dbName, char* userName, char* id, char *roleName)
    
    else
    {
-      /* Enable needed role, plus CONNECT, for both connections */
+      if ((result = SqlCheckGrantedRole (userName, roleName)) != OK)
+      {
+	 return (ERROR);
+      }
+
+      /* Enable only the needed role, plus CONNECT */
       /* For unnamed connection. */
       EXEC SQL WHENEVER NOT FOUND continue;
-      sprintf (setRoleStatement, "set role %s identified by %s, CONNECT",
-	       roleName, rolePsswd);
+      sprintf (setRoleStatement, "set role %s,CONNECT",
+	       roleName);
       
       EXEC SQL EXECUTE IMMEDIATE :setRoleStatement;
       if ((result = SqlErrorHandler
@@ -288,133 +254,7 @@ int SqlConnectRole(char *dbName, char* userName, char* id, char *roleName)
 	 SqlDisconnect();
 	 return (ERROR);
       }
-
-      EXEC SQL AT :dbSite EXECUTE IMMEDIATE :setRoleStatement;
-      if ((result = SqlErrorHandler
-	   (FUNC_NAME, FALSE,
-	    "Error setting role to: %s AT %s.\n\tExiting.", roleName, 
-	    dbSite)) == ERROR)
-      {
-	 SqlDisconnect();
-	 return (ERROR);
-      }
    }
-   return (OK);
-}
-
-
-/****************************************************************************/
-#define FUNC_NAME    "SqlConnectRoleAt"
-/*
-<HTML>
-
-<P> <STRONG>Function name:</STRONG> SqlConnectRoleAt
-
-<P> <STRONG>Function signature:</STRONG> int SqlConnectRoleAt (char *, char *, char *, char *, char *)
-
-<P> <STRONG>Function description:</STRONG> Connects to the specified database as the specified user, using the AT syntax. Enables the indicated role.
-
-<P><DL> <STRONG>Function arguments:</STRONG>
-<BR><DD> char *dbSiteAlias:  Logical name of connection (db_site_code)
-<BR><DD> char *dbName:       Name (SID) of the database to which to connect.
-<BR><DD> char *usrname:      Name of Oracle user connecting.
-<BR><DD> char *id:           Password of Oracle user.
-<BR><DD> char *role:         Role to enable.
-</DL>
-
-<P> <STRONG>Function return value:</STRONG> OK or ERROR
-
-</HTML>
-*/
-
-int SqlConnectRoleAt(char *dbSiteAlias, char *dbName, char* userName, 
-		     char* id, char *roleName)
-{
-   /*Database host variables*/
-   EXEC SQL BEGIN DECLARE SECTION;
-   char *user;
-   char *uid;
-   char *dbstring;
-   char *dbSite;
-   char *psswdUser;
-   char rolePsswd[24];
-   char setRoleStatement[100];
-   EXEC SQL END DECLARE SECTION;
-   
-   /*integer for checking the result of a function call*/
-   int   result;
-
-   user = userName;
-   uid = id;;
-
-   /* set the name of the database and its logical name,
-      and get the password user*/
-   dbstring = dbName;
-   dbSite = dbSiteAlias;
-
-   psswdUser = NULL;
-   psswdUser = getenv("PSSWD_USER");
-
-   if (psswdUser == NULL)
-   {
-      PrintError("Environment variable PSSWD_USER not set...\n");
-      return(ERROR);
-   }
-
-   /* Connect to the local database as the psswd_user, to get the roleName's
-      if the user (userName) has been granted that role. 
-      Use SqlConnectAt so that global current_dbsite will be set
-      and the two functions called can refer to the global. */
-
-   if ((result = SqlConnectAt (dbSite, dbstring, psswdUser, dbstring)) != OK)
-   {
-      return (ERROR);
-   }
-   else
-   {
-      /* First, verify that specified user has been granted the needed
-	 application role. */
-
-      if ((result = SqlCheckGrantedRole (userName, roleName)) != OK)
-      {
-	 return (ERROR);
-      }
-
-      if ((result = SqlGetRolePsswd (roleName, rolePsswd)) != OK)
-      {
-	 return (ERROR);
-      }
-
-      SqlDisconnectAt(dbSite);
-   }
-    
-   /* Now connect as the user for the remainder of the program,
-      enabling needed roles. */
-   if ((result = SqlConnectAt (dbSite, dbstring, userName, uid)) != OK)
-   {
-      return (ERROR);
-   }
-   
-   else
-   {
-      /* Enable needed role, plus CONNECT role */
-      EXEC SQL WHENEVER NOT FOUND continue;
-      sprintf (setRoleStatement, "set role %s identified by %s, CONNECT",
-	       roleName, rolePsswd);
-      
-      EXEC SQL AT :dbSite EXECUTE IMMEDIATE :setRoleStatement;
-      
-      if ((result = SqlErrorHandler
-	   (FUNC_NAME, FALSE,
-	    "Error setting role to: %s AT %s.\n\tExiting.", roleName, 
-	    dbSite)) == ERROR)
-      {
-	 SqlDisconnectAt(dbSite);
-	 return (ERROR);
-      }
-   }
-	
-   EXEC SQL AT :current_dbsite COMMIT;
    return (OK);
 }
 
@@ -457,10 +297,10 @@ int SqlCheckGrantedRole (char* userName, char *roleName)
 
    EXEC SQL WHENEVER SQLWARNING GOTO check_result;
 
-   EXEC SQL AT :current_dbsite SELECT count(granted_role)
+   EXEC SQL SELECT count(granted_role)
       INTO :result
-   FROM dba_role_privs
-   WHERE grantee = UPPER(:user)
+   FROM user_role_privs
+   WHERE username = UPPER(:user)
       AND granted_role = UPPER(:role);
 
    /* Check to see if no rows were selected. */
@@ -485,7 +325,7 @@ check_result:
       return (ERROR);
    }
    
-   EXEC SQL AT :current_dbsite COMMIT;
+   EXEC SQL COMMIT;
    return (OK);
 }
 /****************************************************************************/
@@ -509,43 +349,6 @@ check_result:
 </HTML>
 */
 
-
-int SqlGetRolePsswd (char *roleName, char *rolePsswd)
-{
-   /*Database host variables*/
-   EXEC SQL BEGIN DECLARE SECTION;
-   char role[20];
-   char psswd[20];
-   int   result = 0;   
-   EXEC SQL END DECLARE SECTION;
-
-   strcpy(role, roleName);
-   
-   EXEC SQL AT :current_dbsite SELECT psswd
-      INTO :psswd
-   FROM role_psswd
-   WHERE UPPER (role) = UPPER (:role);
-
-   /* Check to see if no rows were selected. */
-   if (sqlca.sqlcode > 0)
-   {
-      PrintError ("There is no entry for role %s in role_psswd\n", roleName);
-      return (ERROR);
-   }
-
-   if ((result = SqlErrorHandler
-	(FUNC_NAME, FALSE,
-	 "Error selecting from role_psswd for role %s\n\tExiting.", role)) 
-       == ERROR)
-   {
-      return (ERROR);
-   }
-
-   EXEC SQL AT :current_dbsite COMMIT;
-   strcpy (rolePsswd, psswd);
-
-   return (OK);
-}
 
 /*****************************************************************************/
 #define FUNC_NAME "SqlDisconnect"
@@ -574,10 +377,7 @@ int SqlDisconnect()
   /* Disconnect from default connection. */
   result1 = SqlDisconnectAt (NULL);
 
-  /* Disconnect from named connection */
-  result2 = SqlDisconnectAt (DB);
-
-  if (result1 == ERROR || result2 == ERROR)
+  if (result1 == ERROR )
      return (ERROR);
   else
      return (OK);

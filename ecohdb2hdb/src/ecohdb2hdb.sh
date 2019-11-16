@@ -54,12 +54,16 @@ while getopts ":hn:a:u:p:" opt; do
   esac
 done
 
-if [ -z "$app" -o -z "$pass" -o -z "$db" -o -z "$numdays" ] ; then
+
+
+#if [ -z "$app" -o -z "$pass" -o -z "$db" -o -z "$numdays" ] ; then
+if [ -z "$db" -o -z "$numdays" ] ; then
   usage
   exit 1
 fi
 
 sqlplus -S /nolog <<EOS
-connect $app/$pass@$db
+--connect $app/$pass@$db
+connect /@$db
 @ecohdb2hdb.sql $numdays
 EOS
