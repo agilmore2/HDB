@@ -1,5 +1,5 @@
 set linesize 70
-set pagesize 40
+set pagesize 50
 column display_date heading 'Date'
 column release heading 'Released (acft)' format 9999999
 set feedback off

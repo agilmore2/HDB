@@ -14,7 +14,7 @@
 # the reasonm was that site data core dumped on ISIS and I didn't want to debug an
 # old pro*c program; instead replaced it with a simple sql report
 
-sqlplus -sl $APP_USER/$HDB_LOCAL@$HDB_LOCAL @powell_releases.sql
+sqlplus -s / @powell_releases.sql
 EMAIL="haptno@usbr.gov,cdean@wapa.gov,mmoore@wapa.gov,MTPreschedule@wapa.gov,jzyu@usbr.gov,rfellin@wapa.gov,rclayton@usbr.gov"
 mail -s "Powell Release" "$EMAIL" < powell_releases.out
 # this line below works for solaris
