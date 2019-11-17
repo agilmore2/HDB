@@ -41,7 +41,6 @@ $hdb->dbh->do("alter session set NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS'");
 
 # look for -d flag for testing
 my $testing = shift;
-my $ftp;
 
 if (defined ($testing) && $testing eq "-d") {
   $testing=1;
@@ -199,7 +198,7 @@ close OUTPUT;
 #  }
 }
 
-$ftp->quit unless $testing;
+#$ftp->quit unless $testing;
 
 exit;
 
