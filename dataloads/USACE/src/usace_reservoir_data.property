@@ -16,7 +16,7 @@ DRIVER=oracle.jdbc.driver.OracleDriver
 #URL=jdbc:oracle:thin:@sun1.yak.pn.usbr.gov:1521:pnhdb
 #URL=jdbc:oracle:thin:@hvrwater.lc.usbr.gov:1521:lctest
 #URL=jdbc:oracle:thin:@140.217.14.10:1521:uchdb2.uc.usbr.gov
-URL=jdbc:oracle:thin:@localhost:1521:uchdb2t
+URL=jdbc:oracle:thin:@localhost:1521:uchdb2
 
 
 # The username is the oracle username that will be used to connect to the system

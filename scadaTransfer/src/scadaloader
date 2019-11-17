@@ -1,5 +1,4 @@
 #!/bin/sh 
-#   This SCADA LOADER file has been modified to run on ISIS  by M. Bogner 21-MARCH-2011
 #
 # chkconfig: 345 99 1
 # description: SCADA Loader Process
@@ -25,9 +24,9 @@ APP_USER=app_user
 exec=`basename $0`
 usage='(echo ; echo "Usage: $exec [-h] <start | stop | status>" ; echo )'
 
-#SCADA_XFERDIR=$HDB_ENV/scadaTransfer/work
+SCADA_XFERDIR=$HDB_ENV/scadaTransfer/work
 #or this for aplx003
-SCADA_XFERDIR=$HDB_ENV/scadaTransfer/work/dev
+#SCADA_XFERDIR=$HDB_ENV/scadaTransfer/work/dev
 
 # Check command line argument.
 if test $# -eq 0 ; then
@@ -63,7 +62,7 @@ echo "Starting hdb scada loader in directory:"
 echo "     $SCADA_XFERDIR"
 /bin/su - $APP_USER -c ". $HDB_ENV/bashrc_hdb_app; \
                        cd $SCADA_XFERDIR; \
-		nohup perl ../../src/poll4csv.pl -a /wrg/hdb/apps/.app_user_login \
+		nohup perl ../src/poll4csv.pl -a /wrg/hdb/apps/.app_user_login \
                   -f 'csv_.*[0-9]$' \
                   -d . >&poll4csv.out &"
 
@@ -101,7 +100,7 @@ for input in $* ; do
      esac
 done
 
-# Start or stop the license server daemon.
+# Start or stop the polling script.
 action=
 case "$option" in
    start) action=started ;
