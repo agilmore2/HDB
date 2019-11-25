@@ -12,7 +12,7 @@
 -- Modified May 2009 by M. Bogner to handle unknown and wierd error of a blank validation '' as an ascii 32
 
 create or replace trigger r_base_before_insert_update
-before insert or update 
+before insert or update
 on r_base
 for each row
 declare
@@ -23,9 +23,7 @@ declare
   text               varchar2(200);
 begin
 
-  /* Modified by kcavalier 29-APR-2016: Moved Validation and Data Flag Checking Code into MODIFY_R_BASE_RAW */
-  
-   if not (DBMS_SESSION.Is_Role_Enabled ('SAVOIR_FAIRE')) then
+   if not (is_role_granted ('SAVOIR_FAIRE')) then
       check_sdi_auth (:new.site_datatype_id);
    end if;
 
@@ -33,17 +31,23 @@ begin
       text := 'No future dates allowed in r_base tables';
       deny_action(text);
    end if;
-  
+
+  if :new.validation in ('E','+','-','w','n','|','^','~',chr(32)) then
+     :new.data_flags := :new.validation || substr(:new.data_flags,1,19);
+     :new.validation := NULL;
+  end if;
+
+
   /* logic below added to attempt to foil Stored Procedures non-utilization  */
   if :new.date_time_loaded <> to_date('10-DEC-1815','dd-MON-yyyy') then
     :new.validation := 'F';
     :new.data_flags := 'Bad Load: Use Proc.';
   end if;
-  
+
   :new.date_time_loaded:=sysdate;
 
   /* Start and end date must be equal for instant data.
-     Datatype's allowable intervals must be either or instant 
+     Datatype's allowable intervals must be either or instant
      for instant data */
   if (:new.interval = 'instant') then
 
@@ -52,9 +56,9 @@ begin
         deny_action(text);
      end if;
 
-     select count(*) into v_count 
+     select count(*) into v_count
      from hdb_datatype dt, hdb_site_datatype sd
-     where dt.allowable_intervals in ('instant','either') 
+     where dt.allowable_intervals in ('instant','either')
        and sd.site_datatype_id = :new.site_datatype_id
        and sd.datatype_id = dt.datatype_id;
 
@@ -66,7 +70,7 @@ begin
   end if;
 
   /* Start date must be < end date for non-instant data.
-     Datatype's allowable intervals must be either or non-instant 
+     Datatype's allowable intervals must be either or non-instant
      for non-instant data */
   if (:new.interval <> 'instant') then
 
@@ -79,9 +83,9 @@ begin
         deny_action(text);
      end if;
 
-     select count(*) into v_count 
+     select count(*) into v_count
      from hdb_datatype dt, hdb_site_datatype sd
-     where dt.allowable_intervals in ('non-instant','either') 
+     where dt.allowable_intervals in ('non-instant','either')
        and sd.site_datatype_id = :new.site_datatype_id
        and sd.datatype_id = dt.datatype_id;
 
@@ -92,7 +96,7 @@ begin
 
   end if;
 
-  /* Validate record's agen_id against the datatype's agen_id 
+  /* Validate record's agen_id against the datatype's agen_id
      (if there is one). */
   select count(*) into v_count
   from hdb_datatype dt, hdb_site_datatype sd
@@ -113,7 +117,19 @@ begin
     end if;
 
   end if;
-  
+
+--  now validate the record before it goes into the table
+--  old logic for validation removed because of business rule that modify_r_base_RAW will be used always
+--  if (INSERTING and nvl(:new.validation,'Z') in ('Z')) or UPDATING then
+  if (nvl(:new.validation,'Z') in ('Z')) then
+    hdb_utilities.validate_r_base_record
+      (:new.site_datatype_id,
+       :new.interval,
+       :new.start_date_time,
+       :new.value,
+       :new.validation);
+  end if;
+
 end;
 /
 show errors trigger r_base_before_insert_update;
@@ -240,7 +256,7 @@ declare
   v_count            number;
 begin
 
-   if not (DBMS_SESSION.Is_Role_Enabled ('SAVOIR_FAIRE')) then
+   if not (is_role_granted ('SAVOIR_FAIRE')) then
       check_sdi_auth (:old.site_datatype_id);
    end if;
 
