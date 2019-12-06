@@ -322,3 +322,9 @@ ALTER TRIGGER cp_algorithm_update COMPILE;
 ALTER TRIGGER cp_algorithm_delete COMPILE;
 /
 
+--update version table
+INSERT INTO TSDB_PROPERTY (PROP_NAME, PROP_VALUE) VALUES ('MissingColCPArchives', 'Y');
+/
+
+--Commit
+commit;

@@ -346,3 +346,10 @@ show errors trigger hdb_site_archive_delete;
 
 commit;
 /
+
+--update version table
+INSERT INTO TSDB_PROPERTY (PROP_NAME, PROP_VALUE) VALUES ('Archive_SITE-DATAYPE', 'Y');
+/
+
+--Commit
+commit;

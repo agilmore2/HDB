@@ -766,4 +766,9 @@ begin
 end;     
 /
 
+--update version table
+INSERT INTO TSDB_PROPERTY (PROP_NAME, PROP_VALUE) VALUES ('IsRoleGranted', 'Y');
+/
 
+--Commit
+commit;
