@@ -209,7 +209,7 @@ sub compare_rating ($$$) {    #returns 1 if arrays are equal, 0 if not
   while (@newrat) {
     my ($db_indep, $db_dep) = @{pop(@$dbrat)}[1,2]; # hoorah for perl ref and array syntax!
     my ($web_indep, $web_dep) = @{pop(@newrat)}; # same!
-    return 0 if $web_indep != $db_indep and $web_dep != $db_dep; #possible floating point issues
+    return 0 if $web_indep != $db_indep or $web_dep != $db_dep; #possible floating point issues
   }
   return 1;
 }

@@ -13,6 +13,7 @@ use Date::Calc qw(Delta_DHMS Add_Delta_Days Month_to_Text Decode_Date_EU Today);
 use Compress::Zlib;
 use File::Basename;
 use Data::Dumper;
+use List::Util qw[min max];
 
 #insert HDB library
 use Hdb;
@@ -31,14 +32,14 @@ my $insertflag = 1;
 my $overwrite  = 'null';
 my ( $readfile, $accountfile, $printurl, $debug, $flowtype );
 my ( $compression, $hdbuser, $hdbpass );
-my ( $begindatestr, $enddatestr);
+my ( $begindatestr, $enddatestr, $numdays);
 
 #global array of usgs site ids, populated from command line or database
 my ( @site_num_list );
 
 #global variables read from database in get_app_ids
 my ( $load_app_id, $agen_id, $validation,
-     $url, $collect_id, $official_collect_id );
+     $website, $collect_id, $official_collect_id );
      
 my $agen_abbrev = "USGS";
 
@@ -52,6 +53,8 @@ $title{d} = 'USGS Daily Values (Provisional/Official)';
 #======================================================================
 #parse arguments
 process_args(@ARGV); # uses globals, ick.
+
+my $MAX_DAYS_TO_RETRIEVE = $flowtype eq 'u' ? 100 : 10_000; # assuming 96 values a day, read ~10K values at a time
 
 =head2 FORMAT
 
@@ -141,7 +144,7 @@ $hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI'")
 
 get_app_ids();
 
-my ( $usgs_sites, $usgs_codes );
+my ( $usgs_sites );
 
 if ( @site_num_list) {
   $usgs_sites = get_usgs_sites(@site_num_list);
@@ -150,74 +153,43 @@ if ( @site_num_list) {
   @site_num_list = build_site_num_list($usgs_sites);
 }
 
-#build data code list
-# right now, we assume that we want any data codes defined
-# for the sites specified.
-$usgs_codes = get_usgs_codes(@site_num_list);
-
 my (@data);
 
 #if we are just reading in data from a previously downloaded file
 if ( defined($readfile) ) {
-  read_from_file (\@data); 
+  read_from_file (\@data);
+  write_data();
 } else {    # attempt to get data from USGS web page
-  read_from_web (\@data); 
+  my $sites_per_cycle = int($MAX_DAYS_TO_RETRIEVE/$numdays);
+  my @all_sites = keys %$usgs_sites;
+  $sites_per_cycle = min($sites_per_cycle, scalar(@all_sites), 50); # limit based on data size, total sites, or url length
+  while (@all_sites) { # loop over the list rather than all at once.
+    my $local_sites = {};
+    my @cur_sites = @all_sites[0..$sites_per_cycle-1];
+    foreach my $site (@cur_sites) {
+      $local_sites->{$site} = $usgs_sites->{$site};
+      shift @all_sites;
+    }
+
+    read_from_web ($local_sites, \@data);
+    write_data();
+  }
 }
 
-#this next section runs through the data destructively,
-# shortening the @data array after a insert
-# the insert is passed a slice of @data
 
-my $numrows=0;
-STATION:
-until ( !defined( $data[0] ) ) {
-
-  skip_comments (\@data);
-  
-  #find usgs id and get rid of actual header on data
-  my ($usgs_no) = read_header (\@data); 
-
-  next STATION if $usgs_no == 0; #failed to find a USGS site number, next station!
-
-  # count number of rows that are not comments after header
-  #and are still the same usgs site
-  while (     $numrows <= $#data                              # while haven't reached the end of the data
-          and substr( $data[$numrows], 0, 1 ) ne '#'          # and first character is #
-          and ( split /\t/, $data[$numrows] )[1] eq $usgs_no )# and second tab-delimited file is still same id
-  {
-    $numrows++;
-  }
-
-  if ( $numrows eq 0 )
-  { # USGS has started putting completely empty headers in for stations not in realtime system?
-    next STATION;
-  }
-
-  #make a slice of the input data for this site
-  my (@cur_values) = @data[ 0 .. $numrows - 1 ];
-
-  # put data into database, unless testflag is set
-  if ( defined($insertflag) ) {
-      process_data ( $usgs_no, \@cur_values);
-  }
-
-  #now shorten the file array by the number of lines used up by this usgs id
-  @data = @data[ $numrows .. $#data ];
-
-  #reset row count
-  $numrows = 0;
-}
-
-# print error messages for all sites that no or bad data was returned 
+# print error messages for all sites that no or bad data was returned
 my @data_errors;
 foreach my $usgs_no ( keys %$usgs_sites ) {
-  my $usgs_site = $usgs_sites->{$usgs_no};
-  if ( !defined( $usgs_site->{found_data} ) ) {
-    push @data_errors,
-"No data found for site: $usgs_site->{site_name}, $usgs_no\n";
-  } elsif (defined($usgs_site->{error_code})) {
-    push @data_errors,
-"Bad data seen for site: $usgs_site->{site_name}, $usgs_no: $usgs_site->{error_code}\n";
+  foreach my $data_code (keys %{$usgs_sites->{$usgs_no}}) {
+    my $usgs_site = $usgs_sites->{$usgs_no}->{$data_code};
+    if (!defined($usgs_site->{found_data})) {
+      push @data_errors,
+        "No data found for site: $usgs_site->{site_name}, $usgs_no, parameter: $data_code\n";
+    }
+    elsif (defined($usgs_site->{error_code})) {
+      push @data_errors,
+        "Bad data seen for site: $usgs_site->{site_name}, $usgs_no, parameter: $data_code error: $usgs_site->{error_code}\n";
+    }
   }
 }
 
@@ -271,12 +243,12 @@ hdb_loading_application where loading_application_name = '$load_app_name'";
     $sth->bind_col( 1, \$agen_id );
     $sth->bind_col( 2, \$collect_id );
     $sth->bind_col( 3, \$validation );
-    $sth->bind_col( 4, \$url );
+    $sth->bind_col( 4, \$website );
     my $stuff = $sth->fetch;
     Dumper($stuff);
     unless ($stuff) {
       $hdb->hdbdie(
-"Data source definition not found, $agen_id, $collect_id, $validation, $url!\n"
+"Data source definition not found, $agen_id, $collect_id, $validation, $website!\n"
       );
     }
     $sth->finish();
@@ -362,9 +334,7 @@ sub build_url {
 
   # url already has http:// etc. part,
   # argument is multiple site id list generated earlier
-  $url .= $parameters;
-
-  return $url;
+  return $parameters;
 }
 
 sub build_site_num_list {
@@ -379,6 +349,7 @@ sub build_site_num_list {
 }
 
 sub build_web_request {
+  my $params = shift;
   my $ua = LWP::UserAgent->new;
   $ua->agent( "$agen_abbrev Streamflow -> US Bureau of Reclamation HDB dataloader: "
               . $ua->agent );
@@ -386,7 +357,7 @@ sub build_web_request {
   $ua->timeout(600);
   my $request = HTTP::Request->new();
   $request->method('GET');
-  return ( $ua, $request );
+  return ( $website.$params, $ua, $request );
 }
 
 sub get_usgs_sites {
@@ -423,7 +394,7 @@ order by usgs_id";
   #this DBI function returns a hash indexed by column 1 (one-based), which is
   # the usgs id (the first column returned by the query above)
   # if no data returned, checked later
-  eval { $hashref = $hdb->dbh->selectall_hashref( $get_usgs_no_statement, 1 ); };
+  eval { $hashref = $hdb->dbh->selectall_hashref( $get_usgs_no_statement, [1, 2] ); };
 
   if ($@) {    # something screwed up
     print $hdb->dbh->errstr, " $@\n";
@@ -519,28 +490,24 @@ sub insert_values {
   # the rest of the arguments are predetermined by command line arguments and
   # the generic mapping for this site
 
-  if (    !defined( $usgs_site->{interval} )
-       or !defined($agen_id)
+  if (    !defined($agen_id)
        or !defined($overwrite)
-       or !defined($load_app_id)
-       or !defined( $usgs_site->{meth_id} )
-       or !defined( $usgs_site->{comp_id} ) )
+       or !defined($load_app_id) )
   {
-    $hdb->hdbdie(
-"Unable to write data to database for $usgs_site->{site_name}\nRequired information missing in insert_values()!\n"
-    );
+    my $name = $usgs_site->{(keys %$usgs_site)[0]}->{site_name};
+    $hdb->hdbdie("Undefined date, valid code or collection id in insert_values()!\n");
   }
 
 
   my $modify_data_statement = "
   BEGIN
-    modify_r_base($usgs_site->{sdi},'$usgs_site->{interval}',
+    modify_r_base(?,?, /* sdi, interval */
                       ?,null,/* start_date_time, end_date_time */
                       ?,/* value */
                       $agen_id,$overwrite,
                       ?, ?, /* validation, collection system id */
                       $load_app_id,
-                      $usgs_site->{meth_id},$usgs_site->{comp_id},
+                      ?,?, /* meth_id, comp_id */
                       'Y',null, /*do update?, data flags */
                       ?); /*time zone, read from file*/
   END;";
@@ -556,78 +523,100 @@ sub insert_values {
       $numrows++;
       @row = split /\t/, $line;
 
-      #value date is already in required format
-      $value_date = $row[2];
-      $timezone = $row[3];
-
-      $value = $row[ $usgs_site->{column} ];
-
-      if ($value) {    # get rid of ',' in display
-        $value =~ s/,//g;
-      }
-
-      # For daily values:
-      # validation is defaulted to the value of the $validation variable
-      # but may be overwritten by the qual_code from the row of data
-      # Currently, the codes seen from the USGS are: none, P and A
-      # 'A' is approved data, which is the "Official" data. Rows with
-      # this quality code are given a different collection system, and this
-      # quality code is passed on as the validation.
-
-      if ( $flowtype eq 'd' ) {
-        $qual_code = $row[ $usgs_site->{qualitycolumn} ];
-        if ( defined($qual_code) and $qual_code eq 'A' ) {
-          $valid_code = $qual_code;
-          $coll_id = $official_collect_id;  #from USGS official in collect table
-        } else {
-          $valid_code = $validation;        #from data source table
-          $coll_id    = $collect_id;        #from data source table
+      foreach my $code (keys(%$usgs_site)) {
+        if (!defined($usgs_site->{$code}->{interval})
+          or !defined($usgs_site->{$code}->{meth_id})
+          or !defined($usgs_site->{$code}->{comp_id})) {
+          $hdb->hdbdie(
+            "Unable to write data to database for $usgs_site->{$code}->{site_name} $code\nRequired information missing in insert_values()!\n"
+          );
         }
-      }
 
-      #need all three of these here. Also checking on value next
-      if (    !defined($value_date)
-           or !defined($valid_code)
-           or !defined($coll_id) )
-      {
-        $hdb->hdbdie(
-           "Undefined date, valid code or collection id in insert_values()!\n");
-      }
+        #value date is already in required format
+        $value_date = $row[2];
+        $timezone = $row[3];
 
-      # check if value is known, if not, move to next row
-      if ( !defined($value) or $value eq '' ) {
-        print "data missing: $usgs_site->{sdi}, date $value_date\n"
-          if defined($debug);
-        next;
-      } elsif ( $value =~ m/Ice/ ) {    # check for Ice
-        print "Iced up: $usgs_site->{sdi}, date $value_date: $value\n"
-          if defined($debug);
-        $usgs_site->{error_code}=$value;
-        next;
-      } elsif ( $value =~ m/[^-0-9\.]/ ) {    # check for other text, complain
-        print
-"value field not recognized: $usgs_site->{sdi}, date $value_date: $value\n"
-           if defined($debug);
-        $usgs_site->{error_code}=$value;
-        next;
-      } else {
+        $value = $row[ $usgs_site->{$code}->{column} ];
+
+        if ($value) { # get rid of ',' in display
+          $value =~ s/,//g;
+        }
+
+        # For daily values:
+        # validation is defaulted to the value of the $validation variable
+        # but may be overwritten by the qual_code from the row of data
+        # Currently, the codes seen from the USGS are: none, P and A
+        # 'A' is approved data, which is the "Official" data. Rows with
+        # this quality code are given a different collection system, and this
+        # quality code is passed on as the validation.
+
+        if ($flowtype eq 'd') {
+          $qual_code = $row[ $usgs_site->{$code}->{qualitycolumn} ];
+          if (defined($qual_code) and $qual_code eq 'A') {
+            $valid_code = $qual_code;
+            $coll_id = $official_collect_id; #from USGS official in collect table
+          }
+          else {
+            $valid_code = $validation; #from data source table
+            $coll_id = $collect_id;    #from data source table
+          }
+        }
+
+        #need all three of these here. Also checking on value next
+        if (!defined($value_date)
+          or !defined($valid_code)
+          or !defined($coll_id)) {
+          $hdb->hdbdie(
+            "Undefined date, valid code or collection id in insert_values()!\n");
+        }
+
+        # check if value is known, if not, move to next row
+        if (!defined($value) or $value eq '') {
+          print "data missing: $usgs_site->{$code}->{sdi}, date $value_date\n"
+            if defined($debug);
+          next;
+        }
+        elsif ($value =~ m/Ice/) {
+          # check for Ice
+          print "Iced up: $usgs_site->{$code}->{sdi}, date $value_date: $value\n"
+            if defined($debug);
+          $usgs_site->{$code}->{error_code} = $value;
+          next;
+        }
+        elsif ($value =~ m/ZFL/) {
+          $value = 0.0;
+        }
+        elsif ($value =~ m/[^-0-9\.]/) {
+          # check for other text, complain
+          print
+            "value field not recognized: $usgs_site->{$code}->{sdi}, date $value_date: $value\n"
+            if defined($debug);
+          $usgs_site->{$code}->{error_code} = $value;
+          next;
+        }
+
 
         # update or insert
-        if ( defined($debug) ) {
+        if (defined($debug)) {
           print
-"modifying for $usgs_site->{sdi}, date $value_date, value $value, update status unknown\n";
+            "modifying for $usgs_site->{$code}->{sdi}, date $value_date, value $value, update status unknown\n";
         }
-        $modsth->bind_param( 1, $value_date );
-        $modsth->bind_param( 2, $value );
-        $modsth->bind_param( 3, $valid_code );
-        $modsth->bind_param( 4, $coll_id );
-        $modsth->bind_param( 5, $timezone );
+        $modsth->bind_param(1, $usgs_site->{$code}->{sdi});
+        $modsth->bind_param(2, $usgs_site->{$code}->{interval});
+        $modsth->bind_param(3, $value_date);
+        $modsth->bind_param(4, $value);
+        $modsth->bind_param(5, $valid_code);
+        $modsth->bind_param(6, $coll_id);
+        $modsth->bind_param(7, $usgs_site->{$code}->{meth_id});
+        $modsth->bind_param(8, $usgs_site->{$code}->{comp_id});
+        $modsth->bind_param(9, $timezone);
         $modsth->execute;
 
-        if ( !defined($first_date) ) {    # mark that data has changed
+        if (!defined($first_date)) { # mark that data has changed
           $first_date = $value_date;
         }
         $updated_date = $value_date;
+
       }
     }
     $modsth->finish;
@@ -681,7 +670,7 @@ sub version {
 
 sub process_args {    
 #scalar and array versions, the scalars are a string of the arrays
-  my ($numdays, $begindate,$enddate,@begindate,@enddate); #array versions for date calcs
+  my ($begindate,$enddate,@begindate,@enddate); #array versions for date calcs
   
   while (@_) {
     my $arg = shift;
@@ -793,7 +782,7 @@ sub process_args {
   }
  
   ($begindatestr, $enddatestr) = 
-    process_dates (\@enddate, \@begindate, $numdays);
+    process_dates (\@enddate, \@begindate);
 
   return;
 }
@@ -810,14 +799,18 @@ sub read_from_file {
 }
 
 sub read_from_web {
+  my $local_sites   = shift;
   my $data          = shift;
 
-  my $url = build_url( \@site_num_list, $usgs_codes );
+  my @site_num_list = build_site_num_list($local_sites);
+  my $usgs_codes = get_usgs_codes(@site_num_list);
+
+  my $params = build_url( \@site_num_list, $usgs_codes );
+
+  my ( $url, $ua, $request ) = build_web_request($params);
   if ( defined($printurl) or defined($debug) ) {
     print "$url\n";
   }
-
-  my ( $ua, $request ) = build_web_request();
   $request->uri($url);
 
   # this next function actually gets the data
@@ -864,6 +857,23 @@ sub skip_comments {
     return ();
 }
 
+sub skip_data {
+  my $usgs_no = shift;
+  my $data = shift;
+
+  my $numrows = 0;
+
+  while (     $numrows <= scalar(@$data)                              # while haven't reached the end of the data
+    and substr( $data[$numrows], 0, 1 ) ne '#'          # and first character isn't #
+    and ( split /\t/, $data[$numrows] )[1] eq $usgs_no )# and second tab-delimited field is still same id
+  {
+    shift @$data;
+    $numrows++;
+  }
+  print STDERR "WARNING, skipped $numrows rows of data for $usgs_no with no matching parameter\n";
+  return ();
+}
+
 sub read_header {
 
   my $data       = shift;
@@ -901,46 +911,91 @@ sub read_header {
   }
 
   #check on found data for this usgs no
-  $usgs_sites->{$usgs_no}->{found_data} = 1;
-  if (    !defined( $usgs_sites->{$usgs_no}->{sdi} )
-       or !defined( $usgs_sites->{$usgs_no}->{site_id} )
-       or !defined( $usgs_sites->{$usgs_no}->{data_code} ) )
-  {
-    $hdb->hdbdie(
-               "site or sdi or data code not defined for usgs id: $usgs_no!\n");
-  }
+  foreach my $code (keys(%{$usgs_sites->{$usgs_no}})) {
+    if (!defined($usgs_sites->{$usgs_no}->{$code}->{sdi})
+      or !defined($usgs_sites->{$usgs_no}->{$code}->{site_id})) {
+      $hdb->hdbdie(
+        "site or sdi not defined for usgs id: $usgs_no, parameter $code!\n");
+    }
 
-  #find the column in the header that contains the right data code, making
-  # sure not to match column with data qualification code (ending regex with $)
-  my $col = 1;
-  until ( $headers[ $col++ ] =~ /$usgs_sites->{$usgs_no}->{data_code}$/ ) {
-    if ( !defined( $headers[$col] ) ) {
-      print STDERR "Not found: '$usgs_sites->{$usgs_no}->{data_code}' in:\n";
+    #find the column in the header that contains the right data code, making
+    # sure not to match column with data qualification code (ending regex with $)
+    my $col = 1;
+    until ($headers[ $col++ ] =~ /$code$/) {
+      if (!defined($headers[$col])) {
+        print STDERR "WARNING: Not found: '$code' in:\n";
+        print STDERR "@headers\n";
+        print STDERR "Cannot find value column code from header!\n";
+        $usgs_sites->{$usgs_no}->{$code}->{found_data} = 0;
+        skip_data($usgs_no, $data);
+        return 0; #no data, next station please!
+      }
+    }
+    $usgs_sites->{$usgs_no}->{$code}->{found_data} = 1;
+
+    #variable defining which column to read values from
+    $usgs_sites->{$usgs_no}->{$code}->{column} = $col - 1;
+
+    #look for data quality column
+    # column header should be something like 01_00060_00003_cd
+    # and should be the column immediately after the value
+    # does the realtime data have this?
+    unless ($headers[$col] =~ /${code}_cd$/) {
+      print STDERR "Not found: '$usgs_sites->{$usgs_no}->{data_code}_cd' in:\n";
       print STDERR "@headers\n";
-      print STDERR "Cannot find value column code from header!\n";
+      print STDERR "Cannot find quality column code from header!\n";
       $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
     }
+    $usgs_sites->{$usgs_no}->{$code}->{qualitycolumn} = $col;
   }
-
-  #variable defining which column to read values from
-  $usgs_sites->{$usgs_no}->{column} = $col - 1;
-
-  #look for data quality column
-  # column header should be something like 01_00060_00003_cd
-  # and should be the column immediately after the value
-  # does the realtime data have this?
-  unless ( $headers[$col] =~ /$usgs_sites->{$usgs_no}->{data_code}_cd$/ ) {
-    print STDERR "Not found: '$usgs_sites->{$usgs_no}->{data_code}_cd' in:\n";
-    print STDERR "@headers\n";
-    print STDERR "Cannot find quality column code from header!\n";
-    $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
-  }
-  $usgs_sites->{$usgs_no}->{qualitycolumn} = $col;
-
     return ($usgs_no);
 }
 
- 
+#this next section runs through the global @data destructively,
+# shortening the @data array after a insert
+# the insert is passed a slice of @data
+sub write_data {
+  my $numrows=0;
+  STATION:
+  until ( !defined( $data[0] ) ) {
+
+    skip_comments (\@data);
+
+    #find usgs id and get rid of actual header on data
+    my ($usgs_no) = read_header (\@data);
+
+    next STATION if $usgs_no == 0; #failed to find a USGS site number, next station!
+
+    # count number of rows that are not comments after header
+    #and are still the same usgs site
+    while (     $numrows <= $#data                              # while haven't reached the end of the data
+      and substr( $data[$numrows], 0, 1 ) ne '#'          # and first character is #
+      and ( split /\t/, $data[$numrows] )[1] eq $usgs_no )# and second tab-delimited field is still same id
+    {
+      $numrows++;
+    }
+
+    if ( $numrows eq 0 )
+    { # USGS has started putting completely empty headers in for stations not in realtime system?
+      next STATION;
+    }
+
+    #make a slice of the input data for this site
+    my (@cur_values) = @data[ 0 .. $numrows - 1 ];
+
+    # put data into database, unless testflag is set
+    if ( defined($insertflag) ) {
+      process_data ( $usgs_no, \@cur_values);
+    }
+
+    #now shorten the file array by the number of lines used up by this usgs id
+    @data = @data[ $numrows .. $#data ];
+
+    #reset row count
+    $numrows = 0;
+  }
+}
+
 sub process_data {
   my $usgs_no        = shift;
   my $cur_values     = shift;
@@ -958,12 +1013,13 @@ sub process_data {
     insert_values( \@$cur_values, $usgs_site );
 
 #report results of insertion, and report error codes to STDERR
+  my $site_name = [%$usgs_site]->[1]{site_name}; #dereference the first row's site_name
   if ( !defined($first_date) ) {
     print
-      "No data processed for $usgs_site->{site_name}, $usgs_no\n";
+      "No data processed for $site_name: $usgs_no\n";
   } else {
     print
-"Data processed from $first_date to $updated_date for $usgs_site->{site_name}, $usgs_no\n";
+"Data processed from $first_date to $updated_date for $site_name, $usgs_no\n";
     print "Number of rows from $agen_abbrev processed: $rows_processed\n";
   }
   return;
@@ -972,7 +1028,6 @@ sub process_data {
 sub process_dates {
   my $enddate   = shift;
   my $begindate = shift;
-  my $numdays   = shift;
 
   #Truth table and results for numdays, begindate and enddate
   # errors are all defined, only enddate defined.
@@ -1026,6 +1081,7 @@ Large amounts of instantaneous data may be slow to load.\n";
       print "Error, dates are unspecified!\n";
       usage();
     }
+    $numdays = Delta_Days(@$begindate,@$enddate);
   }
 
   if ( !@$begindate or !@$enddate ) {
