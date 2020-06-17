@@ -107,15 +107,11 @@ the _cd columns.
 
 =head2 Design Notes
 
-Current limitations include the lack of ability to collect more than one
-parameter per site. They might even be in the file received from USGS, but
-this application will only read the first. This would be fixable with
-some work to insert_values(), the header parsing code and the generic mapping.
+This program really, really needs some more modularization.
 
-Getting a different parameter at a different site is currently supported, but
-unused.
-
-This program really, really needs some modularization.
+Now handles multiple data parameters at multiple sites
+Also will pull a maximum of 50 sites and only ~10K data rows at a time, or
+unlimited rows for a single site.
 
 =cut
 
@@ -392,7 +388,8 @@ order by usgs_id";
   my $hashref;
 
   #this DBI function returns a hash indexed by column 1 (one-based), which is
-  # the usgs id (the first column returned by the query above)
+  # the usgs id (the first column returned by the query above) and then by
+  # column 2, which is the data code
   # if no data returned, checked later
   eval { $hashref = $hdb->dbh->selectall_hashref( $get_usgs_no_statement, [1, 2] ); };
 
