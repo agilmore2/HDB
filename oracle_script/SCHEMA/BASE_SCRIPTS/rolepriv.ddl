@@ -216,6 +216,8 @@ grant select on hdb_site_sequence to public;
 grant select,insert,update,delete on ref_ext_site_data_map_archive to hdb_meta_role;
 grant select,insert,update,delete on ref_ext_site_data_map_key_arch  to hdb_meta_role;
 
+/* Missing privileges added for Alarm on 07/01/2020 */
+GRANT INSERT,UPDATE,DELETE on HDB_LOADING_APPLICATION  to CALC_DEFINITION_ROLE;
 
 spool off
 exit;
