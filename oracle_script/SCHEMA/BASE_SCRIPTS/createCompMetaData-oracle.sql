@@ -284,7 +284,7 @@ CREATE TABLE CP_COMPUTATION
 	COMPUTATION_ID NUMBER NOT NULL,
 	COMPUTATION_NAME VARCHAR2(64) NOT NULL,
 	ALGORITHM_ID NUMBER,                -- Must be assigned to execute.
-	CMMNT VARCHAR2(1000),
+	CMMNT VARCHAR2(2000),
 	LOADING_APPLICATION_ID NUMBER,      -- App to execute this comp.
 	                                     -- (null means not currently assigned)
 	DATE_TIME_LOADED DATE NOT NULL,
@@ -350,7 +350,7 @@ CREATE TABLE CP_COMPUTATION_ARCHIVE
 	COMPUTATION_ID NUMBER NOT NULL,
 	COMPUTATION_NAME VARCHAR2(64) NOT NULL,
 	ALGORITHM_ID NUMBER,                -- Must be assigned to execute.
-	CMMNT VARCHAR2(1000),
+	CMMNT VARCHAR2(2000),
 	LOADING_APPLICATION_ID NUMBER,      -- App to execute this comp.
 	                                     -- (null means not currently assigned)
 	DATE_TIME_LOADED DATE NOT NULL,
