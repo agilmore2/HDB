@@ -163,8 +163,10 @@ if ( defined($readfile) ) {
     my $local_sites = {};
     my @cur_sites = @all_sites[0..$sites_per_cycle-1];
     foreach my $site (@cur_sites) {
-      $local_sites->{$site} = $usgs_sites->{$site};
-      shift @all_sites;
+      if (defined $site) {
+        $local_sites->{$site} = $usgs_sites->{$site};
+        shift @all_sites;
+      }  
     }
 
     read_from_web ($local_sites, \@data);
@@ -800,6 +802,7 @@ sub read_from_web {
   my $data          = shift;
 
   my @site_num_list = build_site_num_list($local_sites);
+
   my $usgs_codes = get_usgs_codes(@site_num_list);
 
   my $params = build_url( \@site_num_list, $usgs_codes );
