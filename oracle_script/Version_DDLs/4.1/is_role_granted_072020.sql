@@ -766,9 +766,26 @@ begin
 end;     
 /
 
+create or replace TRIGGER ref_site_coeflu_site_perm
+after             insert OR update OR delete
+on                ref_site_coeflu
+for   each row
+begin
+     if not (is_role_granted ('SAVOIR_FAIRE')
+             OR is_role_granted ('REF_META_ROLE')) then
+	   check_site_id_auth (:new.site_id);
+	end if;
+end;
+/
+
 --update version table
 INSERT INTO TSDB_PROPERTY (PROP_NAME, PROP_VALUE) VALUES ('IsRoleGranted', 'Y');
 /
+
+--grants
+grant EXECUTE on IS_ROLE_GRANTED to PUBLIC ;
+CREATE OR REPLACE PUBLIC SYNONYM IS_ROLE_GRANTED FOR IS_ROLE_GRANTED;
+grant select on sys.dba_role_privs to SAVOIR_FAIRE;
 
 --Commit
 commit;
