@@ -159,6 +159,9 @@ if ( defined($readfile) ) {
   my $sites_per_cycle = int($MAX_DAYS_TO_RETRIEVE/$numdays);
   my @all_sites = keys %$usgs_sites;
   $sites_per_cycle = min($sites_per_cycle, scalar(@all_sites), 50); # limit based on data size, total sites, or url length
+  if ($sites_per_cycle < 1) {
+    $sites_per_cycle = 1
+  }
   while (@all_sites) { # loop over the list rather than all at once.
     my $local_sites = {};
     my @cur_sites = @all_sites[0..$sites_per_cycle-1];
@@ -800,11 +803,11 @@ sub read_from_file {
 sub read_from_web {
   my $local_sites   = shift;
   my $data          = shift;
-
+  
   my @site_num_list = build_site_num_list($local_sites);
 
   my $usgs_codes = get_usgs_codes(@site_num_list);
-
+  
   my $params = build_url( \@site_num_list, $usgs_codes );
 
   my ( $url, $ua, $request ) = build_web_request($params);
