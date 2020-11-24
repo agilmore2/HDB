@@ -9,7 +9,7 @@ use warnings;
 use lib ( defined $ENV{PERL_ENV} ? "$ENV{PERL_ENV}/lib" : "$ENV{HDB_ENV}/perlLib/lib" );
 
 use LWP::UserAgent;
-use Date::Calc qw(Delta_DHMS Add_Delta_Days Month_to_Text Decode_Date_EU Today);
+use Date::Calc qw(Delta_DHMS Add_Delta_Days Month_to_Text Decode_Date_EU Today Delta_Days);
 use Compress::Zlib;
 use File::Basename;
 use Data::Dumper;
@@ -159,12 +159,17 @@ if ( defined($readfile) ) {
   my $sites_per_cycle = int($MAX_DAYS_TO_RETRIEVE/$numdays);
   my @all_sites = keys %$usgs_sites;
   $sites_per_cycle = min($sites_per_cycle, scalar(@all_sites), 50); # limit based on data size, total sites, or url length
+  if ($sites_per_cycle < 1) {
+    $sites_per_cycle = 1
+  }
   while (@all_sites) { # loop over the list rather than all at once.
     my $local_sites = {};
     my @cur_sites = @all_sites[0..$sites_per_cycle-1];
     foreach my $site (@cur_sites) {
-      $local_sites->{$site} = $usgs_sites->{$site};
-      shift @all_sites;
+      if (defined $site) {
+        $local_sites->{$site} = $usgs_sites->{$site};
+        shift @all_sites;
+      }  
     }
 
     read_from_web ($local_sites, \@data);
@@ -315,21 +320,22 @@ sub build_url {
   # you can specify period also in hours by appending h to the end of numdays
 
   my $parameters =
-"?date_format=YYYY-MM-DD&format=rdb&begin_date=$begindatestr&end_date=$enddatestr";
+"?format=rdb&siteStatus=all&startDT=$begindatestr&endDT=$enddatestr";
 
-  if ($compression) {
-    $parameters .= "&rdb_compression=gz"
-  }
+  #if ($compression) {
+  #  $parameters .= "&rdb_compression=gz"
+  #}
 
   #append data code list, complete url syntax done in get_usgs_codes
-  $parameters .= "$usgs_codes";
+  $parameters .= "&parameterCd=$usgs_codes";
 
-  $parameters .= "&multiple_site_no=";
+  $parameters .= "&sites=";
   
   $parameters .= join ',', @$site_num_list;
 
   # url already has http:// etc. part,
   # argument is multiple site id list generated earlier
+
   return $parameters;
 }
 
@@ -382,7 +388,7 @@ a.site_id = d.site_id and
 b.ext_data_source_id = e.ext_data_source_id and
 e.ext_data_source_name = '$title{$flowtype}'
 order by usgs_id";
-
+  
   $hdb->dbh->{FetchHashKeyName} = 'NAME_lc';
 
   my $hashref;
@@ -407,11 +413,10 @@ sub get_usgs_codes {
   my $id_limit_clause = '';
   my $site_num_list;
 
-  if ( $site_num_list = shift ) {
-    $site_num_list = "'" . $site_num_list;
-    $site_num_list =~ s/,/','/g;
-    $site_num_list .= "'";
-    $id_limit_clause = "b.primary_site_code in ( $site_num_list ) and";
+  if (@site_num_list) {
+    $id_limit_clause = "b.primary_site_code in ( '";
+    $id_limit_clause .= join("','", @site_num_list);
+    $id_limit_clause .= "' ) and";
   } else {
     $hdb->hdbdie("No sites specified for usgs codes!\n");
   }
@@ -439,7 +444,7 @@ a.ext_data_source_name = '$title{$flowtype}'";
     unless ( $sth->fetch ) {
       $hdb->hdbdie("No data codes found!\n");
     }
-
+   
     #create list for use with retrieval.
     # the parameter list should be like "&cb_00060=on&cb_00065=on" etc
     # one cb_ setting for each data code. The value codes in the resulting
@@ -447,13 +452,13 @@ a.ext_data_source_name = '$title{$flowtype}'";
     # we have to subtract all that extra at the end for this use.
     # realtime codes are 00060 in the db, so this will not affect them
     $value =~ s/_.*//;
-    $data_code_list = '&cb_' . $value . '=on';
+    $data_code_list = $value;
 
     # now build list if there is more than one data code returned
     # if more than one data code per site, will fail
     while ( $sth->fetch ) {
       $value =~ s/_.*//;
-      $data_code_list .= '&cb_' . $value . '=on';
+      $data_code_list .= ',' . $value;
     }
     $sth->finish();
   };
@@ -798,10 +803,11 @@ sub read_from_file {
 sub read_from_web {
   my $local_sites   = shift;
   my $data          = shift;
-
+  
   my @site_num_list = build_site_num_list($local_sites);
-  my $usgs_codes = get_usgs_codes(@site_num_list);
 
+  my $usgs_codes = get_usgs_codes(@site_num_list);
+  
   my $params = build_url( \@site_num_list, $usgs_codes );
 
   my ( $url, $ua, $request ) = build_web_request($params);
