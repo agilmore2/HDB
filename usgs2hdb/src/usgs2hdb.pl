@@ -320,7 +320,7 @@ sub build_url {
   # you can specify period also in hours by appending h to the end of numdays
 
   my $parameters =
-"?format=rdb&siteStatus=all&startDT=$begindatestr&endDT=$enddatestr";
+"?format=rdb&begin_date=$begindatestr&end_date=$enddatestr";
 
   #if ($compression) {
   #  $parameters .= "&rdb_compression=gz"
@@ -329,7 +329,7 @@ sub build_url {
   #append data code list, complete url syntax done in get_usgs_codes
   $parameters .= "&parameterCd=$usgs_codes";
 
-  $parameters .= "&sites=";
+  $parameters .= "&site_no=";
   
   $parameters .= join ',', @$site_num_list;
 
@@ -896,6 +896,7 @@ sub read_header {
   #check to see if no data at all, blank line
   if (   !defined($data->[0])
       or $data->[0] eq '' 
+      or $data->[0] =~ /^\t$/
       or ( substr( $data->[0], 0, 1 ) eq '#' ) ) {
     shift @$data;
     return 0; #no data, next station please!
