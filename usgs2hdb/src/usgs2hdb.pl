@@ -320,7 +320,8 @@ sub build_url {
   # you can specify period also in hours by appending h to the end of numdays
 
   my $parameters =
-"?format=rdb&begin_date=$begindatestr&end_date=$enddatestr";
+"?format=rdb&siteStatus=all&startDT=$begindatestr&endDT=$enddatestr";
+#"?format=rdb&begin_date=$begindatestr&end_date=$enddatestr"; # works outside Reclamation
 
   #if ($compression) {
   #  $parameters .= "&rdb_compression=gz"
@@ -329,7 +330,8 @@ sub build_url {
   #append data code list, complete url syntax done in get_usgs_codes
   $parameters .= "&parameterCd=$usgs_codes";
 
-  $parameters .= "&site_no=";
+  $parameters .= "&sites=";
+#  $parameters .= "&site_no="; # works outside Reclamation
   
   $parameters .= join ',', @$site_num_list;
 
