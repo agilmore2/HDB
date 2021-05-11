@@ -807,7 +807,7 @@ end;
 INSERT INTO TSDB_PROPERTY (PROP_NAME, PROP_VALUE) VALUES ('IsRoleGranted', 'Y');
 /
 
---grants, run as sysdba
+--grants, run as SYS
 grant EXECUTE on IS_ROLE_GRANTED to PUBLIC ;
 CREATE OR REPLACE PUBLIC SYNONYM IS_ROLE_GRANTED FOR IS_ROLE_GRANTED;
 grant select on sys.dba_role_privs to SAVOIR_FAIRE;
