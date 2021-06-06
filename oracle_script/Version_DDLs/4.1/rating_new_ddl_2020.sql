@@ -1,10 +1,18 @@
 
 ##### DO NOT FORGET GRANT PRIVILEGES for new TABLES #######
 
---create new ref_rating_table Table 
 
+--drop below PK triggers, if exist as we will use sequences
+drop trigger REF_SITE_RATING_PK_TRIG;
+drop trigger REF_RATING_TABLE_PK_TRIG;
+
+
+--create sequences to replace PK triggers
+CREATE SEQUENCE REF_SITE_RATING_SEQ  MINVALUE 1 MAXVALUE 999999999999999999999999999 INCREMENT BY 1 START WITH 1 NOCACHE ORDER NOCYCLE;
 CREATE SEQUENCE REF_RATING_TABLE_SEQ MINVALUE 1 MAXVALUE 999999999999999999999999999 INCREMENT BY 1 START WITH 1 NOCACHE ORDER NOCYCLE;
 
+
+--create new ref_rating_table Table 
 create table ref_rating_table (                                  
 RATING_ID NUMBER NOT NULL ENABLE, 
 DESCRIPTION VARCHAR2(1000 BYTE),
@@ -35,6 +43,7 @@ storage (initial 100k
 /
 
 
+-- run this to update new table with existing descriptions, if needed
 update ref_rating_table
 set description=
 (select ref_site_rating.description from ref_site_rating where ref_site_rating.site_rating_id = ref_rating_table.rating_id )
@@ -57,6 +66,7 @@ ALTER TABLE REF_SITE_RATING_ARCHIVE DROP ("DESCRIPTION");
 ALTER TABLE REF_SITE_RATING_ARCHIVE MODIFY ("RATING_ID" NULL);
 
 
+--update ref_site_rating_arch triggers
 create or replace TRIGGER ref_site_rating_arch_upd
 after update on ref_site_rating for each row begin insert into ref_site_rating_archive (
 SITE_RATING_ID,
@@ -106,17 +116,22 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 --Public synonyms
 CREATE OR REPLACE PUBLIC SYNONYM ref_rating_table_archive FOR ref_rating_table_archive;
 CREATE OR REPLACE PUBLIC SYNONYM ref_rating_table FOR ref_rating_table;
+CREATE OR REPLACE PUBLIC SYNONYM REF_SITE_RATING_SEQ FOR REF_SITE_RATING_SEQ;
+CREATE OR REPLACE PUBLIC SYNONYM REF_RATING_TABLE_SEQ FOR ref_rating_table;
 /
 
 --Grants to Public
 GRANT SELECT ON  ref_rating_table_archive to PUBLIC;
 GRANT SELECT ON  ref_rating_table to PUBLIC;
+GRANT SELECT ON  REF_SITE_RATING_SEQ to PUBLIC;
+GRANT SELECT ON  REF_RATING_TABLE_SEQ to PUBLIC;
+
 /
 
 commit;
 /
 
---TRIGGERS
+--Update ref_rating_table_arch TRIGGERS
 create or replace trigger ref_rating_table_arch_update                                                                    
 after update on ref_rating_table 
 for each row 
@@ -167,10 +182,8 @@ show errors trigger ref_rating_table_arch_delete;
 /
 
 
----------------------------
---Changed FUNCTION
---FIND_RATING
----------------------------
+
+--Update FIND_RATING FUNCTION
 CREATE OR REPLACE FUNCTION "XDBA"."FIND_RATING" 
 ( rating_type in varchar2
 , indep_sdi in number
