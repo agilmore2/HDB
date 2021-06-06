@@ -214,7 +214,7 @@ end find_rating;
 --Changed PACKAGE
 --RATINGS
 ---------------------------
-CREATE OR REPLACE PACKAGE RATINGS AS
+create or replace PACKAGE ratings AS
 
 /**
  * Ratings package
@@ -391,11 +391,12 @@ figures (15+)
 
 END ratings;
 /
+
 ---------------------------
 --Changed PACKAGE BODY
 --RATINGS
 ---------------------------
-CREATE OR REPLACE PACKAGE BODY RATINGS
+create or replace PACKAGE BODY ratings
 AS
 
   PROCEDURE 
@@ -807,10 +808,24 @@ END IF;
     END IF;
 
     BEGIN
+    
+  -- This first outer IF statement added by Ismail Ozdemir on 08/20/2010
+  -- to check if the shiftedGH <=0 , the flow is 0.  
+  -- Another if statement to check unshifted GH=0 then flow=0 is 
+  -- added in uc_algorithms.jar file
+  
+ IF(indep_value <= 0) THEN
+ dep_value :=0;
+ ELSE
       find_rating_points(rating_in,
       indep_value, x1, x2, y1, y2, match_check);
 
       indep_base := x1;
+
+      IF (y1 = 0 OR y2 = 0 or x1 = 0 or x2 = 0 OR indep_value = 0) THEN
+        deny_action('Unable to complete logarithmic rating for rating ' ||
+      rating_in || ', rating points = 0 are not usable in logarithmic rating, value ' || indep_value);
+      END IF;
 
       IF(match_check = 'E') THEN
         dep_value := y1;
@@ -825,7 +840,8 @@ END IF;
 
         dep_value := POWER(10,   y1 + dy / dx *(x -x1));
       END IF;
-
+ END IF;
+ 
     EXCEPTION
     WHEN others THEN
       deny_action('Unable to complete logarithmic rating for rating ' ||
@@ -894,6 +910,11 @@ END IF;
       find_rating_points(rating_in,
       indep_value, x1, x2, y1, y2, match_check);
 
+      IF (x1 = 0 or x2 = 0 or indep_value = 0) THEN
+        deny_action('Unable to complete logarithmic rating for rating ' ||
+      rating_in || ', rating points = 0 are not usable in logarithmic rating, value ' || indep_value);
+      END IF;
+      
       indep_base := x1;
 
       IF(match_check = 'E') THEN
@@ -1167,4 +1188,3 @@ FUNCTION find_rating(rating_in IN NUMBER)
 
 END ratings;
 /
-
