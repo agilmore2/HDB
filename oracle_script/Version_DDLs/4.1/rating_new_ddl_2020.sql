@@ -1,14 +1,12 @@
 
-##### DO NOT FORGET GRANT PRIVILEGES for new TABLES #######
-
-
 --drop below PK triggers, if exist as we will use sequences
 drop trigger REF_SITE_RATING_PK_TRIG;
 drop trigger REF_RATING_TABLE_PK_TRIG;
 
 
 --create sequences to replace PK triggers
---Change START WITH value  for dbs that has existing RATINGS
+--Change START WITH value  for dbs that has existing RATINGS with Max(Rating_id)+1
+-- Select max(rating_id) from ref_site_rating;
 
 CREATE SEQUENCE REF_SITE_RATING_SEQ  MINVALUE 1 MAXVALUE 999999999999999999999999999 INCREMENT BY 1 START WITH 1 NOCACHE ORDER NOCYCLE;
 CREATE SEQUENCE REF_RATING_TABLE_SEQ MINVALUE 1 MAXVALUE 999999999999999999999999999 INCREMENT BY 1 START WITH 1 NOCACHE ORDER NOCYCLE;
@@ -45,22 +43,34 @@ storage (initial 100k
 /
 
 
--- run this to update new table with existing descriptions, if needed
-update ref_rating_table
-set description=
-(select ref_site_rating.description from ref_site_rating where ref_site_rating.site_rating_id = ref_rating_table.rating_id )
-;
+-- Populate ref_rating_table with ref_site_rating existing rating_id & descriptions values, if needed
+INSERT INTO ref_rating_table (rating_id, description)
+SELECT rating_id,description FROM ref_site_rating;
 
 
---ref_site_rating table modifications
-ALTER TABLE REF_SITE_RATING ADD ("SITE_RATING_ID" NUMBER(38,0) NOT NULL ENABLE);
+
+--main rating tables modifications
+ALTER TABLE REF_SITE_RATING ADD ("SITE_RATING_ID" NUMBER(38,0));
 ALTER TABLE REF_SITE_RATING DROP ("DESCRIPTION");
 ALTER TABLE REF_SITE_RATING MODIFY ("RATING_ID" NUMBER(38,0));
 ALTER TABLE REF_SITE_RATING MODIFY ("RATING_ID" NULL);
-ALTER TABLE REF_SITE_RATING DROP CONSTRAINT "REF_SITE_RATING_PK";
-ALTER TABLE REF_SITE_RATING ADD CONSTRAINT "REF_SITE_RATING_PK" PRIMARY KEY ("SITE_RATING_ID") ENABLE;
+
+alter trigger REF_SITE_RATING_ARCH_UPD disable;
+alter trigger REF_SITE_RATING_ARCH_DEL disable;
+update REF_SITE_RATING set site_rating_id=rating_id;
+commit;
+alter trigger REF_SITE_RATING_ARCH_UPD enable;
+alter trigger REF_SITE_RATING_ARCH_DEL enable;
+
+alter table REF_RATING disable  constraint REF_RATING_REF_SDI_RATING_FK1;
+alter table REF_RATING drop constraint REF_RATING_REF_SDI_RATING_FK1;
+ALTER TABLE REF_SITE_RATING DROP CONSTRAINT REF_SITE_RATING_PK;
+drop index REF_SITE_RATING_PK;
+ALTER TABLE REF_SITE_RATING ADD CONSTRAINT REF_SITE_RATING_PK PRIMARY KEY ("SITE_RATING_ID") ENABLE;
 ALTER TABLE REF_SITE_RATING ADD CONSTRAINT "REF_SITE_RATING_ID_FK1" FOREIGN KEY ("RATING_ID") REFERENCES REF_RATING_TABLE("RATING_ID") ENABLE;
 ALTER TABLE REF_SITE_RATING ADD CONSTRAINT "REF_SITE_RATING_ID_CHECK" CHECK ("RATING_ID" IS NOT NULL) ENABLE;
+alter table REF_RATING  add constraint REF_RATING_REF_SDI_RATING_FK1 foreign key("RATING_ID") references "REF_SITE_RATING"("SITE_RATING_ID");
+alter table REF_RATING enable   constraint REF_RATING_REF_SDI_RATING_FK1;
 
 --ref_site_rating_archive table modifications
 ALTER TABLE REF_SITE_RATING_ARCHIVE ADD ("SITE_RATING_ID" NUMBER NOT NULL ENABLE);
@@ -128,7 +138,8 @@ GRANT SELECT ON  ref_rating_table to PUBLIC;
 GRANT SELECT ON  REF_SITE_RATING_SEQ to PUBLIC;
 GRANT SELECT ON  REF_RATING_TABLE_SEQ to PUBLIC;
 
-/
+--Grants to REF_META_ROLE
+GRANT SELECT,UPDATE,INSERT,DELETE ON ref_rating_table TO REF_META_ROLE;
 
 commit;
 /
@@ -186,7 +197,7 @@ show errors trigger ref_rating_table_arch_delete;
 
 
 --Update FIND_RATING FUNCTION
-CREATE OR REPLACE FUNCTION "XDBA"."FIND_RATING" 
+CREATE OR REPLACE FUNCTION FIND_RATING 
 ( rating_type in varchar2
 , indep_sdi in number
 , value_date_time in date default null
