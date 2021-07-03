@@ -24,7 +24,7 @@ tablespace HDB_data
 storage (initial 100k
          next 100k
          pctincrease 0);
-/
+
 
 --create new ref_rating_table_archive Table 
 create table ref_rating_table_archive (                                  
@@ -40,7 +40,7 @@ tablespace HDB_data
 storage (initial 100k
          next 100k
          pctincrease 0);
-/
+
 
 
 -- Populate ref_rating_table with ref_site_rating existing rating_id & descriptions values, if needed
@@ -99,7 +99,7 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.AGEN_ID,
 :old.RATING_ID,
 'UPDATE', sysdate, NULL); end;
-/
+
 
 create or replace TRIGGER ref_site_rating_arch_del
 after delete on ref_site_rating for each row begin insert into ref_site_rating_archive (
@@ -121,7 +121,7 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.AGEN_ID,
 :old.RATING_ID,
 'DELETE', sysdate, NULL); end;
-/
+
 
 
 
@@ -130,7 +130,7 @@ CREATE OR REPLACE PUBLIC SYNONYM ref_rating_table_archive FOR ref_rating_table_a
 CREATE OR REPLACE PUBLIC SYNONYM ref_rating_table FOR ref_rating_table;
 CREATE OR REPLACE PUBLIC SYNONYM REF_SITE_RATING_SEQ FOR REF_SITE_RATING_SEQ;
 CREATE OR REPLACE PUBLIC SYNONYM REF_RATING_TABLE_SEQ FOR ref_rating_table;
-/
+
 
 --Grants to Public
 GRANT SELECT ON  ref_rating_table_archive to PUBLIC;
@@ -142,7 +142,7 @@ GRANT SELECT ON  REF_RATING_TABLE_SEQ to PUBLIC;
 GRANT SELECT,UPDATE,INSERT,DELETE ON ref_rating_table TO REF_META_ROLE;
 
 commit;
-/
+
 
 --Update ref_rating_table_arch TRIGGERS
 create or replace trigger ref_rating_table_arch_update                                                                    
@@ -166,9 +166,9 @@ coalesce(
          )
 ); 
 end;                                                                    
-/                                                                                                                       
+                                                                                                                      
 show errors trigger ref_rating_table_arch_update;                                                                         
-/
+
                                                                                                                         
 create or replace trigger ref_rating_table_arch_delete                                                                    
 after delete on ref_rating_table 
@@ -190,9 +190,8 @@ coalesce(
          )
 ); 
 end;                                                                    
-/                                                                                                                       
+                                                                                                                      
 show errors trigger ref_rating_table_arch_delete;      
-/
 
 
 
@@ -219,7 +218,7 @@ begin
   return rating;
   
 end find_rating;
-/
+
 
 ---------------------------
 --Changed PACKAGE
@@ -401,7 +400,7 @@ figures (15+)
 
 
 END ratings;
-/
+
 
 ---------------------------
 --Changed PACKAGE BODY
@@ -1198,4 +1197,3 @@ FUNCTION find_rating(rating_in IN NUMBER)
 
 
 END ratings;
-/
