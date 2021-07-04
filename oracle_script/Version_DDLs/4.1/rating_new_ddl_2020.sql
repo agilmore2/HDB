@@ -64,9 +64,9 @@ alter trigger REF_SITE_RATING_ARCH_DEL enable;
 
 alter table REF_RATING disable  constraint REF_RATING_REF_SDI_RATING_FK1;
 alter table REF_RATING drop constraint REF_RATING_REF_SDI_RATING_FK1;
-ALTER TABLE REF_SITE_RATING DROP CONSTRAINT REF_SITE_RATING_PK;
+ALTER TABLE REF_SITE_RATING DROP CONSTRAINT REF_SDI_RATING_PK;
 drop index REF_SITE_RATING_PK;
-ALTER TABLE REF_SITE_RATING ADD CONSTRAINT REF_SITE_RATING_PK PRIMARY KEY ("SITE_RATING_ID") ENABLE;
+ALTER TABLE REF_SITE_RATING ADD CONSTRAINT REF_SDI_RATING_PK PRIMARY KEY ("SITE_RATING_ID") ENABLE;
 ALTER TABLE REF_SITE_RATING ADD CONSTRAINT "REF_SITE_RATING_ID_FK1" FOREIGN KEY ("RATING_ID") REFERENCES REF_RATING_TABLE("RATING_ID") ENABLE;
 ALTER TABLE REF_SITE_RATING ADD CONSTRAINT "REF_SITE_RATING_ID_CHECK" CHECK ("RATING_ID" IS NOT NULL) ENABLE;
 alter table REF_RATING  add constraint REF_RATING_REF_SDI_RATING_FK1 foreign key("RATING_ID") references REF_RATING_TABLE("RATING_ID");
@@ -98,7 +98,9 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.DATE_TIME_LOADED,
 :old.AGEN_ID,
 :old.RATING_ID,
-'UPDATE', sysdate, NULL); end;
+'UPDATE', sysdate, NULL); 
+end;
+/
 
 
 create or replace TRIGGER ref_site_rating_arch_del
@@ -120,7 +122,9 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.DATE_TIME_LOADED,
 :old.AGEN_ID,
 :old.RATING_ID,
-'DELETE', sysdate, NULL); end;
+'DELETE', sysdate, NULL); 
+end;
+/
 
 
 
@@ -165,7 +169,8 @@ coalesce(
           ,sys_context('userenv','session_user')
          )
 ); 
-end;                                                                    
+end; 
+/
                                                                                                                       
 show errors trigger ref_rating_table_arch_update;                                                                         
 
@@ -189,7 +194,8 @@ coalesce(
           ,sys_context('userenv','session_user')
          )
 ); 
-end;                                                                    
+end;         
+/
                                                                                                                       
 show errors trigger ref_rating_table_arch_delete;      
 
@@ -218,6 +224,7 @@ begin
   return rating;
   
 end find_rating;
+/
 
 
 ---------------------------
@@ -400,6 +407,7 @@ figures (15+)
 
 
 END ratings;
+/
 
 
 ---------------------------
@@ -1197,3 +1205,4 @@ FUNCTION find_rating(rating_in IN NUMBER)
 
 
 END ratings;
+/
