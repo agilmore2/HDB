@@ -1,3 +1,279 @@
+create or replace FUNCTION COMPLEXITY_VERIFICATION_FUNC   (
+   USERNAME       VARCHAR2,
+   NEW_PASSWORD   VARCHAR2,
+   OLD_PASSWORD   VARCHAR2
+)
+   RETURN BOOLEAN
+IS
+------------------------------------------------------------------------------------------------------
+-- FILE NAME  :  CR_COMPLEXITY_VERIFICATION_FUNC.SQL
+-- OBJECT NAME:  COMPLEXITY_VERIFICATION_FUNC
+-- TYPE       :  PL/SQL FUNCTION
+--
+------------------------------------------------------------------------------------------------------
+--     DESCRIPTION
+--       THIS IS A SCRIPT FOR ENABLING THE PASSWORD MANAGEMENT FEATURES
+--       BY DEFINING THE FUNCTION FOR PASSWORD COMPLEXITY VERIFICATION.
+------------------------------------------------------------------------------------------------------
+-- PROGRAMMERS NOTES
+------------------------------------------------------------------------------------------------------
+--        THIS FUNCTION MUST BE CREATED IN SYS SCHEMA.
+--        CONNECT SYS/<PASSWORD> AS SYSDBA BEFORE RUNNING THE SCRIPT
+------------------------------------------------------------------------------------------------------
+--            EDITS
+------------------------------------------------------------------------------------------------------
+--
+-- 1) OLD PASSWORD IS NULL.  THIS EDIT IS DISABLED UNTIL WE CONVERT DATABASES TO VERSION 9I.
+--    ORACLE VERSION 8.1.7 DOES NOT SUPPORT THE REPLACE PARAMETER OF THE ALTER USER COMMAND.
+--    THE REPLACE PARAMETER SPECIFIES THE OLD PASSWORD DURING A CHANGE OF PASSWORD.
+-- 2) PASSWORD LENGTH MUST BE AT LEAST 8 CHARACTERS AND NO MORE THAN 30 CHARACTERS.
+--    MINIMUM OF EIGHT CHARACTERS IS REQUIRED BY IRM 08-12.  MAXIMUM OF 30 CHARACTERS
+--    IS THE LIMIT IMPOSED BY ORACLE.
+-- 3) PASSWORD CAN NOT BE THE SAME OR SIMILAR TO USER NAME.  THIS TEST NOW USES THE INSTR()
+--    FUNCTION INSTEAD OF A SIMPLE = COMPARISON THAT THE ORIGINAL CODE CONTAINED.
+-- 4) PASSWORD MUST START WITH AN ALPHABETIC CHARACTER.  THIS IS AN ORACLE RESTRICTION
+--    WHEN THE PASSWORDS ARE NOT INCLOSED IN DOUBLE QUOTES.  NOT ALLOWING DOUBLE QUOTED PASSWORDS
+--    ALSO PREVENTS THE USE OF UPPER AND LOWER CASE PASSWORDS.  ORACLE DOCUMENTATION SAYS THAT
+--    NON-QUOTED PASSWORDS ARE CASE INSENSITIVE AND THAT ORACLE SHIFTS THEM TO UPPER CASE
+--    PRIOR TO SAVING THEM.
+-- 5) PASSWORD TOO SIMPLE.  THIS IS THE ORIGINAL CODE FROM ORACLE.  AT THIS TIME WE CHOSE TO NOT
+--    ENHANCE THE CODE UNTIL A BETTER SOLUTION COULD BE FOUND OR ADDITIONAL WORD LISTS COULD BE CREATED.
+-- 6) PASSWORD MUST CONTAIN ONLY VALID SINGLE-BYTE NUMERIC, ALPHABETIC, OR SPECIAL CHARACTERS.
+--    THIS TEST COMPARES EACH CHARACTER OF THE PASSWORD TO A LIST OF ALLOWABLE CHARACTERS.
+-- 7) PASSWORD CAN NOT CONTAIN UPPERCASE ALPHABETIC CHARACTERS.  THIS TEST WAS ADDED TO PREVENT
+--    CASE SENSITIVE PASSWORDS THAT WOULD THEN REQUIRE THE USE OF DOUBLE QUOTES EVERYTIME THE PASSWORD
+--    IS USED.
+--        ORACLE DOCUMENTATION ON SCHEMA OBJECT NAMES STATES THAT
+--        "NONQUOTED IDENTIFIERS (PASSWORDS)ARE NOT CASE SENSITIVE.
+--        ORACLE INTERPRETS THEM AS UPPERCASE."
+-- 8) PASSWORD MUST CONTAIN AT LEAST ONE NUMERIC, ONE ALPHABETIC AND ONE SPECIAL CHARACTER.
+--    THIS TEST WILL ENSURE A HIGHER LEVEL OF PASSWORD COMPLEXITY BY REQUIRING AT LEAST ONE
+--    ALPHABETIC, ONE NUMERIC, AND ONE SPECIAL CHARACTER IN EACH PASSWORD.
+-- 9) PASSWORD MUST DIFFER FROM THE PREVIOUS PASSWORD BY AT LEAST 3 CHARACTERS.
+--    AT THIS TIME THIS TEST WILL NEVER FAIL.  SINCE THE OLD PASSWORD HAS TO BE PASSED BY USING
+--    THE REPLACE PARAMETER OF THE ALTER USER COMMAND AND THIS COMMAND IS NOT AVAILABLE
+--    UNTIL ORACLE VERSION 9I THEN THE OLD PASSWORD WILL ALWAYS BE NULL.
+--    THE ONLY EXCEPTION TO THIS IS WHEN THE SQL*PLUS PASSWORD COMMAND IS USED.  THIS COMMAND
+--    IS AVAILABLE IN ORACLE VERION 8.1.7 AND IT AUTOMATICALLY PROMPTS FOR THE OLD PASSWORD AND
+--    PASSES THE OLD PASSWORD TO THE PASSWORD COMPLEXITY VERIFICATION ROUTINE.
+------------------------------------------------------------------------------------------------------
+--            ERROR MESSAGES
+------------------------------------------------------------------------------------------------------
+-- ORA-20001: OLD PASSWORD IS NULL.
+-- ORA-20002: PASSWORD LENGTH MUST BE AT LEAST 8 CHARACTERS AND NO MORE THAN 30 CHARACTERS.
+-- ORA-20003: PASSWORD CAN NOT BE THE SAME OR SIMILAR TO USER NAME.
+-- ORA-20004: PASSWORD MUST START WITH AN ALPHABETIC CHARACTER.
+-- ORA-20005: PASSWORD TOO SIMPLE.
+-- ORA-20006: PASSWORD MUST CONTAIN ONLY VALID SINGLE-BYTE NUMERIC, ALPHABETIC, OR SPECIAL CHARACTERS.
+-- ORA-20007: PASSWORD CAN NOT CONTAIN UPPERCASE ALPHABETIC CHARACTERS.
+-- ORA-20008: PASSWORD MUST CONTAIN AT LEAST ONE NUMERIC, ONE ALPHABETIC AND ONE SPECIAL CHARACTER.
+-- ORA-20009: PASSWORD MUST DIFFER FROM THE PREVIOUS PASSWORD BY AT LEAST 3 CHARACTERS.
+------------------------------------------------------------------------------------------------------
+-- WHO             DATE
+-- DESCRIPTION    (MM/DD/YYYY)      < PLEASE ENTER NEXT MODIFICATION TO TOP OF LIST >
+------------------------------------------------------------------------------------------------------
+-- <NAME>         MM/DD/YYYY
+-- DESCRIPTION OF CHANGE...
+------------------------------------------------------------------------------------------------------
+-- GHARDMAN       01/29/2004
+-- Modified to correct the ascii range for numerics.
+-- Was testing as shown:
+--       -- TEST FOR NUMERIC CHARACTERS 0 THOUGH 9.
+--      IF (NEW_PW_ASCII_VAL > 46 AND NEW_PW_ASCII_VAL < 58)
+-- Now testing as shown:
+--       IF (NEW_PW_ASCII_VAL > 47 AND NEW_PW_ASCII_VAL < 58)
+------------------------------------------------------------------------------------------------------
+-- GHARDMAN       02/05/2003
+-- MADE MODIFICATIONS TO COMPLY WITH RECLAMATION MANUAL / DIRECTIVES AND STANDARDS IRM 08-12.
+-- SEE PROGRAMMER NOTES AND ERROR MESSAGES ABOVE...
+------------------------------------------------------------------------------------------------------
+--
+--   COPYRIGHT (C) ORACLE CORPORATION 1996, 1997. ALL RIGHTS RESERVED.
+--
+--     NAME
+--       UTLPWDMG.SQL - SCRIPT FOR DEFAULT PASSWORD RESOURCE LIMITS
+--
+--     NIRELAND    08/31/00 - IMPROVE CHECK FOR USERNAME=PASSWORD. #1390553
+--     ASURPUR     04/17/97 - FIX FOR BUG479763
+--     ASURPUR     12/12/96 - CHANGING THE NAME OF PASSWORD_VERIFY_FUNCTION
+--     ASURPUR     05/30/96 - NEW SCRIPT FOR DEFAULT PASSWORD MANAGEMENT
+--     ASURPUR     05/30/96 - CREATED
+--
+------------------------------------------------------------------------------------------------------
+-- DECLARES
+------------------------------------------------------------------------------------------------------
+   NEW_PW_LEN         INTEGER;
+   OLD_PW_LEN         INTEGER;
+   PW_LEN_DIFFER      INTEGER;
+   NEW_PW_ASCII_VAL   INTEGER;
+   OLD_PW_ASCII_VAL   INTEGER;
+   ISDIGIT            BOOLEAN := FALSE;
+   ISCHAR             BOOLEAN := FALSE;
+   ISPUNCT            BOOLEAN := FALSE;
+   ISCAPS             BOOLEAN := FALSE;
+------------------------------------------------------------------------------------------------------
+BEGIN
+------------------------------------------------------------------------------------------------------
+   NEW_PW_LEN := LENGTH (NEW_PASSWORD);
+   OLD_PW_LEN := LENGTH (OLD_PASSWORD);
+   PW_LEN_DIFFER := ABS (OLD_PW_LEN - NEW_PW_LEN);
+   DBMS_OUTPUT.ENABLE (1000000);
+
+--    DBMS_OUTPUT.PUT_LINE('USERNAME = ' || USERNAME);
+--    DBMS_OUTPUT.PUT_LINE('NEW_PASSWORD = ' || NEW_PASSWORD);
+--    DBMS_OUTPUT.PUT_LINE('OLD_PASSWORD = ' || OLD_PASSWORD);
+
+
+------------------------------------------------------------------------------------------------------
+   -- TEST IF THE OLD_PASSWORD IS NULL.
+------------------------------------------------------------------------------------------------------
+--    IF OLD_PASSWORD IS NULL
+--    THEN
+--       RAISE_APPLICATION_ERROR (-20001, 'OLD PASSWORD IS NULL.');
+--    END IF;
+
+------------------------------------------------------------------------------------------------------
+   -- TEST IF PASSWORD LENGH IS AT LEAST 8 CHARACTERS AND NO MORE THAN 30 CHARACTERS.
+------------------------------------------------------------------------------------------------------
+   IF NEW_PW_LEN < 8 OR NEW_PW_LEN > 30
+   THEN
+      RAISE_APPLICATION_ERROR (-20002,
+                               'PASSWORD LENGTH MUST BE AT LEAST 8 CHARACTERS AND NO MORE THAN 30 CHARACTERS.'
+                              );
+   END IF;
+
+------------------------------------------------------------------------------------------------------
+   -- TEST IF THE PASSWORD IS SAME AS THE USERNAME.
+------------------------------------------------------------------------------------------------------
+   IF INSTR (NLS_LOWER (NEW_PASSWORD), NLS_LOWER (USERNAME)) > 0
+   THEN
+      RAISE_APPLICATION_ERROR (-20003,
+                               'PASSWORD CAN NOT BE THE SAME OR SIMILAR TO USER NAME.'
+                              );
+   END IF;
+
+------------------------------------------------------------------------------------------------------
+   -- TEST THAT THE FIRST CHARACTER OF THE PASSWORD IS ALPHABETIC.
+------------------------------------------------------------------------------------------------------
+   NEW_PW_ASCII_VAL := ASCII (SUBSTR (NEW_PASSWORD, 1, 1));
+
+   IF    (NEW_PW_ASCII_VAL > 96 AND NEW_PW_ASCII_VAL < 123)
+      OR (NEW_PW_ASCII_VAL > 64 AND NEW_PW_ASCII_VAL < 91)
+   THEN
+      NULL;
+   ELSE
+      RAISE_APPLICATION_ERROR (-20004,
+                               'PASSWORD MUST START WITH AN ALPHABETIC CHARACTER.'
+                              );
+   END IF;
+
+------------------------------------------------------------------------------------------------------
+   -- TEST IF THE PASSWORD IS TOO SIMPLE. A DICTIONARY OF WORDS MAY BE
+   -- MAINTAINED AND A CHECK MAY BE MADE SO AS NOT TO ALLOW THE WORDS
+   -- THAT ARE TOO SIMPLE FOR THE PASSWORD.
+------------------------------------------------------------------------------------------------------
+   IF NLS_LOWER (NEW_PASSWORD) IN
+         ('WELCOME',
+          'DATABASE',
+          'ACCOUNT',
+          'USER',
+          'PASSWORD',
+          'ORACLE',
+          'COMPUTER',
+          'ABCD'
+         )
+   THEN
+      RAISE_APPLICATION_ERROR (-20005, 'PASSWORD TOO SIMPLE.');
+   END IF;
+
+------------------------------------------------------------------------------------------------------
+   -- TEST ALL CHARACTERS OF THE PASSWORD...
+   --
+   -- THIS WILL PREVENT MULTI-BYTE CHARACTERS AND SPECIAL CHARACTERS.
+   --
+------------------------------------------------------------------------------------------------------
+
+   FOR J IN 1 .. NEW_PW_LEN
+   LOOP
+      NEW_PW_ASCII_VAL := ASCII (SUBSTR (NEW_PASSWORD, J, 1));
+
+      IF J <= OLD_PW_LEN
+      THEN
+         OLD_PW_ASCII_VAL := ASCII (SUBSTR (OLD_PASSWORD, J, 1));
+      END IF;
+
+      -- TEST FOR NUMERIC CHARACTERS 0 THOUGH 9.
+      IF (NEW_PW_ASCII_VAL > 47 AND NEW_PW_ASCII_VAL < 58)
+      THEN
+         ISDIGIT := TRUE;
+      -- TEST FOR LOWERCASE ALPHABETIC CHARACTERS A THOUGH Z.
+      ELSIF (NEW_PW_ASCII_VAL > 96 AND NEW_PW_ASCII_VAL < 123)
+      THEN
+         ISCHAR := TRUE;
+      -- TEST FOR UPPERCASE ALPHABETIC CHARACTERS A THOUGH Z.
+      ELSIF (NEW_PW_ASCII_VAL > 64 AND NEW_PW_ASCII_VAL < 91)
+      THEN
+         ISCAPS := TRUE;
+      -- TEST FOR VALID SPECIAL CHARACTERS !%&()*+,-./:;<=>?_`
+      ELSIF    (NEW_PW_ASCII_VAL = 33)
+            OR (NEW_PW_ASCII_VAL > 36 AND NEW_PW_ASCII_VAL < 39)
+            OR (NEW_PW_ASCII_VAL > 39 AND NEW_PW_ASCII_VAL < 48)
+            OR (NEW_PW_ASCII_VAL > 57 AND NEW_PW_ASCII_VAL < 64)
+            OR (NEW_PW_ASCII_VAL > 94 AND NEW_PW_ASCII_VAL < 97)
+      THEN
+         ISPUNCT := TRUE;
+      ELSE
+         RAISE_APPLICATION_ERROR (-20006,
+                                  'PASSWORD MUST CONTAIN ONLY VALID SINGLE-BYTE NUMERIC, ALPHABETIC, OR SPECIAL CHARACTERS.'
+                                 );
+      END IF;
+
+      -- INCREMENT PW_LEN_DIFFER COUNTER TO RECOGNIZE DIFFERENCES BETWEEN OLD AND NEW PASSWORDS.
+      IF J <= OLD_PW_LEN
+      THEN
+         IF NEW_PW_ASCII_VAL != OLD_PW_ASCII_VAL
+         THEN
+            PW_LEN_DIFFER := PW_LEN_DIFFER + 1;
+         END IF;
+      END IF;
+   END LOOP;
+
+------------------------------------------------------------------------------------------------------
+   -- CHECK IF THE PASSWORD CONTAINS UPPERCASE ALPHABETIC CHARACTERS.
+------------------------------------------------------------------------------------------------------
+   IF ISCAPS = TRUE
+   THEN
+      RAISE_APPLICATION_ERROR (-20007,
+                               'PASSWORD CAN NOT CONTAIN UPPERCASE ALPHABETIC CHARACTERS.'
+                              );
+   END IF;
+
+------------------------------------------------------------------------------------------------------
+   -- CHECK IF THE PASSWORD CONTAINS AT LEAST ONE NUMERIC, ONE ALPHABETIC AND ONE SPECIAL CHARACTER.
+------------------------------------------------------------------------------------------------------
+   IF ISDIGIT = FALSE OR ISCHAR = FALSE OR ISPUNCT = FALSE
+   THEN
+      RAISE_APPLICATION_ERROR (-20008,
+                               'PASSWORD MUST CONTAIN AT LEAST ONE NUMERIC, ONE ALPHABETIC AND ONE SPECIAL CHARACTER.'
+                              );
+   END IF;
+
+------------------------------------------------------------------------------------------------------
+   -- PASSWORD MUST DIFFER FROM THE PREVIOUS PASSWORD BY AT LEAST 3 CHARACTERS.
+------------------------------------------------------------------------------------------------------
+   IF PW_LEN_DIFFER < 3
+   THEN
+      RAISE_APPLICATION_ERROR (-20009,
+                               'PASSWORD MUST DIFFER FROM THE PREVIOUS PASSWORD BY AT LEAST 3 CHARACTERS.'
+                              );
+   END IF;
+
+   -- EVERYTHING IS FINE; RETURN TRUE ;
+   RETURN (TRUE);
+END;
+
+
+
 CREATE PROFILE "BOR_ADMIN"
 LIMIT
     COMPOSITE_LIMIT DEFAULT
