@@ -1206,3 +1206,12 @@ FUNCTION find_rating(rating_in IN NUMBER)
 
 END ratings;
 /
+
+
+--update version table
+INSERT INTO TSDB_PROPERTY (PROP_NAME, PROP_VALUE) VALUES ('4.1.5', 'RATING tables modified to work same rating id with multiple site');
+
+
+
+--Commit
+commit;
