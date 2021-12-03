@@ -132,7 +132,9 @@ create or replace PROCEDURE refresh_HDB_snap  (which_table IN varchar2)
 
 
 	 -- Check to see if a subset of tables is to be refreshed, or ALL
+	 -- refresh_phys_quan_snap added by IO on 11/23/2021
 	 if (which_table = 'ALL') THEN
+			   refresh_phys_quan_snap;
                refresh_snapshot_table('HDB_FEATURE_CLASS');                     
                refresh_snapshot_table('HDB_FEATURE');                           
                refresh_snapshot_table('HDB_PROPERTY');                          
