@@ -256,6 +256,11 @@ ALTER TABLE REF_DB_GENERIC_LIST
       ADD CONSTRAINT REF_DB_GENERIC_LIST_PK 
          PRIMARY KEY (RECORD_ID) 
          using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);
+		 
+ALTER TABLE REF_CZAR_DB_GENERIC_LIST
+      ADD CONSTRAINT REF_CZAR_DB_GENERIC_LIST_PK 
+         PRIMARY KEY (RECORD_ID) 
+         using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0);
 
 ALTER TABLE ref_db_list   
       ADD ( CONSTRAINT ref_db_list_pk

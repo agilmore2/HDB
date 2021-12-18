@@ -40,6 +40,7 @@ spool hdb_triggers.out
 @ ./TRIGGERS/m_year_triggers.trg;
 @ ./TRIGGERS/m_wy_triggers.trg;
 @ ./TRIGGERS/ref_db_generic_list_triggers.trg;
+@ ./TRIGGERS/ref_czar_db_generic_list_triggers.trg;
 @ ./TRIGGERS/ref_ext_site_data_map_triggers.trg;
 @ ./TRIGGERS/ref_ext_site_data_map_keyval_triggers.trg;
 @ ./TRIGGERS/ref_interval_redefinition_triggers.trg;

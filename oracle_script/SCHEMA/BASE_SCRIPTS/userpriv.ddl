@@ -17,6 +17,7 @@ grant select on DBA.hdb_date_time_unit to public;
 grant select on DBA.hdb_dimension to public;
 /* grant select on DBA.hdb_derivation_flag to public; removed for CP Project */
 grant select on DBA.REF_DB_GENERIC_LIST to public;
+grant select on DBA.REF_CZAR_DB_GENERIC_LIST to public;
 grant select on DBA.ref_div to public;
 grant select on DBA.hdb_divtype to public;
 grant select on DBA.hdb_dmi_unit_map to public;

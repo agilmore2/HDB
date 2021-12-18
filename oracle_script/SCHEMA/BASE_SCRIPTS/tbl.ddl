@@ -710,6 +710,21 @@ tablespace HDB_data
 storage (initial 50k
          next 50k
          pctincrease 0);
+		 
+CREATE TABLE REF_CZAR_DB_GENERIC_LIST
+(
+        RECORD_ID          NUMBER NOT NULL,
+        RECORD_KEY         VARCHAR2(50) NOT NULL,               
+        RECORD_KEY_VALUE1  VARCHAR2(512) NOT NULL,               
+        RECORD_KEY_VALUE2  VARCHAR2(512),               
+        DATE_TIME_LOADED DATE
+)
+pctfree 10
+pctused 40
+tablespace HDB_data
+storage (initial 50k
+         next 50k
+         pctincrease 0);
 
 CREATE TABLE REF_DB_PARAMETER
 (

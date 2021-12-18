@@ -67,6 +67,7 @@ create public synonym ref_app_data_source                    for DBA.ref_app_dat
 create public synonym ref_auth_site                   for DBA.ref_auth_site;
 create public synonym ref_auth_site_datatype                  for DBA.ref_auth_site_datatype;
 create or replace public synonym REF_DB_GENERIC_LIST for DBA.REF_DB_GENERIC_LIST;
+create or replace public synonym REF_CZAR_DB_GENERIC_LIST for DBA.REF_CZAR_DB_GENERIC_LIST;
 create public synonym ref_db_list                  for DBA.ref_db_list;
 -- create public synonym ref_derivation_source        for DBA.ref_derivation_source;
 -- create public synonym ref_derivation_destination        for DBA.ref_derivation_destination;
