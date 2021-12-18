@@ -27,5 +27,6 @@ SELECT 'CREATE OR REPLACE TRIGGER '||substr (a.table_name, 1, 22)||'_PK_TRIG BEF
 
 spool off;
 set feedback on
-@gen_trigs_script
+@gen_trigs_script;
+@snap_modified_triggers.trg;
 quit
