@@ -1,0 +1,8 @@
+bin
+.idea
+lib*
+pyvenv.cfg
+stale_outputs_checked
+xl2hdb.iml
+cx_Oracle-doc
+
