@@ -1,0 +1,13 @@
+create sequence ref_db_generic_list_sequence start with 1 nocache;
+
+
+/*  create the synonymns and priveleges for the sequences previously created  */
+grant select on ref_db_generic_list_sequence to public;
+create public synonym ref_db_generic_list_sequence for ref_db_generic_list_sequence;
+
+
+/* create ref_czar_db_generic_list_sequence sequence for czar refresh*/
+create sequence ref_czar_db_generic_list_sequence start with 1 nocache;
+
+grant select on ref_czar_db_generic_list_sequence to public;
+create public synonym ref_czar_db_generic_list_sequence for ref_db_generic_list_sequence; 
