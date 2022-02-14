@@ -27,12 +27,13 @@ class Hdb(object):
         """Read authentication file and ensure restrictive permissions
 
         Authfile Format
-         should have three lines:
-
+        should have three to five lines:
          username <username>
          password <password>
          database <databasename>
+         and optionally
          hostname <hostname>
+         port <TCP port for listener>
         Will fail if file contains anything else.
         """
         with open(authfile) as file:  # this will error if user does not have permission
@@ -50,6 +51,9 @@ class Hdb(object):
                 else:
                     print(f'Unrecognized line in {authfile}: {line}')
                     exit(1)
+
+            if auth['hostname'] is None: #default to database name
+                auth['hostname'] = auth['database']
 
         if len(auth) != 5:
             self.hdbdie(f"Missing information in authfile: {authfile}")
@@ -161,29 +165,46 @@ class Hdb(object):
         self.conn.commit()
 
     def get_app_ids(self):
-        if self.app_id is None:
-            q=("BEGIN"
-               "    lookup_application(:agen,:collect,:app,:method,:comp, /*names*/"
-               "                       :agen_id,:collect_id,:app_id,:method_id,:comp_id); /* ids */"
-               "END;")
-            with self.conn.cursor() as cursor:
-                try:
-                    self.agen_id = cursor.var(int)
-                    self.collect_id = cursor.var(int)
-                    self.app_id = cursor.var(int)
-                    self.method_id = cursor.var(int)
-                    self.comp_id = cursor.var(int)
+        #if self.app_id is None:
+        q=("BEGIN"
+           "    lookup_application(:agen,:collect,:app,:method,:comp, /*names*/"
+           "                       :agen_id,:collect_id,:app_id,:method_id,:comp_id); /* ids */"
+           "END;")
+        with self.conn.cursor() as cursor:
+            try:
+                self.agen_id = cursor.var(int)
+                self.collect_id = cursor.var(int)
+                self.app_id = cursor.var(int)
+                self.method_id = cursor.var(int)
+                self.comp_id = cursor.var(int)
 
-                    cursor.execute(q, {k: vars(self)[k] for k in
-                                       ('agen', 'collect', 'app', 'method', 'comp',
-                                        'agen_id', 'collect_id', 'app_id', 'method_id', 'comp_id')})
-                except Exception as ex:
-                    self.conn.rollback()
-                    print(ex)
-                    self.hdbdie("Errors occurred during selection of application IDs")
+                cursor.execute(q, {k: vars(self)[k] for k in
+                                   ('agen', 'collect', 'app', 'method', 'comp',
+                                    'agen_id', 'collect_id', 'app_id', 'method_id', 'comp_id')})
+            except Exception as ex:
+                self.conn.rollback()
+                print(ex)
+                self.hdbdie("Errors occurred during selection of application IDs!")
 
         return {k: vars(self)[k] for k in ('agen_id', 'collect_id', 'app_id', 'method_id', 'comp_id')}
 
+    def lookup_sdi(self, site, sheet):
+        q=("select site_datatype_id FROM "
+           "hdb_ext_data_code_sys NATURAL JOIN hdb_ext_data_code data, "
+           "hdb_site_datatype NATURAL JOIN hdb_site sdi "
+           "WHERE site_name = :site and primary_data_code = :sheet AND "
+           "hdb_datatype_id = datatype_id AND "
+           "ext_data_code_sys_name = 'CUL Sheet Names'")
+        with self.conn.cursor() as cursor:
+            try:
+                cursor.execute(q, {'sheet': sheet, 'site': site})
+
+            except Exception as ex:
+                self.conn.rollback()
+                print(ex)
+                self.hdbdie("Errors occurred during selection of SDI!")
+
+            return cursor.fetchone()[0]
 
 def main():
     '''Just for testing.'''
