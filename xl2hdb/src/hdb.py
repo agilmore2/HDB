@@ -38,9 +38,9 @@ class Hdb(object):
         """
         with open(authfile) as file:  # this will error if user does not have permission
             st = os.stat(authfile)
-            # if st.st_mode & (stat.S_IRGRP | stat.S_IROTH):
-            #     print(f'{authfile} has incorrect permissions! Should not be readable by group or others')
-            #     exit(1)
+            if st.st_mode & (stat.S_IRGRP | stat.S_IROTH):
+                print(f'{authfile} has incorrect permissions! Should not be readable by group or others')
+                exit(1)
 
             auth = {'port': 1521} # default Oracle DB port
             for line in file:
@@ -208,13 +208,15 @@ class Hdb(object):
 
 def main():
     '''Just for testing.'''
+    # db = Hdb()
+    # db.connect_from_file('.agilmore_login_cu')
+    # db.ruler()
+    # db.write_xfer({'app_id': 109, 'sdi': 25575, 'inter': 'day', 'agen_id': 7, 'overwrite_flag': None, 'val': None,
+    #                'collect_id': 13, 'method_id': 18, 'comp_id': 1},
+    #               [date(2000, 1, 1), date(2000, 1, 2)], [1, 2])
+    # db.rollback()
     db = Hdb()
-    db.connect_from_file('.agilmore_login_cu')
-    db.ruler()
-    db.write_xfer({'app_id': 109, 'sdi': 25575, 'inter': 'day', 'agen_id': 7, 'overwrite_flag': None, 'val': None,
-                   'collect_id': 13, 'method_id': 18, 'comp_id': 1},
-                  [date(2000, 1, 1), date(2000, 1, 2)], [1, 2])
-    db.rollback()
+    db.connect_from_file('brett_cu.auth')
 
 if __name__ == '__main__':
     main()
