@@ -38,9 +38,9 @@ class Hdb(object):
         """
         with open(authfile) as file:  # this will error if user does not have permission
             st = os.stat(authfile)
-            if st.st_mode & (stat.S_IRGRP | stat.S_IROTH):
-                print(f'{authfile} has incorrect permissions! Should not be readable by group or others')
-                exit(1)
+            # if st.st_mode & (stat.S_IRGRP | stat.S_IROTH):
+            #     print(f'{authfile} has incorrect permissions! Should not be readable by group or others')
+            #     exit(1)
 
             auth = {'port': 1521} # default Oracle DB port
             for line in file:

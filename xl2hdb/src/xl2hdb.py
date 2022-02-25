@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 '''HDB writing from XLSX files, and more?
 
-Built against Python 2.7.4, Pillow 2.0.0, and cx_Oracle 5.1.2
+Built against Python 3.9, Pillow 2.0.0, and cx_Oracle 5.1.2
 
 Created on Apr 15, 2013
 
@@ -22,13 +22,13 @@ AGEN_ROW = "AGEN"
 COLLECT_ROW = "COLLECT"
 METHOD_ROW = "METHOD"
 COMP_ROW = "COMP"
-SITE_ROW = 6
+HEADER_ROWS = 5
 
 def main(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('-a', help='app_login containing database credentials', required=True)
     parser.add_argument('-f', '--file', help='File to load from', required=True)
-    parser.add_argument('--sheet', '-s', nargs='+', help='Sheet to load from, default first', default=0)
+    parser.add_argument('-s', '--sheet', help='Sheet to load from', required=True)
     parser.add_argument('-v', '--verbose', action='count', default=0, help='Show more detail about process')
     args = parser.parse_args()
     print(args)
@@ -36,32 +36,31 @@ def main(args):
     db.connect_from_file(args.a)
     db.app = os.path.basename(sys.argv[0])
 
-    #TODO read sheet once and split, keeping date index
     header = pandas.read_excel(io=args.file, sheet_name=args.sheet,
-                               index_col=0,  nrows=SITE_ROW, )
+                               index_col=0, usecols=[0,1], header=None, names=['field','value'],nrows=HEADER_ROWS)
 
     data = pandas.read_excel(io=args.file, sheet_name=args.sheet,
-                             index_col=0, parse_dates=True, skiprows=SITE_ROW)
+                             index_col=0, parse_dates=True, skiprows=HEADER_ROWS)
 
-    COL=0 #replace with column iterator
+    interval = header.loc[INT_ROW]['value']
+    db.agen = header.loc[AGEN_ROW]['value']
+    db.collect = header.loc[COLLECT_ROW]['value']
+    db.method = header.loc[METHOD_ROW]['value']
+    db.comp = header.loc[COMP_ROW]['value']                   
 
-    db.agen = header[args.sheet[0]].loc[AGEN_ROW][COL]
-    db.collect = header[args.sheet[0]].loc[COLLECT_ROW][COL]
-    db.method = header[args.sheet[0]].loc[METHOD_ROW][COL]
-    db.comp = header[args.sheet[0]].loc[COMP_ROW][COL]
+    for site_name in data:
+        dt_list = data[site_name].dropna().index.tolist()
+        val_list = data[site_name].dropna().tolist()
+        sdi = db.lookup_sdi(site_name, args.sheet)
+        if sdi is None:
+            db.hdbdie(f"Lookup of sdi for site: {site_name} datatype code: {args.sheet[0]} failed!")
 
-    site_name = header[args.sheet[0]].iloc[SITE_ROW-1][COL]
-    sdi = db.lookup_sdi(site_name, args.sheet[0])
-    if sdi is None:
-        db.hdbdie(f"Lookup of sdi for site: {site_name} datatype code: {args.sheet[0]} failed!")
-
-    one_col = data[args.sheet[0]][[site_name]].copy().dropna()
-
-    db.write_xfer(db.get_app_ids() | {'sdi': sdi, 'inter': header[args.sheet[0]].loc([INT_ROW][COL]),
+        db.write_xfer(db.get_app_ids() | {'sdi': sdi, 'inter': interval,
                                       'overwrite_flag': None, 'val': None},
-                  one_col.index.to_list(), one_col[site_name].to_list())
+                  dt_list, val_list)
 
-    #db.commit()
+    if input('Commit? y/n: ') == 'y':
+        db.commit()
 
     print('Loading complete at ' + datetime.now().strftime('%c'))
 
