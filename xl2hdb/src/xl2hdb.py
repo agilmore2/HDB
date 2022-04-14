@@ -36,19 +36,26 @@ def main(args):
     db.connect_from_file(args.a)
     db.app = os.path.basename(sys.argv[0])
 
-    header = pandas.read_excel(io=args.file, sheet_name=args.sheet,
-                               index_col=0, usecols=[0,1], header=None, names=['field','value'],nrows=HEADER_ROWS)
-
     data = pandas.read_excel(io=args.file, sheet_name=args.sheet,
-                             index_col=0, parse_dates=True, skiprows=HEADER_ROWS)
+                            index_col=0, parse_dates=True, skiprows=HEADER_ROWS)
+    sites = data.columns.tolist()
+    
+    # header can either be one column and apply to the whole sheet, or there is a header for each site column
+    header = pandas.read_excel(io=args.file, sheet_name=args.sheet,
+                               index_col=0, header=None,names=data.columns.tolist(),nrows=HEADER_ROWS)
 
-    interval = header.loc[INT_ROW]['value']
-    db.agen = header.loc[AGEN_ROW]['value']
-    db.collect = header.loc[COLLECT_ROW]['value']
-    db.method = header.loc[METHOD_ROW]['value']
-    db.comp = header.loc[COMP_ROW]['value']                   
+    if len(sites) > 1 and header[sites[1]].isna().sum() > 0: # if the second column of the header has more than 0 blanks, assume that the first column applies to the whole sheet
+        for site_name in sites[1:]:
+            header[site_name] = header[sites[0]]
+              
 
-    for site_name in data:
+    for site_name in sites:
+        interval = header.loc[INT_ROW][site_name]
+        db.agen = header.loc[AGEN_ROW][site_name]
+        db.collect = header.loc[COLLECT_ROW][site_name]
+        db.method = header.loc[METHOD_ROW][site_name]
+        db.comp = header.loc[COMP_ROW][site_name]    
+
         dt_list = data[site_name].dropna().index.tolist()
         val_list = data[site_name].dropna().tolist()
         sdi = db.lookup_sdi(site_name, args.sheet)
