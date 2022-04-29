@@ -29,9 +29,12 @@ def main(args):
     parser.add_argument('-a', help='app_login containing database credentials', required=True)
     parser.add_argument('-f', '--file', help='File to load from', required=True)
     parser.add_argument('-s', '--sheet', help='Sheet to load from', required=True)
-    parser.add_argument('-v', '--verbose', action='count', default=0, help='Show more detail about process')
+    parser.add_argument('-v', '--verbose', default=0, help='1 = Show more detail about process')
     args = parser.parse_args()
-    print(args)
+    verbose = int(args.verbose) > 0
+
+    if verbose: print(args)
+
     db = Hdb()
     db.connect_from_file(args.a)
     db.app = os.path.basename(sys.argv[0])
@@ -56,11 +59,17 @@ def main(args):
         db.method = header.loc[METHOD_ROW][site_name]
         db.comp = header.loc[COMP_ROW][site_name]    
 
+        if verbose:
+            print('site = {}; interval = {}; agency = {}; collection system = {}; method; computation = {}'
+                    .format(site_name,interval,db.agen,db.collect,db.method,db.comp))
+
         dt_list = data[site_name].dropna().index.tolist()
         val_list = data[site_name].dropna().tolist()
         sdi = db.lookup_sdi(site_name, args.sheet)
         if sdi is None:
             db.hdbdie(f"Lookup of sdi for site: {site_name} datatype code: {args.sheet[0]} failed!")
+
+        if verbose: print('sdi = {}'.format(sdi))
 
         db.write_xfer(db.get_app_ids() | {'sdi': sdi, 'inter': interval,
                                       'overwrite_flag': None, 'val': None},
