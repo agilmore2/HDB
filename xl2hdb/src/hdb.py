@@ -89,7 +89,7 @@ class Hdb(object):
         print(message)
         exit(1)
 
-    def write_xfer(self, app_key, dates, values):
+    def write_xfer(self, app_key, dates, values, dataflag=None):
         """Writes a single timeseries to the database
 
         This writes (using the given `cursor`) the timeseries represented by dates and values arrays
@@ -107,27 +107,16 @@ class Hdb(object):
         , METHOD_ID NUMBER
         , computation_id NUMBER
         , do_update_y_n VARCHAR2
+        , data_flags IN VARCHAR2 DEFAULT NULL
+        , TIME_ZONE IN VARCHAR2 DEFAULT NULL
+        )
 
-        Ignoring the optional timezone and data_flags fields
+        Ignoring the optional timezone field
 
-        alternative:
-        modify_r_base ( SITE_DATATYPE_ID NUMBER,
-                      INTERVAL VARCHself.conn.cursor()AR2,
-                      START_DATE_TIME DATE,
-                      END_DATE_TIME DATE,
-                      VALUE FLOAT,
-                      AGEN_ID NUMBER,
-                      OVERWRITE_FLAG VARCHAR2,
-                      VALIDATION CHAR,
-                      COLLECTION_SYSTEM_ID NUMBER,
-                      LOADING_APPLICATION_ID NUMBER,
-                      METHOD_ID NUMBER,
-                      COMPUTATION_ID NUMBER,
-                      DO_UPDATE_Y_OR_N VARCHAR2
         """
 
         proc = ("begin cuhdba.ts_xfer.write_real_data(:sdi,:inter,:dates,:values,:agen_id,:overwrite_flag,"
-                ":val,:collect_id,:app_id,:method_id,:comp_id,'Y'); end;")
+                ":val,:collect_id,:app_id,:method_id,:comp_id,'Y',:data_flags); end;")
 
     #    example call with single date/value procedure
     #    proc_one = ("begin cuhdba.modify_r_base(:sdi,:inter,:dates,:edate,:values,:agen  Returns number of values written._id,:overwrite_flag  ,"
@@ -143,7 +132,7 @@ class Hdb(object):
         with self.conn.cursor() as cursor:
             try:
                 #cursor.execute(proc_one, app_key|meta_key|{'dates':dates,'edate':None,'values':values})
-                cursor.execute(proc, app_key | {'dates': dates, 'values': values})
+                cursor.execute(proc, app_key | {'dates': dates, 'values': values, 'data_flags' : dataflag})
             except Exception as ex:
                 self.conn.rollback()
                 print(ex)

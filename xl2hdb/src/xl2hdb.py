@@ -1,11 +1,16 @@
 #!/usr/bin/python3
-'''HDB writing from XLSX files, and more?
+'''HDB writing from XLSX files, designed specifically for CUL project
+Excel input files should be in the following format:
+    - sheet/row/column => datatype/timestep/site
+    - header rows => either one set of headers that apply to all sites in the sheet or one set of headers per site
+    - data flags => for time series data flags, each site should have a column to the right with data flags and a column header <site>.data_flags
 
-Built against Python 3.9, Pillow 2.0.0, and cx_Oracle 5.1.2
 
-Created on Apr 15, 2013
+Built against Python 3.9 and cx_Oracle 5.1.2
+Created February 2022
 
-@author: hsk@RTi
+Has only been used for the CUL project, could use better error handling
+@author: Andrew Gilmore, Brett Boyer
 '''
 
 from datetime import datetime
@@ -13,10 +18,9 @@ import sys
 import argparse
 import os
 import pandas
-
-
 from hdb import Hdb
 
+# Header rows in excel workbook need to have these labels
 INT_ROW = "INTERVAL"
 AGEN_ROW = "AGEN"
 COLLECT_ROW = "COLLECT"
@@ -24,30 +28,40 @@ METHOD_ROW = "METHOD"
 COMP_ROW = "COMP"
 HEADER_ROWS = 5
 
+def debug(msg,v):
+    if v: print(msg)
+
 def main(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-a', help='app_login containing database credentials', required=True)
+    parser.add_argument('-a', '--authFile', help='app_login containing database credentials', required=True)
     parser.add_argument('-f', '--file', help='File to load from', required=True)
     parser.add_argument('-s', '--sheet', help='Sheet to load from', required=True)
-    parser.add_argument('-v', '--verbose', default=0, help='1 = Show more detail about process')
+    parser.add_argument('--verbose', action='store_true', help='Show more detail about process')
+    parser.set_defaults(verbose=False)
     args = parser.parse_args()
-    verbose = int(args.verbose) > 0
 
-    if verbose: print(args)
+    debug(args,args.verbose)
 
     db = Hdb()
-    db.connect_from_file(args.a)
+    db.connect_from_file(args.authFile)
     db.app = os.path.basename(sys.argv[0])
 
     data = pandas.read_excel(io=args.file, sheet_name=args.sheet,
                             index_col=0, parse_dates=True, skiprows=HEADER_ROWS)
-    sites = data.columns.tolist()
-    
     # header can either be one column and apply to the whole sheet, or there is a header for each site column
     header = pandas.read_excel(io=args.file, sheet_name=args.sheet,
                                index_col=0, header=None,names=data.columns.tolist(),nrows=HEADER_ROWS)
+    
+    # determine whether data includes flags. This will change the write behavior
+    dataFlags = any('.data_flag' in s for s in data.columns.tolist())
 
-    if len(sites) > 1 and header[sites[1]].isna().sum() > 0: # if the second column of the header has more than 0 blanks, assume that the first column applies to the whole sheet
+    # sites are the column headers that don't contain ".data_flag"
+    sites = [s for s in data.columns.tolist() if '.data_flag' not in s]
+
+
+
+
+    if len(sites) > 1 and header[sites[1]].isna().sum() > 0: # if the second column of the header has more than 0 blanks, assume that the first column applies to all sites
         for site_name in sites[1:]:
             header[site_name] = header[sites[0]]
               
@@ -59,21 +73,43 @@ def main(args):
         db.method = header.loc[METHOD_ROW][site_name]
         db.comp = header.loc[COMP_ROW][site_name]    
 
-        if verbose:
-            print('site = {}; interval = {}; agency = {}; collection system = {}; method; computation = {}'
-                    .format(site_name,interval,db.agen,db.collect,db.method,db.comp))
-
-        dt_list = data[site_name].dropna().index.tolist()
-        val_list = data[site_name].dropna().tolist()
         sdi = db.lookup_sdi(site_name, args.sheet)
         if sdi is None:
-            db.hdbdie(f"Lookup of sdi for site: {site_name} datatype code: {args.sheet[0]} failed!")
+                db.hdbdie(f"Lookup of sdi for site: {site_name} datatype code: {args.sheet[0]} failed!")
 
-        if verbose: print('sdi = {}'.format(sdi))
+        debug('{}/{} | site = {}; interval = {}; agency = {}; collection system = {}; method = {}; computation = {}; sdi = {}'
+                    .format(sites.index(site_name) + 1,len(sites),site_name,interval,db.agen,db.collect,db.method,db.comp,sdi),args.verbose)
 
-        db.write_xfer(db.get_app_ids() | {'sdi': sdi, 'inter': interval,
-                                      'overwrite_flag': None, 'val': None},
-                  dt_list, val_list)
+        # the write is handled very differently with and without data flags, because of the way that ts_xfer.write_real_data works
+        # handle separately
+        if not dataFlags:
+            dt_list = data[site_name].dropna().index.tolist()
+            val_list = data[site_name].dropna().tolist()            
+
+            db.write_xfer(db.get_app_ids() | {'sdi': sdi, 'inter': interval,
+                                        'overwrite_flag': None, 'val': None},
+                    dt_list, val_list)
+        else:
+            # ts_xfer.write_real_data takes a single character as the data_flags argument instead of an array
+            # write chunks of data with constant data flags
+            flagCol = site_name + '.data_flag'
+            allFlags = data[flagCol].dropna().unique().tolist()
+            for f in allFlags:
+                dt_list = data[data[flagCol] == f][site_name].dropna().index.tolist()
+                val_list = data[data[flagCol] == f][site_name].dropna().tolist()
+
+                db.write_xfer(db.get_app_ids() | {'sdi': sdi, 'inter': interval,
+                                            'overwrite_flag': None, 'val': None},
+                        dt_list, val_list,f)
+            
+            # repeat a similar step for blank data flags
+                dt_list = data[data[flagCol].isna()][site_name].dropna().index.tolist()
+                val_list = data[data[flagCol].isna()][site_name].dropna().tolist()
+
+                db.write_xfer(db.get_app_ids() | {'sdi': sdi, 'inter': interval,
+                                            'overwrite_flag': None, 'val': None},
+                        dt_list, val_list)
+
 
     if input('Commit? y/n: ') == 'y':
         db.commit()
