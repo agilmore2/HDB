@@ -36,6 +36,7 @@ def main(args):
     parser.add_argument('-a', '--authFile', help='app_login containing database credentials', required=True)
     parser.add_argument('-f', '--file', help='File to load from', required=True)
     parser.add_argument('-s', '--sheet', help='Sheet to load from', required=True)
+    parser.add_argument('-c', '--column', help='Optional, provide name of single site (column) to load', required=False)
     parser.add_argument('--verbose', action='store_true', help='Show more detail about process')
     parser.set_defaults(verbose=False)
     args = parser.parse_args()
@@ -58,13 +59,13 @@ def main(args):
     # sites are the column headers that don't contain ".data_flag"
     sites = [s for s in data.columns.tolist() if '.data_flag' not in s]
 
-
-
-
     if len(sites) > 1 and header[sites[1]].isna().sum() > 0: # if the second column of the header has more than 0 blanks, assume that the first column applies to all sites
         for site_name in sites[1:]:
             header[site_name] = header[sites[0]]
-              
+
+    # if the column argument is supplied, shorten the list of sites to just a single one
+    if args.column is not None:
+        sites = [args.column]              
 
     for site_name in sites:
         interval = header.loc[INT_ROW][site_name]
