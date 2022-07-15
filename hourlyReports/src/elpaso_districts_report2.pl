@@ -139,7 +139,7 @@ c.key_name = 'Column Order' and
 b.ext_data_source_id = d.ext_data_source_id and
 d.ext_data_source_name = '$app_name' and
 start_date_time between trunc(sysdate - 7,'DD') and sysdate
-order by start_date_time)
+order by start_date_time desc)
 select
 date_time,
 lpad(to_char(round(a.value,2)),22) val1,b.value val2,c.value val3,d.value val4
@@ -154,7 +154,7 @@ where
  b.key_value(+) = 2 and
  c.key_value(+) = 3 and
  d.key_value(+) = 4
- order by dates.date_time";
+ order by dates.date_time desc";
 
 #get the email addresses to write to
 # first line of this reponse is
