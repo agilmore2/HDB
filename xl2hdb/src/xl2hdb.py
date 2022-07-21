@@ -104,12 +104,12 @@ def main(args):
                         dt_list, val_list,f)
             
             # repeat a similar step for blank data flags
-                dt_list = data[data[flagCol].isna()][site_name].dropna().index.tolist()
-                val_list = data[data[flagCol].isna()][site_name].dropna().tolist()
+            dt_list = data[data[flagCol].isna()][site_name].dropna().index.tolist()
+            val_list = data[data[flagCol].isna()][site_name].dropna().tolist()
 
-                db.write_xfer(db.get_app_ids() | {'sdi': sdi, 'inter': interval,
-                                            'overwrite_flag': None, 'val': None},
-                        dt_list, val_list)
+            db.write_xfer(db.get_app_ids() | {'sdi': sdi, 'inter': interval,
+                                        'overwrite_flag': None, 'val': None},
+                    dt_list, val_list)
 
 
     if input('Commit? y/n: ') == 'y':
