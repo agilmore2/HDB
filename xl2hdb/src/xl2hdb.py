@@ -38,10 +38,13 @@ def main(args):
     parser.add_argument('-s', '--sheet', help='Sheet to load from', required=True)
     parser.add_argument('-c', '--column', help='Optional, provide name of single site (column) to load', required=False)
     parser.add_argument('--verbose', action='store_true', help='Show more detail about process')
-    parser.set_defaults(verbose=False)
+    parser.add_argument('--NoOverwrite', action='store_true', help='Do not write an O to the overwrite_flag field')
     args = parser.parse_args()
 
     debug(args,args.verbose)
+
+    # Write either None or 'O' to the overwrite flag field
+    oFlag = None if args.NoOverwrite else 'O'
 
     db = Hdb()
     db.connect_from_file(args.authFile)
@@ -88,7 +91,7 @@ def main(args):
             val_list = data[site_name].dropna().tolist()            
 
             db.write_xfer(db.get_app_ids() | {'sdi': sdi, 'inter': interval,
-                                        'overwrite_flag': None, 'val': None},
+                                        'overwrite_flag': oFlag, 'val': None},
                     dt_list, val_list)
         else:
             # ts_xfer.write_real_data takes a single character as the data_flags argument instead of an array
@@ -100,7 +103,7 @@ def main(args):
                 val_list = data[data[flagCol] == f][site_name].dropna().tolist()
 
                 db.write_xfer(db.get_app_ids() | {'sdi': sdi, 'inter': interval,
-                                            'overwrite_flag': None, 'val': None},
+                                            'overwrite_flag': oFlag, 'val': None},
                         dt_list, val_list,f)
             
             # repeat a similar step for blank data flags
@@ -108,7 +111,7 @@ def main(args):
             val_list = data[data[flagCol].isna()][site_name].dropna().tolist()
 
             db.write_xfer(db.get_app_ids() | {'sdi': sdi, 'inter': interval,
-                                        'overwrite_flag': None, 'val': None},
+                                        'overwrite_flag': oFlag, 'val': None},
                     dt_list, val_list)
 
 
