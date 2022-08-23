@@ -1,0 +1,26 @@
+# TSTool command file used to expand template that downloads historical SNOTEL data from NRCS AWDB webservice
+#
+# Read the data loader configuration table from HDB
+#
+ReadTableFromDataStore(DataStore="hdbtstcu",Sql="select map.ext_data_source_id, primary_site_code,primary_data_code,hdb_site_datatype_id from ref_ext_site_data_map map, hdb_ext_data_source source where source.ext_data_source_id = map.ext_data_source_id and ext_data_source_name = 'CODWR Load for CUL' and is_active_y_n = 'Y'",TableID="DataLoaderConfiguration")
+#ReadTableFromDataStore(DataStore="uchdb2",DataStoreTable="REF_EXT_SITE_DATA_MAP",TableID="DataLoaderConfiguration")
+#
+# Split the table into separate tables, one column each.
+# Single column tables are seen as lists by the templating engine.
+#
+CopyTable(TableID="DataLoaderConfiguration",NewTableID="ExtDataSourceIDs",IncludeColumns="EXT_DATA_SOURCE_ID")
+CopyTable(TableID="DataLoaderConfiguration",NewTableID="PrimarySiteCodes",IncludeColumns="PRIMARY_SITE_CODE")
+CopyTable(TableID="DataLoaderConfiguration",NewTableID="PrimaryDataCodes",IncludeColumns="PRIMARY_DATA_CODE")
+CopyTable(TableID="DataLoaderConfiguration",NewTableID="HDBSiteDatatypeIDs",IncludeColumns="HDB_SITE_DATATYPE_ID")
+#
+# Set some properties needed by the template.
+#  Current year is automatic and should not need to be changed.
+#  Sub-period size is the number of years in each read/write sub-period, and can be changed as desired.
+#  Start year is the year that data retrieval should attempt to start at. Stations may have less data than this.
+#
+#  Note: every January the year needs to be set the new year.
+SetProperty(PropertyName="currentYear",PropertyType=DateTime,PropertyValue="CurrentToYear")
+SetProperty(PropertyName="startYear",PropertyType=DateTime,PropertyValue="CurrentToYear",Subtract="3Year")
+#
+ExpandTemplateFile(InputFile="CODWR_Historical_Template.txt",OutputFile="CODWR_Historical_Expanded.TSTool")
+RunCommands(InputFile="CODWR_Historical_Expanded.TSTool",ExpectedStatus=Success,ShareDataStores=Share)

@@ -1,0 +1,6 @@
+# Downloading DivTotal from CODWR Site 3004662 to HDB SDI 29520
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:3004662.DWR.DivTotal.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="3004662.DWR.DivTotal.Month",SiteDataTypeID=29520,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
