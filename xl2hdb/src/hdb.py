@@ -181,7 +181,7 @@ class Hdb(object):
         q=("select site_datatype_id FROM "
            "hdb_ext_data_code_sys NATURAL JOIN hdb_ext_data_code data, "
            "hdb_site_datatype NATURAL JOIN hdb_site sdi "
-           "WHERE site_name = :site and primary_data_code = :sheet AND "
+           "WHERE lower(site_name) = lower(:site) and primary_data_code = :sheet AND "
            "hdb_datatype_id = datatype_id AND "
            "ext_data_code_sys_name = 'CUL Sheet Names'")
         with self.conn.cursor() as cursor:
