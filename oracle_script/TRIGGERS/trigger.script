@@ -7,7 +7,7 @@ spool hdb_triggers.out
 /* @ ./TRIGGERS/check_computed_datatype_id.trg;  removed  */
 @ ./TRIGGERS/check_attr_type_and_unit.trg;
 @ ./TRIGGERS/check_property_type_and_unit.trg;
-@ ./TRIGGERS/combined_disagg_chk_val.trg;
+-- @ ./TRIGGERS/combined_disagg_chk_val.trg; removed for CP Project 10/2022
 @ ./TRIGGERS/combined_ref_div_chk.trg;
 @ ./TRIGGERS/combined_ref_res_chk.trg;
 @ ./TRIGGERS/combined_ref_str_chk.trg;
@@ -108,7 +108,7 @@ spool hdb_triggers.out
 @ ./TRIGGERS/REF_EXT_SITE_DATA_MAP_PK_TRIG.trg
 @ ./TRIGGERS/REF_RATING_DT_LOAD.trg
 @ ./TRIGGERS/REF_DB_LIST_PK_TRIG.trg
-@ ./TRIGGERS/REF_AGG_DISAGG_PK_TRIG.trg
+-- @ ./TRIGGERS/REF_AGG_DISAGG_PK_TRIG.trg removed for CP Project 10/2022
 @ ./TRIGGERS/REF_SPATIAL_RELATION_SITE_PERM.trg
 spool off
 exit;

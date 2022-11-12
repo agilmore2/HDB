@@ -236,9 +236,11 @@ ALTER TABLE hm_temp_data
       ADD ( CONSTRAINT hm_temp_data_pk
             PRIMARY KEY (site_datatype_id,date_date) using index tablespace hdb_idx storage (initial 100k next 100k pctincrease 0));
 
-ALTER TABLE ref_agg_disagg
-      ADD ( CONSTRAINT ref_agg_disagg_pk
-            PRIMARY KEY (agg_disagg_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));
+/* removed for CP Project
+--ALTER TABLE ref_agg_disagg
+--      ADD ( CONSTRAINT ref_agg_disagg_pk
+--            PRIMARY KEY (agg_disagg_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));
+*/
 
 ALTER TABLE ref_app_data_source      
       ADD ( CONSTRAINT ref_app_data_source_pk
@@ -286,10 +288,11 @@ ALTER TABLE ref_db_list
 ALTER TABLE ref_div  
       ADD ( CONSTRAINT ref_div_pk
             PRIMARY KEY (divtype,site_id) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0)); 
-
-ALTER TABLE ref_dmi_data_map    
-      ADD ( CONSTRAINT ref_dmi_data_map_pk
-            PRIMARY KEY (model_id, object_name, data_name) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));
+/* removed for CP Project
+--ALTER TABLE ref_dmi_data_map    
+--      ADD ( CONSTRAINT ref_dmi_data_map_pk
+--           PRIMARY KEY (model_id, object_name, data_name) using index tablespace hdb_idx storage (initial 50k next 50k pctincrease 0));
+*/
 
 ALTER TABLE REF_ENSEMBLE  add constraint REF_ENSEMBLE_PK
 primary key (ensemble_id) 

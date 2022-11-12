@@ -29,14 +29,14 @@ start ./CONSTRAINTS/hdb_river_reach_ref.ddl;
 start ./CONSTRAINTS/hdb_site_datatype_ref.ddl;
 start ./CONSTRAINTS/hdb_site_ref.ddl;
 start ./CONSTRAINTS/hdb_unit_ref.ddl;
-start ./CONSTRAINTS/ref_agg_disagg_ref.ddl;
+-- start ./CONSTRAINTS/ref_agg_disagg_ref.ddl; removed for CP Project 10/2022
 start ./CONSTRAINTS/ref_app_data_source_ref.ddl
 start ./CONSTRAINTS/ref_auth_site_datatype_ref.ddl;
 start ./CONSTRAINTS/ref_auth_site_ref.ddl;
 -- start ./CONSTRAINTS/ref_derivation_destination_ref.ddl;  removed for CP Project
 -- start ./CONSTRAINTS/ref_derivation_source_ref.ddl;  removed for CP Project
 start ./CONSTRAINTS/ref_div_ref.ddl;
-start ./CONSTRAINTS/ref_dmi_data_map_ref.ddl;
+-- start ./CONSTRAINTS/ref_dmi_data_map_ref.ddl; removed for CP Project 10/2022
 start ./CONSTRAINTS/ref_ensemble_ref.ddl;
 start ./CONSTRAINTS/ref_ensemble_keyval_ref.ddl;
 start ./CONSTRAINTS/ref_ensemble_trace_ref.ddl;
