@@ -28,7 +28,7 @@ drop public synonym REF_AGG_DISAGG;
 
 --update version table
 INSERT INTO TSDB_PROPERTY (PROP_NAME, PROP_VALUE) VALUES ('4.15.1', 'Obsolete REF Derivation,dmi_data_map, agg_disagg tables have been removed. ');
-/
+
 
 --Commit
 commit;
