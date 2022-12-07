@@ -37,6 +37,7 @@ def main(args):
     parser.add_argument('-f', '--file', help='File to load from', required=True)
     parser.add_argument('-s', '--sheet', help='Sheet to load from', required=True)
     parser.add_argument('-c', '--column', help='Optional, provide name of single site (column) to load', required=False)
+    parser.add_argument('-l', '--loadingApp', help='Supply an optional loading application name, defaults to file name', required=False)
     parser.add_argument('--verbose', action='store_true', help='Show more detail about process')
     parser.add_argument('--NoOverwrite', action='store_true', help='Do not write an O to the overwrite_flag field')
     args = parser.parse_args()
@@ -48,7 +49,10 @@ def main(args):
 
     db = Hdb()
     db.connect_from_file(args.authFile)
-    db.app = os.path.basename(sys.argv[0])
+    if args.loadingApp == None:
+        db.app = os.path.basename(sys.argv[0]) 
+    else:
+        db.app = args.loadingApp
 
     data = pandas.read_excel(io=args.file, sheet_name=args.sheet,
                             index_col=0, parse_dates=True, skiprows=HEADER_ROWS)
