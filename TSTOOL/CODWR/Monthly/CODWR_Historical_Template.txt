@@ -1,0 +1,21 @@
+<#compress>
+<#-- Template to download historical CUL data from CODWR HydroBaseWeb-->
+
+<#setting number_format="#####">
+
+<#-- Loop through all the rows in the input table -->
+<#list ExtDataSourceIDs as ExtDataSourceID>
+  <#-- Pull out the values from each column for that row -->
+  <#assign PrimarySiteCode = PrimarySiteCodes[ExtDataSourceID_index]>
+  <#assign PrimaryDataCode = PrimaryDataCodes[ExtDataSourceID_index]>
+  <#assign HDBSiteDatatypeID = HDBSiteDatatypeIDs[ExtDataSourceID_index]>
+  
+  #
+  # Downloading ${PrimaryDataCode} from CODWR Site ${PrimarySiteCode} to HDB SDI ${HDBSiteDatatypeID}
+  # Not worrying about breaking this up into separate periods, only 36ish values
+  SetInputPeriod(InputStart="${startYear}-10-01 00:00",InputEnd="CurrentToMinute")
+  abbrev:${PrimarySiteCode}.DWR.${PrimaryDataCode}.Month~HydroBaseWeb
+  WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="${PrimarySiteCode}.DWR.${PrimaryDataCode}.Month",SiteDataTypeID=${HDBSiteDatatypeID},Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+  Free(TSList=AllTS)
+</#list>
+</#compress>
