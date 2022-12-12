@@ -22,25 +22,23 @@ def main(args):
     db.method = 'unknown'
     db.comp = 'unknown'  
 
-    datatypes = [
-        {'wrcc' : 'avgt','comp' : 'mave','hdb' : 'average air temperature'},
-        {'wrcc' : 'pcpn','comp' : 'msum','hdb' : 'precipitation (total over period)'}
-    ]
-
-
-    # Load site info dataframe
-    allSites = pd.read_csv('CUL_ClimateSites.csv',dtype=str) # treat all values as string to avoid trimming leading zeros
+    url_compstrings = {'avgt' : 'mave','pcpn' : 'msum'} # wrcc computation names used in URL query for temp (average) and precip (sum)
+    
+    # Load site map info dataframe
+    # Many sites are no longer active. Future effort could identify these sites, mark them as not active in the database
+    # and modify this code to only try queries at active sites
+    SiteDataMap = db.get_siteDataMap('WRCC Load For CUL','month')
 
     # fill default arguments
     # Write either None or 'O' to the overwrite flag field
     oFlag = None if args.NoOverwrite else 'O'
 
-    # Select a single row of the allSites dataframe if one is given
+    # Select a single site from the map if one is given
     if args.site is not None:
-        allSites = allSites[allSites['Numeric ID'] == args.site]
-        if len(allSites) == 0:
+        SiteDataMap = SiteDataMap[SiteDataMap['PRIMARY_SITE_CODE'] == args.site]
+        if len(SiteDataMap) == 0:
             raise Exception('no site found with numeric ID {}'.format(args.site))
-    debug('--- Collecting data for {} site(s) ---'.format(len(allSites)),args.verbose)
+    debug('--- Collecting data for {} sdi(s) ---'.format(len(SiteDataMap)),args.verbose)
 
     # Build start date for data to be loaded. Default to Jan of the current year if no argument was provided
     if args.startMonth is None:
@@ -52,40 +50,44 @@ def main(args):
             print('Error parsing start month. Expecting format m/yyyy')
             raise Exception(e)
 
-    for index,row in allSites.iterrows():
-        numericID = row['Numeric ID']
-        name = row['Name']
-        hdbSite = row['HDB Site']
+    for index,row in SiteDataMap.iterrows():
+        numericID = row['PRIMARY_SITE_CODE']
+        hdbSite = row['SITE_NAME']
+        sdi = row['HDB_SITE_DATATYPE_ID']
+        dt_wrcc = row['PRIMARY_DATA_CODE']
+        dt_hdb = row['DATATYPE_NAME']
+        comp_wrcc = url_compstrings[dt_wrcc]
 
-        for dt in datatypes: # average temp and sum precip
-            raw_site_data = pd.DataFrame()
-            site_data = pd.DataFrame()
-            sdi = getSDI_fromSiteAndDt(db,hdbSite,dt['hdb'])        
-            url = 'https://wrcc.dri.edu/WRCCWrappers.py?sodxtrmts+{}+por+por+{}+none+{}+5+01+F'.format(numericID,dt['wrcc'],dt['comp'])
-            debug('Site : {} || Datatype : {} || SDI : {}'.format(hdbSite,dt['hdb'],sdi),args.verbose)
-            try:
-                raw_site_data = pd.read_html(url,header=0,na_values=['-----'])[0]
-                site_data = formatWRCCTable(raw_site_data,startDate)
-            except Exception as e:
-                print('Error retrieving {} data for site: {}'.format(dt['hdb'],hdbSite))
-                print('Attempted URL: {}'.format(url))
-                print(e)
-                #raise Exception(e)
-            if len(site_data) == 0:
-                debug('No data since {}'.format(datetime.strftime(startDate,'%m/%Y')),args.verbose)
-            else:
-                debug('Found {} data points starting in {}'.format(len(site_data),datetime.strftime(site_data.index.min(),'%m/%Y')),args.verbose)
-                # This logic comes from xl2hdb.py, which can load time series w/ data flags to r_base by loading chunks at a time with consistent data flags
-                allFlags = site_data['flag'].dropna().unique().tolist()
-                for f in allFlags:
-                    dt_list = site_data[site_data['flag'] == f]['data'].dropna().index.tolist()
-                    val_list = site_data[site_data['flag'] == f]['data'].dropna().tolist()
-                    db.write_xfer(db.get_app_ids() | {'sdi' : sdi,'inter' : 'month','overwrite_flag' : oFlag,'val' : None},dt_list,val_list,f)
+        url = 'https://wrcc.dri.edu/WRCCWrappers.py?sodxtrmts+{}+por+por+{}+none+{}+5+01+F'.format(numericID,dt_wrcc,comp_wrcc)
+        debug('Site : {} || Datatype : {} || SDI : {}'.format(hdbSite,dt_hdb,sdi),args.verbose)
 
-                # repeat a similar step for blank data flags
-                dt_list = site_data[site_data['flag'].isna()]['data'].dropna().index.tolist()
-                val_list = site_data[site_data['flag'].isna()]['data'].dropna().tolist()
-                db.write_xfer(db.get_app_ids() | {'sdi' : sdi,'inter' : 'month','overwrite_flag' : oFlag,'val' : None},dt_list,val_list)
+        raw_site_data = pd.DataFrame()
+        site_data = pd.DataFrame()
+    
+
+        try:
+            raw_site_data = pd.read_html(url,header=0,na_values=['-----'])[0]
+            site_data = formatWRCCTable(raw_site_data,startDate)
+        except Exception as e:
+            print('Error retrieving {} data for site: {}'.format(dt_hdb,hdbSite))
+            print('Attempted URL: {}'.format(url))
+            print(e)
+            #raise Exception(e)
+        if len(site_data) == 0:
+            debug('No data since {}'.format(datetime.strftime(startDate,'%m/%Y')),args.verbose)
+        else:
+            debug('Found {} data points starting in {}'.format(len(site_data),datetime.strftime(site_data.index.min(),'%m/%Y')),args.verbose)
+            # This logic comes from xl2hdb.py, which can load time series w/ data flags to r_base by loading chunks at a time with consistent data flags
+            allFlags = site_data['flag'].dropna().unique().tolist()
+            for f in allFlags:
+                dt_list = site_data[site_data['flag'] == f]['data'].dropna().index.tolist()
+                val_list = site_data[site_data['flag'] == f]['data'].dropna().tolist()
+                db.write_xfer(db.get_app_ids() | {'sdi' : sdi,'inter' : 'month','overwrite_flag' : oFlag,'val' : None},dt_list,val_list,f)
+
+            # repeat a similar step for blank data flags
+            dt_list = site_data[site_data['flag'].isna()]['data'].dropna().index.tolist()
+            val_list = site_data[site_data['flag'].isna()]['data'].dropna().tolist()
+            db.write_xfer(db.get_app_ids() | {'sdi' : sdi,'inter' : 'month','overwrite_flag' : oFlag,'val' : None},dt_list,val_list)
     
     if input('Commit? y/n: ') == 'y':
         db.commit()
@@ -125,23 +127,6 @@ def formatWRCCTable(raw,startDate):
 
     # only return dates after or equal to the supplied start date, with numeric values
     return raw[raw.index >= startDate]
-
-def getSDI_fromSiteAndDt(db,site,dt):
-    q=("SELECT sd.site_datatype_id FROM "
-        "hdb_site_datatype sd "
-        "INNER JOIN hdb_datatype d ON sd.datatype_id = d.datatype_id "
-        "INNER JOIN hdb_site s ON sd.site_id = s.site_id "
-        "WHERE s.site_name = :site and d.datatype_name = :dt")
-    with db.conn.cursor() as cursor:
-        try:
-            cursor.execute(q, {'site': site, 'dt': dt})
-
-        except Exception as ex:
-            db.conn.rollback()
-            print(ex)
-            db.hdbdie("Errors occurred during selection of SDI!")
-
-        return cursor.fetchone()[0]
 
 if __name__ == '__main__':
     main(sys.argv[:])
