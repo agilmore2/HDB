@@ -38,6 +38,7 @@ def main(args):
     parser.add_argument('-s', '--sheet', help='Sheet to load from', required=True)
     parser.add_argument('-c', '--column', help='Optional, provide name of single site (column) to load', required=False)
     parser.add_argument('-l', '--loadingApp', help='Supply an optional loading application name, defaults to file name', required=False)
+    parser.add_argument('-d','--dataCodeSys',help='Data code system name, used to map sheet names to hdb datatypes. Default = CUL Sheet Names',default='CUL Sheet Names')
     parser.add_argument('--verbose', action='store_true', help='Show more detail about process')
     parser.add_argument('--NoOverwrite', action='store_true', help='Do not write an O to the overwrite_flag field')
     args = parser.parse_args()
@@ -81,7 +82,7 @@ def main(args):
         db.method = header.loc[METHOD_ROW][site_name]
         db.comp = header.loc[COMP_ROW][site_name]    
 
-        sdi = db.lookup_sdi(site_name, args.sheet)
+        sdi = db.lookup_sdi_ext_data_code(site_name, args.sheet,args.dataCodeSys)
         if sdi is None:
                 db.hdbdie(f"Lookup of sdi for site: {site_name} datatype code: {args.sheet[0]} failed!")
 

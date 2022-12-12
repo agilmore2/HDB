@@ -177,16 +177,16 @@ class Hdb(object):
 
         return {k: vars(self)[k] for k in ('agen_id', 'collect_id', 'app_id', 'method_id', 'comp_id')}
 
-    def lookup_sdi(self, site, sheet):
+    def lookup_sdi_ext_data_code(self, site, sheet, datacodesys):
         q=("select site_datatype_id FROM "
            "hdb_ext_data_code_sys NATURAL JOIN hdb_ext_data_code data, "
            "hdb_site_datatype NATURAL JOIN hdb_site sdi "
            "WHERE lower(site_name) = lower(:site) and primary_data_code = :sheet AND "
            "hdb_datatype_id = datatype_id AND "
-           "ext_data_code_sys_name = 'CUL Sheet Names'")
+           "ext_data_code_sys_name = :datacodesys")
         with self.conn.cursor() as cursor:
             try:
-                cursor.execute(q, {'sheet': sheet, 'site': site})
+                cursor.execute(q, {'sheet': sheet, 'site': site,'datacodesys': datacodesys})
 
             except Exception as ex:
                 self.conn.rollback()
@@ -197,15 +197,7 @@ class Hdb(object):
 
 def main():
     '''Just for testing.'''
-    # db = Hdb()
-    # db.connect_from_file('.agilmore_login_cu')
-    # db.ruler()
-    # db.write_xfer({'app_id': 109, 'sdi': 25575, 'inter': 'day', 'agen_id': 7, 'overwrite_flag': None, 'val': None,
-    #                'collect_id': 13, 'method_id': 18, 'comp_id': 1},
-    #               [date(2000, 1, 1), date(2000, 1, 2)], [1, 2])
-    # db.rollback()
-    db = Hdb()
-    db.connect_from_file('brett_cu.auth')
+    pass
 
 if __name__ == '__main__':
     main()
