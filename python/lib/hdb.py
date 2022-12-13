@@ -5,6 +5,7 @@ Testing ts_xfer package for CUL loading
 from datetime import date
 import cx_Oracle
 import os
+import pandas as pd
 import stat
 
 
@@ -89,7 +90,7 @@ class Hdb(object):
         print(message)
         exit(1)
 
-    def write_xfer(self, app_key, dates, values):
+    def write_xfer(self, app_key, dates, values, dataflag=None):
         """Writes a single timeseries to the database
 
         This writes (using the given `cursor`) the timeseries represented by dates and values arrays
@@ -107,27 +108,16 @@ class Hdb(object):
         , METHOD_ID NUMBER
         , computation_id NUMBER
         , do_update_y_n VARCHAR2
+        , data_flags IN VARCHAR2 DEFAULT NULL
+        , TIME_ZONE IN VARCHAR2 DEFAULT NULL
+        )
 
-        Ignoring the optional timezone and data_flags fields
+        Ignoring the optional timezone field
 
-        alternative:
-        modify_r_base ( SITE_DATATYPE_ID NUMBER,
-                      INTERVAL VARCHself.conn.cursor()AR2,
-                      START_DATE_TIME DATE,
-                      END_DATE_TIME DATE,
-                      VALUE FLOAT,
-                      AGEN_ID NUMBER,
-                      OVERWRITE_FLAG VARCHAR2,
-                      VALIDATION CHAR,
-                      COLLECTION_SYSTEM_ID NUMBER,
-                      LOADING_APPLICATION_ID NUMBER,
-                      METHOD_ID NUMBER,
-                      COMPUTATION_ID NUMBER,
-                      DO_UPDATE_Y_OR_N VARCHAR2
         """
 
         proc = ("begin cuhdba.ts_xfer.write_real_data(:sdi,:inter,:dates,:values,:agen_id,:overwrite_flag,"
-                ":val,:collect_id,:app_id,:method_id,:comp_id,'Y'); end;")
+                ":val,:collect_id,:app_id,:method_id,:comp_id,'Y',:data_flags); end;")
 
     #    example call with single date/value procedure
     #    proc_one = ("begin cuhdba.modify_r_base(:sdi,:inter,:dates,:edate,:values,:agen  Returns number of values written._id,:overwrite_flag  ,"
@@ -143,7 +133,7 @@ class Hdb(object):
         with self.conn.cursor() as cursor:
             try:
                 #cursor.execute(proc_one, app_key|meta_key|{'dates':dates,'edate':None,'values':values})
-                cursor.execute(proc, app_key | {'dates': dates, 'values': values})
+                cursor.execute(proc, app_key | {'dates': dates, 'values': values, 'data_flags' : dataflag})
             except Exception as ex:
                 self.conn.rollback()
                 print(ex)
@@ -188,16 +178,16 @@ class Hdb(object):
 
         return {k: vars(self)[k] for k in ('agen_id', 'collect_id', 'app_id', 'method_id', 'comp_id')}
 
-    def lookup_sdi(self, site, sheet):
+    def lookup_sdi_ext_data_code(self, site, sheet, datacodesys):
         q=("select site_datatype_id FROM "
            "hdb_ext_data_code_sys NATURAL JOIN hdb_ext_data_code data, "
            "hdb_site_datatype NATURAL JOIN hdb_site sdi "
-           "WHERE site_name = :site and primary_data_code = :sheet AND "
+           "WHERE lower(site_name) = lower(:site) and primary_data_code = :sheet AND "
            "hdb_datatype_id = datatype_id AND "
-           "ext_data_code_sys_name = 'CUL Sheet Names'")
+           "ext_data_code_sys_name = :datacodesys")
         with self.conn.cursor() as cursor:
             try:
-                cursor.execute(q, {'sheet': sheet, 'site': site})
+                cursor.execute(q, {'sheet': sheet, 'site': site,'datacodesys': datacodesys})
 
             except Exception as ex:
                 self.conn.rollback()
@@ -206,17 +196,31 @@ class Hdb(object):
 
             return cursor.fetchone()[0]
 
+    def get_siteDataMap(self,datasource,interval):
+        q = ("select m.*,s.site_name,d.datatype_name from ref_ext_site_data_map m "
+        "inner join hdb_ext_data_source ds on ds.ext_data_source_id = m.ext_data_source_id "
+        "inner join hdb_site_datatype sd on sd.site_datatype_id = m.hdb_site_datatype_id "
+        "inner join hdb_site s on s.site_id = sd.site_id "
+        "inner join hdb_datatype d on d.datatype_id = sd.datatype_id "
+        "where lower(ds.ext_data_source_name) = lower(:datasource) "
+        "and m.hdb_interval_name = :interval")
+
+        with self.conn.cursor() as cursor:
+            try: 
+                cursor.execute(q,{'datasource' : datasource,'interval' : interval})
+            except Exception as ex:
+                self.conn.rollback()
+                print(ex)
+                self.hdbdie("Errors occurred during selection of site data map")
+
+            map = cursor.fetchall()
+            headers = [c[0] for c in cursor.description]
+            return pd.DataFrame(map,columns=headers)
+
+
 def main():
     '''Just for testing.'''
-    # db = Hdb()
-    # db.connect_from_file('.agilmore_login_cu')
-    # db.ruler()
-    # db.write_xfer({'app_id': 109, 'sdi': 25575, 'inter': 'day', 'agen_id': 7, 'overwrite_flag': None, 'val': None,
-    #                'collect_id': 13, 'method_id': 18, 'comp_id': 1},
-    #               [date(2000, 1, 1), date(2000, 1, 2)], [1, 2])
-    # db.rollback()
-    db = Hdb()
-    db.connect_from_file('brett_cu.auth')
+    pass
 
 if __name__ == '__main__':
     main()
