@@ -18,7 +18,7 @@ import sys
 import argparse
 import os
 import pandas
-from hdb import Hdb
+from src.hdb import Hdb
 
 # Header rows in excel workbook need to have these labels
 INT_ROW = "INTERVAL"

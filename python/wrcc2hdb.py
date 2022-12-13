@@ -3,7 +3,7 @@ import sys
 import argparse
 import os
 import pandas as pd
-from hdb import Hdb
+from src.hdb import Hdb
 
 def main(args):
     parser = argparse.ArgumentParser(description='Program to load monthly average temperatures and cumulative precip for many WRCC climate sites used by UC CUL computations')
