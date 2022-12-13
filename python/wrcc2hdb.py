@@ -3,7 +3,7 @@ import sys
 import argparse
 import os
 import pandas as pd
-from src.hdb import Hdb
+from lib.hdb import Hdb
 
 def main(args):
     parser = argparse.ArgumentParser(description='Program to load monthly average temperatures and cumulative precip for many WRCC climate sites used by UC CUL computations')
@@ -11,7 +11,7 @@ def main(args):
     parser.add_argument('-m','--startMonth',help='start month (m/yyyy) to begin loading data for. Defaults to January of the current year')
     parser.add_argument('-s','--site',help='numeric ID (ex. 020750) of single site to load data for. Defaults to all sites')
     parser.add_argument('--verbose', action='store_true', help='Show more detail about process')
-    parser.add_argument('--NoOverwrite', action='store_true', help='Do not write an O to the overwrite_flag field')
+    parser.add_argument('--nooverwrite', action='store_true', help='Do not write an O to the overwrite_flag field')
     args = parser.parse_args()
 
     db = Hdb()
@@ -31,7 +31,7 @@ def main(args):
 
     # fill default arguments
     # Write either None or 'O' to the overwrite flag field
-    oFlag = None if args.NoOverwrite else 'O'
+    oFlag = None if args.nooverwrite else 'O'
 
     # Select a single site from the map if one is given
     if args.site is not None:

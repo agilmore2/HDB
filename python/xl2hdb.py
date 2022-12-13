@@ -18,7 +18,7 @@ import sys
 import argparse
 import os
 import pandas
-from src.hdb import Hdb
+from lib.hdb import Hdb
 
 # Header rows in excel workbook need to have these labels
 INT_ROW = "INTERVAL"
@@ -40,13 +40,13 @@ def main(args):
     parser.add_argument('-l', '--loadingApp', help='Supply an optional loading application name, defaults to file name', required=False)
     parser.add_argument('-d','--dataCodeSys',help='Data code system name, used to map sheet names to hdb datatypes. Default = CUL Sheet Names',default='CUL Sheet Names')
     parser.add_argument('--verbose', action='store_true', help='Show more detail about process')
-    parser.add_argument('--NoOverwrite', action='store_true', help='Do not write an O to the overwrite_flag field')
+    parser.add_argument('--nooverwrite', action='store_true', help='Do not write an O to the overwrite_flag field')
     args = parser.parse_args()
 
     debug(args,args.verbose)
 
     # Write either None or 'O' to the overwrite flag field
-    oFlag = None if args.NoOverwrite else 'O'
+    oFlag = None if args.nooverwrite else 'O'
 
     db = Hdb()
     db.connect_from_file(args.authFile)
