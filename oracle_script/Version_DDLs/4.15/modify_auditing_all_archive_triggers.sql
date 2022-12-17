@@ -1844,7 +1844,7 @@ show errors trigger ref_model_run_key_after_delete;
 
 
 --update version table
-INSERT INTO TSDB_PROPERTY (PROP_NAME, PROP_VALUE) VALUES ('4.15.3', 'archives_cmmnt column used for session audits for all archive tables have been modified to enhance auditing.');
+INSERT INTO TSDB_PROPERTY (PROP_NAME, PROP_VALUE) VALUES ('4.15.2', 'archives_cmmnt column used for session audits for all archive tables have been modified to enhance auditing.');
 /
 
 --Commit
