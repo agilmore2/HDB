@@ -21,7 +21,14 @@ values (
 :old.PROP_VALUE,
 'UPDATE', 
 sysdate, 
-NULL); 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+         ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+         ,sys_context('userenv','session_user')
+         ) || ':' || sys_context('userenv','os_user') 
+         || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
+); 
 end;                                                                    
 /                                                                                                                       
 show errors trigger cp_algo_property_update;                                                                         
@@ -49,7 +56,14 @@ values (
 :old.PROP_VALUE,
 'DELETE', 
 sysdate, 
-NULL); 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+         ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+         ,sys_context('userenv','session_user')
+         ) || ':' || sys_context('userenv','os_user') 
+         || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
+); 
 end;                                                                    
 /                                                                                                                       
 show errors trigger cp_algo_property_delete;                                                                         

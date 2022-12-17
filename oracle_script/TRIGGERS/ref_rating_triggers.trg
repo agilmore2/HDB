@@ -20,7 +20,15 @@ DATE_TIME_LOADED, ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.RATING_ID,
 :old.INDEPENDENT_VALUE,
 :old.DEPENDENT_VALUE,
-:old.date_time_loaded,'UPDATE', sysdate, NULL); 
+:old.date_time_loaded,'UPDATE', sysdate, 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+         ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+         ,sys_context('userenv','session_user')
+         ) || ':' || sys_context('userenv','os_user') 
+         || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
+); 
 end;
 /
 
@@ -38,7 +46,15 @@ DATE_TIME_LOADED, ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.RATING_ID,
 :old.INDEPENDENT_VALUE,
 :old.DEPENDENT_VALUE,
-:old.date_time_loaded,'DELETE', sysdate, NULL); 
+:old.date_time_loaded,'DELETE', sysdate, 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+         ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+         ,sys_context('userenv','session_user')
+         ) || ':' || sys_context('userenv','os_user') 
+         || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
+); 
 end;
 /
 show errors trigger ref_rating_arch_del;

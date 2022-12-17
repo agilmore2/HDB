@@ -30,7 +30,14 @@ values (
 :old.date_time_loaded,
 'UPDATE', 
 sysdate, 
-NULL); 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+         ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+         ,sys_context('userenv','session_user')
+         ) || ':' || sys_context('userenv','os_user') 
+         || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
+); 
 end;                                                                    
 /                                                                                                                       
 show errors trigger hdb_ext_data_code_arch_upd;                                                                         
@@ -56,7 +63,14 @@ ARCHIVE_CMMNT) values (
 :old.date_time_loaded,
 'DELETE', 
 sysdate, 
-NULL); 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+         ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+         ,sys_context('userenv','session_user')
+         ) || ':' || sys_context('userenv','os_user') 
+         || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
+); 
 end;                                                                    
 /                                                                                                                       
 show errors trigger hdb_ext_data_code_arch_del;                                                                         

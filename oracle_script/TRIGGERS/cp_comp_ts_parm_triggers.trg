@@ -44,7 +44,13 @@ values (
   :old.MODEL_ID,
   'UPDATE', 
   sysdate, 
-  NULL,
+    coalesce(
+            sys_context('APEX$SESSION','app_user')
+           ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+           ,sys_context('userenv','session_user')
+           ) || ':' || sys_context('userenv','os_user') 
+           || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME'),
   :old.DATATYPE_ID,
   :old.DELTA_T_UNITS,
   :old.SITE_ID); 
@@ -96,7 +102,13 @@ values (
   :old.MODEL_ID,
   'DELETE', 
   sysdate, 
-  NULL,
+    coalesce(
+            sys_context('APEX$SESSION','app_user')
+           ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+           ,sys_context('userenv','session_user')
+           ) || ':' || sys_context('userenv','os_user') 
+           || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME'),
   :old.DATATYPE_ID,
   :old.DELTA_T_UNITS,
   :old.SITE_ID); 

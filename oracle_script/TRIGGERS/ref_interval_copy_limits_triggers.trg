@@ -54,7 +54,13 @@ VALUES (
 :old.DATE_TIME_LOADED,
 'UPDATE',
 sysdate,
-NULL,
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+         ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+         ,sys_context('userenv','session_user')
+         ) || ':' || sys_context('userenv','os_user') 
+         || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME'),
 :old.EFFECTIVE_START_DATE_TIME,
 :old.EFFECTIVE_END_DATE_TIME,
 :old.PREPROCESSOR_EQUATION
@@ -103,7 +109,13 @@ VALUES (
 :old.DATE_TIME_LOADED,
 'DELETE',
 sysdate,
-NULL,
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+         ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+         ,sys_context('userenv','session_user')
+         ) || ':' || sys_context('userenv','os_user') 
+         || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME'),
 :old.EFFECTIVE_START_DATE_TIME,
 :old.EFFECTIVE_END_DATE_TIME,
 :old.PREPROCESSOR_EQUATION

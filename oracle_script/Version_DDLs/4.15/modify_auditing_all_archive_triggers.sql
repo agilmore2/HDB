@@ -5,75 +5,81 @@
 --------------------------------------------------------------------------
 
 
-create or replace TRIGGER cp_algorithm_delete
-after delete on cp_algorithm
-for each row
-begin
+create or replace trigger cp_algorithm_delete                                                                    
+after delete on cp_algorithm 
+for each row 
+begin 
 /*  This trigger created by M.  Bogner  04/04/2006
     This trigger archives any deletes to the table
     cp_algorithm.
+	
+	updated to add DB_OFFICE_CODE column in archive table by IsmailO. 08/26/2019
 */
-insert into cp_algorithm_archive (
+insert into cp_algorithm_archive (                     
 ALGORITHM_ID,
 ALGORITHM_NAME,
 EXEC_CLASS,
 CMMNT,
 ARCHIVE_REASON,
 DATE_TIME_ARCHIVED,
-ARCHIVE_CMMNT
-)
-values (
+ARCHIVE_CMMNT,
+DB_OFFICE_CODE
+) 
+values (                                           
 :old.ALGORITHM_ID,
 :old.ALGORITHM_NAME,
 :old.EXEC_CLASS,
 :old.CMMNT,
-'DELETE',
-sysdate,
+'DELETE', 
+sysdate, 
 coalesce(
           sys_context('APEX$SESSION','app_user')
          ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
          ,sys_context('userenv','session_user')
          ) || ':' || sys_context('userenv','os_user') 
          || ':' || sys_context('userenv','HOST') 
-         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
- );
-end;
-/
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME'),
+:old.DB_OFFICE_CODE); 
+end;                                                                    
+/                  
 
-create or replace TRIGGER cp_algorithm_update
-after update on cp_algorithm
-for each row
-begin
+create or replace trigger cp_algorithm_update                                                                    
+after update on cp_algorithm 
+for each row 
+begin 
 /*  This trigger created by M.  Bogner  04/04/2006
     This trigger archives any updates to the table
     cp_algorithm.
+	
+	updated to add DB_OFFICE_CODE column in archive table by IsmailO. 08/26/2019
 */
-insert into cp_algorithm_archive (
+insert into cp_algorithm_archive (                     
 ALGORITHM_ID,
 ALGORITHM_NAME,
 EXEC_CLASS,
 CMMNT,
 ARCHIVE_REASON,
 DATE_TIME_ARCHIVED,
-ARCHIVE_CMMNT
-)
-values (
+ARCHIVE_CMMNT,
+DB_OFFICE_CODE
+) 
+values (                                           
 :old.ALGORITHM_ID,
 :old.ALGORITHM_NAME,
 :old.EXEC_CLASS,
 :old.CMMNT,
-'UPDATE',
-sysdate,
+'UPDATE', 
+sysdate, 
 coalesce(
           sys_context('APEX$SESSION','app_user')
          ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
          ,sys_context('userenv','session_user')
          ) || ':' || sys_context('userenv','os_user') 
          || ':' || sys_context('userenv','HOST') 
-         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
-);
-end;
-/
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME'),
+:old.DB_OFFICE_CODE); 
+end;                                                                    
+/   
 
 create or replace TRIGGER cp_algo_property_delete
 after delete on cp_algo_property
@@ -1766,6 +1772,74 @@ coalesce(
 end;                                                                    
 /                                                                                                                       
 show errors trigger hdb_site_archive_delete;    
+/
+
+create or replace trigger ref_model_run_key_after_update
+after update on ref_model_run_keyval
+for each row
+begin
+
+-- archive the row that was changed
+  insert into ref_model_run_keyval_archive
+    (model_run_id,
+     key_name,
+     key_value,
+     date_time_loaded,
+     archive_reason,
+     date_time_archived,
+     ARCHIVE_CMMNT)
+  values
+    (:old.model_run_id,
+     :old.key_name,
+     :old.key_value,
+     :old.date_time_loaded,
+     'UPDATE',
+     sysdate,
+     coalesce(
+               sys_context('APEX$SESSION','app_user')
+              ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+              ,sys_context('userenv','session_user')
+              ) || ':' || sys_context('userenv','os_user') 
+              || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
+     );
+end;
+/
+show errors trigger ref_model_run_key_after_update;
+/
+
+create or replace trigger ref_model_run_key_after_delete
+after delete on ref_model_run_keyval
+for each row
+begin
+
+-- archive the row that was changed
+  insert into ref_model_run_keyval_archive
+    (model_run_id,
+     key_name,
+     key_value,
+     date_time_loaded,
+     archive_reason,
+     date_time_archived,
+     ARCHIVE_CMMNT)
+  values
+    (:old.model_run_id,
+     :old.key_name,
+     :old.key_value,
+     :old.date_time_loaded,
+     'DELETE',
+     sysdate,
+     coalesce(
+               sys_context('APEX$SESSION','app_user')
+              ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+              ,sys_context('userenv','session_user')
+              ) || ':' || sys_context('userenv','os_user') 
+              || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
+     );
+end;
+/
+show errors trigger ref_model_run_key_after_delete;
 /
 
 

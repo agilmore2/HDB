@@ -76,7 +76,14 @@ begin
     :old.date_time_loaded, 
      'UPDATE',
      sysdate,
-    NULL);
+    coalesce(
+                  sys_context('APEX$SESSION','app_user')
+                 ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+                 ,sys_context('userenv','session_user')
+                 ) || ':' || sys_context('userenv','os_user') 
+                 || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
+    );
 end;
 /
 show errors trigger ref_ext_site_data_map_arch_upd;
@@ -120,7 +127,14 @@ begin
     :old.date_time_loaded, 
      'DELETE',
      sysdate,
-    NULL);
+    coalesce(
+              sys_context('APEX$SESSION','app_user')
+             ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+             ,sys_context('userenv','session_user')
+             ) || ':' || sys_context('userenv','os_user') 
+             || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
+);
 end;
 /
 show errors trigger ref_ext_site_data_map_arch_del;
