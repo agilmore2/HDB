@@ -203,7 +203,8 @@ class Hdb(object):
         "inner join hdb_site s on s.site_id = sd.site_id "
         "inner join hdb_datatype d on d.datatype_id = sd.datatype_id "
         "where lower(ds.ext_data_source_name) = lower(:datasource) "
-        "and m.hdb_interval_name = :interval")
+        "and m.hdb_interval_name = :interval "
+        "and m.is_active_y_n = 'Y'")
 
         with self.conn.cursor() as cursor:
             try: 
