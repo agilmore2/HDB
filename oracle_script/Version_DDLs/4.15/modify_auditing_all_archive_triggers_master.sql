@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------
 -- This script modifies auditing on all archiving triggers to enhance auditing
 -- IMPORTANT!!! This script should be executed as main schema user that owns the tables.
--- created on 11/18/2022 by IsmailO
+-- created on 12/17/2022 by IsmailO
 --------------------------------------------------------------------------
 
 
@@ -1805,8 +1805,7 @@ begin
      );
 end;
 /
-show errors trigger ref_model_run_key_after_update;
-/
+
 
 create or replace trigger ref_model_run_key_after_delete
 after delete on ref_model_run_keyval
@@ -1839,13 +1838,12 @@ begin
      );
 end;
 /
-show errors trigger ref_model_run_key_after_delete;
-/
+
 
 
 --update version table
 INSERT INTO TSDB_PROPERTY (PROP_NAME, PROP_VALUE) VALUES ('4.15.2', 'archives_cmmnt column used for session audits for all archive tables have been modified to enhance auditing.');
-/
+
 
 --Commit
 commit;
