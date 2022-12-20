@@ -10,24 +10,21 @@ def main(args):
     parser.add_argument('-a', '--authFile', help='app_login containing database credentials', required=True)
     parser.add_argument('-m','--startMonth',help='start month (m/yyyy) to begin loading data for. Defaults to January of the current year')
     parser.add_argument('-s','--site',help='numeric ID (ex. 020750) of single site to load data for. Defaults to all sites')
+    parser.add_argument('-d','--dataSource' ,help='name of data source to get site datatype mappings from',default='WRCC Load For CUL')
     parser.add_argument('--verbose', action='store_true', help='Show more detail about process')
     parser.add_argument('--nooverwrite', action='store_true', help='Do not write an O to the overwrite_flag field')
     args = parser.parse_args()
 
     db = Hdb()
     db.connect_from_file(args.authFile)
-    db.app = os.path.basename(sys.argv[0])
-    db.agen = 'Western Regional Climate Center'
-    db.collect = 'NOAA coop station'
-    db.method = 'unknown'
-    db.comp = 'unknown'  
+    app = db.get_loadingAppID(os.path.basename(sys.argv[0]))
 
     url_compstrings = {'avgt' : 'mave','pcpn' : 'msum'} # wrcc computation names used in URL query for temp (average) and precip (sum)
     
     # Load site map info dataframe
     # Many sites are no longer active. Future effort could identify these sites, mark them as not active in the database
     # and modify this code to only try queries at active sites
-    SiteDataMap = db.get_siteDataMap('WRCC Load For CUL','month')
+    SiteDataMap = db.get_siteDataMap(args.dataSource,'month')
 
     # fill default arguments
     # Write either None or 'O' to the overwrite flag field
@@ -58,6 +55,9 @@ def main(args):
         dt_hdb = row['DATATYPE_NAME']
         comp_wrcc = url_compstrings[dt_wrcc]
 
+        # r_base metadata
+        base_meta = {'agen_id' : row['HDB_AGEN_ID'],'collect_id' : row['COLLECTION_SYSTEM_ID'],'app_id' : app,'method_id' : row['HDB_METHOD_ID'],'comp_id' : row['HDB_COMPUTATION_ID']}
+
         url = 'https://wrcc.dri.edu/WRCCWrappers.py?sodxtrmts+{}+por+por+{}+none+{}+5+01+F'.format(numericID,dt_wrcc,comp_wrcc)
         debug('Site : {} || Datatype : {} || SDI : {}'.format(hdbSite,dt_hdb,sdi),args.verbose)
 
@@ -82,12 +82,12 @@ def main(args):
             for f in allFlags:
                 dt_list = site_data[site_data['flag'] == f]['data'].dropna().index.tolist()
                 val_list = site_data[site_data['flag'] == f]['data'].dropna().tolist()
-                db.write_xfer(db.get_app_ids() | {'sdi' : sdi,'inter' : 'month','overwrite_flag' : oFlag,'val' : None},dt_list,val_list,f)
+                db.write_xfer(base_meta | {'sdi' : sdi,'inter' : 'month','overwrite_flag' : oFlag,'val' : None},dt_list,val_list,f)
 
             # repeat a similar step for blank data flags
             dt_list = site_data[site_data['flag'].isna()]['data'].dropna().index.tolist()
             val_list = site_data[site_data['flag'].isna()]['data'].dropna().tolist()
-            db.write_xfer(db.get_app_ids() | {'sdi' : sdi,'inter' : 'month','overwrite_flag' : oFlag,'val' : None},dt_list,val_list)
+            db.write_xfer(base_meta | {'sdi' : sdi,'inter' : 'month','overwrite_flag' : oFlag,'val' : None},dt_list,val_list)
     
     if input('Commit? y/n: ') == 'y':
         db.commit()

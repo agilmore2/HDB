@@ -197,13 +197,14 @@ class Hdb(object):
             return cursor.fetchone()[0]
 
     def get_siteDataMap(self,datasource,interval):
-        q = ("select m.*,s.site_name,d.datatype_name from ref_ext_site_data_map m "
+        q = ("select m.*,ds.collection_system_id,s.site_name,d.datatype_name from ref_ext_site_data_map m "
         "inner join hdb_ext_data_source ds on ds.ext_data_source_id = m.ext_data_source_id "
         "inner join hdb_site_datatype sd on sd.site_datatype_id = m.hdb_site_datatype_id "
         "inner join hdb_site s on s.site_id = sd.site_id "
         "inner join hdb_datatype d on d.datatype_id = sd.datatype_id "
         "where lower(ds.ext_data_source_name) = lower(:datasource) "
-        "and m.hdb_interval_name = :interval")
+        "and m.hdb_interval_name = :interval "
+        "and m.is_active_y_n = 'Y'")
 
         with self.conn.cursor() as cursor:
             try: 
@@ -216,6 +217,22 @@ class Hdb(object):
             map = cursor.fetchall()
             headers = [c[0] for c in cursor.description]
             return pd.DataFrame(map,columns=headers)
+
+    def get_loadingAppID(self,appName):
+        q = ("select loading_application_id from hdb_loading_application "
+            "where loading_application_name = :appName")
+
+        with self.conn.cursor() as cursor:
+            try:
+                cursor.execute(q, {'appName' : appName})
+
+            except Exception as ex:
+                self.conn.rollback()
+                print(ex)
+                self.hdbdie("Errors occurred during selection of loading application ID")
+
+            return cursor.fetchone()[0]
+        
 
 
 def main():
