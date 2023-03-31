@@ -194,7 +194,6 @@ comment on table ALARM_GROUP is 'Holds list of email address records. It is also
 comment on table ALARM_HISTORY is 'Holds alarms that have been asserted and resolved in the past. ';
 comment on table ALARM_LIMIT_SET is 'Holds the limits used to generate the alarm. ';
 comment on table ALARM_SCREENING is 'Describes alarm screening information. It is associated with a DATATYPE and optionally a SITE. Records without SITE assignment can define a kind of default for a data type. For example, you might define a screening with datatype=Incremental Precip and no site assignment. ';
-	comment on table CG_REF_CODES is ' ';
 comment on table CP_ALGO_PROPERTY is 'Describes the properties associated with the algorithm. The properties apply to all computations using that algorithm.The property value in this table is the default value for any computation using the algorithm.';
 comment on table CP_ALGO_PROPERTY_ARCHIVE is 'Archive table of CP_ALGO_PROPERTY';
 comment on table CP_ALGO_SCRIPT is 'Holds Base64 encoded scripts for algorithms, including Python code.';
