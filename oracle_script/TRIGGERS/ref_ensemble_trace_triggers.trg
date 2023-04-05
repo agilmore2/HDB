@@ -14,7 +14,16 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.TRACE_NUMERIC,
 :old.TRACE_NAME,
 :old.MODEL_RUN_ID,
-'UPDATE', sysdate, NULL); end;
+'UPDATE', sysdate, 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+         ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+         ,sys_context('userenv','session_user')
+         ) || ':' || sys_context('userenv','os_user') 
+         || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
+);
+end;
 /
 show errors trigger ref_ensemble_trace_upd;
 
@@ -32,6 +41,15 @@ ARCHIVE_REASON, DATE_TIME_ARCHIVED, ARCHIVE_CMMNT) values (
 :old.TRACE_NUMERIC,
 :old.TRACE_NAME,
 :old.MODEL_RUN_ID,
-'DELETE', sysdate, NULL); end;
+'DELETE', sysdate, 
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+         ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+         ,sys_context('userenv','session_user')
+         ) || ':' || sys_context('userenv','os_user') 
+         || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
+);
+end;
 /
 show errors trigger ref_ensemble_trace_del;

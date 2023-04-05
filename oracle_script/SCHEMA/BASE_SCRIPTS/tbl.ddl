@@ -631,23 +631,25 @@ storage (initial 100k
          next 100k
          pctincrease 0);
 
-create table ref_agg_disagg (                     
-agg_disagg_id                  number(11) NOT NULL  ,      
-source_datatype_id             number(11) NOT NULL  ,     
-source_observation_interval    varchar2(16) NOT NULL  ,   
-dest_datatype_unit_ind         varchar2(1) NOT NULL  ,  
-dest_datatype_or_unit_id       number(11) NOT NULL  ,  
-dest_observation_interval      varchar2(16) NOT NULL  ,
-method_or_function             varchar2(1) NOT NULL  ,    
-method_id                      number(11) NULL      ,   
-agg_disagg_function_name       varchar2(32) NULL        
-)                                                      
-pctfree 10
-pctused 40
-tablespace HDB_data
-storage (initial 50k
-         next 50k
-         pctincrease 0);
+/* removed by CP Project
+--create table ref_agg_disagg (                     
+--agg_disagg_id                  number(11) NOT NULL  ,      
+--source_datatype_id             number(11) NOT NULL  ,     
+--source_observation_interval    varchar2(16) NOT NULL  ,   
+--dest_datatype_unit_ind         varchar2(1) NOT NULL  ,  
+--dest_datatype_or_unit_id       number(11) NOT NULL  ,  
+--dest_observation_interval      varchar2(16) NOT NULL  ,
+--method_or_function             varchar2(1) NOT NULL  ,    
+--method_id                      number(11) NULL      ,   
+--agg_disagg_function_name       varchar2(32) NULL        
+--)                                                      
+--pctfree 10
+--pctused 40
+--tablespace HDB_data
+--storage (initial 50k
+--         next 50k
+--         pctincrease 0);
+*/
 
 create table ref_app_data_source (            
 executable_name                varchar2(32) NOT NULL  ,     
@@ -915,19 +917,22 @@ storage (initial 50k
          next 50k
          pctincrease 0);
 
-create table ref_dmi_data_map (        
-model_id                       number(11) NOT NULL,    
-object_name                    varchar2(240) NOT NULL  ,          
-data_name                      varchar2(64) NOT NULL  ,         
-site_datatype_id               number(11) NOT NULL
-)                                                            
-pctfree 10
-pctused 40
-tablespace HDB_data
-storage (initial 50k
-         next 50k
-         pctincrease 0)
-;
+/*  removed by CP project
+--create table ref_dmi_data_map (        
+--model_id                       number(11) NOT NULL,    
+--object_name                    varchar2(240) NOT NULL  ,          
+--data_name                      varchar2(64) NOT NULL  ,         
+--site_datatype_id               number(11) NOT NULL
+--)                                                            
+--pctfree 10
+--pctused 40
+--tablespace HDB_data
+--storage (initial 50k
+--         next 50k
+--         pctincrease 0)
+--;
+*/
+
 ------------------------------------------------------------------------------------
 -- This REF_ENSEMBLE table
 -- This table is for unique Ensembles that represent a particular suite run of a model

@@ -26,7 +26,13 @@ values (
 :old.CMMNT,
 'UPDATE', 
 sysdate, 
-NULL,
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+         ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+         ,sys_context('userenv','session_user')
+         ) || ':' || sys_context('userenv','os_user') 
+         || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME'),
 :old.DB_OFFICE_CODE); 
 end;                                                                    
 /                                                                                                                       
@@ -60,7 +66,13 @@ values (
 :old.CMMNT,
 'DELETE', 
 sysdate, 
-NULL,
+coalesce(
+          sys_context('APEX$SESSION','app_user')
+         ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+         ,sys_context('userenv','session_user')
+         ) || ':' || sys_context('userenv','os_user') 
+         || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME'),
 :old.DB_OFFICE_CODE); 
 end;                                                                    
 /                                                                                                                       

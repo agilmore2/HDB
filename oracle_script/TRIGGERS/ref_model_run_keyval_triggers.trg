@@ -111,14 +111,23 @@ begin
      key_value,
      date_time_loaded,
      archive_reason,
-     date_time_archived)
+     date_time_archived,
+     ARCHIVE_CMMNT)
   values
     (:old.model_run_id,
      :old.key_name,
      :old.key_value,
      :old.date_time_loaded,
      'UPDATE',
-     sysdate);
+     sysdate,
+     coalesce(
+               sys_context('APEX$SESSION','app_user')
+              ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+              ,sys_context('userenv','session_user')
+              ) || ':' || sys_context('userenv','os_user') 
+              || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
+     );
 end;
 /
 show errors trigger ref_model_run_key_after_update;
@@ -136,14 +145,23 @@ begin
      key_value,
      date_time_loaded,
      archive_reason,
-     date_time_archived)
+     date_time_archived,
+     ARCHIVE_CMMNT)
   values
     (:old.model_run_id,
      :old.key_name,
      :old.key_value,
      :old.date_time_loaded,
      'DELETE',
-     sysdate);
+     sysdate,
+     coalesce(
+               sys_context('APEX$SESSION','app_user')
+              ,regexp_substr(sys_context('userenv','client_identifier'),'^[^:]*')
+              ,sys_context('userenv','session_user')
+              ) || ':' || sys_context('userenv','os_user') 
+              || ':' || sys_context('userenv','HOST') 
+         || ':' || sys_context('userenv','CLIENT_PROGRAM_NAME')
+     );
 end;
 /
 show errors trigger ref_model_run_key_after_delete;

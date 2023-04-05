@@ -62,7 +62,7 @@ create public synonym m_monthstat                            for DBA.m_monthstat
 create public synonym m_wy           for DBA.m_wy;
 create public synonym m_year         for DBA.m_year;
 create public synonym ratings for DBA.ratings;
-create public synonym ref_agg_disagg                      for DBA.ref_agg_disagg;
+-- create public synonym ref_agg_disagg                      for DBA.ref_agg_disagg; deprecated and removed by IsmailO 10/2022
 create public synonym ref_app_data_source                    for DBA.ref_app_data_source;
 create public synonym ref_auth_site                   for DBA.ref_auth_site;
 create public synonym ref_auth_site_datatype                  for DBA.ref_auth_site_datatype;
@@ -78,7 +78,7 @@ create or replace public synonym REF_ENSEMBLE_TRACE for DBA.REF_ENSEMBLE_TRACE;
 create or replace public synonym REF_ENSEMBLE_ARCHIVE for DBA.REF_ENSEMBLE_ARCHIVE;
 create or replace public synonym REF_ENSEMBLE_KEYVAL_ARCHIVE for DBA.REF_ENSEMBLE_KEYVAL_ARCHIVE;
 create or replace public synonym REF_ENSEMBLE_TRACE_ARCHIVE for DBA.REF_ENSEMBLE_TRACE_ARCHIVE;
-create public synonym ref_dmi_data_map                  for DBA.ref_dmi_data_map;
+-- create public synonym ref_dmi_data_map                  for DBA.ref_dmi_data_map; deprecated and removed by IsmailO 10/2022
 create public synonym ref_ext_site_data_map  for DBA.ref_ext_site_data_map;
 create public synonym ref_ext_site_data_map_archive  for DBA.ref_ext_site_data_map_archive;
 create public synonym ref_ext_site_data_map_keyval  for DBA.ref_ext_site_data_map_keyval;
