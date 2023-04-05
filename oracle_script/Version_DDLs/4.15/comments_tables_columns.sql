@@ -197,7 +197,7 @@ comment on table ALARM_SCREENING is 'Describes alarm screening information. It i
 comment on table CP_ALGO_PROPERTY is 'Describes the properties associated with the algorithm. The properties apply to all computations using that algorithm.The property value in this table is the default value for any computation using the algorithm.';
 comment on table CP_ALGO_PROPERTY_ARCHIVE is 'Archive table of CP_ALGO_PROPERTY';
 comment on table CP_ALGO_SCRIPT is 'Holds Base64 encoded scripts for algorithms, including Python code.';
-comment on table CP_ALGO_TS_PARM is 'Defines the time series parameters associated with the algorithm and the number of input & output that the algorithm will accept.';
+comment on table CP_ALGO_TS_PARM is 'Defines the time series parameters associated with the algorithm and the number of input and output that the algorithm will accept.';
 comment on table CP_ALGO_TS_PARM_ARCHIVE is 'Archive table of CP_ALGO_TS_PARM ';
 comment on table CP_ALGORITHM is 'Holds all defined algorithms. Every computation must be assigned to an algorithm.';
 comment on table CP_ALGORITHM_ARCHIVE is 'Archive table of CP_ALGORITHM ';
