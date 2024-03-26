@@ -898,7 +898,7 @@ sub read_header {
   #check to see if no data at all, blank line
   if (   !defined($data->[0])
       or $data->[0] eq '' 
-      or $data->[0] =~ /^\t$/
+      or $data->[0] =~ /^\t+$/
       or ( substr( $data->[0], 0, 1 ) eq '#' ) ) {
     shift @$data;
     return 0; #no data, next station please!
