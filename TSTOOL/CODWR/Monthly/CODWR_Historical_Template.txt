@@ -15,6 +15,8 @@
   # Not worrying about breaking this up into separate periods, only 36ish values
   SetInputPeriod(InputStart="${startYear}-10-01 00:00",InputEnd="CurrentToMinute")
   abbrev:${PrimarySiteCode}.DWR.${PrimaryDataCode}.Month~HydroBaseWeb
+  # Fills missing data with zero
+  FillConstant(TSList=AllTS,ConstantValue=0)
   WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="${PrimarySiteCode}.DWR.${PrimaryDataCode}.Month",SiteDataTypeID=${HDBSiteDatatypeID},Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
   Free(TSList=AllTS)
 </#list>
