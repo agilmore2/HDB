@@ -868,9 +868,9 @@ sub skip_data {
 
   my $numrows = 0;
 
-  while (     $numrows <= scalar(@$data)                              # while haven't reached the end of the data
-    and substr( $data[$numrows], 0, 1 ) ne '#'          # and first character isn't #
-    and ( split /\t/, $data[$numrows] )[1] eq $usgs_no )# and second tab-delimited field is still same id
+  while (scalar(@$data)                          # while haven't reached the end of the data
+    and substr( $data[0], 0, 1 ) ne '#'          # and first character isn't #
+    and ( split /\t/, $data[0] )[1] eq $usgs_no )# and second tab-delimited field is still same id
   {
     shift @$data;
     $numrows++;
