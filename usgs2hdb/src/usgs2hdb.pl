@@ -1031,6 +1031,15 @@ sub process_data {
   return;
 }
 
+sub LastDay {
+  if ($flowtype eq 'u') {
+    return Today();
+  }
+  else {
+    return Add_Delta_Days( Today(), -1 )
+  };
+}
+
 sub process_dates {
   my $enddate   = shift;
   my $begindate = shift;
@@ -1071,7 +1080,7 @@ Large amounts of instantaneous data may be slow to load.\n";
     } elsif (@$enddate) {
       @$begindate = Add_Delta_Days( @$enddate, -$numdays );
     } else {
-      @$enddate = Today();
+      @$enddate = LastDay();
       @$begindate = Add_Delta_Days( @$enddate, -$numdays );
     }
   } else {
@@ -1079,7 +1088,7 @@ Large amounts of instantaneous data may be slow to load.\n";
 
       #do nothing, we're good
     } elsif (@$begindate) {
-      @$enddate = Today();
+      @$enddate = LastDay();
     } elsif (@$enddate) {
       print "Error, cannot specify only end date!\n";
       exit 1;
