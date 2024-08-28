@@ -1,0 +1,5 @@
+#
+# Elephant Butte ID data loader (from OneRain) 
+# loads at 23 minutes past the hour
+#
+23 5,8,10,12,15,17 * * * . /home/uchdba/.profile; cd /wrg/HDB/apps/ebid2hdb/src; ./ebid2hdb.pl -a /home/echdba/.app_user_login -n 4 > /wrg/HDB/apps/ebid2hdb/src/ebid2hdb.log 2> /wrg/HDB/apps/ebid2hdb/src/ebid2hdb.err
