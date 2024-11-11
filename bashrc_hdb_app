@@ -10,34 +10,30 @@ HDB_NOTIFY_CASPER_EMAIL=root@localhost
 export HDB_NOTIFY_CASPER_EMAIL
 
 #SITE SPECIFIC - required for all Oracle applications
-ORACLE_HOME=/ora1/app/product/12.2/db
+ORACLE_HOME=/home/agilmore/lib/instantclient_12_2
 export ORACLE_HOME
-ORACLE_BASE=/ora1/app
-export ORACLE_BASE
 ORACLE_DOC=$ORACLE_HOME/doc
 export ORACLE_DOC
 ORACLE_LPPROG=/usr/ucb/lpr
 export ORACLE_LPPROG
 ORACLE_LPSTAT=/usr/ucb/lpq
 export ORACLE_LPSTAT
-ORACLE_NLS32=$ORACLE_HOME/ocommon/nls/admin/data
-export ORACLE_NLS32
 ORACLE_PAGER=/usr/bin/less
 export ORACLE_PAGER
 ORACLE_SID=uchdb2
 export ORACLE_SID
 ORACLE_TERM=xterm
 export ORACLE_TERM
-TNS_ADMIN=$ORACLE_HOME/network/admin
+TNS_ADMIN=$ORACLE_HOME #/network/admin
 export TNS_ADMIN
 
 HDB_LOCAL=uchdb2
 export HDB_LOCAL
-HDB_ENV=/wrg/hdb/apps
+HDB_ENV=$HOME/workspace/HDB
 export HDB_ENV
 HDB_BIN=$HDB_ENV/bin
 export HDB_BIN
-DECODES_INSTALL_DIR=$HDB_ENV/OPENDCS/current
+DECODES_INSTALL_DIR=$HOME/OPENDCS/current
 export DECODES_INSTALL_DIR
 DECODES_BIN=$DECODES_INSTALL_DIR/bin
 export DECODES_BIN
@@ -58,11 +54,11 @@ export PATH
 
 # add to LD_LIBRARY_PATH if it exists, set a new valueif it doesn't
 if [ -n "$LD_LIBRARY_PATH" ] ; then { #relying on user to have sane stuff in var
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH":$ORACLE_HOME/lib:$ORACLE_HOME/lib32:$HDB_ENV/lib
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH":$ORACLE_HOME:$HDB_ENV/lib
 export LD_LIBRARY_PATH
 }
 else { 
-    LD_LIBRARY_PATH=/usr/lib:/lib:/usr/local/lib:$ORACLE_HOME/lib:$ORACLE_HOME/lib32:$HDB_ENV/lib
+    LD_LIBRARY_PATH=/usr/lib:/lib:/usr/local/lib:$ORACLE_HOME:$HDB_ENV/lib
 export LD_LIBRARY_PATH
 }
 fi
@@ -76,11 +72,11 @@ fi
   
 # add to CLASSPATH if it exists, set a new valueif it doesn't
 if [ -n "$CLASSPATH" ] ; then {
- CLASSPATH="$CLASSPATH":$HDB_LIB/dataloader.jar:$HDB_LIB/heclib.jar:$HDB_LIB/jdbcpool-0.99.jar:$HDB_LIB/dcstool.jar:$HDB_LIB/derivation_algorithms.jar:$HDB_LIB/cp_algorithms.jar:$HDB_LIB/general_algorithms.jar:$HDB_LIB/uc_algorithms.jar:$ORACLE_HOME/jdbc/lib/ojdbc8.jar
+ CLASSPATH="$CLASSPATH":$HDB_LIB/dataloader.jar:$HDB_LIB/heclib.jar:$HDB_LIB/jdbcpool-0.99.jar:$HDB_LIB/dcstool.jar:$HDB_LIB/derivation_algorithms.jar:$HDB_LIB/cp_algorithms.jar:$HDB_LIB/general_algorithms.jar:$HDB_LIB/uc_algorithms.jar:$ORACLE_HOME/ojdbc8.jar
 export CLASSPATH
 }
 else {
-    CLASSPATH=$HDB_LIB/dataloader.jar:$HDB_LIB/heclib.jar:$HDB_LIB/jdbcpool-0.99.jar:$HDB_LIB/dcstool.jar:$HDB_LIB/derivation_algorithms.jar:$HDB_LIB/cp_algorithms.jar:$HDB_LIB/general_algorithms.jar:$HDB_LIB/uc_algorithms.jar:$ORACLE_HOME/jdbc/lib/ojdbc8.jar
+    CLASSPATH=$HDB_LIB/dataloader.jar:$HDB_LIB/heclib.jar:$HDB_LIB/jdbcpool-0.99.jar:$HDB_LIB/dcstool.jar:$HDB_LIB/derivation_algorithms.jar:$HDB_LIB/cp_algorithms.jar:$HDB_LIB/general_algorithms.jar:$HDB_LIB/uc_algorithms.jar:$ORACLE_HOME/ojdbc8.jar
 export CLASSPATH
 }
 fi
