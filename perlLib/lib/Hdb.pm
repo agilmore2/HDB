@@ -234,7 +234,10 @@ Will fail if file contains anything else.
     } elsif (s/^database //) {
       chomp;
       $database = $_;
-    } else {
+    } elsif (s/^hostname //) {
+    chomp;
+      $hostname = $_;
+  } else {
       $self->hdbdie("Unrecognized line in access file: $_");
     }
   }
