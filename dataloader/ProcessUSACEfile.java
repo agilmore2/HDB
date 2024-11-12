@@ -24,7 +24,7 @@ public class ProcessUSACEfile {
 
       Logger log = Logger.createInstance(log_file);
 
-      USACEfileReader afp = new USACEfileReader(var0[0]);
+      USACEfileReader afp = new USACEfileReader(args[0]);
       afp.process();
 
     }
