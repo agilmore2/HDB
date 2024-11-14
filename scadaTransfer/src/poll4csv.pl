@@ -4,6 +4,7 @@ use warnings;
 use strict;
 use File::Basename;
 use File::Copy "mv";
+use Date::Calc qw(Today Delta_Days);
 
 my $verstring = '$Revision$ ';
 $verstring =~ s/^\$Revision: //;
@@ -15,8 +16,8 @@ my $appdir = $ENV{"HDB_ENV"};
 my $progname = basename($0);
 chomp $progname;
 
-my ($polldir, $archivedir, $pattern, @files, $file, $accountfile);
-my (@crspfiles, $crspfile, $newcrspfile, @dates, $date);
+my ($polldir, $archivedir, $dubiousdir, $pattern, $dubdays, @files, $file, $accountfile);
+my (@crspfiles, $crspfile, $newcrspfile, @program, @problems);
 
 while (@ARGV)
 {
@@ -29,6 +30,8 @@ while (@ARGV)
     $accountfile=shift(@ARGV);
   } elsif ($arg =~ /-f/) {	# get csv filename pattern
     $pattern = shift(@ARGV);
+  } elsif ($arg =~ /-n/) {	# get number of days before data considered dubious
+    $dubdays = shift(@ARGV);
   } elsif ($arg =~ /-d/) {	# get directory to check
     $polldir = shift(@ARGV);
     if (! -d $polldir) {
@@ -53,9 +56,16 @@ if (!defined($pattern)) {
   usage();
 }
 
+if (!defined($dubdays)) {
+  $dubdays = 14;
+}
+
 $archivedir=$appdir . "/scadaTransfer/work/old_csv";
+$dubiousdir=$appdir . "/scadaTransfer/work/dubious";
 
 chdir $polldir;
+
+mkdir $dubiousdir if (! -d $dubiousdir);
 
 #run this loop forever
 while (1) {
@@ -64,7 +74,8 @@ while (1) {
   @files = grep { /^$pattern/ && -f "$polldir/$_" } readdir(DIR);
   closedir DIR;
 
-  undef @dates;
+  undef @problems;
+  undef @program;
 
   #if any new files, 
   # run parsecsv.pl to create separate crsp_ files for each day
@@ -73,9 +84,20 @@ while (1) {
   # move the csv file to old_csv subdir
   if (@files) {
     sleep 10; # wait for gefrx to finish checking the file before moving it!
-    foreach $file (@files) {
 
-      my @program=("perl","$appdir/scadaTransfer/src/parsecsv.pl","-f","$polldir/$file");
+    my @today=Today();
+
+    foreach $file (@files) {
+      #compare dates for files to current date, ignore and complain if it's more than X days old
+      my @date = $file =~ /csv_(20\d\d)_(\d\d)_(\d\d)/;
+      if (Delta_Days(@date,@today) > $dubdays ) {
+        push(@problems,$file);
+        mv "$polldir/$file","$dubiousdir" or
+          die "Failed to move file: $file\n$!\n";
+        next;
+      }
+
+      @program=("perl","$appdir/scadaTransfer/src/parsecsv.pl","-f","$polldir/$file");
       system (@program) == 0 or die "Failed to run parsecsv.pl!\n $!";
 
       #read the directory again to find all crsp_20* files 
@@ -88,7 +110,8 @@ while (1) {
 
       # now for each crsp file created by parsecsv.pl, run the loading script
       foreach $crspfile (@crspfiles) {
-        my @program=("perl","$appdir/scadaTransfer/src/scada2hdb.pl","-a",$accountfile,"-f","$polldir/$crspfile");
+        @program=("perl","$appdir/scadaTransfer/src/scada2hdb.pl","-a",$accountfile,"-f","$polldir/$crspfile");
+        print @program;
         system (@program) == 0 or die "Failed to run scada2hdb.pl!\n $!";
       # move processed crspfile to old_files
         $newcrspfile=$crspfile;
@@ -102,34 +125,16 @@ while (1) {
       #now move processed csv file to command line specified directory
       mv "$polldir/$file","$archivedir/$file" or
          die "Failed to move file: $file\n$!\n";
-
-      #get the date for all of the crsp files created by parsecsv
-      grep {/20(\d\d\w\w\w\d\d)/ && push @dates, $1 } @crspfiles;
     }
 
-#then run derivation for specified SDIs, only need to do this after each set of
-#files processed, not for each file.
-#    system ("../src/derive_scada") == 0 or warn "SCADA Derivation failed!\n";
-#      print "$file\n";
+    if (@problems) {
+      @problems = map {"$dubiousdir/" . $_ } @problems;
+      @problems = map { ("-a", $_) } @problems;
 
-# we need to try and create Glen total release here. But for which day?
-# We assume here that power release was computed by the AVM process
-#
-#    for $date (@dates) {
-#      system ("glenTotRelease app_user uchdb2 $date") == 0 or
-#        warn "glenTotRelease failed!\n";
-#    }
-#    system ("../src/derive_tot") == 0 or warn "Total Release Derivation failed!\n";
-
-#  the following processed was removed by M. Bogner on 21-March-2011
-# it is believed this data move functionality is no longer needed since Hydromet no longer exists
-#sleep for 10 seconds to let daily computations complete
-#sleep 10;
-# attempt to ship scada data to hydromet
-#    for $date (@dates) {
-#      system ("scadaData app_user uchdb2 $date") == 0 or
-#        warn "scadaData failed.\n";
-#    }
+      @program=("mailx","-s","Transfer Warning: $progname found dubious files more than $dubdays day(s) old",
+          @problems,"-T To:",$ENV{HDB_XFER_EMAIL});
+      system(@program) == 0 or warn ("email about dubious files failed!");
+    }
   }
   sleep 60;
 }
@@ -145,6 +150,7 @@ Example: $progname -d <directory> -a <accountfile> -f <pattern>
 
   -h               : This help
   -v               : Version
+  -n <days>        : Number of days before new files considered dubious (default 14)
   -a <accountfile> : HDB account login file (REQUIRED)
   -f <filename pattern>    : file pattern to watch for csv files(REQUIRED)
   -d <directory>   : directory to watch for files with right pattern (REQUIRED)
