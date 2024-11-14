@@ -113,6 +113,8 @@ READ: while ($line = <INFILE>)
   }
 
   unless ($fields[6] =~ /elev/ or
+	  $fields[6] =~ /table/ or
+	  $fields[6] =~ /equation/ or
           $fields[6] =~ /power/ or
           $fields[6] =~ /turbine/ or
           $fields[6] =~ /spillway/ or
