@@ -64,7 +64,7 @@ echo "     $SCADA_XFERDIR"
                        cd $SCADA_XFERDIR; \
 		nohup perl ../src/poll4csv.pl -a /wrg/hdb/apps/.app_user_login \
                   -f 'csv_.*[0-9]$' \
-                  -d . >&poll4csv.out &"
+                  -d . &>>poll4csv.out &"
 
 }
 
