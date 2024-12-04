@@ -17,13 +17,13 @@ wget --no-check-certificate -O colo.report 'https://wcc.sc.egov.usda.gov/reports
 ## covert these web reports to unix format using dos2unix utility
 ## also added Nov 6, 2014 by M. Bogner the sed command to change all the text to uppercase
 dos2unix -n colorado.report temp.rpt
-cat temp.rpt | sed 's/\(.*\)/\U\1/' >colorado.report
+cat temp.rpt | sed -e 's/\(.*\)/\U\1/' -e '10,11 d' >colorado.report
 dos2unix -n riogrand.report temp.rpt
-cat temp.rpt | sed 's/\(.*\)/\U\1/' >riogrand.report
+cat temp.rpt | sed -e 's/\(.*\)/\U\1/' -e '10,11 d' >riogrand.report
 dos2unix -n utah.report temp.rpt
-cat temp.rpt | sed 's/\(.*\)/\U\1/' >utah.report
+cat temp.rpt | sed -e 's/\(.*\)/\U\1/' -e '10,11 d' >utah.report
 dos2unix -n nmex.report temp.rpt
-cat temp.rpt | sed 's/\(.*\)/\U\1/' >nmex.report
+cat temp.rpt | sed -e 's/\(.*\)/\U\1/' -e '10,11 d' >nmex.report
 dos2unix -n colo.report temp.rpt
-cat temp.rpt | sed 's/\(.*\)/\U\1/' >colo.report
+cat temp.rpt | sed -e 's/\(.*\)/\U\1/' -e '10,11 d' >colo.report
 
