@@ -22,7 +22,7 @@ CopyTable(TableID="DataLoaderConfiguration",NewTableID="IsActiveYNs",IncludeColu
 #  Note: every January the year needs to be set the new year.
 SetProperty(PropertyName="currentYear",PropertyType=DateTime,PropertyValue="CurrentToYear")
 SetProperty(PropertyName="subPeriodSize",PropertyType=Integer,PropertyValue="5")
-SetProperty(PropertyName="startYear",PropertyType=Integer,PropertyValue="2018")
+SetProperty(PropertyName="startYear",PropertyType=Integer,PropertyValue="2021")
 #
 ExpandTemplateFile(InputFile="NRCS_Historical_Template.txt",OutputFile="NRCS_Historical_Expanded.TSTool")
 RunCommands(InputFile="NRCS_Historical_Expanded.TSTool",ExpectedStatus=Success,ShareDataStores=Share)
