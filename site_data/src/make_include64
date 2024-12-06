@@ -1,0 +1,7 @@
+CC = gcc
+APPDIR = $(HDB_ENV)/site_data
+OBJDIR = $(APPDIR)/obj64
+INCLUDES = -I$(HDB_APP_INCLUDE)
+LIBS = $(HDB_LIBS) -lm -ldl
+CFLAGS = -ansi -Wall -g -DANSIPROTO $(INCLUDES)
+
