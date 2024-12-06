@@ -1,7 +1,0 @@
-CC = gcc
-APPDIR = $(HDB_ENV)/maxflow
-OBJDIR = $(APPDIR)/obj
-INCLUDES = -I$(HDB_APP_INCLUDE)
-LIBS = $(HDB_LIBS) -lm -ldl
-CFLAGS = -ansi -Wall -g -DANSIPROTO -DDEBUG $(INCLUDES)
-
