@@ -108,7 +108,9 @@ my $sp = 10;
 
 my $siteheader = " " x (34-length($site)/2) . $site;
 my $provoheader .=   "            DATA IS PROVISIONAL AND SUBJECT TO REVISION";
-my $codeline ="Date       Time     ";
+my $theader = "            *Date/Time is in MST, add 1 hour during MDT";
+my $spacer = " ";
+my $codeline ="Date*       Time*    ";
 my $unitline ="                    ";
 
 foreach my $code (@$codes) {
@@ -119,6 +121,8 @@ foreach my $code (@$codes) {
 
 print OUTPUT $siteheader ."\n";
 print OUTPUT $provoheader ."\n";
+print OUTPUT $theader ."\n";
+print OUTPUT $spacer ."\n";
 print OUTPUT $codeline ."\n";
 print OUTPUT $unitline . "\n\n";
 
