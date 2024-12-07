@@ -1,0 +1,140 @@
+#
+# Downloading Streamflow-Avg from CODWR Site AZOTUNNM to HDB SDI 2380
+#
+SetInputPeriod(InputStart="2018-10-01 00:00",InputEnd="2023-12-31 24:00")
+abbrev:AZOTUNNM.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:AZOTUNNM.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=2380,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+SetInputPeriod(InputStart="2023-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:AZOTUNNM.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:AZOTUNNM.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=2380,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Avg from CODWR Site BLADIVCO to HDB SDI 20214
+#
+SetInputPeriod(InputStart="2018-10-01 00:00",InputEnd="2023-12-31 24:00")
+abbrev:BLADIVCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:BLADIVCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=20214,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+SetInputPeriod(InputStart="2023-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:BLADIVCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:BLADIVCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=20214,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Avg from CODWR Site LITOSOCO to HDB SDI 1408
+#
+SetInputPeriod(InputStart="2018-10-01 00:00",InputEnd="2023-12-31 24:00")
+abbrev:LITOSOCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:LITOSOCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=1408,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+SetInputPeriod(InputStart="2023-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:LITOSOCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:LITOSOCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=1408,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Avg from CODWR Site NAVOSOCO to HDB SDI 1407
+#
+SetInputPeriod(InputStart="2018-10-01 00:00",InputEnd="2023-12-31 24:00")
+abbrev:NAVOSOCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:NAVOSOCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=1407,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+SetInputPeriod(InputStart="2023-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:NAVOSOCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:NAVOSOCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=1407,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Avg from CODWR Site RIOALACO to HDB SDI 23986
+#
+SetInputPeriod(InputStart="2018-10-01 00:00",InputEnd="2023-12-31 24:00")
+abbrev:RIOALACO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIOALACO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=23986,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+SetInputPeriod(InputStart="2023-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:RIOALACO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIOALACO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=23986,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Avg from CODWR Site RIODELCO to HDB SDI 21844
+#
+SetInputPeriod(InputStart="2018-10-01 00:00",InputEnd="2023-12-31 24:00")
+abbrev:RIODELCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIODELCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=21844,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+SetInputPeriod(InputStart="2023-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:RIODELCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIODELCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=21844,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Avg from CODWR Site RIOLOBCO to HDB SDI 20234
+#
+SetInputPeriod(InputStart="2018-10-01 00:00",InputEnd="2023-12-31 24:00")
+abbrev:RIOLOBCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIOLOBCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=20234,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+SetInputPeriod(InputStart="2023-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:RIOLOBCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIOLOBCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=20234,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Avg from CODWR Site RIOMILCO to HDB SDI 24030
+#
+SetInputPeriod(InputStart="2018-10-01 00:00",InputEnd="2023-12-31 24:00")
+abbrev:RIOMILCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIOMILCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=24030,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+SetInputPeriod(InputStart="2023-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:RIOMILCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIOMILCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=24030,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Avg from CODWR Site RIOMONCO to HDB SDI 23992
+#
+SetInputPeriod(InputStart="2018-10-01 00:00",InputEnd="2023-12-31 24:00")
+abbrev:RIOMONCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIOMONCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=23992,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+SetInputPeriod(InputStart="2023-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:RIOMONCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIOMONCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=23992,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Avg from CODWR Site RIOSFKCO to HDB SDI 24034
+#
+SetInputPeriod(InputStart="2018-10-01 00:00",InputEnd="2023-12-31 24:00")
+abbrev:RIOSFKCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIOSFKCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=24034,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+SetInputPeriod(InputStart="2023-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:RIOSFKCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIOSFKCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=24034,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Avg from CODWR Site RIOTRICO to HDB SDI 24038
+#
+SetInputPeriod(InputStart="2018-10-01 00:00",InputEnd="2023-12-31 24:00")
+abbrev:RIOTRICO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIOTRICO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=24038,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+SetInputPeriod(InputStart="2023-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:RIOTRICO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIOTRICO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=24038,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Avg from CODWR Site RIOWAGCO to HDB SDI 24031
+#
+SetInputPeriod(InputStart="2018-10-01 00:00",InputEnd="2023-12-31 24:00")
+abbrev:RIOWAGCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIOWAGCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=24031,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+SetInputPeriod(InputStart="2023-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:RIOWAGCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:RIOWAGCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=24031,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Avg from CODWR Site OSODIVCO to HDB SDI 20212
+#
+SetInputPeriod(InputStart="2018-10-01 00:00",InputEnd="2023-12-31 24:00")
+abbrev:OSODIVCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:OSODIVCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=20212,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+SetInputPeriod(InputStart="2023-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:OSODIVCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:OSODIVCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=20212,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Avg from CODWR Site LOSODVCO to HDB SDI 20213
+#
+SetInputPeriod(InputStart="2018-10-01 00:00",InputEnd="2023-12-31 24:00")
+abbrev:LOSODVCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:LOSODVCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=20213,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+SetInputPeriod(InputStart="2023-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:LOSODVCO.DWR.Streamflow-Avg.Day~HydroBaseWeb
+WriteReclamationHDB(DataStore="uchdb2",TSList=AllMatchingTSID,TSID="abbrev:LOSODVCO.DWR.Streamflow-Avg.Day~HydroBaseWeb",SiteDataTypeID=20213,Agency="CODWR",ValidationFlag="A",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)

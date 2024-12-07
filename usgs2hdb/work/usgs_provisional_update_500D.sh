@@ -15,7 +15,8 @@
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09210500 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09225500 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09196500 -n 500 -l d
-
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09217900 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09220000 -n 500 -l d
 
 #BASIN_ID = 2 (BEAR)
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 10011500 -n 500 -l d
@@ -92,12 +93,25 @@
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09302000 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09306500 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09277800 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09288180 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09261700 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09277500 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09279000 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09292500 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09295000 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09295100 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09301500 -n 500 -l d
 
 #BASIN_ID = 7 (PRICE-SAN RAFEAL)
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09315000 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09328500 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09310500 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09313000 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09310700 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09312600 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09314500 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09326500 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09328060 -n 500 -l d
 
 #BASIN_ID = 8 (SEVIER)
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 10174500 -n 500 -l d
@@ -167,11 +181,23 @@
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09172100 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09173000 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09132095 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09134100 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09146020 -n 500 -i d
 
 #BASIN_ID = 13 (UPPER RIO GRANDE)
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08313500 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08314000 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08354800 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08354900 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08329918 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08328950 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08317400 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08330875 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08332010 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08331160 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08331510 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08267500 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08330830 -n 500 -l d
 
 #BASIN_ID = 14 (COLORADO RIVER PLATEAUS)
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09379500 -n 500 -l d
@@ -251,7 +277,7 @@
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09349500 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09349800 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09350500 -n 500 -l d
-../src/usgs2hdb.pl -a $HOME/.app_user_login_UC -i 09352800 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09352800 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09352900 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09353500 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09354000 -n 500 -l d
@@ -376,6 +402,8 @@
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08407000 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08407500 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08408500 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08390500 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08390800 -n 500 -l d
 
 #BASIN_ID = 20 (UPPER COLORADO RIVER HEADWATERS)
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09034250 -n 500 -l d
@@ -400,12 +428,14 @@
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09041400 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 09057500 -n 500 -l d
 
+
 #BASIN_ID = 1142 (BEAVER RIVER)
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 10242000 -n 500 -l d
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 10172700 -n 500 -l d
 
 #BASIN_ID = 1143 (JEMEZ RIVER)
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08324000 -n 500 -l d
+../src/usgs2hdb.pl -a $HOME/.app_user_login -i 08329000 -n 500 -l d
 
 #BASIN_ID = 1144 (TOOELE VALLEY-VERNON CREEK)
 ../src/usgs2hdb.pl -a $HOME/.app_user_login -i 10172727 -n 500 -l d

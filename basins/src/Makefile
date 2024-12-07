@@ -6,7 +6,7 @@ include ../../Environ.12
 OBJDIR = $(HDB_ENV)/basins/obj64
 INCLUDES= -I$(HDB_APP_INCLUDE)
 LIBS= $(HDB_LIBS) -lm -ldl
-CFLAGS = -ansi -Wall -g -DANSIPROTO $(INCLUDES)
+CFLAGS = -ansi -Wall -g -fcommon -DANSIPROTO $(INCLUDES)
 
 TARGET = $(HDB_APP_BIN)/basins
 

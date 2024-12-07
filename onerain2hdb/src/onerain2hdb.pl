@@ -30,12 +30,9 @@ my ( $hdbuser, $hdbpass, @site_num_list );
 # global because used in several sub routines
 my $hdb;
 
-#global datasource name, used in get_app_ids
-my $datasource = "EBID OneRain Website CSV Loader";
-
 #global variables read from database in get_app_ids
 my ( $load_app_id, $agen_id, $validation, $url, $collect_id );
-my $agen_abbrev = "EBID";
+my ( $agen_abbrev ); #initialized by command line argument
 
 #global hash reference containing meta data about sites
 # initialized by get_sites below, and referenced throughout
@@ -43,6 +40,9 @@ my ($_sites);
 
 #global date string representations for use in retrieving data
 my ( $begindatestr, $enddatestr ) = process_args(@ARGV);
+
+#global datasource name, used in get_app_ids
+my $datasource = "$agen_abbrev OneRain Website CSV Loader";
 
 $hdb = Hdb->new();
 if ( defined($accountfile) ) {
@@ -97,9 +97,9 @@ if ( defined($readfile) ) {
 } else {    # attempt to get data from web page
   foreach my $a_id ( keys %$_sites ) {
     my ($data);
-    read_from_web( $a_id, $_sites->{$a_id}->{dev_code}, \$data );
-
-    process_data( \$data, $a_id );
+    if (read_from_web( $a_id, $_sites->{$a_id}->{dev_code}, \$data )) {
+      process_data( \$data, $a_id );
+    }
 
     undef($data);    #needed to reinitialize @data in every loop?
   }    # end of foreach site loop
@@ -153,6 +153,8 @@ sub process_args {
       $debug = 1;
     } elsif ( $arg =~ /-i/ ) {    # get codwr id, split possible id,id,id
       push @site_num_list, split /,/, shift;
+    } elsif ( $arg =~ /-l/ ) {    # get agency abbreviation
+      $agen_abbrev = shift;
     } elsif ( $arg =~ /-u/ ) {    # get hdb user
       $hdbuser = shift;
     } elsif ( $arg =~ /-p/ ) {    # get hdb passwd
@@ -190,7 +192,10 @@ sub process_args {
   if (defined($readfile) and @site_num_list != 1) {
       die "ERROR: must specify one and only one site id for reading from a file\n";
   }
-
+  if ( !defined($agen_abbrev)) {
+    print "ERROR: Required Agency Abbreviation not set ('-l <abbrev>')\n";
+    usage();
+  }    
   if ( !defined($accountfile) and ( !defined($hdbuser) || !defined($hdbpass) ) )
   {
     print
@@ -275,7 +280,7 @@ hdb_loading_application where loading_application_name = '$load_app_name'";
 
 sub parse_data {
   my $csv = shift;
-  
+ 
 # make array out of string
   my (@array) = split /^/m,$$csv;
 
@@ -388,11 +393,12 @@ sub build_site_num_list {
 }
 
 sub build_web_request {
-  my $ua = WWW::Mechanize->new;
+  my $ua = WWW::Mechanize->new(autocheck => 0);
   $ua->agent(
          "$agen_abbrev Streamflow -> US Bureau of Reclamation HDB dataloader: "
            . $ua->agent );
   $ua->from("$ENV{HDB_XFER_EMAIL}");
+  $ua->quiet(1);
   return ( $ua );
 }
 
@@ -555,16 +561,16 @@ sub parserow ($) {
   my $value = 0;
 
   @splitrow = (split /,/,$row);
-  if ( $#splitrow > 4) { 
+  if ( $#splitrow > 4) {
     #if OneRain fails and puts values like 1,200 into a CSV file, they get detected as multiple fields, so third-N fields for value
-    @csvvalues = @splitrow[2 .. $#splitrow-2] # get 3rd field plus any others up to 2 from the end
+    @csvvalues = @splitrow[2 .. $#splitrow-2]; # get 3rd field plus any others up to 2 from the end
     foreach my $v (@csvvalues) {
-      $value = $value*1000 + $value; #fix weird decision
+      $value = $value*1000 + $v; #fix weird decision
     }
   } else {
     $value = $splitrow[2];
   }
-  return ($splitrow[0],$value,$splitrow[-1];)
+  return ($splitrow[0],$value,$splitrow[-1])
 }
 
 
@@ -581,6 +587,7 @@ Example: $progname -u app_user -p <hdbpassword> -i 189
   -i <id>          : $agen_abbrev gage id to look for. Must be in HDB. More than one
                      may be specified with -i id1,id2 or -i id1 -i id2
                      If none specified, will load all gages set up in HDB.
+  -l <ABBREV>      : Agency abbreviation, used to determine source of data
   -t               : Test retrieval, but do not insert data into DB
   -f <filename>    : Filename instead of live web, must specify -i 
   -w               : Web address (URL developed to get $agen_abbrev data)
@@ -640,14 +647,18 @@ sub read_from_web {
     if ( !$response->content ) {
       $hdb->hdbdie("no data returned from $agen_abbrev, exiting.\n");
     }
-    print $response->content if defined($debug);
 
+    $response->decode;#handle uncompress if needed
     $$data = $response->content;
+
+    print "data: ".$$data if defined($debug);
+
   } else {    # ($response->is_error)
     printf STDERR $response->error_as_HTML;
-    $hdb->hdbdie("Error reading from $agen_abbrev web page, cannot continue\n");
+    print ("Error reading from $agen_abbrev web page, skipping site $a_id\n");
+    return 0;
   }
-  return;
+  return 1;
 }
 
 sub process_dates {

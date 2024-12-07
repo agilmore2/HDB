@@ -57,7 +57,7 @@ if (!defined($pattern)) {
 }
 
 if (!defined($dubdays)) {
-  $dubdays = 35;
+  $dubdays = 14;
 }
 
 $archivedir=$appdir . "/scadaTransfer/work/old_csv";
@@ -75,6 +75,7 @@ while (1) {
   closedir DIR;
 
   undef @problems;
+  undef @program;
 
   #if any new files, 
   # run parsecsv.pl to create separate crsp_ files for each day
@@ -110,6 +111,7 @@ while (1) {
       # now for each crsp file created by parsecsv.pl, run the loading script
       foreach $crspfile (@crspfiles) {
         @program=("perl","$appdir/scadaTransfer/src/scada2hdb.pl","-a",$accountfile,"-f","$polldir/$crspfile");
+        print @program;
         system (@program) == 0 or die "Failed to run scada2hdb.pl!\n $!";
       # move processed crspfile to old_files
         $newcrspfile=$crspfile;
@@ -130,7 +132,7 @@ while (1) {
       @problems = map { ("-a", $_) } @problems;
 
       @program=("mailx","-s","Transfer Warning: $progname found dubious files more than $dubdays day(s) old",
-          @problems,"--",$ENV{HDB_XFER_EMAIL});
+          @problems,"-T To:",$ENV{HDB_XFER_EMAIL});
       system(@program) == 0 or warn ("email about dubious files failed!");
     }
   }
@@ -148,7 +150,7 @@ Example: $progname -d <directory> -a <accountfile> -f <pattern>
 
   -h               : This help
   -v               : Version
-  -n <days>        : Number of days before new files considered dubious (default 35)
+  -n <days>        : Number of days before new files considered dubious (default 14)
   -a <accountfile> : HDB account login file (REQUIRED)
   -f <filename pattern>    : file pattern to watch for csv files(REQUIRED)
   -d <directory>   : directory to watch for files with right pattern (REQUIRED)

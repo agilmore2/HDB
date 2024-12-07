@@ -18,7 +18,7 @@ USACE_DATA_LOC=$HDB_ENV/dataloads/USACE/cespa_data; export USACE_DATA_LOC;
 # assign the location for storing processed data files
 USACE_RES_DATA_PROP=$HDB_ENV/dataloads/USACE/src/usace_reservoir_data.property; export USACE_RES_DATA_PROP;
 # assign the ftp login file to use for this ftp access
-UCHDBA_FTP_LOGIN=$HOME/.ftp_login_file; export UCHDBA_FTP_LOGIN;
+#UCHDBA_FTP_LOGIN=$HOME/.ftp_login_file; export UCHDBA_FTP_LOGIN;
 
 echo $USACE_FILES
 echo $USACE_FTP_LOC
@@ -40,7 +40,9 @@ echo $USACE_RES_DATA_PROP
 #ncftpget -F -DD -f $UCHDBA_FTP_LOGIN $USACE_FILES $USACE_FTP_LOC/*
 
 # add the following sftp command to get the files from secure.usbr.gov
-sftp -oBatchMode=yes jzyu@usbr.gov@secure.usbr.gov<<EOF
+#sftp -oBatchMode=yes -i /wrg/hdb/apps/.ssh/alb_coe_jzyu jzyu@usbr.gov@secure.usbr.gov<<EOF
+sftp -oBatchMode=yes -i /wrg/hdb/apps/.ssh/alb_coe_lbarrett.key lbarrett@usbr.gov@secure.usbr.gov<<EOF
+
 cd UC_ALB_COE
 get *.csv $USACE_FILES
 bye
@@ -52,7 +54,7 @@ do
 
 # process the data file using the USACE data file loader
 # if the java routine successfully  processed this file then zip the file to indicate it was processed
-
+ 
   echo " Processing USACE file: $f "
   java -Dstart.property=$USACE_RES_DATA_PROP dataloader.ProcessUSACEfile $f
 
