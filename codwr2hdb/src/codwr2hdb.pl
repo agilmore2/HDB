@@ -65,8 +65,8 @@ if ( defined($accountfile) ) {
 $hdb->set_approle();
 
 #Set date format to the format used by their website
-$hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI'")
-  or die "Unable to set NLS_DATE_FORMAT to ISO \n";
+$hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'MM/DD/YYYY HH24:MI'")
+  or die "Unable to set NLS_DATE_FORMAT to US Standard\n";
 
 get_app_ids();
 
@@ -77,36 +77,24 @@ if (@site_num_list) {
   (@site_num_list) = build_site_num_list($codwr_sites);
 }
 
-=head1 FORMAT
+=head1 DATA SOURCE
 
-The data is expected in tab delimited format. Example:
+While CODWR publishes a web service, it uses different endpoints for raw vs daily values. We want just one, so we'll use these for now:
+instant: https://dwr.state.co.us/Tools/Stations/ExportObsTsFileResult?obs_type=best&abbrevs=ADATUNCO&parameters=DISCHRG&por_start=2020-06-06&por_end=2020-06-17&time_step=LoggedInterval
+hourly: https://dwr.state.co.us/Tools/Stations/ExportObsTsFileResult?obs_type=best&abbrevs=ADATUNCO&parameters=DISCHRG&por_start=2020-06-06&por_end=2020-06-17&time_step=HourlyAverage
+daily: https://dwr.state.co.us/Tools/Stations/ExportObsTsFileResult?obs_type=best&abbrevs=ADATUNCO&parameters=DISCHRG&por_start=2020-06-06&por_end=2020-06-17&time_step=DailyAverage
 
-#---------------------------- Provisional Data -------------------------------
-#This system is maintained by the Colorado Division of Water Resources.
-#Contact: Colorado Division of Water Resources (303) 866-3581
-#
-#All data presented on the Colorado Surface Water Conditions web site are 
-#provisional and subject to revision. Data users are cautioned to consider
-#carefully the provisional nature of the information before using it for 
-#decisions that concern personal or public safety or the conduct of business
-#that involves substantial monetary or operational consequences.
-#
-#Data is returned in TAB delimited format. Data miners may find help on automating
-#queries and formatting parameters at http://www.dwr.state.co.us/help
-##Gaging Station: FLORIDA RIVER BELOW LEMON RESERVOIR (FLOBLECO)
-#Retrieved: 1/25/2007 12:06
-#-----------------------------------------------------------------------------
-Station 	Date/Time	DISCHRG (cfs)
-FLOBLECO	2006-01-22 00:00	10.9
-FLOBLECO	2006-01-23 00:00	10.7
-FLOBLECO	2006-01-24 00:00	10.7
+=head2 NEW FORMAT
 
-Problems:
-Name of the flow column changes from
-DISCHRG to DISCHRG1 to DISCHRG2 to DISCHRG3
-Only one site at a time can be retrieved
-GOES randomly timed data is on a different page than
-normal self-timed data?
+abbrev,Date Time,Parameter,Value,Units,Review Status,Observation Flag,modified,
+"ADATUNCO","=""06/06/2020 00:15""","DISCHRG","455","cfs","O","","=""06/06/2020 01:11""",
+"ADATUNCO","=""06/06/2020 00:30""","DISCHRG","455","cfs","O","","=""06/06/2020 01:11""",
+
+abbrev,Date Time,Parameter,Value,Units,Review Status,Observation Flag,modified,
+"ADATUNCO","=""06/06/2020 00:00""","DISCHRG","495","cfs","O","","=""06/07/2020 00:11""",
+"ADATUNCO","=""06/07/2020 00:00""","DISCHRG","540","cfs","O","","=""06/08/2020 00:10""",
+
+Someone loves quotes.
 
 =cut
 
@@ -324,10 +312,10 @@ sub read_header {
 
   #save header record, for use in finding data column
   my $header = shift @$data;
-  my @headers = split /\t/, $header;
-  if (!($headers[0] =~ /Station/ )) {
+  my @headers = split /,/, $header;
+  if (!($headers[0] =~ /abbrev/ )) {
     print "@headers\n";
-    $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
+    $hdb->hdbdie("Data is not $agen_abbrev website csv delimited format!\n");
   }
 
   #check to see if no data at all, blank line
@@ -341,7 +329,10 @@ sub read_header {
 
   # now we have data, mark data as found in CODWR ID
   # assume that the format holds, and the id is in second column
-  my (@firstrow) = split /\t/, $data->[0];
+  my $row = $data->[0];
+  $row =~ s/\"//g; # nuke all the quotes
+  $row =~ s/=//g;  # remove random equal signs
+  my (@firstrow) = split /,/, $row;
   my $codwr_no = $firstrow[0];
 
   # check that codwr_no is sane, i.e. contains only upper case letters or numbers:
@@ -365,12 +356,12 @@ sub read_header {
 
   #find the column in the header that contains the right data code
   my $col = 1;
-  until ( $headers[ $col++ ] =~ /$codwr_sites->{$codwr_no}->{data_code}/ ) {
+  until ( $headers[ $col++ ] =~ /Parameter/ ) {
     if ( !defined( $headers[$col] ) ) {
-      print STDERR "Not found: '$codwr_sites->{$codwr_no}->{data_code}' in:\n";
+      print STDERR "Not found: 'Parameter' in:\n";
       print STDERR "@headers\n";
       print STDERR "Cannot find value column code from header!\n";
-      $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
+      $hdb->hdbdie("Data is not $agen_abbrev website csv delimited format!\n");
     }
   }
 
@@ -383,6 +374,8 @@ sub read_header {
 sub process_data {
   my $data           = $_[0];
   my $input_codwr_no = $_[1];
+
+  return if (!defined($data->[0])); # handle successful retrieval but empty response
 
   skip_comments($data);
 
@@ -420,34 +413,44 @@ sub process_data {
   }
 }
 
+=head1 DATA SOURCE
+
+While CODWR publishes a web service, it uses different endpoints for raw vs daily values. We want just one, so we'll use these for now:
+
+instant: https://dwr.state.co.us/tools/stations/exportobstsfileresult?obs_type=best&abbrevs=ADATUNCO&parameters=DISCHRG&por_start=2020-06-06&por_end=2020-06-17&time_step=LoggedInterval
+hourly: https://dwr.state.co.us/tools/stations/exportobstsfileresult?obs_type=best&abbrevs=ADATUNCO&parameters=DISCHRG&por_start=2020-06-06&por_end=2020-06-17&time_step=HourlyAverage
+daily: https://dwr.state.co.us/tools/stations/exportobstsfileresult?obs_type=best&abbrevs=ADATUNCO&parameters=DISCHRG&por_start=2020-06-06&por_end=2020-06-17&time_step=DailyAverage
+
+=cut
+
 sub build_url ($$$) {
   my $site_code  = $_[0];
   my $begin_date = $_[1];
   my $end_date   = $_[2];
 
-#this url is generated from http://www.dwr.state.co.us/help.aspx
+#this url is generated from https://dwr.state.co.us/tools/stations
 # parts of the url:
-# program generating the result  : http://www.dwr.state.co.us/SurfaceWater/data/export_tabular.aspx
-# specify site                            : ID=$_[0]
-# specify discharge(these codes change!)  : MTYPE=$_[1]
-# specify instant, hourly, or daily       : INTERVAL=1 (instant, 2 hourly, or 3 daily)
-# specify start and end dates             : START=YYYY-MM-DD&END=YYYY-MM-DD
+# program generating the result  : daily: https://dwr.state.co.us/tools/stations/exportobstsfileresult?obs_type=best
+# specify site                            : abbrevs=$site_code
+# specify discharge(these codes change!)  : parameters=data code
+# specify instant, hourly, or daily       : LoggedInterval, HourlyAverage, DailyAverage
+# specify start and end dates             : por_start=YYYY-MM-DD&por_end=YYYY-MM-DD
 
   # retrieval from database included data_codes for the various discharge
   # column ids
 
-  $hdb->hdbdie("Site id $_[0] not recognized, no datacode known!\n")
-      unless ( defined $codwr_sites->{ $_[0] }->{data_code} );
+  $hdb->hdbdie("Site id $site_code  not recognized, no datacode known!\n")
+      unless ( defined $codwr_sites->{$site_code}->{data_code} );
 
   #Handle interval
   my $interval;
-  my $int_name = $codwr_sites->{ $_[0] }->{interval};
+  my $int_name = $codwr_sites->{$site_code}->{interval};
   if ($int_name eq 'instant') {
-      $interval = 1;
+      $interval = "LoggedInterval";
   } elsif ($int_name eq 'hour') {
-      $interval = 2;
+      $interval = "HourlyAverage";
   } elsif ($int_name eq 'day') {
-      $interval = 3;
+      $interval = "DailyAverage";
   } else {
       $hdb->hdbdie("Unrecognized interval $int_name for CODWR loader, only daily and below supported");
   }
@@ -458,8 +461,8 @@ sub build_url ($$$) {
 Check generic mapping against instant/daily selection, instant is default!");
   }
 
-  my $parameters = "INTERVAL=$interval&START=$begin_date&END=$end_date";
-  $parameters .= "&ID=$_[0]&MTYPE=$codwr_sites->{$_[0]}->{data_code}";
+  my $parameters = "&time_step=$interval&por_start=$begin_date&por_end=$end_date";
+  $parameters .= "&abbrevs=$site_code&parameters=$codwr_sites->{$site_code }->{data_code}";
 
   # url described by database, retrieved in get_app_ids()
 
@@ -564,7 +567,7 @@ sub insert_values {
 
   #fixed the url encoding to only retrieve one
   # parameter, so no longer need this, but could need it again
-  my $column = 1;
+  my $column = $codwr_site->{column};
 
   my $numrows    = 0;
   my $first_date = undef;
@@ -606,7 +609,9 @@ Required information missing in insert_values()!\n"
     foreach $row (@data) {
       $numrows++;
       # throw away first column, which is station id repeated
-      ( $dummy, @fields ) = split /\t/, $row;
+      $row =~ s/\"//g; # nuke all the quotes
+      $row =~ s/=//g;  # remove random equal signs
+      ( $dummy, @fields ) = split /,/, $row;
 
       $value_date = $fields[0];
       $value      = $fields[$column];
@@ -738,7 +743,7 @@ sub read_from_web {
     print "Data read from $agen_abbrev: $status\n";
 
     if ( !$response->content ) {
-      $hdb->hdbdie("no data returned from $agen_abbrev, exiting.\n");
+      print STDERR ("No data returned from $agen_abbrev, skipping.\n");
     }
     print $response->content if defined($debug);
 

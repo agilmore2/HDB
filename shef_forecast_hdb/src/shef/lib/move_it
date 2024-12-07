@@ -1,9 +1,0 @@
-# macro to move versions to rls, beta and alpha
-echo "cd to /usr/local/lib/shef/beta"
-cd /usr/local/lib/shef/beta
-echo " cp * /usr/local/lib/shef/rls"
-cp * /usr/local/lib/shef/rls
-echo "cd /usr/local/lib/shef/alpha"
-cd /usr/local/lib/shef/alpha
-echo "cp * /usr/local/lib/shef/beta"
-cp * /usr/local/lib/shef/beta

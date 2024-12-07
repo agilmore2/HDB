@@ -1,0 +1,8 @@
+# Downloading 00060 from CODWR Site 09319000 to HDB SDI 29550
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+ReadUsgsNwisDaily(DataStore="UsgsNwisDaily",Sites="09319000",Parameters="00060",Statistics="00003",InputStart="2019")
+ChangeInterval(TSList=AllTS,Alias="%A",NewInterval=Month,OldTimeScale=MEAN,NewTimeScale=ACCM,NewUnits=cfs-day)
+Scale(TSList=AllTS,ScaleValue=1.98347,NewUnits="ACFT")
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="09319000.USGS.00060-00003.Month",SiteDataTypeID=29550,Agency="USGS",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)

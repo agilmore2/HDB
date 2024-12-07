@@ -1,0 +1,7 @@
+.agilmore_login_cu
+*.auth
+.~*
+*.xlsx
+__pycache__
+**/.vscode
+

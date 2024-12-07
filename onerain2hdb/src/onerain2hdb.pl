@@ -359,10 +359,10 @@ sub build_url ($$$$) {
   # stored in the database is:
   # http://ebid.onerain.com/export/csv.php?tz=America/Denver&format_datetime=%Y-%m-%d+%H:%i:%S&mime=txt
   # parts of the url:
-  # program generating the result (from HDB)	: http://ebid.onerain.com/export/csv.php
-  # specify site				: site_id=757
-  # specify device (datatype)			: device_id=5
-  # specify report format, txt			: mime=txt
+  # program generating the result (from HDB)    : http://ebid.onerain.com/export/csv.php
+  # specify site                : site_id=757
+  # specify device (datatype)           : device_id=5
+  # specify report format, txt          : mime=txt
   # specify start and end dates: data_start=YYYY-MM-DD+HH:MI:SS&data_end=YYYY-MM-DD+HH:MI:SS
   # retrieval from database included site ids and datatypes 
   # need to work out if URL needs to be html entity encoded to handle spaces in timestamps, or can use ISO 8601. No.
@@ -459,6 +459,7 @@ sub insert_values {
   my ( $value, $value_date, $tz, $updated_date );
   my ( $row);
   my ( $old_val, $old_source, $data_flags );
+  my ( @splitrow, @csvvalues);
 
   if (    !defined( $_site->{interval} )
        or !defined($agen_id)
@@ -495,43 +496,43 @@ Required information missing in insert_values()!\n"
       chomp $row;
       $numrows++;
 
-#split CSV, want the first, third, fifth fields for date, value, and data flags
       ($value_date,$value,$data_flags) = parserow($row);
 
 # update or insert, source and database differ (or database value does not exist)
-       if ( defined($debug) ) {
-         print "modifying for $cur_sdi, date $value_date, value $value\n";
-       }
+      if ( defined($debug) ) {
+        print "modifying for $cur_sdi, date $value_date, value $value\n";
+      }
 
-       # check if value is known
-       if ( !defined $value or $value eq '' ) {
-         print "data missing: $cur_sdi, date $value_date\n" if defined($debug);
-         next;
-       } elsif ( $value =~ m/[^0-9\.]/ ) {    # check for other text, complain
-         print "data corrupted: $cur_sdi, date $value_date: $value\n";
-         $_site->{error_code} = $value;
-       } elsif ( $value_date =~ m/[^-0-9\/: ]/ ) {    # check for bad chars in date, complain
-         print "date corrupted: $cur_sdi, date $value_date: $value\n";
-         $_site->{error_code} = "Bad date";
-       } else {       #modify
-	       #round date minutes to nearest 15, per https://hdbsupport.precisionwre.com/helpdesk/tickets/382
-         $value_date = round_15($value_date);
-         if ( defined($debug) ) {
-           print "rounded date: $value_date\n";
-         }
-         $modsth->bind_param( 1, $cur_sdi );
-         $modsth->bind_param( 2, $value_date );
-         $modsth->bind_param( 3, $value );
-         $modsth->bind_param( 4, $data_flags );
-         $modsth->bind_param( 5, $value_date );#Repeated date for dst computation
-	
-         $modsth->execute;
+      # check if value is known
+      if ( !defined $value or $value eq '' ) {
+        print "data missing: $cur_sdi, date $value_date\n" if defined($debug);
+        next;
+      } elsif ( $value =~ m/[^0-9\.]/ ) {    # check for other text, complain
+        print "data corrupted: $cur_sdi, date $value_date: $value\n";
+        $_site->{error_code} = $value;
+      } elsif ( $value_date =~ m/[^-0-9\/: ]/ ) {    # check for bad chars in date, complain
+        print "date corrupted: $cur_sdi, date $value_date: $value\n";
+        $_site->{error_code} = "Bad date";
+      } else {       #modify
+        
+        #round date minutes to nearest 15, per https://hdbsupport.precisionwre.com/helpdesk/tickets/382
+        $value_date = round_15($value_date);
+        if ( defined($debug) ) {
+          print "rounded date: $value_date\n";
+        }
+        $modsth->bind_param( 1, $cur_sdi );
+        $modsth->bind_param( 2, $value_date );
+        $modsth->bind_param( 3, $value );
+        $modsth->bind_param( 4, $data_flags );
+        $modsth->bind_param( 5, $value_date );#Repeated date for dst computation
 
-         if ( !defined($first_date) ) {    # mark that data has changed
-           $first_date = $value_date;
-         }
-         $updated_date = $value_date;
-       } 
+        $modsth->execute;
+
+        if ( !defined($first_date) ) {    # mark that data has changed
+          $first_date = $value_date;
+        }
+        $updated_date = $value_date;
+      } 
     }
     $modsth->finish;
 
@@ -553,7 +554,7 @@ Required information missing in insert_values()!\n"
   return ( $first_date, $updated_date, $numrows );
 }
 
-sub parserow {
+sub parserow ($) {
 #split CSV, want the first, third, last fields for date, value, and data flags
   my $row = shift;
   my (@splitrow, @csvvalues);

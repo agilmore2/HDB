@@ -55,20 +55,3 @@ optionally you can add a log file name as an additional  parameter if you do not
 
 optionally to can add an additional parameter to specify wherether you want a particular set of site codes processed or only a subset of site_codes/pcodes.  THe sitecode/pcode combinations are user specified, comma separated.
 (ie. site_codes=GLDA,FGRU/FB)
-
-
-REAL Time Dataloader
-
-
-The java application real time data loader will take data via a predetermined socket and place that data into the r-base table.
-
-the  command: java -Dstart.property=/local/rtl.property dataloader.Server  will start the socket listener.  
-This utility writes to the file rtl.log any errors it encounters.
-
-
-STOPPING THE REAL TIME DATA LOADER
-
-The java utility KillServer will halt the Server socket listener gracefully.
-
-THe command: java dataloader.KillServer <hostname>  will attempt to connect to the socket that the Server process is 
-listening to and will issue a command to halt processing.

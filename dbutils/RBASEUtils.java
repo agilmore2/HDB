@@ -291,7 +291,109 @@ public class RBASEUtils
     } // end of get_DMI_SDI method
 
 
+// May not need this code, never referenced anywhere?
+   public void getStandardDates(Integer var1, String var2, Date var3, Date var4, String dateFormat) {
+      CallableStatement var6 = null;
 
+      try {
+         Timestamp var7 = new Timestamp(var3.getTime());
+         new java.sql.Date(var3.getTime());
+         new java.sql.Date(var4.getTime());
+         String var10 = "{ call hdb_utilities.standardize_dates(?,?,?,?) }";
+         var6 = this.conn.prepareCall(var10);
+         var6.setLong(1, Long.parseLong(var1.toString()));
+         var6.setString(2, var2);
+         var6.setTimestamp(3, var7);
+         var6.setTimestamp(4, var7);
+         var6.registerOutParameter(3, 93); //probably java.sql.TIMESTAMP
+         var6.registerOutParameter(4, 93);
+         var6.execute();
+         Timestamp var11 = var6.getTimestamp(3);
+         Timestamp var12 = var6.getTimestamp(4);
+         if (var5 == null) {
+            var5 = "dd-MM-yyyy HH:mm";
+         }
+
+         SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
+         this.do2.put("SD_SDT", sdf.format(var11));
+         this.do2.put("SD_EDT", sdf.format(var12));
+      } catch (SQLException var22) {
+         this.log.debug(var22.toString());
+      } finally {
+         try {
+            if (var6 != null) {
+               var6.close();
+            }
+         } catch (SQLException var21) {
+            this.log.debug(var21.toString());
+         }
+
+      }
+
+   }
+
+// May not need this code, never referenced anywhere?
+   public void merge_cp_hist_calc(Integer loadapp_in, Integer sdi_in, String int_in, Date sdt_in, Date edt_in,
+                                  String dateFormat, Integer mri_in, String tabsel_in)
+   {
+      String query = null;
+      String result = null;
+      conn = db.getConnection(do2);
+      if (dateFormat == null)
+      {
+         dateFormat = "dd-MM-yyyy HH:mm";
+      }
+
+      SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
+      query = "merge into cp_historic_computations cp using ( select " + loadapp_in + " ldapp," +
+              sdi_in + " sdi, '" + int_in + "' interval, " + mri_in + " mrid, '" + tabsel_in + "' tbl, " +
+              " to_date('" + sdf.format(sdt_in) + "','dd-MM-yyyy HH24:mi') sdt, " +
+              " to_date('" + sdf.format(edt_in) + "','dd-MM-yyyy HH24:mi') edt " + 
+              " from dual ) nvr " + "on (cp.loading_application_id = nvr.ldapp and cp.site_datatype_id = nvr.sdi and " +
+              " cp.interval = nvr.interval and cp.start_date_time = nvr.sdt and " + 
+              " cp.end_date_time = nvr.edt) when matched then update set ready_for_delete = null " + "when not matched then insert " +
+              " (loading_application_id,site_datatype_id,interval,start_date_time,end_date_time,table_selector," +
+              " model_run_id,date_time_loaded) " + "values (nvr.ldapp,nvr.sdi,nvr.interval,nvr.sdt,nvr.edt,nvr.tbl,nvr.mrid,sysdate)";
+
+      result = db.performDML(query, do2);
+      if (result.startsWith("ERROR"))
+      {
+         System.out.println("RBASEUtils:merge_cp_hist_calc: " + result);
+         System.out.println(query + "  " + sdt_in + "  " + edt_in);
+      }
+
+   }
+
+//Used by USACE CSV Java dataloader
+   public Integer get_external_data_sdi() {
+      String query = null;
+      String result = null;
+      Integer ret_sdi = new Integer(-9999);
+      query = "select edm.hdb_site_datatype_id site_datatype_id from hdb_ext_data_source eds , ref_ext_site_data_map edm where eds.ext_data_source_name = '" +
+              do2.get("data_source") + "' and edm.primary_site_code='" + do2.get("site_code") + "' and edm.primary_data_code='" +
+              do2.get("parameter_code") + "'" + " and eds.ext_data_source_id = edm.ext_data_source_id" + " and edm.hdb_interval_name = '" +
+              do2.get("sample_interval") + "'";
+
+      result = db.performQuery(query, do2);
+      if (result.startsWith("ERROR")) {
+         error_message = "GET EXTERNAL SDI DATABASE RESULT FAILED" + result;
+         if (debug) {
+            log.debug(this, "  " + query + "  :" + error_message);
+         }
+
+         return ret_sdi;
+      } else {
+         if (debug) {
+            log.debug(this, "  " + query + "  :" + " PASSED EXTERNAL SDI GET");
+         }
+
+         if ((String)do2.get("site_datatype_id") != null && ((String)do2.get("site_datatype_id")).length() != 0) {
+            ret_sdi = new Integer((String)do2.get("site_datatype_id"));
+         }
+
+         return ret_sdi;
+      }
+   }
 
 
 }  // end of RBASEUtils class

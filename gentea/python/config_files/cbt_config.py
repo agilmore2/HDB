@@ -2,7 +2,7 @@
 
 database = {
     'user' : 'app_user',
-    'passwd' : 'ecohdb',
+    'passwd' : 'XXXXXX',
     'host' : 'XXX.XXX.XX.200', 
     'port' : '1521', 
     'sid' : 'ecohdb'

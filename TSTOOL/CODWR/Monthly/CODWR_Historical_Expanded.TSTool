@@ -1,0 +1,210 @@
+#
+# Downloading Streamflow-Total from CODWR Site ADANETCO to HDB SDI 29523
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:ADANETCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="ADANETCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29523,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site AZOTUNNM to HDB SDI 29564
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:AZOTUNNM.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="AZOTUNNM.DWR.Streamflow-Total.Month",SiteDataTypeID=29564,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site BERDITCO to HDB SDI 29521
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:BERDITCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="BERDITCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29521,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site BORDITCO to HDB SDI 29526
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:BORDITCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="BORDITCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29526,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site BOUTUNCO to HDB SDI 29536
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:BOUTUNCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="BOUTUNCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29536,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site BUSTUNCO to HDB SDI 29535
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:BUSTUNCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="BUSTUNCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29535,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site COLDITCO to HDB SDI 29530
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:COLDITCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="COLDITCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29530,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site DLFCMBCO to HDB SDI 29565
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:DLFCMBCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="DLFCMBCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29565,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site DOLTUNCO to HDB SDI 29510
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:DOLTUNCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="DOLTUNCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29510,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site EWIDITCO to HDB SDI 29531
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:EWIDITCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="EWIDITCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29531,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site GRNDRDCO to HDB SDI 29525
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:GRNDRDCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="GRNDRDCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29525,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site HOMTUNCO to HDB SDI 29532
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:HOMTUNCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="HOMTUNCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29532,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site HSPTUNCO to HDB SDI 29529
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:HSPTUNCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="HSPTUNCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29529,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site LARDITCO to HDB SDI 29533
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:LARDITCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="LARDITCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29533,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site PRWDITCO to HDB SDI 29561
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:PRWDITCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="PRWDITCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29561,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site ROBTUNCO to HDB SDI 29527
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:ROBTUNCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="ROBTUNCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29527,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site TABDITCO to HDB SDI 29568
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:TABDITCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="TABDITCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29568,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site TARBELCO to HDB SDI 29569
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:TARBELCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="TARBELCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29569,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site TREDITCO to HDB SDI 29562
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:TREDITCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="TREDITCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29562,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site TWITUNCO to HDB SDI 29537
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:TWITUNCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="TWITUNCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29537,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site VIDTUNCO to HDB SDI 29528
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:VIDTUNCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="VIDTUNCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29528,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site WCSDITCO to HDB SDI 29566
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:WCSDITCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="WCSDITCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29566,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site WEMDITCO to HDB SDI 29563
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:WEMDITCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="WEMDITCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29563,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading Streamflow-Total from CODWR Site WURDITCO to HDB SDI 29534
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:WURDITCO.DWR.Streamflow-Total.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="WURDITCO.DWR.Streamflow-Total.Month",SiteDataTypeID=29534,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading DivTotal from CODWR Site 7104676 to HDB SDI 29511
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:7104676.DWR.DivTotal.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="7104676.DWR.DivTotal.Month",SiteDataTypeID=29511,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading DivTotal from CODWR Site 3202006 to HDB SDI 29512
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:3202006.DWR.DivTotal.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="3202006.DWR.DivTotal.Month",SiteDataTypeID=29512,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading DivTotal from CODWR Site 7100609 to HDB SDI 29513
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:7100609.DWR.DivTotal.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="7100609.DWR.DivTotal.Month",SiteDataTypeID=29513,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading DivTotal from CODWR Site 7100618 to HDB SDI 29514
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:7100618.DWR.DivTotal.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="7100618.DWR.DivTotal.Month",SiteDataTypeID=29514,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading DivTotal from CODWR Site 3004661 to HDB SDI 29519
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:3004661.DWR.DivTotal.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="3004661.DWR.DivTotal.Month",SiteDataTypeID=29519,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
+#
+# Downloading DivTotal from CODWR Site 3004662 to HDB SDI 29520
+# Not worrying about breaking this up into separate periods, only 36ish values
+SetInputPeriod(InputStart="2019-10-01 00:00",InputEnd="CurrentToMinute")
+abbrev:3004662.DWR.DivTotal.Month~HydroBaseWeb
+WriteReclamationHDB(DataStore="hdbtstcu",TSList=AllMatchingTSID,TSID="3004662.DWR.DivTotal.Month",SiteDataTypeID=29520,Agency="CODWR",OverwriteFlag="O",WriteProcedure="OLD_WRITE_TO_HDB",TimeZone="MST")
+Free(TSList=AllTS)
