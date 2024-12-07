@@ -7,11 +7,13 @@
 
 ***************************************************************************/
 
+#ifndef ORA_PROC
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "dbutils.h"
 #include "utils.h"
+#endif
 #include "defines.h"
 #include "typedefs.h"
 
