@@ -1,1 +1,1 @@
-sqlplus -s / @daily_cleanups.sql
+sqlplus -s $APP_USER/$HDB_LOCAL @daily_cleanups.sql

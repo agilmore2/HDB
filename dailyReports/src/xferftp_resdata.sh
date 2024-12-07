@@ -4,7 +4,7 @@
 /bin/rm *.csv
 
 # we then create the new data, and then put it on the server.
-sqlplus -s / @../src/fetchresdata.sql
+sqlplus -s $APP_USER/$HDB_LOCAL @../src/fetchresdata.sql
 #mv *csv /wrg/exec/pub/c5stagesvr_uc_water/res_data
 
 #this put the res data file on our anonymous ftp site for anyone to grab
