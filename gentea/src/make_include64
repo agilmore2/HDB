@@ -4,5 +4,5 @@ OBJDIR = $(APPDIR)/obj64
 INCLUDES = -I$(HDB_APP_INCLUDE)
 #LIBS = $(HDB_LIBS) -lm -ldl -lgd -lpng -ljpeg -lz -liconv
 LIBS = $(HDB_LIBS) -lm -ldl -lgd -lpng -ljpeg -lz 
-CFLAGS = -ansi -Wall -g -DANSIPROTO -DDEBUG $(INCLUDES)
+CFLAGS = -ansi -Wall -g -fcommon -DANSIPROTO -DDEBUG $(INCLUDES)
 
