@@ -11,15 +11,16 @@ CFLAGS = -ansi -Wall -g -DANSIPROTO $(INCLUDES)
 TARGET = $(HDB_APP_LIB)/libutils.a
 
 OBJS =  $(OBJDIR)/Error.o \
-        $(OBJDIR)/RoundValue.o \
-        $(OBJDIR)/CalcExpression.o \
-        $(OBJDIR)/TableLookup.o \
-        $(OBJDIR)/Date.o \
-        $(OBJDIR)/Convert.o \
-        $(OBJDIR)/Interval.o \
-	$(OBJDIR)/Schema.o \
 	$(OBJDIR)/signalHandler.o \
-	$(OBJDIR)/Misc.o
+
+#        $(OBJDIR)/RoundValue.o \
+#        $(OBJDIR)/CalcExpression.o \
+#        $(OBJDIR)/TableLookup.o \
+#        $(OBJDIR)/Date.o \
+#        $(OBJDIR)/Convert.o \
+#        $(OBJDIR)/Interval.o \
+#        $(OBJDIR)/Schema.o \
+#        $(OBJDIR)/Misc.o
 
 GLOBAL_INCLUDE = \
 	$(HDB_APP_INCLUDE)/utils.h \

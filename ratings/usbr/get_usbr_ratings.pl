@@ -5,11 +5,7 @@ use strict;
 
 #use libraries from HDB environment (Solaris only except for HDB.pm)
 # this Perl variable is set in .cshrc_hdb_app
-if (defined ($ENV{PERL_ENV})) {
-	use lib "$ENV{PERL_ENV}/lib";
-} else {
-	use lib "$ENV{HDB_ENV}/perlLib/lib";
-}
+use lib "$ENV{HDB_ENV}/perlLib/lib";
 use Hdb;
 
 use LWP::UserAgent;
@@ -73,7 +69,7 @@ sub process_rating ($$) {
     if (compare_rating($hdb, $rating, \@barerat )) {
       #actual ratings are the same, no update required, we're done;
       print "No change in rating for $site\n";
-      return;
+      return $rating;
     } else {
       #clean up old rating
       delete_rating_points($hdb,$rating) unless $debug;

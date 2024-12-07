@@ -63,7 +63,7 @@ if [ -z "$db" -o -z "$numdays" ] ; then
 fi
 
 sqlplus -S /nolog <<EOS
---connect $app/$pass@$db
-connect /@$db
+connect $app/$pass@$db
+--connect /@$db
 @ecohdb2hdb.sql $numdays
 EOS

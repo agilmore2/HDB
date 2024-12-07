@@ -33,11 +33,13 @@
 * Rick Casey, May 2003. Modified for HDB2.
 *****************************************************************************/
 
+#ifndef ORA_PROC
 #include <stdlib.h>
 #include <math.h>
 #include "basins.h"
 #include "dbutils.h"
 #include "utils.h"
+#endif
 #include "defines.h"
 #include "typedefs.h"
 #include "basinTypedefs.h"

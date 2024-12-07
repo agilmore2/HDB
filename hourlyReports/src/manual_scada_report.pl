@@ -7,7 +7,7 @@ use English '-no_match_vars';
 $OUTPUT_FIELD_SEPARATOR="\n";
 
 #use libraries from HDB environment (Solaris only except for HDB.pm)
-use lib "$ENV{PERL_ENV}/lib";
+use lib ( defined $ENV{PERL_ENV} ? "$ENV{PERL_ENV}/lib" : "$ENV{HDB_ENV}/perlLib/lib" );
 # the previous line was modified by M. Bogner to allow program to compile and run on ISIS
 
 

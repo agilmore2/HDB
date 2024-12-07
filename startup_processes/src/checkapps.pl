@@ -119,7 +119,7 @@ sub startup_rs($) {
 
     my @args =
       ( "$decdir/bin/rs", "-e", 
-	#	                  "-d", "1",
+		          #"-d", "3",
                           "-l", "$ENV{HDB_ENV}/log/" . $app . "$date.log",
 	                  "-o", "$statdir/$rs.status",
                           "-k", "$lockdir/$rs.lock", "\"$rs\"" );
@@ -151,8 +151,13 @@ sub startup_cp($) {
 #                  "-d","1",
                   "-Y","America/Denver",
                   "-l", $logfile );
+#    } elsif ($app eq "rap") {
+    # debug level 3, to logfile as specified, need more data on FTRW-Inflow-Volume, HDB ticket #1440
+#        @args = ( "$decdir/bin/compproc", "-a","\"$cp\"",
+#                      "-d","3",
+#                      "-Y","America/Denver",
+#                      "-l", $logfile );
     } else {
-    # debug level 1, to logfile as specified
 	@args = ( "$decdir/bin/compproc", "-a","\"$cp\"",
 #                  "-d","1",
                   "-Y","America/Denver",

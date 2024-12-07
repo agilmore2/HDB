@@ -35,16 +35,18 @@
 * Notes
 * 8-April-2003 (rc) Added function to return the loading application id.
 *****************************************************************************/
-
+#ifndef ORA_PROC
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "basins.h"
 #include "dbutils.h"
 #include "utils.h"
+#endif
 #include "defines.h"
 #include "typedefs.h"
 #include "basinTypedefs.h"
+
 
 EXEC SQL INCLUDE sqlca;
 

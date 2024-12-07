@@ -36,12 +36,13 @@
 * NOTES
 * April 2003 - Modified by Rick Casey to work with HDB2 schema.
 *****************************************************************************/
-
+#ifndef ORA_PROC
 #include <stdlib.h>
 #include <math.h>
 #include "basins.h"
 #include "dbutils.h"
 #include "utils.h"
+#endif
 #include "defines.h"
 #include "typedefs.h"
 #include "basinTypedefs.h"

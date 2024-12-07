@@ -55,8 +55,8 @@ public class Baseloader
          stmt.setLong(11,Long.parseLong(do2.get("method_id").toString()));
          stmt.setLong(12,Long.parseLong(do2.get("computation_id").toString()));
          stmt.setString(13,"Y");
-         stmt.setString(14,(String)this.do2.get("sample_data_flags"));
-         stmt.setString(15,(String)this.do2.get("sample_tz"));
+         stmt.setString(14,(String)do2.get("sample_data_flags"));
+         stmt.setString(15,(String)do2.get("sample_tz"));
 
          stmt.registerOutParameter(4, java.sql.Types.DATE);
 
