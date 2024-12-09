@@ -79,7 +79,7 @@ void teacup(gdImagePtr im,gdPoint base,int size,double maxfull,
    /*            sprintf(buf,"MISSING/%ld",(long)maxfull); */
    /* 	else     */
 
-   sprintf(buf,"%ld/%ld",(long)currentfull,(long)maxfull);
+   snprintf(buf,100,"%ld/%ld",(long)currentfull,(long)maxfull);
    gdImageString(im,gdFontSmall,base.x,base.y+13,(unsigned char *)buf,foregroundtext);
 
    /* 	if(currentfull==998877.0) */
@@ -87,10 +87,10 @@ void teacup(gdImagePtr im,gdPoint base,int size,double maxfull,
    /*         else */
 
    if(datadate) {
-      sprintf(buf,"%d%% Full as of %s",percentfull,datadate);
+      snprintf(buf,100,"%d%% Full as of %s",percentfull,datadate);
       gdImageString(im,gdFontSmall,base.x,base.y+23,(unsigned char *)buf,foregroundtext);
    } else {
-      sprintf(buf,"%d%% Full",percentfull);
+      snprintf(buf,100,"%d%% Full",percentfull);
    gdImageString(im,gdFontSmall,base.x,base.y+23,(unsigned char *)buf,foregroundtext);
    }
 
@@ -103,7 +103,7 @@ void lineprint(gdImagePtr im,gdPoint base,float value,char *label,char *units)
    /*        sprintf(buf,"%s MISSING",label); */
    /*     else */
 
-   sprintf(buf,"%s %5.0f %s",label,value,units);
+   snprintf(buf,100,"%s %5.0f %s",label,value,units);
    gdImageString(im,gdFontSmall,base.x,base.y+2,
                  (unsigned char *)buf,foregroundtext);
 }
@@ -116,9 +116,9 @@ void lineprint2(gdImagePtr im,gdPoint base,float value,char *label,char *units)
              else */
 
    if(strncmp(units,"CFS",3)==0)
-      sprintf(buf,"%s %7.0f %s",label,value,units);
+      snprintf(buf,100,"%s %7.0f %s",label,value,units);
    else
-      sprintf(buf,"%s %7.2f %s",label,value,units);
+      snprintf(buf,100,"%s %7.2f %s",label,value,units);
 
    gdImageString(im,gdFontSmall,base.x,base.y+2,
                  (unsigned char *)buf,foregroundtext);

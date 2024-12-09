@@ -21,6 +21,9 @@
 #include "defines.h"
 #include "typedefs.h"
 
+#define DATE_LEN 12
+#define DATE_ARRAY_LEN 20
+#define VAL_ARRAY_LEN 10
 main ( int argc, char** argv )
 {
   
@@ -33,12 +36,12 @@ main ( int argc, char** argv )
   short         value_null_indicator;
   float         value1,value2,value3,value4;
   VARCHAR	site_name[65];
-  char          dater_base[12],dater1[12],dater2[12],dater3[12],dater4[12];
+  char          dater_base[DATE_LEN],dater1[DATE_LEN],dater2[DATE_LEN],dater3[DATE_LEN],dater4[DATE_LEN];
   
   EXEC SQL END DECLARE SECTION;
   
-  char		*dbName,date_out_base[1000][20],date_out1[1000][20],date_out2[1000][20],date_out3[1000][20],date_out4[1000][20];
-  char          final1c[1000][10],final2c[1000][10],final3c[1000][10],final4c[1000][10];
+  char		*dbName,date_out_base[1000][DATE_ARRAY_LEN],date_out1[1000][DATE_ARRAY_LEN],date_out2[1000][DATE_ARRAY_LEN],date_out3[1000][DATE_ARRAY_LEN],date_out4[1000][DATE_ARRAY_LEN];
+  char          final1c[1000][VAL_ARRAY_LEN],final2c[1000][VAL_ARRAY_LEN],final3c[1000][VAL_ARRAY_LEN],final4c[1000][VAL_ARRAY_LEN];
   int           num_days,result,count_base,count1,count2,count3,count4,i,j,test_a,test_b;
   float         vals1[1000],vals2[1000],vals3[1000],vals4[1000],final1[1000],final2[1000],final3[1000],final4[1000];
   short         val_null_base[1000],val_null1[1000],val_null2[1000],val_null3[1000],val_null4[1000];
@@ -168,7 +171,7 @@ main ( int argc, char** argv )
 	INTO :dater_base:value_null_indicator;
       if(sqlca.sqlcode <= 0)
 	{
-      strcpy(date_out_base[count_base],dater_base);
+      strncpy(date_out_base[count_base],dater_base,DATE_LEN);
       val_null_base[count_base]= value_null_indicator;
 	}
       count_base = count_base +1;
@@ -183,7 +186,7 @@ main ( int argc, char** argv )
 	INTO :dater1,:value1:value_null_indicator;
       if(sqlca.sqlcode <= 0)
 	{
-	  strcpy(date_out1[count1],dater1);
+	  strncpy(date_out1[count1],dater1,DATE_ARRAY_LEN);
 	  vals1[count1] = value1; 
 	  val_null1[count1]= value_null_indicator;
 	}
@@ -199,7 +202,7 @@ main ( int argc, char** argv )
 	INTO :dater2,:value2:value_null_indicator;
       if(sqlca.sqlcode <= 0)
 	{
-      strcpy(date_out2[count2],dater2);
+      strncpy(date_out2[count2],dater2,DATE_ARRAY_LEN);
       vals2[count2] = value2; 
       val_null2[count2]= value_null_indicator;
 	}
@@ -214,7 +217,7 @@ main ( int argc, char** argv )
 	INTO :dater3,:value3:value_null_indicator;
       if(sqlca.sqlcode <= 0)
 	{
-      strcpy(date_out3[count3],dater3);
+      strncpy(date_out3[count3],dater3,DATE_ARRAY_LEN);
       vals3[count3] = value3; 
       val_null3[count3]= value_null_indicator;
 	}
@@ -230,7 +233,7 @@ main ( int argc, char** argv )
 	INTO :dater4,:value4:value_null_indicator;
       if(sqlca.sqlcode <= 0)
 	{
-      strcpy(date_out4[count4],dater4);
+      strncpy(date_out4[count4],dater4,DATE_ARRAY_LEN);
       vals4[count4] = value4; 
       val_null4[count4]= value_null_indicator;
 	}
@@ -360,37 +363,37 @@ for(i=0;i<count_base;i++)
     {
       if(final1[i] == 998877) 
 	{
-	  sprintf(final1c[i],"    ---\0");
+	  snprintf(final1c[i],VAL_ARRAY_LEN,"    ---\0");
 	}
       else
 	{
-	  sprintf(final1c[i],"%7.2f",final1[i]);
+	  snprintf(final1c[i],VAL_ARRAY_LEN,"%7.2f",final1[i]);
 	}
 
       if((final2[i] == 998877) || (val_null2[i] == -1))
 	{
-	  sprintf(final2c[i],"       ---\0");
+	  snprintf(final2c[i],VAL_ARRAY_LEN,"       ---\0");
 	}
       else
 	{
-	  sprintf(final2c[i],"%10.0f",final2[i]);
+	  snprintf(final2c[i],VAL_ARRAY_LEN,"%10.0f",final2[i]);
 	}
 
       if((final3[i] == 998877) || (val_null3[i] == -1))
 	{
-	  sprintf(final3c[i],"       ---\0");
+	  snprintf(final3c[i],VAL_ARRAY_LEN,"       ---\0");
 	}
       else
 	{
-	  sprintf(final3c[i],"%10.0f",final3[i]);
+	  snprintf(final3c[i],VAL_ARRAY_LEN,"%10.0f",final3[i]);
 	}
        if((final4[i] == 998877) || (val_null4[i] == -1))
 	{
-	  sprintf(final4c[i],"       ---\0");
+	  snprintf(final4c[i],VAL_ARRAY_LEN,"       ---\0");
 	}
       else
 	{
-	  sprintf(final4c[i],"%10.0f",final4[i]);
+	  snprintf(final4c[i],VAL_ARRAY_LEN,"%10.0f",final4[i]);
 	}
       printf("       %s     %s   %s   %s   %s\n",date_out_base[i],final1c[i],final2c[i],final3c[i],final4c[i]);
 

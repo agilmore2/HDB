@@ -57,7 +57,7 @@ int SqlGetNumSecondsInMonth (SQL_DATE theDate, long *seconds)
     return (ERROR);
   if ((result = SqlExtractDatePart (theDate, YEAR, &year)) != OK)
     return (ERROR);
-  sprintf (tempDate, "01-%d-%d", month, year);
+  snprintf (tempDate, SQL_DATE_LENGTH, "01-%d-%d", month, year);
 
 
 #ifdef DEBUG
@@ -124,8 +124,8 @@ int SqlNumIntervalsBetweenDates (SQL_DATE sDate, SQL_DATE eDate,
       eYear,
       nMonths;
 
-  sprintf (sqlSDate, sDate);
-  sprintf (sqlEDate, eDate);
+  snprintf (sqlSDate, SQL_DATE_LENGTH, sDate);
+  snprintf (sqlEDate, SQL_DATE_LENGTH, eDate);
 
   /* This function does not always have the expected effect when the
      interval specified is months, quarters or years. This is because
@@ -309,7 +309,7 @@ int SqlGetIntOrder(SQL_INTERVAL name, int* order)
    int result;
 
    /* Assign sql declared variable to the input interval name */
-   strcpy (sqlName, name);   
+   strncpy (sqlName, name, SQL_INTERVAL_LENGTH);   
 
    /* Select from the interval table */
    EXEC SQL AT :current_dbsite 
@@ -382,7 +382,7 @@ int SqlGetIntName(int order, SQL_INTERVAL name)
    
    /* Successful - assign return parameter */
    EXEC SQL AT :current_dbsite COMMIT;
-   strcpy (name, sqlName);
+   strncpy (name, sqlName, SQL_INTERVAL_LENGTH);
    return(OK);
 }
 
@@ -421,7 +421,7 @@ int SqlGetPreviousIntName(SQL_INTERVAL name, SQL_INTERVAL previousName, int* val
    int result;
 
    /* Assign sql declared variable to the input interval name */
-   strcpy (sqlName, name);   
+   strncpy (sqlName, name, SQL_INTERVAL_LENGTH);   
 
    /* Select from the interval table */
    EXEC SQL AT :current_dbsite 
@@ -446,7 +446,7 @@ int SqlGetPreviousIntName(SQL_INTERVAL name, SQL_INTERVAL previousName, int* val
    }
    else
    {
-      strcpy (previousName, sqlPreviousName);
+      strncpy (previousName, sqlPreviousName, SQL_INTERVAL_LENGTH);
       *valid = 1;
    }
    return(OK);
