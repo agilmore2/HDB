@@ -48,7 +48,7 @@ int parseDate (char *dateString, char *oracleDate)
 
   /* Get the month */
   tempDate = strstr(dateString, ":");
-  if (tempdate == NULL) {
+  if (tempDate == NULL) {
     fprintf (stdout, "Error finding : in date %s.\n", dateString);
     exit (ERROR);
   }
@@ -59,7 +59,7 @@ int parseDate (char *dateString, char *oracleDate)
   while (month[i] != ' ')
     i++;
   month[i] = '\0';
-  strncpy (tempDate1, &(tempDate2[i + 1]), DATE_LEN)); 
+  strncpy (tempDate1, &(tempDate2[i + 1]), DATE_LEN); 
 
 
   /* Get the day */
