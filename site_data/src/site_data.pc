@@ -3,13 +3,13 @@
 
 /* stldlib.h library added by M. Bogner for move to Linux  */
 
-#ifndef ORA_PROC
+/*#ifndef ORA_PROC*/
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "dbutils.h"
 #include "utils.h"
-#endif
+/*#endif*/
 #include "defines.h"
 #include "typedefs.h"
 
