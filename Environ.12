@@ -31,7 +31,7 @@ HDB_APP_INCLUDE = $(HDB_ENV)/include
 #TK_LIBS = -ltk8.4 -ltcl8.4 -lm
 
 # Oracle library files
-ORACLE_LIB = -L$(ORACLE_HOME)/lib -lclntsh -lmm -lpthread -lrt -lclntshcore 
+ORACLE_LIB = -L$(ORACLE_HOME)/lib -lclntsh -lpthread -lrt -lclntshcore 
 
 ### ORACLE 9, Solaris Code below
 
