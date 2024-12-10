@@ -950,7 +950,8 @@ sub read_header {
       print STDERR "Not found: '$usgs_sites->{$usgs_no}->{data_code}_cd' in:\n";
       print STDERR "@headers\n";
       print STDERR "Cannot find quality column code from header!\n";
-      $hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
+      #$hdb->hdbdie("Data is not $agen_abbrev website tab delimited format!\n");
+      return 0; #error, next station please
     }
     $usgs_sites->{$usgs_no}->{$code}->{qualitycolumn} = $col;
   }
