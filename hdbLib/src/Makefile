@@ -6,7 +6,7 @@ include ../../Environ.12
 OBJDIR = $(HDB_ENV)/hdbLib/obj64
 INCLUDES = -I$(HDB_APP_INCLUDE)  -I$(ORACLE_HOME)/precomp/public -I$(ORACLE_HOME)/rdbms/public
 LIBS = $(HDB_LIBS) -lm -ldl
-CFLAGS = -ansi -Wall -c -g -DANSIPROTO $(INCLUDES)
+CFLAGS = -ansi -Wall -c -g -DANSIPROTO -fcommon $(INCLUDES)
 
 TARGET = $(HDB_APP_LIB)/libhdb.a
 

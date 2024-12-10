@@ -1,4 +1,5 @@
-
+#ifndef ORA_PROC
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
