@@ -85,7 +85,7 @@ int SqlGetUnitInfo (ID unitId, UNIT_INFO *unitInfo)
    EXEC SQL AT :current_dbsite COMMIT;
    
    unitInfo->unitId = unitId;
-   strcpy (unitInfo->name, name);
+   strncpy (unitInfo->name, name, 33);
    unitInfo->dimension = dimension;
    unitInfo->storedUnitId = storedUnitId;
    unitInfo->isFactor = isFactor;
@@ -100,8 +100,8 @@ int SqlGetUnitInfo (ID unitId, UNIT_INFO *unitInfo)
    
    if (!isFactor)
    {
-      strcpy (unitInfo->fromStdExpression, fromExpression);
-      strcpy (unitInfo->toStdExpression, toExpression);
+      strncpy (unitInfo->fromStdExpression, fromExpression, 65);
+      strncpy (unitInfo->toStdExpression, toExpression, 65);
    }
    else
    {

@@ -47,6 +47,7 @@
 EXEC SQL INCLUDE sqlca;
 
 #define FUNC_NAME "SqlUpdateBasPctSnow"
+#define NAME_LENGTH 64
 
 int SqlUpdateBasPctSnow (BASIN *basinArray, int numSites, SQL_DATE date, 
 			 int *totalNumValues)
@@ -55,9 +56,9 @@ int SqlUpdateBasPctSnow (BASIN *basinArray, int numSites, SQL_DATE date,
  EXEC SQL BEGIN DECLARE SECTION;
    ID            siteDatatypeId;
    float         pctSnow;
-   char          tempValidationFlag[2],
-				 method_name[64];
-   varchar       validationFlag[2];
+   char          tempValidationFlag[VALIDATION_FLAG_LENGTH],
+				 method_name[NAME_LENGTH];
+   varchar       validationFlag[VALIDATION_FLAG_LENGTH];
    SQL_DATE      sqlDate, start_date_time, end_date_time;
 	int 		 loading_application_id,
 				 agen_id,
@@ -70,10 +71,8 @@ int SqlUpdateBasPctSnow (BASIN *basinArray, int numSites, SQL_DATE date,
              result;
  ID          siteId;
 
- sprintf (sqlDate, date);
-
  /* Create the date variables. They are the same for all updates or inserts. */
- sprintf(sqlDate, date);
+ snprintf(sqlDate, SQL_DATE_LENGTH, date );
  EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
  EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
  (*totalNumValues) = 0;
@@ -85,7 +84,7 @@ int SqlUpdateBasPctSnow (BASIN *basinArray, int numSites, SQL_DATE date,
      return (ERROR);
    }
  /* Get the method id for the method for Basin Percent Snow. */
- strcpy(method_name,BAS_PCT_SNOW_METHOD_NAME);
+ strncpy(method_name,BAS_PCT_SNOW_METHOD_NAME,NAME_LENGTH);
  if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
    {
      return (ERROR);
@@ -111,7 +110,7 @@ int SqlUpdateBasPctSnow (BASIN *basinArray, int numSites, SQL_DATE date,
 						 tempValidationFlag)) == ERROR)
 	       return (ERROR);
 
-	     strcpy (validationFlag.arr, tempValidationFlag); 
+	     strncpy (validationFlag.arr, tempValidationFlag,VALIDATION_FLAG_LENGTH); 
 	     validationFlag.len = strlen (validationFlag.arr);
 	     validationFlag.arr[validationFlag.len] = '\0';
 
@@ -184,7 +183,7 @@ int SqlUpdateBasPctPrecip (BASIN *basinArray, int numSites, SQL_DATE date,
  ID          siteId;
 
 	/* Create the date variables. They are the same for all updates or inserts. */
-	 sprintf(sqlDate, date);
+	 snprintf(sqlDate, SQL_DATE_LENGTH, date);
 	 EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
  	 EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
  (*totalNumValues) = 0;
@@ -196,7 +195,7 @@ int SqlUpdateBasPctPrecip (BASIN *basinArray, int numSites, SQL_DATE date,
 		return (ERROR);
 	 }
 	 /* Get the method id for the method for Basin Percent Precip. */
-	 strcpy(method_name,BAS_PCT_PCP_METHOD_NAME);
+	  strncpy(method_name,BAS_PCT_PCP_METHOD_NAME,NAME_LENGTH);
 	 if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
 	 {
 		return (ERROR);
@@ -223,7 +222,7 @@ int SqlUpdateBasPctPrecip (BASIN *basinArray, int numSites, SQL_DATE date,
 						 tempValidationFlag)) == ERROR)
 	       return (ERROR);
 	 
-	     strcpy (validationFlag.arr, tempValidationFlag); 
+	     strncpy (validationFlag.arr, tempValidationFlag, VALIDATION_FLAG_LENGTH); 
 	     validationFlag.len = strlen (validationFlag.arr);
 	     validationFlag.arr[validationFlag.len] = '\0';
 

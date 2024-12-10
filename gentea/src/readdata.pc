@@ -50,7 +50,7 @@ float readone(int site,int datatype, char *date)
       exit(ERROR);
    }
   
-   strcpy(date,oradate);
+   strncpy(date,oradate,25);
   
    return value;
 

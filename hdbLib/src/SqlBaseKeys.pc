@@ -333,6 +333,6 @@ int SqlGetOverwriteFlag(char* name, char* flag)
    
    /* Successful - assign return parameter */
    EXEC SQL AT :current_dbsite COMMIT;
-   strcpy (flag, sqlFlag);
+   strncpy (flag, sqlFlag, VALIDATION_FLAG_LENGTH);
    return(OK);
 }

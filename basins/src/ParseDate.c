@@ -29,43 +29,51 @@
 
 #define FUNC_NAME "parseDate"
 #define NUM_COLUMNS 2
+#define DATE_LEN 20
+#define MON_LEN 25
+#define DAY_LEN 11
+#define YR_LEN 8
 
 int parseDate (char *dateString, char *oracleDate)
 
 {
   char *tempDate,
-       tempDate1[20],
-       tempDate2[20],
-       day[11],
-       month[25],
-       year[8];
+       tempDate1[DATE_LEN],
+       tempDate2[DATE_LEN],
+       day[DAY_LEN],
+       month[MON_LEN],
+       year[YR_LEN];
   short i;
 
 
   /* Get the month */
   tempDate = strstr(dateString, ":");
-  strcpy (tempDate2, &(tempDate[2]));
-  strcpy (month, tempDate2);
+  if (tempdate == NULL) {
+    fprintf (stdout, "Error finding : in date %s.\n", dateString);
+    exit (ERROR);
+  }
+  strncpy (tempDate2, &(tempDate[2]), DATE_LEN);
+  strncpy (month, tempDate2, MON_LEN);
 
   i = 0;
   while (month[i] != ' ')
     i++;
   month[i] = '\0';
-  strcpy (tempDate1, &(tempDate2[i + 1])); 
+  strncpy (tempDate1, &(tempDate2[i + 1]), DATE_LEN)); 
 
 
   /* Get the day */
-  strcpy (day, tempDate1);
+  strncpy (day, tempDate1, DAY_LEN);
 
   i = 0;
   while (day[i] != ' ')
     i++;
   day[i] = '\0';
-  strcpy (tempDate2, &(tempDate1[i + 3])); 
+  strncpy (tempDate2, &(tempDate1[i + 3]), DATE_LEN); 
 
 
   /* Get the year */
-  strcpy (year, tempDate2);
+  strncpy (year, tempDate2, YR_LEN);
 
   i = 0;
   while (year[i] != '\n' && year[i] != ' ')
@@ -73,7 +81,7 @@ int parseDate (char *dateString, char *oracleDate)
   year[i] = '\0';
 
   /* construct the Oracle date */
-  sprintf (oracleDate, "%s-%s-%s", day, month, year);
+  snprintf (oracleDate, SQL_DATE_LENGTH, "%s-%s-%s", day, month, year);
 
   return (OK);
 }

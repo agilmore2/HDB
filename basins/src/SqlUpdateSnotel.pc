@@ -47,6 +47,8 @@
 #include "typedefs.h"
 #include "basinTypedefs.h"
 
+#define NAME_LENGTH 64
+
 EXEC SQL INCLUDE sqlca;
 
 #define FUNC_NAME "SqlUpdateCurSnow"
@@ -57,9 +59,9 @@ int SqlUpdateCurSnow (SNOTEL *snotelArray, int numSites, SQL_DATE date,
   EXEC SQL BEGIN DECLARE SECTION;
   ID            siteDatatypeId;
   float         curSnow;
-  char          tempValidationFlag[2],
-    method_name[64];
-  varchar       validationFlag[2];
+  char          tempValidationFlag[VALIDATION_FLAG_LENGTH],
+    method_name[NAME_LENGTH];
+  varchar       validationFlag[VALIDATION_FLAG_LENGTH];
   SQL_DATE      sqlDate,
     start_date_time,
     end_date_time;
@@ -75,7 +77,7 @@ int SqlUpdateCurSnow (SNOTEL *snotelArray, int numSites, SQL_DATE date,
   ID          siteId;
   
   /* Create the date variables. They are the same for all updates or inserts. */
-  sprintf(sqlDate, date);
+  snprintf(sqlDate, SQL_DATE_LENGTH, date);
   EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
   EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
   
@@ -88,7 +90,7 @@ int SqlUpdateCurSnow (SNOTEL *snotelArray, int numSites, SQL_DATE date,
       return (ERROR);
     }
   /* Get the method id for the method for Current Snow . */
-  strcpy(method_name,CUR_SNOW_METHOD_NAME);
+  strncpy(method_name,CUR_SNOW_METHOD_NAME,NAME_LENGTH);
   if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
     {
       return (ERROR);
@@ -113,7 +115,7 @@ int SqlUpdateCurSnow (SNOTEL *snotelArray, int numSites, SQL_DATE date,
 		return (ERROR);
 	      
 	      /* Write validationFlag to varchar host variable */
-	      strcpy (validationFlag.arr, tempValidationFlag); 
+	      strncpy (validationFlag.arr, tempValidationFlag, VALIDATION_FLAG_LENGTH); 
 	      validationFlag.len = strlen (validationFlag.arr);
 	      validationFlag.arr[validationFlag.len] = '\0';
 	      
@@ -190,7 +192,7 @@ int SqlUpdateCurPrecip (SNOTEL *snotelArray, int numSites, SQL_DATE date,
  ID          altId;
 
  /* Create the date variables. They are the same for all updates or inserts. */
- sprintf(sqlDate, date);
+ snprintf(sqlDate, SQL_DATE_LENGTH, date);
  EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
  EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
  (*totalNumValues) = 0;
@@ -204,7 +206,7 @@ int SqlUpdateCurPrecip (SNOTEL *snotelArray, int numSites, SQL_DATE date,
    }
  
  /* Get the method id for the method for Current Precip. */
- strcpy(method_name,CUR_PCP_METHOD_NAME);
+ strncpy(method_name,CUR_PCP_METHOD_NAME,NAME_LENGTH);
  if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
    {
      return (ERROR);
@@ -231,7 +233,7 @@ int SqlUpdateCurPrecip (SNOTEL *snotelArray, int numSites, SQL_DATE date,
 						 tempValidationFlag)) == ERROR)
 	       return (ERROR);
 	     
-	     strcpy (validationFlag.arr, tempValidationFlag); 
+	     strncpy (validationFlag.arr, tempValidationFlag, VALIDATION_FLAG_LENGTH); 
 	     validationFlag.len = strlen (validationFlag.arr);
 	     validationFlag.arr[validationFlag.len] = '\0';
 	     
@@ -306,7 +308,7 @@ int SqlUpdatePctSnow (SNOTEL *snotelArray, int numSites, SQL_DATE date,
  ID          siteId;
 
  /* Create the date variables. They are the same for all updates or inserts. */
- sprintf(sqlDate, date);
+ snprintf(sqlDate, SQL_DATE_LENGTH, date);
  EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
  EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
  (*totalNumValues) = 0;
@@ -320,7 +322,7 @@ int SqlUpdatePctSnow (SNOTEL *snotelArray, int numSites, SQL_DATE date,
    }
  
  /* Get the method id for the method for Percent Snow. */
- strcpy(method_name,PCT_SNOW_METHOD_NAME);
+ strncpy(method_name,PCT_SNOW_METHOD_NAME,NAME_LENGTH);
  if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
    {
      return (ERROR);
@@ -346,7 +348,7 @@ int SqlUpdatePctSnow (SNOTEL *snotelArray, int numSites, SQL_DATE date,
 						 tempValidationFlag)) == ERROR)
 	       return (ERROR);
 	     
-	     strcpy (validationFlag.arr, tempValidationFlag); 
+	     strncpy (validationFlag.arr, tempValidationFlag, VALIDATION_FLAG_LENGTH); 
 	     validationFlag.len = strlen (validationFlag.arr);
 	     validationFlag.arr[validationFlag.len] = '\0';
 	     
@@ -417,7 +419,7 @@ int SqlUpdatePctPrecip (SNOTEL *snotelArray, int numSites, SQL_DATE date,
   ID          altId;
   
   /* Create the date variables. They are the same for all updates or inserts. */
-  sprintf(sqlDate, date);
+  snprintf(sqlDate, SQL_DATE_LENGTH, date);
   EXEC SQL SELECT TO_CHAR(TRUNC(TO_DATE(:sqlDate,'dd-mon-yyyy hh24:mi:ss')),'dd-mon-yyyy hh24:mi:ss') INTO :start_date_time FROM dual;
   EXEC SQL SELECT TO_CHAR(TO_DATE(:start_date_time,'dd-mon-yyyy hh24:mi:ss')+1,'dd-mon-yyyy hh24:mi:ss') INTO :end_date_time FROM dual;
   (*totalNumValues) = 0;
@@ -432,7 +434,7 @@ int SqlUpdatePctPrecip (SNOTEL *snotelArray, int numSites, SQL_DATE date,
   
   
   /* Get the method id for the method for Percent Precip. */
-  strcpy(method_name,PCT_PCP_METHOD_NAME);
+  strncpy(method_name,PCT_PCP_METHOD_NAME,NAME_LENGTH);
   if ( (result = SqlGetMethodId(&method_name, &method_id) ) == ERROR)
     {
       return (ERROR);
@@ -458,7 +460,7 @@ int SqlUpdatePctPrecip (SNOTEL *snotelArray, int numSites, SQL_DATE date,
 						  tempValidationFlag)) == ERROR)
 		return (ERROR);
 	      
-	      strcpy (validationFlag.arr, tempValidationFlag); 
+	      strncpy (validationFlag.arr, tempValidationFlag,VALIDATION_FLAG_LENGTH); 
 	      validationFlag.len = strlen (validationFlag.arr);
 	      validationFlag.arr[validationFlag.len] = '\0';
 	      

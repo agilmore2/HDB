@@ -43,7 +43,7 @@ int SqlGetValidationFlag (ID siteDatatypeId, char *validationFlag)
   
   int result;
 
-  sprintf (validationFlag, "Z");
+  snprintf (validationFlag, VALIDATION_FLAG_LENGTH, "Z");
 
   EXEC SQL AT :current_dbsite COMMIT;
   
