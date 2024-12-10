@@ -199,7 +199,7 @@ sub do_mail {
 
   if ( !$testing ) {
     #set up mail command
-    $mailcmd = $mailcmd . " -s " . $subject . " -c " . $cc . " \'" . $to . "\'";
+    $mailcmd = $mailcmd . " -s " . $subject . " -T CC:" . $cc . " -T To:\'" . $to . "\'";
   }
 
   if ( $#output > 0 ) {
@@ -223,7 +223,7 @@ insert into hdb_ext_data_source
 values (
  36, 'HDB CODWR Update', 7,null,
 7,null,null,null,
-'mailto: Dan Crabtree <dcrabtree@usbr.gov>, Erik Knight <eknight@usbr.gov>, Bob.hurford@state.co.us, Dan Crabtree <dan.crabtree@bresnan.net>,Robert Hurford <bhurford@montrose.net>,Gina Dearcos <gina.dearcos@state.co.us>',
+'mailto: eknight@usbr.gov, rclayton@usbr.gov, gregory.brown@state.co.us, bob.hurford@state.co.us, dan.crabtree@bresnan.net, bhurford@montrose.net, gina.dearcos@state.co.us, jason.ullmann@state.co.us',
 null);
 
 --Other datatypes?

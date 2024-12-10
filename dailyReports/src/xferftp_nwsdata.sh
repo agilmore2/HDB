@@ -2,7 +2,7 @@
 
 # we first create the new data file with the sql script
 #
-sqlplus -s / @fetchNWSdata.sql 
+sqlplus -s $APP_USER/$HDB_LOCAL@$HDB_LOCAL @fetchNWSdata.sql 
 #
 # we then copy the file to a location where Denver can pick it up
 # and move it to the production web server

@@ -85,8 +85,8 @@ filename[100],fileprefix[3]="WY",filedir[255]="dra1:[dms_v4.slc.archives].acf";
 	if(dt->mn>=10)
 		y+=1;
 
-	strcpy(filename,fileprefix);
-	sprintf(year,"%04d",y);
+	strncpy(filename,fileprefix,100);
+	snprintf(year,5,"%04d",y);
 	strncat(filename,year,4);
 
 	if((retval=openfab(&infab,&filename[0],&filedir[0]))!=0)

@@ -14,7 +14,7 @@ my @current_date = Today(); #or (2001,8,1); for August 1, 2001
 
 my $numdays = 10;
 
-if (defined(@ARGV) and scalar(@ARGV) == 1 and $ARGV[0] =~ /\d+/) {
+if (@ARGV and scalar(@ARGV) == 1 and $ARGV[0] =~ /\d+/) {
   $numdays = $ARGV[0];
 } else {
   print 

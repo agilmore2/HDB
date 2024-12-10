@@ -104,9 +104,9 @@ int main(int argc,char **argv)
    dt.dy = timep->tm_mday;
    dt.hr=0;dt.mi=0;dt.sc=0;
 
-   sprintf(datestr,"%02d/%02d",dt.mn,dt.dy);
-   sprintf(label,"Data Current as of:");
-   sprintf(datelabel,"%s/%04d",datestr,dt.yr);
+   snprintf(datestr,25,"%02d/%02d",dt.mn,dt.dy);
+   snprintf(label,25,"Data Current as of:");
+   snprintf(datelabel,25,"%s/%04d",datestr,dt.yr);
 
    gdImageFilledRectangle(im,0,0,100,14,background);    
    gdImageString(im,gdFontMediumBold,0,0,(unsigned char *)label,foreground);

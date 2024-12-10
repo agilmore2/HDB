@@ -363,7 +363,7 @@ sub insert_values
 
       undef $old_val;
       $old_val = check_value($datestr, $scada->{sdi}, $scada->{interval});
-      if (!defined $value) {
+      if (!defined $value || $value eq '') {
         print "data missing: $scada->{sdi}, date $datestr\n" if defined($debug);
       } elsif (defined($old_val) and $old_val == $value) {
         print "data identical: $scada->{sdi}, date $datestr, value $value\n" if defined($debug);

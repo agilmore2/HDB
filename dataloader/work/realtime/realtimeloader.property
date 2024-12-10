@@ -13,21 +13,17 @@ DRIVER=oracle.jdbc.driver.OracleDriver
 # The url is the important entry that tells the java jdbc code where to connect to the oracle database
 #be sure to enter the correct server name : port : sid 
 # typical examples in our community:
-#URL=jdbc:oracle:thin:@ganges:1521:MS_CUHDB
-#URL=jdbc:oracle:thin:@sun1.yak.pn.usbr.gov:1521:pnhdb
-#URL=jdbc:oracle:thin:@hvrwater.lc.usbr.gov:1521:lctest
-URL=jdbc:oracle:thin:@athena.uc.usbr.gov:1521:uchdb2
+URL=jdbc:oracle:thin:@localhost:1521:uchdb2
 
 
 # The username is the oracle username that will be used to connect to the system
 # for HDB2  generally this will be the owner of the datatables
 # enter the DBNAMEDBA here ie
-#USERNAME=LCHDBA
 USERNAME=app_user
 
 #  enter the oracle password for this account  ie
 #PASSWORD=master
-PASSWORD=uchdb2
+PASSWORD=XXXXXX
 
 #  NOTE:  an alternative to entering each of these names correctly is to enter the associated id
 # for each respective lookup table.  In general either method will produce the same results

@@ -95,8 +95,8 @@ select to_char(trunc(sysdate - 1,'DD'), 'YYYYMMDD') day from dual
 
 print $yesterday."\n";
 
-#define SQL queries. 
-my $mailtosql =  "select description from hdb_ext_data_source where
+#define SQL queries. Fix issues with embedded newlines
+my $mailtosql =  "select replace(description,chr(13),'~') from hdb_ext_data_source where
 ext_data_source_name = '$app_name'";
 
 #get data where the truncated to day date is yesterday
@@ -162,7 +162,8 @@ where
 # mailto: <emailaddresses>
 my @mailto = @{$hdb->dbh->selectcol_arrayref("$mailtosql")};
 
-my ($to) = split /\n/,$mailto[0];
+#split on ~ as switched with newlines above
+my ($to) = split /~/,$mailto[0];
 $to =~ s/^mailto: //;
 chomp $to;
 
@@ -176,19 +177,9 @@ my @output = @$data;
 #mail this data to WAPA
 my $mailcmd = $mail;
 if (!$testing) {
-  #grep for GLEN, and ftp it to GCMRC
-  my @glen = grep {/GLEN/} @output;
-  open GLEN, "|ncftpput -o useCLNT=0 -f gcqaccount.dat -c /gcmrc/glen_$yesterday.dat",
-  or $hdb->hdbdie("ftp failed! $!");
-  
-#  open GLEN, ">glen_$yesterday.dat";
-  print GLEN @glen;
-  print GLEN "\n";
-  close GLEN;
-
   #set up mail command
   my $subject = "\"WAPA SCADA Daily $yesterday\"";
-  $mailcmd = $mailcmd ." -s ". $subject . " -c ".$cc." ".$to;
+  $mailcmd = $mailcmd ." -s ". $subject . " -T cc:".$cc." -T to:".$to;
 }
 
 open MAIL, "|$mailcmd" or $hdb->hdbdie("unable to open mail: $!\n");
@@ -210,24 +201,11 @@ if (!$testing) {
 
   my $subject = "\"WAPA SCADA Update $yesterday\"";
 
-  $mailcmd = $mail ." -s ". $subject . " -c ".$cc." ".$to;
+  $mailcmd = $mail ." -s ". $subject . " -T cc:".$cc." -T to:".$to;
   open MAIL, "|$mailcmd" or $hdb->hdbdie("unable to open mail: $!\n");
   print MAIL @output;
   print MAIL "\n";
   close MAIL;
-
-  # do not want to delete the output of the updates.
-  #  unlink "wapa_update_$sqlout.dat";
-
-  my @glen = grep {/GLEN/} @output;
-
-  open GLEN, "|ncftpput -o useCLNT=0 -f gcqaccount.dat -c /gcmrc/glen_update_$yesterday.dat",
-  or $hdb->hdbdie("ftp failed! $!");
-
-# open GLEN, ">glen_update_$yesterday.dat";
-  print GLEN @glen;
-  print GLEN "\n";
-  close GLEN;
 
   $hdb->dbh->do("$updatetimesql");
 

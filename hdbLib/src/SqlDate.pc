@@ -53,13 +53,13 @@ int SqlDateTrunc (SQL_DATE date, char * datePart, SQL_DATE dateTrunc)
    
    int result;
    
-   strcpy(sqlDatePart, datePart);
-   strcpy(sqlDate, date);
+   strncpy(sqlDatePart, datePart, SQL_DATE_LENGTH);
+   strncpy(sqlDate, date, SQL_DATE_LENGTH);
 
    /* Can't truncate to seconds, so handle this case specially. */
    if (!strcmp (datePart, SECOND))
    {
-      strcpy (dateTrunc, sqlDate);
+      strncpy (dateTrunc, sqlDate, SQL_DATE_LENGTH);
       return (OK);
    }
 
@@ -81,7 +81,7 @@ int SqlDateTrunc (SQL_DATE date, char * datePart, SQL_DATE dateTrunc)
   fprintf (stdout, "%s\n", select_statement);
 #endif 
   
-  strcpy (dateTrunc, sqlDateTrunc);
+  strncpy (dateTrunc, sqlDateTrunc, SQL_DATE_LENGTH);
   
   return (OK);
 }
@@ -126,7 +126,7 @@ int SqlGetDate (SQL_DATE date)
     }
 
   sqlCurDate[11] = NULL;
-  sprintf (date, "%s %s", sqlCurDate, "00:00:00");
+  snprintf (date, SQL_DATE_LENGTH, "%s %s", sqlCurDate, "00:00:00");
 
   return (OK);
 }
@@ -171,7 +171,7 @@ int SqlGetDateTime (SQL_DATE date)
       return (ERROR);
    }
 
-  strcpy(date, sqlCurDate);
+  strncpy(date, sqlCurDate, SQL_DATE_LENGTH);
   
   return (OK); 
 }
@@ -226,9 +226,9 @@ int SqlFormatDate(char date[300], SQL_DATE formattedDate)
    char *rest;
    char *lastRest;
 
-   strcpy(zeros, "00");
+   strncpy(zeros, "00\0", 5);
  	  
-   strcpy(sqlDate, date);
+   strncpy(sqlDate, date, SQL_DATE_LENGTH);
    sqlDate[20] = NULL;
 
    /* Parse date string based on delimiter: day-month-year OR month/day/year */
@@ -274,12 +274,12 @@ int SqlFormatDate(char date[300], SQL_DATE formattedDate)
    
    if(strlen(day) < 2)
    {
-      sprintf(tempDay, "0%s", day);
+      snprintf(tempDay, 25, "0%s", day);
       day = tempDay;
    }
    else
    {
-      strcpy(tempDay, day);
+      strncpy(tempDay, day, 25);
       tempDay[3] = '\0';
       day = tempDay;  
    }
@@ -287,14 +287,14 @@ int SqlFormatDate(char date[300], SQL_DATE formattedDate)
    monthLen = strlen(month); 
    if(monthLen < 2)
    {
-      sprintf(tempMonth, "0%s", month);
+      snprintf(tempMonth, 25, "0%s", month);
       month = tempMonth;
       for(i = 0; month[i] != NULL; i++)
 	 month[i] = toupper(month[i]);
    } 
    else
    {
-      strcpy(tempMonth, month);
+      strncpy(tempMonth, month, 25);
       tempMonth[3] = '\0';
       month = tempMonth;
    }
@@ -307,49 +307,49 @@ int SqlFormatDate(char date[300], SQL_DATE formattedDate)
    
    else
    {
-      strcpy(tempYear, year);
+      strncpy(tempYear, year, 25);
       tempYear[4] = '\0';
       year = tempYear;
    }
    
    if(strlen(hour) < 2)
    {
-      sprintf(tempHour, "0%s", hour);
+      snprintf(tempHour, 25, "0%s", hour);
       hour = tempHour;
    }
    else
    {
-      strcpy(tempHour, hour);
+      strncpy(tempHour, hour, 25);
       tempHour[3] = '\0';
       hour = tempHour;
    }
    if(strlen(minute) < 2)
    {
-      sprintf(tempMinute, "0%s", minute);
+      snprintf(tempMinute, 25, "0%s", minute);
       minute = tempMinute;
    } 
    else
    {
-      strcpy(tempMinute, minute);
+      strncpy(tempMinute, minute, 25);
       tempMinute[4] = '\0';
       minute = tempMinute;
       }
    
    if(strlen(second) < 2)
    {
-      sprintf(tempSecond, "0%s", second);
+      snprintf(tempSecond, 25, "0%s", second);
       second = tempSecond;
    }
    else
    {
-      strcpy(tempSecond, second);
+      strncpy(tempSecond, second, 25);
       tempSecond[4] = '\0';
       second = tempSecond;
    }
    
    if(monthLen < 3)
    {
-      sprintf(sqlDate,"%s-%s-%s %s:%s:%s", 
+      snprintf(sqlDate,SQL_DATE_LENGTH,"%s-%s-%s %s:%s:%s", 
 	      day,month,year,hour,minute,second);
       EXEC SQL AT :current_dbsite 
 	SELECT TO_CHAR(TO_DATE(:sqlDate, 'DD-MM-YYYY HH24:MI:SS'),
@@ -366,12 +366,12 @@ int SqlFormatDate(char date[300], SQL_DATE formattedDate)
    }
    else
    {
-     sprintf(sqlDate,"%s-%s-%s %s:%s:%s", 
+     snprintf(sqlDate, SQL_DATE_LENGTH, "%s-%s-%s %s:%s:%s", 
 	      day,month,year,hour,minute,second); 
-     strcpy(sqlCharDate, sqlDate);
+     strncpy(sqlCharDate, sqlDate, SQL_DATE_LENGTH);
    }
 
-   strcpy(formattedDate, sqlCharDate);
+   strncpy(formattedDate, sqlCharDate, SQL_DATE_LENGTH);
    return(OK);
 }
 
@@ -424,9 +424,9 @@ int SqlExtractDatePart (SQL_DATE date, char *datePart, int *intPart)
    char tempSecond[25];
    char *rest;
 
-   strcpy(zeros, "00\0");
+   strncpy(zeros, "00\0", 5);
  	  
-   strcpy(sqlDate, date);
+   strncpy(sqlDate, date, SQL_DATE_LENGTH);
    sqlDate[20] = '\0';
 #ifdef DEBUG
    fprintf (stdout, "%s\n", select_statement);
@@ -462,12 +462,12 @@ int SqlExtractDatePart (SQL_DATE date, char *datePart, int *intPart)
    
    if(strlen(day) < 2)
    {
-      sprintf(tempDay, "0%s", day);
+      snprintf(tempDay, 25, "0%s", day);
       day = tempDay;
    }
    else
    {
-      strcpy(tempDay, day);
+      strncpy(tempDay, day, 25);
       tempDay[3] = '\0';
       day = tempDay;  
    }
@@ -475,12 +475,12 @@ int SqlExtractDatePart (SQL_DATE date, char *datePart, int *intPart)
    monthLen = strlen(month); 
    if(monthLen < 2)
    {
-      sprintf(tempMonth, "0%s", month);
+      snprintf(tempMonth, 25, "0%s", month);
       month = tempMonth;
    } 
    else
    {
-      strcpy(tempMonth, month);
+      strncpy(tempMonth, month, 25);
       tempMonth[4] = '\0';
       month = tempMonth;
    }
@@ -493,7 +493,7 @@ int SqlExtractDatePart (SQL_DATE date, char *datePart, int *intPart)
    
    else
    {
-      strcpy(tempYear, year);
+      strncpy(tempYear, year, 25);
       tempYear[4] = '\0';
       year = tempYear;
    }
@@ -501,42 +501,42 @@ int SqlExtractDatePart (SQL_DATE date, char *datePart, int *intPart)
    {
       if(strlen(hour) < 2)
       {
-	 sprintf(tempHour, "0%s", hour);
+	 snprintf(tempHour, 25, "0%s", hour);
 	 hour = tempHour;
       }
       else
       {
-	 strcpy(tempHour, hour);
+	 strncpy(tempHour, 25, hour);
 	 tempHour[3] = '\0';
 	 hour = tempHour;
       }
       if(strlen(minute) < 2)
       {
-	 sprintf(tempMinute, "0%s", minute);
+	 snprintf(tempMinute, 25, "0%s", minute);
 	 minute = tempMinute;
       } 
       else
       {
-	 strcpy(tempMinute, minute);
+	 strncpy(tempMinute, minute, 25);
 	 tempMinute[4] = '\0';
 	 minute = tempMinute;
       }
       
       if(strlen(second) < 2)
       {
-	 sprintf(tempSecond, "0%s", second);
+	 snprintf(tempSecond, 25, "0%s", second);
 	 second = tempSecond;
       }
       else
       {
-	 strcpy(tempSecond, second);
+	 strncpy(tempSecond, second, 25);
 	 tempSecond[4] = '\0';
 	 second = tempSecond;
       }
 
       if(monthLen > 2)
       {
-	 sprintf(sqlDate,"%s-%s-%s %s:%s:%s", 
+	 snprintf(sqlDate,SQL_DATE_LENGTH,"%s-%s-%s %s:%s:%s", 
 		 day,month,year,hour,minute,second);
 	 EXEC SQL AT :current_dbsite 
 	    SELECT TO_CHAR(TO_DATE(:sqlDate, 'DD-MON-YYYY HH24:MI:SS'),
@@ -557,7 +557,7 @@ int SqlExtractDatePart (SQL_DATE date, char *datePart, int *intPart)
    {
       if(monthLen > 2)
       {
-	 sprintf(sqlDate,"%s-%s-%s", day,month,year);
+	 snprintf(sqlDate,SQL_DATE_LENGTH,"%s-%s-%s", day,month,year);
 	 EXEC SQL AT :current_dbsite 
 	    SELECT TO_CHAR(TO_DATE(:sqlDate, 'DD-MON-YYYY'),
 			   'DD-MM-YYYY')
@@ -745,7 +745,7 @@ int SqlDateMath(DATE_MATH_TYPES op, SQL_DATE startDate, SQL_DATE endDate,
 
    sqlEndDate[20] = NULL;
   
-   strcpy(sqlStartDate, startDate);
+   strncpy(sqlStartDate, startDate, SQL_DATE_LENGTH);
    sqlStartDate[20] = NULL; 
   
    if(strcmp(interval, YEAR)==0)
@@ -760,7 +760,7 @@ int SqlDateMath(DATE_MATH_TYPES op, SQL_DATE startDate, SQL_DATE endDate,
 	 return (ERROR);
       }
 	 
-      strcpy (hms, strstr (startDate, " "));
+      strncpy (hms, strstr (startDate, " "), 10);
 
       /* Add or subtract appropriate number of years to year, then 
 	 reconstruct date. */
@@ -774,7 +774,7 @@ int SqlDateMath(DATE_MATH_TYPES op, SQL_DATE startDate, SQL_DATE endDate,
 	     break;
       }
 
-      sprintf (endDate, "%s%d%s", ddmon, year, hms);
+      snprintf (endDate, 25, "%s%d%s", ddmon, year, hms);
 
       return (OK);
    }
@@ -797,7 +797,7 @@ int SqlDateMath(DATE_MATH_TYPES op, SQL_DATE startDate, SQL_DATE endDate,
 	 return (ERROR);
       }
 	 
-      strcpy (hms, strstr (startDate, " "));
+      strncpy (hms, strstr (startDate, " "), 10);
 
       /* Add or subtract appropriate number of months to month, add years if 
 	 necessary, then reconstruct date. */
@@ -836,10 +836,10 @@ int SqlDateMath(DATE_MATH_TYPES op, SQL_DATE startDate, SQL_DATE endDate,
              ((year%400)== 0)); /* leapyear */
           the_day = 29;
         }
-        sprintf(dd,"%2d-",the_day);
+        snprintf(dd, 4, "%2d-",the_day);
       }
 
-      sprintf (sqlTempDate, "%s%d-%d%s", dd, month, year, hms);
+      snprintf (sqlTempDate, SQL_DATE_LENGTH, "%s%d-%d%s", dd, month, year, hms);
       
       if (SqlFormatDate (sqlTempDate, endDate) != OK)
       {
@@ -888,7 +888,7 @@ int SqlDateMath(DATE_MATH_TYPES op, SQL_DATE startDate, SQL_DATE endDate,
       EXEC SQL AT :current_dbsite ROLLBACK;
       return (ERROR);
    }
-   strcpy(endDate, sqlEndDate);
+   strncpy(endDate, sqlEndDate, SQL_DATE_LENGTH);
    
    return (OK);
 }
@@ -923,8 +923,8 @@ int SqlDateCompare(SQL_DATE firstDate, SQL_DATE secondDate, int *compareResult)
              date2;
   EXEC SQL END DECLARE SECTION;
 
-  sprintf (date1, firstDate);
-  sprintf (date2, secondDate);
+  snprintf (date1, SQL_DATE_LENGTH, firstDate);
+  snprintf (date2, SQL_DATE_LENGTH, secondDate);
 
   EXEC SQL AT :current_dbsite SELECT to_date(:date1, 'dd-mon-yyyy hh24:mi:ss') 
      - to_date(:date2, 'dd-mon-yyyy hh24:mi:ss') INTO :return_val
@@ -1006,8 +1006,8 @@ int SqlDateRangeIncludesFeb (SQL_DATE dateLow, SQL_DATE dateHigh,
       year,
       month;
   
-  sprintf (sqlDateLow, dateLow);
-  sprintf (sqlDateHigh, dateHigh);
+  snprintf (sqlDateLow, SQL_DATE_LENGTH, dateLow);
+  snprintf (sqlDateHigh, SQL_DATE_LENGTH, dateHigh);
   /*******************************************************
    Determine which Feb 28 to use (which year). If month of the low
    date is later than February, only chance that Feb is included is
@@ -1030,7 +1030,7 @@ int SqlDateRangeIncludesFeb (SQL_DATE dateLow, SQL_DATE dateHigh,
       *yearInd = LOW;
     }
   
-  sprintf (feb28, "28-feb-%d 00:00:00", year);
+  snprintf (feb28, SQL_DATE_LENGTH, "28-feb-%d 00:00:00", year);
   
   EXEC SQL AT :current_dbsite SELECT DISTINCT 1 
     INTO :sqlIncludesFeb 
@@ -1085,7 +1085,7 @@ int SqlSetDateFormatAt (char *dateFormat)
 
   int result;
 
-  sprintf (setStatement, "ALTER SESSION SET nls_date_format = '%s'",
+  snprintf (setStatement, 200, "ALTER SESSION SET nls_date_format = '%s'",
 	   dateFormat);
 
   EXEC SQL AT :current_dbsite EXECUTE IMMEDIATE :setStatement;
@@ -1135,7 +1135,7 @@ int SqlSetDateFormat (char *dateFormat)
 
   int result;
 
-  sprintf (setStatement, "ALTER SESSION SET nls_date_format = '%s'",
+  snprintf (setStatement, 200, "ALTER SESSION SET nls_date_format = '%s'",
 	   dateFormat);
 
   EXEC SQL EXECUTE IMMEDIATE :setStatement;
@@ -1192,8 +1192,8 @@ int SqlDateSubtract(SQL_DATE firstDate,
    int result;
 
    /* Initialize sql variables */
-   strcpy (sqlFirstDate, firstDate);
-   strcpy (sqlSecondDate, secondDate);
+   strncpy (sqlFirstDate, firstDate, SQL_DATE_LENGTH);
+   strncpy (sqlSecondDate, secondDate, SQL_DATE_LENGTH);
 
    /* Call to database to do subtraction */
    EXEC SQL AT :current_dbsite

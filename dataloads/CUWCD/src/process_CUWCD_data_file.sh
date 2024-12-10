@@ -21,7 +21,7 @@ CUWCD_DATA_LOC=$HDB_ENV/dataloads/CUWCD/data; export CUWCD_DATA_LOC;
 # assign the location for storing processed data files
 CUWCD_DATA_PROP=$HDB_ENV/dataloads/CUWCD/src/CUWCD_data.property; export CUWCD_DATA_PROP;
 #assign the URL to go get the Central UTAH Water Conservancy District Data
-CUWCD_DATA_URL=http://data.cuwcd.com/datasets/USBR; export CUWCD_DATA_URL;
+CUWCD_DATA_URL=http://data.cuwcd.gov/datasets/USBR; export CUWCD_DATA_URL;
 
 echo $CUWCD_DATA_FILE
 echo $CUWCD_DATA_LOC

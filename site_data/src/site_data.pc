@@ -3,11 +3,13 @@
 
 /* stldlib.h library added by M. Bogner for move to Linux  */
 
+#ifndef ORA_PROC
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "dbutils.h"
 #include "utils.h"
+#endif
 #include "defines.h"
 #include "typedefs.h"
 
@@ -100,23 +102,23 @@ main ( int argc, char** argv )
 /*to prevent wrapping on the screen-- if a new datatype is found to wrap*/
 /*it may be added to the list by simply creating a new line and editing*/
 
-  if (datatype_id == 3) {strcpy(datatype_name,"precipitation reading");}
-  if (datatype_id == 13) {strcpy(datatype_name,"head");}
-  if (datatype_id == 15) {strcpy(datatype_name,"bank storage");}
-  if (datatype_id == 17) {strcpy(datatype_name,"reservoir storage");}
-  if (datatype_id == 24) {strcpy(datatype_name,"instantaneous elevation");}
-  if (datatype_id == 27) {strcpy(datatype_name,"percent ice cover");}
-  if (datatype_id == 41) {strcpy(datatype_name,"total releases");}
-  if (datatype_id == 42) {strcpy(datatype_name,"total releases");}
-  if (datatype_id == 43) {strcpy(datatype_name,"total releases");}
-  if (datatype_id == 49) {strcpy(datatype_name,"water surface elevation");}
-  if (datatype_id == 50) {strcpy(datatype_name,"snow water equivelent");}
-  if (datatype_id == 59) {strcpy(datatype_name,"unregulated streamflow");}
-  if (datatype_id == 60) {strcpy(datatype_name,"unregulated streamflow");}
-  if (datatype_id == 73) {strcpy(datatype_name,"power generated");}
-  if (datatype_id == 83) {strcpy(datatype_name,"tailrace elevation");}
-  if (datatype_id == 86) {strcpy(datatype_name,"plant capacity");}
-  if (datatype_id == 86) {strcpy(datatype_name,"reservoir area");}
+  if (datatype_id == 3) {strncpy(datatype_name,"precipitation reading", 40);}
+  if (datatype_id == 13) {strncpy(datatype_name,"head", 40);}
+  if (datatype_id == 15) {strncpy(datatype_name,"bank storage", 40);}
+  if (datatype_id == 17) {strncpy(datatype_name,"reservoir storage", 40);}
+  if (datatype_id == 24) {strncpy(datatype_name,"instantaneous elevation", 40);}
+  if (datatype_id == 27) {strncpy(datatype_name,"percent ice cover", 40);}
+  if (datatype_id == 41) {strncpy(datatype_name,"total releases", 40);}
+  if (datatype_id == 42) {strncpy(datatype_name,"total releases", 40);}
+  if (datatype_id == 43) {strncpy(datatype_name,"total releases", 40);}
+  if (datatype_id == 49) {strncpy(datatype_name,"water surface elevation", 40);}
+  if (datatype_id == 50) {strncpy(datatype_name,"snow water equivelent", 40);}
+  if (datatype_id == 59) {strncpy(datatype_name,"unregulated streamflow", 40);}
+  if (datatype_id == 60) {strncpy(datatype_name,"unregulated streamflow", 40);}
+  if (datatype_id == 73) {strncpy(datatype_name,"power generated", 40);}
+  if (datatype_id == 83) {strncpy(datatype_name,"tailrace elevation", 40);}
+  if (datatype_id == 86) {strncpy(datatype_name,"plant capacity", 40);}
+  if (datatype_id == 86) {strncpy(datatype_name,"reservoir area", 40);}
 
 /*End of datatype naming*/
 
@@ -166,7 +168,7 @@ main ( int argc, char** argv )
 	INTO :dater_base:value_null_indicator;
       if(sqlca.sqlcode <= 0)
 	{
-          strcpy(date_out_base[count_base],dater_base);
+          strncpy(date_out_base[count_base],dater_base, 20);
           val_null_base[count_base]= value_null_indicator;
         }
       count_base = count_base +1;
@@ -181,7 +183,7 @@ main ( int argc, char** argv )
 	INTO :dater1,:value1:value_null_indicator;
       if(sqlca.sqlcode <= 0)
 	{
-	  strcpy(date_out1[count1],dater1);
+	  strncpy(date_out1[count1],dater1, 20);
 	  vals1[count1] = value1; 
 	  val_null1[count1]= value_null_indicator;
 	}
@@ -226,11 +228,11 @@ main ( int argc, char** argv )
     {
       if(final1[i] == 998877) 
 	{
-	  sprintf(final1c[i],"    ---\0");
+	  snprintf(final1c[i],10,"    ---\0");
 	}
       else
 	{
-	  sprintf(final1c[i],"%7.2f",final1[i]);
+	  snprintf(final1c[i],10,"%7.2f",final1[i]);
 	}
 
       printf("       %s     %s  \n",date_out_base[i],final1c[i]);

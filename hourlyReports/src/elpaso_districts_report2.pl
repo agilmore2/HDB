@@ -108,7 +108,9 @@ my $sp = 10;
 
 my $siteheader = " " x (34-length($site)/2) . $site;
 my $provoheader .=   "            DATA IS PROVISIONAL AND SUBJECT TO REVISION";
-my $codeline ="Date       Time     ";
+my $theader = "            *Date/Time is in MST, add 1 hour during MDT";
+my $spacer = " ";
+my $codeline ="Date*       Time*    ";
 my $unitline ="                    ";
 
 foreach my $code (@$codes) {
@@ -119,6 +121,8 @@ foreach my $code (@$codes) {
 
 print OUTPUT $siteheader ."\n";
 print OUTPUT $provoheader ."\n";
+print OUTPUT $theader ."\n";
+print OUTPUT $spacer ."\n";
 print OUTPUT $codeline ."\n";
 print OUTPUT $unitline . "\n\n";
 
@@ -139,7 +143,7 @@ c.key_name = 'Column Order' and
 b.ext_data_source_id = d.ext_data_source_id and
 d.ext_data_source_name = '$app_name' and
 start_date_time between trunc(sysdate - 7,'DD') and sysdate
-order by start_date_time)
+order by start_date_time desc)
 select
 date_time,
 lpad(to_char(round(a.value,2)),22) val1,b.value val2,c.value val3,d.value val4
@@ -154,7 +158,7 @@ where
  b.key_value(+) = 2 and
  c.key_value(+) = 3 and
  d.key_value(+) = 4
- order by dates.date_time";
+ order by dates.date_time desc";
 
 #get the email addresses to write to
 # first line of this reponse is

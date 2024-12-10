@@ -35,16 +35,18 @@
 * Notes
 * 8-April-2003 (rc) Added function to return the loading application id.
 *****************************************************************************/
-
+#ifndef ORA_PROC
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "basins.h"
 #include "dbutils.h"
 #include "utils.h"
+#endif
 #include "defines.h"
 #include "typedefs.h"
 #include "basinTypedefs.h"
+
 
 EXEC SQL INCLUDE sqlca;
 
@@ -217,6 +219,8 @@ close_c2: EXEC SQL close c2;
  * in there. (see SqlGetValidationFlag in $HDB_ENV/hdbLib/src/SqlValidation.pc).
  *
  ****************************************************************************/
+#define NAME_LENGTH 64
+
 int SqlFetchRbasekeys (int * p_loading_application_id, int * p_agen_id, int * p_collection_system_id, int * p_computation_id)
 {
 	int		result;
@@ -226,19 +230,19 @@ int SqlFetchRbasekeys (int * p_loading_application_id, int * p_agen_id, int * p_
 	  				collection_system_id, 
 					computation_id, 
 					loading_application_id; 
-	  char          agen_name[64],
-					collection_system_name[64],
-					computation_name[64],
-					loading_application_name[64];
+	  char          agen_name[NAME_LENGTH],
+					collection_system_name[NAME_LENGTH],
+					computation_name[NAME_LENGTH],
+					loading_application_name[NAME_LENGTH];
 	EXEC SQL END DECLARE SECTION;
 
 	EXEC SQL WHENEVER NOT FOUND go to close_FetchRbaseKeys;
 
 	/* Assign #define's to host variables. */
-	strcpy(agen_name,AGEN_NAME);
-	strcpy(collection_system_name,COLLECTION_SYSTEM_NAME);
-	strcpy(computation_name,COMPUTATION_NAME);
-	strcpy(loading_application_name,LOADING_APPLICATION_NAME);
+	strncpy(agen_name,AGEN_NAME,NAME_LENGTH);
+	strncpy(collection_system_name,COLLECTION_SYSTEM_NAME,NAME_LENGTH);
+	strncpy(computation_name,COMPUTATION_NAME,NAME_LENGTH);
+	strncpy(loading_application_name,LOADING_APPLICATION_NAME,NAME_LENGTH);
 
 	EXEC SQL SELECT agen_id INTO :agen_id
 		FROM hdb_agen 

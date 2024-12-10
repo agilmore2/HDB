@@ -187,8 +187,8 @@ char *SqlCheckError(char *funcName)
     return(NULL);
 
   sqlError[0] = '\0'; 
-  strcpy(sqlError,sqlca.sqlerrm.sqlerrmc);
-  sprintf(tmp,"\nSQL error in %s\n\t%s", funcName, 
+  strncpy(sqlError,sqlca.sqlerrm.sqlerrmc, ERROR_MSG_LENGTH);
+  snprintf(tmp,ERROR_MSG_LENGTH,"\nSQL error in %s\n\t%s", funcName, 
 	  sqlError);
   errorMessage = strdup (tmp);
   return((char *) errorMessage);
@@ -225,8 +225,8 @@ char *SqlCheckErrorNoRows(char *funcName)
     return(NULL);
 
   sqlError[0] = '\0'; 
-  strcpy(sqlError,sqlca.sqlerrm.sqlerrmc);
-  sprintf(tmp,"\nSQL error in %s\n\t%s", funcName, 
+  strncpy(sqlError,sqlca.sqlerrm.sqlerrmc, ERROR_MSG_LENGTH);
+  snprintf(tmp,ERROR_MSG_LENGTH,"\nSQL error in %s\n\t%s", funcName, 
 	  sqlError);
   errorMessage = strdup (tmp);
   return((char *) errorMessage);
@@ -264,7 +264,7 @@ char *SqlCheckWarning(char *funcName)
   if(sqlca.sqlwarn[0] != 'W') /* there is no warning */
      return(NULL);
   
-  strcpy (message, WARN_MESSAGE);
+  strncpy (message, WARN_MESSAGE, ERROR_MSG_LENGTH);
   
   if(sqlca.sqlwarn[1] == 'W')
      strcat(message, "truncated column...");
@@ -285,9 +285,9 @@ char *SqlCheckWarning(char *funcName)
    (Programmer's Guide to the Oracle Precompilers (CD-version 2.2);  */
 
   sqlError[0] = '\0'; 
-  strcpy(sqlError,sqlca.sqlerrm.sqlerrmc);
+  strncpy(sqlError,sqlca.sqlerrm.sqlerrmc, ERROR_MSG_LENGTH);
 
-  sprintf (tmp, "\nSQL warning in %s\n\t%s\n\t%s", funcName,
+  snprintf (tmp,ERROR_MSG_LENGTH, "\nSQL warning in %s\n\t%s\n\t%s", funcName,
 	   message, sqlError);
 
   warningMessage = (char*)strdup(tmp);
