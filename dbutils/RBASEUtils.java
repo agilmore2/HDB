@@ -1,7 +1,10 @@
 package dbutils;
 
+
+import java.sql.Date;
 import java.sql.*;
 import java.util.*;
+import java.text.SimpleDateFormat;
 
 public class RBASEUtils 
 {
@@ -310,8 +313,8 @@ public class RBASEUtils
          var6.execute();
          Timestamp var11 = var6.getTimestamp(3);
          Timestamp var12 = var6.getTimestamp(4);
-         if (var5 == null) {
-            var5 = "dd-MM-yyyy HH:mm";
+         if (dateFormat == null) {
+            dateFormat = "dd-MM-yyyy HH:mm";
          }
 
          SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
