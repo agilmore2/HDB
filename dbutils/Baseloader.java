@@ -68,7 +68,5 @@ public class Baseloader
          fatal_error = false;
       }
       catch (Exception e) {if (log_all) log.debug(this, e.getMessage());}
-      }
-
    }
 }

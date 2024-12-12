@@ -38,7 +38,7 @@ public class USACEfileReader {
 
   }
 
-   public USACEfileReader(String _file_name, String parm, String int) {
+   public USACEfileReader(String _file_name, String parm, String inter) {
       file_name = _file_name;
       log = Logger.getInstance();
       db = new DBAccess(cnn);
@@ -46,10 +46,10 @@ public class USACEfileReader {
 
       try {
          dobj_orig.addPropertyFile(System.getProperty("start.property"));
-         dobj_orig.put("SAMPLE_INTERVAL", int);
+         dobj_orig.put("SAMPLE_INTERVAL", inter);
          dobj_orig.put("PARAMETER_CODE", parm);
          dobj_orig.put("SAMPLE_DATE_FORMAT", "yyyy-mm-dd HH24:MI");
-         if (int.equalsIgnoreCase("day")) {
+         if (inter.equalsIgnoreCase("day")) {
             dobj_orig.put("SAMPLE_DATE_FORMAT", "yyyy-mm-dd");
          }
 
@@ -89,7 +89,7 @@ public class USACEfileReader {
          int skips = 0;
          DataObject dobj = null;
 
-         for(inputLine = input.readLine(); inputLine != null; inputLine = var1.readLine()) {
+         for(inputLine = input.readLine(); inputLine != null; inputLine = input.readLine()) {
             boolean process = true;
             if (inputLine != null) {
                ++reads;
@@ -223,7 +223,7 @@ Site Code|Date|Value
 
    }
 
-   private void parseUSGSTSVDataObject dobj, String input)
+   private void parseUSGSTSV(DataObject dobj, String input)
     {
 
 /* USGS RDB Format (tab separated, two different format):
@@ -266,10 +266,10 @@ Source Code	Date	value	validation
                break;
             }
 
-            dobj.put("validation", var8);
+            dobj.put("validation", field);
             break;
          case 5:
-            dobj.put("validation", var8);
+            dobj.put("validation", field);
          }
 
          ++tcount;
