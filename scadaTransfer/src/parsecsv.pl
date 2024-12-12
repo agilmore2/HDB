@@ -88,7 +88,7 @@ my ($line, $datestr, @fields, @prevdate, $sitecode);
 my ($value, $head, $rel, $seenspill);
 
 # get date on input file
-open (INFILE, "$readfile") || die "Error: couldn't open input file $ARGV[0]";
+open (INFILE, "$readfile") || die "Error: couldn't open input file $readfile";
 
 $readdir = dirname($readfile);
 
