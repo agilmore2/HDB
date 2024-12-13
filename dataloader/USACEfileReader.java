@@ -61,6 +61,32 @@ public class USACEfileReader {
 
    }
 
+   public USACEfileReader(String _file_name, String site, String parm, String inter) {
+      file_name = _file_name;
+      log = Logger.getInstance();
+      db = new DBAccess(cnn);
+      dobj_orig = new DataObject();
+
+      try {
+         dobj_orig.addPropertyFile(System.getProperty("start.property"));
+         dobj_orig.put("SITE_CODE", site);
+         dobj_orig.put("SAMPLE_INTERVAL", inter);
+         dobj_orig.put("PARAMETER_CODE", parm);
+         dobj_orig.put("SAMPLE_DATE_FORMAT", "yyyy-mm-dd HH24:MI");
+         if (inter.equalsIgnoreCase("day")) {
+            dobj_orig.put("SAMPLE_DATE_FORMAT", "mm/dd/yyyy");
+         }
+
+         cnn = db.getConnection(dobj_orig);
+         RBASEUtils rbu = new RBASEUtils(dobj_orig, cnn);
+         rbu.get_all_ids();
+      } catch (Exception e) {
+         System.out.println(e.toString());
+      }
+
+   }
+
+
    public void process()
    {
       BufferedReader input = null;
