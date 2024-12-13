@@ -62,28 +62,27 @@ public class USACEfileReader {
    }
 
    public void process()
-
- {
-   BufferedReader input = null;
-
-   try 
    {
-     input = new BufferedReader(new FileReader(file_name));
-   } 
-   catch (FileNotFoundException e) {
-     log.debug(this,e.getMessage());
-     System.exit(-1);
-   }
+      BufferedReader input = null;
+
+      try
+      {
+         input = new BufferedReader(new FileReader(file_name));
+      }
+      catch (FileNotFoundException e) {
+         log.debug(this,e.getMessage());
+         System.exit(-1);
+      }
 
 
 
-   try
-   {
-     if (dobj_orig.get("debug") != null && dobj_orig.get("debug").toString().equalsIgnoreCase("YES")) {
-         debug = true;
-     }
+      try
+      {
+         if (dobj_orig.get("debug") != null && dobj_orig.get("debug").toString().equalsIgnoreCase("YES")) {
+            debug = true;
+         }
 
-   // read the file line by line
+      // read the file line by line
          String inputLine = null;
          int reads = 0;
          int skips = 0;
@@ -106,23 +105,42 @@ public class USACEfileReader {
                   dobj.put("sample_data_flags", "");
                   if (dobj.get("data_source") != null && dobj.get("file_type").toString().equals("CUWCD_PSV")) {
                      this.parseCentral(dobj, inputLine);
+                  } else if (dobj.get("data_source") != null && dobj.get("file_type").toString().equals("HOOVER_CSV")) {
+                     this.parseHooverSCADA(dobj, inputLine);
                   } else if (dobj.get("data_source") != null && dobj.get("file_type").toString().equals("USGS_TSV")) {
                      this.parseUSGSTSV(dobj, inputLine);
+                  } else if (dobj.get("data_source") != null && dobj.get("file_type").toString().equals("USBRHM_TSV")) {
+                     this.parseUSBRHMTSV(dobj, inputLine);
                   } else {
                      this.parse(dobj, inputLine);
                   }
 
                   RBASEUtils rbu = new RBASEUtils(dobj, this.cnn);
-                  Integer sdi = rbu.get_external_data_sdi();
+                  Integer sdi;
+                  if (dobj.get("data_source") != null && dobj.get("file_type").toString().equals("HOOVER_CSV")) {
+                     sdi = rbu.get_external_data_interval();
+                     String query = "";
+                     query = "select to_char(to_date('" + dobj.get("SAMPLE_DATE") + "','" + dobj.get("SAMPLE_DATE_FORMAT") + "')-1/24,'" + dobj.get("SAMPLE_DATE_FORMAT") + "') SAMPLE_DATE from dual";
+                     if (dobj.get("sample_interval") != null && dobj.get("sample_interval").toString().equals("instant")) {
+                        query = "select to_char(TRUNC(to_date('" + dobj.get("SAMPLE_DATE") + "','" + dobj.get("SAMPLE_DATE_FORMAT") + "'),'HH24'),'" + dobj.get("SAMPLE_DATE_FORMAT") + "') SAMPLE_DATE from dual";
+                     }
+
+                     if (debug) {
+                        log.debug(this, query);
+                     }
+
+                     db.performQuery(query, dobj);
+                  }
+                  sdi = rbu.get_external_data_sdi();
                   if (sdi > 0) {
-                     if (this.debug) {
-                        this.log.debug(this, dobj.toString());
+                     if (debug) {
+                        log.debug(this, dobj.toString());
                      }
 
                      Baseloader bl = new Baseloader(dobj, cnn);
                      bl.process();
                   } else {
-                     this.log.debug("No mapping record found for site: " + dobj.get("site_code") + "  Parameter Code: " + dobj.get("parameter_code") + "  Source: " + dobj.get("data_source"));
+                     log.debug("No mapping record found for site: " + dobj.get("site_code") + "  Parameter Code: " + dobj.get("parameter_code") + "  Source: " + dobj.get("data_source"));
                      ++skips;
                   }
                }
@@ -143,8 +161,8 @@ public class USACEfileReader {
 
    }
 
-    private void parse(DataObject dobj, String input)
-    {
+   private void parse(DataObject dobj, String input)
+   {
 
 /* CSV file reader, Format:
 Data Source,Date:HH:MI:TZ,site code,parameter code,interval,value,unit
@@ -190,7 +208,7 @@ Data Source,Date:HH:MI:TZ,site code,parameter code,interval,value,unit
    }
 
    private void parseCentral(DataObject dobj, String input)
-    {
+   {
 
 /* Central Utah Format (value may have thousands separators):
 Site Code|Date|Value
@@ -224,7 +242,7 @@ Site Code|Date|Value
    }
 
    private void parseUSGSTSV(DataObject dobj, String input)
-    {
+   {
 
 /* USGS RDB Format (tab separated, two different format):
 instant:
@@ -273,6 +291,61 @@ Source Code	Date	value	validation
          }
 
          ++tcount;
+      }
+
+   }
+/* tab separated something */
+   private void parseUSBRHMTSV(DataObject dobj, String input)
+   {
+      int tcount = 0;
+      dobj.put("INPUTLINE", input);
+      String[] fields = input.split("\t");
+      int l = fields.length;
+
+      for(int i = 0; i < l; ++i) {
+         String field = fields[i];
+         switch(tcount) {
+         case 0:
+            dobj.put("SAMPLE_DATE", field);
+            dobj.put("SAMPLE_TZ", "MST");
+            break;
+         case 1:
+            dobj.put("SAMPLE_VALUE", field);
+         }
+
+         ++tcount;
+      }
+
+   }
+
+/* comma separated from hoover */
+   private void parseHooverSCADA(DataObject dobj, String input)
+   {
+      int tcount = 0;
+      dobj.put("INPUTLINE", input);
+      String[] fields = input.split(this.comma);
+      int l = fields.length;
+
+      for(int i = 0; i < l; ++i) {
+         String field = fields[i];
+         switch(tcount) {
+         case 0:
+            dobj.put("SITE_CODE", field);
+            dobj.put("PARAMETER_CODE", "NO ENTRY");
+            break;
+         case 1:
+            dobj.put("SAMPLE_DATE", field);
+            dobj.put("SAMPLE_TZ", "MST");
+            break;
+         case 2:
+            dobj.put("SAMPLE_VALUE", field.replaceAll(this.comma, ""));
+         }
+
+         ++tcount;
+      }
+
+      if (debug) {
+         log.debug(this, dobj.toString());
       }
 
    }
