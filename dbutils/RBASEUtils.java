@@ -1,10 +1,12 @@
 package dbutils;
 
 
-import java.sql.Date;
-import java.sql.*;
-import java.util.*;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class RBASEUtils 
 {
@@ -398,5 +400,31 @@ public class RBASEUtils
       }
    }
 
+   public Integer get_external_data_interval() {
+      String query = null;
+      String result = null;
+      Integer ret_int = new Integer(-9999);
+      query = "select edm.hdb_interval_name sample_interval from hdb_ext_data_source eds , ref_ext_site_data_map edm where eds.ext_data_source_name = '" +
+               do2.get("data_source") + "' and edm.primary_site_code='" + do2.get("site_code") + "' and edm.primary_data_code='" +
+               do2.get("parameter_code") + "'" + " and eds.ext_data_source_id = edm.ext_data_source_id";
+      result = db.performQuery(query, do2);
+      if (result.startsWith("ERROR")) {
+         error_message = "GET EXTERNAL INTERVAL DATABASE RESULT FAILED" + result;
+         if (debug) {
+            log.debug(this, "  " + query + "  :" + error_message);
+         }
 
+         return ret_int;
+      } else {
+         if (debug) {
+            log.debug(this, "  " + query + "  :" + " PASSED EXTERNAL SDI GET");
+         }
+
+         if ((String)do2.get("sample_interval") != null && ((String)do2.get("sample_interval")).length() != 0) {
+            ret_int = 1;
+         }
+
+         return ret_int;
+      }
+   }
 }  // end of RBASEUtils class
