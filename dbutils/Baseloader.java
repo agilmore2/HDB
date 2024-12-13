@@ -30,7 +30,7 @@ public class Baseloader
    public void process()
    {
   
-    fatal_error = true;
+      fatal_error = true;
 
       try
       {
@@ -39,7 +39,7 @@ public class Baseloader
             log.debug(this, do2.toString());
          }
 
-         String proc = "{ call modify_r_base_raw(?,?,to_date(?,'" + do2.get("sample_date_format") + "'),?,?,?,?,?,?,?,?,?,?,?,?)}";
+         String proc = "{ call modify_r_base_raw(?,?,to_date(?,'" + do2.get("sample_date_format") + "'),?,to_number(?),?,?,?,?,?,?,?,?,?,?)}";
          CallableStatement stmt = db.getConnection(do2).prepareCall(proc);
          // set all the called procedures input variables from the DataObject
          stmt.setLong(1,Long.parseLong(do2.get("site_datatype_id").toString()));
