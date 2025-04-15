@@ -14,6 +14,7 @@ use Compress::Zlib;
 use File::Basename;
 use Data::Dumper;
 use List::Util qw[min max];
+use JSON;
 
 #insert HDB library
 use Hdb;
@@ -30,7 +31,7 @@ chomp $progname;
 #globals for command line options
 my $insertflag = 1;
 my $overwrite  = 'null';
-my ( $readfile, $accountfile, $printurl, $debug, $flowtype );
+my ( $readfile, $accountfile, $printurl, $debug, $flowtype, $format );
 my ( $compression, $hdbuser, $hdbpass );
 my ( $begindatestr, $enddatestr, $numdays);
 
@@ -56,7 +57,170 @@ process_args(@ARGV); # uses globals, ick.
 
 my $MAX_DAYS_TO_RETRIEVE = $flowtype eq 'u' ? 100 : 10_000; # assuming 96 values a day, read ~10K values at a time
 
-=head2 FORMAT
+=head2 JSON_FORMAT
+
+USGS provides json for iv and dv timeseries, but it is translated from waterML
+following https://github.com/CSE512-15S/fp-bwstud/blob/master/process.md
+and https://code.usgs.gov/water/dataretrieval-python/-/blob/main/dataretrieval/nwis.py?ref_type=heads#L1347
+pretty printed result from https://waterdata.usgs.gov/nwis/iv?sites=09261000,09301500&format=json&parameterCD=00060,00065&startDT=2025-04-10&enddt=2025-04-10
+looks like:
+
+  "name": "ns1:timeSeriesResponseType",
+  "declaredType": "org.cuahsi.waterml.TimeSeriesResponseType",
+  "scope": "javax.xml.bind.JAXBElement$GlobalScope",
+  "value": {
+    "queryInfo": {
+      "queryURL": "http://waterdata.usgs.gov/nwis/ivsites=09261000,09301500&format=json&parameterCD=00060,00065&startDT=2025-04-10&enddt=2025-04-10",
+      "criteria": {
+        "locationParam": "[ALL:09261000, ALL:09301500]",
+        "variableParam": "[00060, 00065]",
+        "timeParam": {
+          "beginDateTime": "2025-04-10T00:00:00.000",
+          "endDateTime": "2025-04-10T23:59:59.000"
+        },
+        "parameter": []
+      },
+      "note": [
+        {
+          "value": "[ALL:09261000, ALL:09301500]",
+          "title": "filter:sites"
+        },
+        {
+          "value": "[mode=RANGE, modifiedSince=null] interval={INTERVAL[2025-04-10T00:00:00.000-04:00/2025-04-10T23:59:59.000Z]}",
+          "title": "filter:timeRange"
+        },
+        {
+          "value": "methodIds=[ALL]",
+          "title": "filter:methodId"
+        },
+        {
+          "value": "2025-04-15T03:59:48.773Z",
+          "title": "requestDT"
+        },
+        {
+          "value": "13533730-19ae-11f0-8070-005056be39ee",
+          "title": "requestId"
+        },
+        {
+          "value": "Provisional data are subject to revision. Go to http://waterdata.usgs.gov/nwis/help/?provisional for more information.",
+          "title": "disclaimer"
+        },
+        {
+          "value": "caww02",
+          "title": "server"
+        }
+      ]
+    },
+    "timeSeries": [
+      {
+        "sourceInfo": {
+          "siteName": "GREEN RIVER NEAR JENSEN, UT",
+          "siteCode": [
+            {
+              "value": "09261000",
+              "network": "NWIS",
+              "agencyCode": "USGS"
+            }
+          ],
+          "timeZoneInfo": {
+            "defaultTimeZone": {
+              "zoneOffset": "-07:00",
+              "zoneAbbreviation": "MST"
+            },
+            "daylightSavingsTimeZone": {
+              "zoneOffset": "-06:00",
+              "zoneAbbreviation": "MDT"
+            },
+            "siteUsesDaylightSavingsTime": true
+          },
+          "geoLocation": {
+            "geogLocation": {
+              "srs": "EPSG:4326",
+              "latitude": 40.4093915,
+              "longitude": -109.2354283
+            },
+            "localSiteXY": []
+          },
+          "note": [],
+          "siteType": [],
+          "siteProperty": [
+            {
+              "value": "ST",
+              "name": "siteTypeCd"
+            },
+            {
+              "value": "14040106",
+              "name": "hucCd"
+            },
+            {
+              "value": "49",
+              "name": "stateCd"
+            },
+            {
+              "value": "49047",
+              "name": "countyCd"
+            }
+          ]
+        },
+        "variable": {
+          "variableCode": [
+            {
+              "value": "00060",
+              "network": "NWIS",
+              "vocabulary": "NWIS:UnitValues",
+              "variableID": 45807197,
+              "default": true
+            }
+          ],
+          "variableName": "Streamflow, ft&#179;/s",
+          "variableDescription": "Discharge, cubic feet per second",
+          "valueType": "Derived Value",
+          "unit": {
+            "unitCode": "ft3/s"
+          },
+          "options": {
+            "option": [
+              {
+                "name": "Statistic",
+                "optionCode": "00000"
+              }
+            ]
+          },
+          "note": [],
+          "noDataValue": -999999,
+          "variableProperty": [],
+          "oid": "45807197"
+        },
+        "values": [
+          {
+            "value": [
+              {
+                "value": "2290",
+                "qualifiers": [
+                  "P"
+                ],
+                "dateTime": "2025-04-10T00:00:00.000-06:00"
+              },
+              {
+                "value": "2320",
+                "qualifiers": [
+                  "P"
+                ],
+                "dateTime": "2025-04-10T00:15:00.000-06:00"
+              },
+              {
+                "value": "2330",
+                "qualifiers": [
+                  "P"
+                ],
+                "dateTime": "2025-04-10T00:30:00.000-06:00"
+              },
+              etc.
+
+
+=cut
+
+=head2 RDB_FORMAT
 
  The data is expected in the following format:
 # large number of comments delimited by pound signs (#)
@@ -105,6 +269,12 @@ So will have to distinguish data sources, collection systems etc by this extra
 column, also need to search for which column to look for data in by ignoring
 the _cd columns.
 
+They added timezones to the RDB format at some point:
+agency_cd	site_no	datetime	tz_cd	144055_00060	144055_00060_cd	144056_00065	144056_00065_cd
+5s	15s	20d	6s	14n	10s	14n	10s
+USGS	09261000	2025-04-10 00:00	MDT	2290	P	2.86	P
+
+
 =head2 Design Notes
 
 This program really, really needs some more modularization.
@@ -135,9 +305,13 @@ if ( defined($accountfile) ) {
 $hdb->set_approle();
 
 #Set date format to ISO, USGS data also in this format
-$hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI'")
-  or $hdb->hdbdie("Unable to set NLS_DATE_FORMAT to ISO standard\n");
-
+if ($format eq "rdb") {
+  $hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI'")
+    or $hdb->hdbdie("Unable to set NLS_DATE_FORMAT to ISO standard\n");
+} else {
+  $hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SSXFF3'")
+    or $hdb->hdbdie("Unable to set NLS_DATE_FORMAT to JSON standard\n");
+}
 get_app_ids();
 
 my ( $usgs_sites );
@@ -154,7 +328,11 @@ my (@data);
 #if we are just reading in data from a previously downloaded file
 if ( defined($readfile) ) {
   read_from_file (\@data);
-  write_data();
+  if($format eq 'json') {
+    write_json(join("",@data)); #might break because read from file into row array
+  } else {
+    write_rdb();
+  }
 } else {    # attempt to get data from USGS web page
   my $sites_per_cycle = int($MAX_DAYS_TO_RETRIEVE/$numdays);
   my @all_sites = keys %$usgs_sites;
@@ -172,8 +350,13 @@ if ( defined($readfile) ) {
       }  
     }
 
-    read_from_web ($local_sites, \@data);
-    write_data();
+    my $content = read_from_web ($local_sites, \@data);
+    if($format eq 'json') {
+      write_json($content);
+    } else {
+      @data = split /\n/, $content;
+      write_rdb();
+    }
   }
 }
 
@@ -309,6 +492,7 @@ sub build_url {
   # specify flow                   : parameter_cd= (from database)
   # specify date format            : date_format=YYYY-MM-DD
   # specify tab delimited format   : format=rdb
+  # OR specify JSON                : format=json
   # specify gzip compression       : rdb_compression=gz (Off by default at USGS request)
   # specify begin date             : begin_date=$begindatestr
   # specify end date               : end_date=$enddatestr
@@ -320,12 +504,11 @@ sub build_url {
   # you can specify period also in hours by appending h to the end of numdays
 
   my $parameters =
-"?format=rdb&siteStatus=all&startDT=$begindatestr&endDT=$enddatestr";
+"?siteStatus=all&startDT=$begindatestr&endDT=$enddatestr";
 #"?format=rdb&begin_date=$begindatestr&end_date=$enddatestr"; # works outside Reclamation
 
-  #if ($compression) {
-  #  $parameters .= "&rdb_compression=gz"
-  #}
+  #append format
+  $parameters .= "&format=$format";
 
   #append data code list, complete url syntax done in get_usgs_codes
   $parameters .= "&parameterCd=$usgs_codes";
@@ -638,6 +821,172 @@ sub insert_values {
   return $first_date, $updated_date, $numrows;
 }
 
+sub insert_json {
+  my @data      = @{ $_[0] };
+  my $usgs_site = $_[1];
+  my $code = $_[2];
+
+  my $numrows          = 0;
+  my $first_date = undef;
+  my ( $value, $value_date, $updated_date, $qual_code );
+  my ( $line, @row );
+  my $valid_code = $validation;
+  my $coll_id    = $collect_id;
+  my $timezone = undef;
+
+  # SQL statements
+
+  # this statement takes arguments of
+  # start_date_time, end_date_time, value, validation, and collection system id
+  # the rest of the arguments are predetermined by command line arguments and
+  # the generic mapping for this site
+
+  if (    !defined($agen_id)
+       or !defined($overwrite)
+       or !defined($load_app_id) )
+  {
+    my $name = $usgs_site->{(keys %$usgs_site)[0]}->{site_name};
+    $hdb->hdbdie("Undefined date, valid code or collection id in insert_values()!\n");
+  }
+
+
+  my $modify_data_statement = "
+  BEGIN
+    modify_r_base(?,?, /* sdi, interval */
+                      ?,null,/* start_date_time, end_date_time */
+                      ?,/* value */
+                      $agen_id,$overwrite,
+                      ?, ?, /* validation, collection system id */
+                      $load_app_id,
+                      ?,?, /* meth_id, comp_id */
+                      'Y',null, /*do update?, data flags */
+                      ?); /*time zone, read from file*/
+  END;";
+
+  eval {
+    my ($modsth);
+    $modsth = $hdb->dbh->prepare($modify_data_statement);
+
+    # loop through array of data read for single site
+    # insert or update or do nothing for each datapoint (row in file);
+    foreach $line (@data) {
+
+      $numrows++;
+      @row = split /\t/, $line;
+
+      if (!defined($usgs_site->{$code}->{interval})
+        or !defined($usgs_site->{$code}->{meth_id})
+        or !defined($usgs_site->{$code}->{comp_id})) {
+        $hdb->hdbdie(
+          "Unable to write data to database for $usgs_site->{$code}->{site_name} $code\nRequired information missing in insert_values()!\n"
+        );
+      }
+
+      #value date is already in required format
+      $value_date = $row[2];
+      $value_date =~ s/T/ /; #remove T date/time separator
+      $timezone = substr($value_date,-5,5); #grab timezone data
+      $value_date = substr($value_date,0,-5); #remove timezone data
+
+      $value = $row[3];
+
+      if ($value) { # get rid of ',' in display
+        $value =~ s/,//g;
+      }
+
+      # For daily values:
+      # validation is defaulted to the value of the $validation variable
+      # but may be overwritten by the qual_code from the row of data
+      # Currently, the codes seen from the USGS are: none, P and A
+      # 'A' is approved data, which is the "Official" data. Rows with
+      # this quality code are given a different collection system, and this
+      # quality code is passed on as the validation.
+
+      if ($flowtype eq 'd') {
+        $qual_code = $row[4];
+        if (defined($qual_code) and $qual_code eq 'A') {
+          $valid_code = $qual_code;
+          $coll_id = $official_collect_id; #from USGS official in collect table
+        }
+        else {
+          $valid_code = $validation; #from data source table
+          $coll_id = $collect_id;    #from data source table
+        }
+      }
+
+      #need all three of these here. Also checking on value next
+      if (!defined($value_date)
+        or !defined($valid_code)
+        or !defined($coll_id)) {
+        $hdb->hdbdie(
+          "Undefined date, valid code or collection id in insert_values()!\n");
+      }
+
+      # check if value is known, if not, move to next row
+      if (!defined($value) or $value eq '') {
+        print "data missing: $usgs_site->{$code}->{sdi}, date $value_date\n"
+          if defined($debug);
+        next;
+      }
+      elsif ($value =~ m/Ice/) {
+        # check for Ice
+        print "Iced up: $usgs_site->{$code}->{sdi}, date $value_date: $value\n"
+          if defined($debug);
+        $usgs_site->{$code}->{error_code} = $value;
+        next;
+      }
+      elsif ($value =~ m/ZFL/) {
+        $value = 0.0;
+      }
+      elsif ($value =~ m/[^-0-9\.]/) {
+        # check for other text, complain
+        print
+          "value field not recognized: $usgs_site->{$code}->{sdi}, date $value_date: $value\n"
+          if defined($debug);
+        $usgs_site->{$code}->{error_code} = $value;
+        next;
+      }
+
+
+      # update or insert
+      if (defined($debug)) {
+        print
+          "modifying for $usgs_site->{$code}->{sdi}, date $value_date, value $value, update status unknown\n";
+      }
+      $modsth->bind_param(1, $usgs_site->{$code}->{sdi});
+      $modsth->bind_param(2, $usgs_site->{$code}->{interval});
+      $modsth->bind_param(3, $value_date);
+      $modsth->bind_param(4, $value);
+      $modsth->bind_param(5, $valid_code);
+      $modsth->bind_param(6, $coll_id);
+      $modsth->bind_param(7, $usgs_site->{$code}->{meth_id});
+      $modsth->bind_param(8, $usgs_site->{$code}->{comp_id});
+      $modsth->bind_param(9, $timezone);
+      $modsth->execute;
+
+      if (!defined($first_date)) { # mark that data has changed
+        $first_date = $value_date;
+      }
+      $updated_date = $value_date;
+
+    }
+    $modsth->finish;
+
+  };    # semicolon here because of use of eval
+
+  if ($@) {    # something screwed up in insert/update
+    print $hdb->dbh->errstr, " $@\n";
+    $hdb->hdbdie(
+"Errors occurred during insert/update/deletion of data. Rolled back any database manipulation.\n"
+    );
+  } elsif ($first_date) {    # commit the data
+    $hdb->dbh->commit or $hdb->hdbdie( $hdb->dbh->errstr );
+  }
+  return $first_date, $updated_date, $numrows;
+}
+
+
+
 sub usage {
   print STDERR <<"ENDHELP";
 $progname $verstring [ -h | -v ] | [ options ]
@@ -654,6 +1003,7 @@ Example: $progname -a <accountfile> -n 2 -i 09260000 -l u
                      IF NONE SPECIFIED, WILL LOAD ALL GAGES ENABLED IN HDB.
   -t               : Test retrieval, but do not insert data into DB
   -f <filename>    : Filename instead of live web
+  -F rdb|json      : Format RDB (tab-delimited) or JSON (converted from WaterML)
   -n <numdays>     : Days for retrieval (max 31 for realtime)
   -b <DD-MON-YYYY> : Begin date for data retrieval
   -e <DD-MON-YYYY> : End date for data retrieval
@@ -690,6 +1040,8 @@ sub process_args {
         print "file not found or unreadable: $readfile\n";
         exit 1;
       }
+    } elsif ( $arg =~ /-F/ ) {    # get Format to request
+      $format = shift;
     } elsif ( $arg =~ /-a/ ) {    # get database login file
       $accountfile = shift;
       if ( !-r $accountfile ) {
@@ -758,6 +1110,18 @@ sub process_args {
     usage();
   }
 
+  #handle format, RDB or JSON
+  #check if formet is defined, if not, we assume RDB
+  if ( !defined($format) ) {
+    $format = 'rdb';
+  }
+  $format = lc($format); 
+  if ( !( $format =~ /^(rdb|json)$/ ) ) {
+    print "Error, invalid format requested: '$format'\n";
+    print "Specify one of RDB(tab-delimited) or JSON\n";
+    usage();
+  }
+
   # # If we are running from a terminal, check if user really wants to load all
   # # this data! If it is not a terminal, we can assume the user knows what they
   # # are doing! Of course, this fails in cron, since cron scripts have a
@@ -821,6 +1185,7 @@ sub read_from_web {
   # this next function actually gets the data
   my $response = $ua->request($request);
 
+  my $content;
   # check result
   if ( $response->is_success ) {
     my $status = $response->status_line;
@@ -828,26 +1193,21 @@ sub read_from_web {
 
     # if compression requested, expand the response content
     # not by default since USGS asked not to for CPU power limits
+    
     if ($compression) {
-      my ($inflated) = Compress::Zlib::memGunzip( $response->content );
-      if ( !$inflated ) {
-        $hdb->hdbdie("no data returned from $agen_abbrev, exiting.\n");
-      }
-      print $inflated if defined($debug);
-      @$data = split /\n/, $inflated;
+      $content = Compress::Zlib::memGunzip( $response->content );
     } else {
-      my $content = $response->content;
-      if ( !$content) {
-        $hdb->hdbdie("no data returned from $agen_abbrev, exiting.\n");
-      }
-      print $content if defined($debug);
-      @$data = split /\n/, $content;
+      $content = $response->content;
     }
+    if ( !$content) {
+      $hdb->hdbdie("no data returned from $agen_abbrev, exiting.\n");
+    }
+    print $content if defined($debug);
   } else {    # ($response->is_error)
     printf STDERR $response->error_as_HTML;
     $hdb->hdbdie("Error reading from $agen_abbrev web page, cannot continue\n");
   }
-  return;
+  return $content;
 }
 
 sub skip_comments {
@@ -961,7 +1321,41 @@ sub read_header {
 #this next section runs through the global @data destructively,
 # shortening the @data array after a insert
 # the insert is passed a slice of @data
-sub write_data {
+sub write_json {
+  my $content = shift;
+  my $top = decode_json($content);
+  my $numrows = 0;
+  my $usgs_no = 0;
+  my $usgs_code = '';
+  foreach (@{$top->{"value"}->{"timeSeries"}}) {
+    print(Data::Dumper::Dumper($_));
+    $usgs_no = $_->{"sourceInfo"}->{"siteCode"}->[0]->{"value"};
+    $usgs_code = $_->{"variable"}->{"variableCode"}->[0]->{"value"};
+    print($usgs_code);
+    next if $usgs_no == 0; #failed to find a USGS site number, next station!
+    my $values = $_->{"values"}->[0]->{"value"};
+    $numrows = @$values;
+    # put data into database, unless testflag is set
+    my @cur_values;
+    foreach (@$values) {
+      push(@cur_values, "$usgs_no\t$_->{dateTime}\t$_->{value}\t$_->{qualifiers}[0]")
+    }
+
+    if ( defined($insertflag) ) {
+      process_json( $usgs_no, $usgs_code, \@cur_values);
+    }
+    #print(Data::Dumper::Dumper(@cur_values));
+    $numrows = 0;
+  };
+
+  exit (1);
+  
+}
+
+#this next section runs through the global @data destructively,
+# shortening the @data array after a insert
+# the insert is passed a slice of @data
+sub write_rdb {
   my $numrows=0;
   STATION:
   until ( !defined( $data[0] ) ) {
@@ -1031,6 +1425,38 @@ sub process_data {
   }
   return;
 }
+
+
+sub process_json {
+  my $usgs_no        = shift;
+  my $usgs_code        = shift;
+  my $cur_values     = shift;
+
+  my ($rows_processed,$updated_date,$first_date);
+
+  #tell user something, so they know it is working
+  print "Working on $agen_abbrev gage number: $usgs_no parameter: $usgs_code\n";
+
+  my $usgs_site = $usgs_sites->{$usgs_no};
+ 
+  #pass in possibly huge array of data for specific usgs id
+  #function returns date of first value and last value updated
+  ( $first_date, $updated_date, $rows_processed ) =
+    insert_json( \@$cur_values, $usgs_site, $usgs_code );
+
+#report results of insertion, and report error codes to STDERR
+  my $site_name = [%$usgs_site]->[1]{site_name}; #dereference the first row's site_name
+  if ( !defined($first_date) ) {
+    print
+      "No data processed for $site_name: $usgs_no\n";
+  } else {
+    print
+"Data processed from $first_date to $updated_date for $site_name, $usgs_no\n";
+    print "Number of rows from $agen_abbrev processed: $rows_processed\n";
+  }
+  return;
+}
+
 
 sub LastDay {
   if ($flowtype eq 'u') {
