@@ -68,7 +68,7 @@ class Hdb(object):
         try:
             self.conn = cx_Oracle.connect(user=auth['username'], password=auth['password'],
                                           dsn=cx_Oracle.makedsn(host=auth['hostname'],
-                                                                port=1521,
+                                                                port=auth['port'],
                                                                 sid=auth['database']))
         except Exception as ex:
             print(ex)
@@ -115,15 +115,15 @@ class Hdb(object):
         Ignoring the optional timezone field
 
         """
-
-        proc = ("begin cuhdba.ts_xfer.write_real_data(:sdi,:inter,:dates,:values,:agen_id,:overwrite_flag,"
+        # if this errors, may need ts_xfer public synonym
+        proc = ("begin ts_xfer.write_real_data(:sdi,:inter,:dates,:values,:agen_id,:overwrite_flag,"
                 ":val,:collect_id,:app_id,:method_id,:comp_id,'Y',:data_flags); end;")
 
     #    example call with single date/value procedure
-    #    proc_one = ("begin cuhdba.modify_r_base(:sdi,:inter,:dates,:edate,:values,:agen  Returns number of values written._id,:overwrite_flag  ,"
+    #    proc_one = ("begin cuhdba.modify_r_base(:sdi,:inter,:dates,:edate,:values,:agen_id,:overwrite_flag  ,"
     #    ":val,:collect_id,:app_id,:method_id,:comp_id,'Y'); end;")
 
-        #these are CASE sensitive!
+        #these are CASE sensitive! (Custom types defined in DB)
         date_type = self.conn.gettype("DATEARRAY")
         val_type = self.conn.gettype("NUMBER_ARRAY")
 
@@ -178,23 +178,38 @@ class Hdb(object):
 
         return {k: vars(self)[k] for k in ('agen_id', 'collect_id', 'app_id', 'method_id', 'comp_id')}
 
-    def lookup_sdi_ext_data_code(self, site, sheet, datacodesys):
+    def lookup_sdi_ext_data_code(self, site, code, datacodesys):
         q=("select site_datatype_id FROM "
            "hdb_ext_data_code_sys NATURAL JOIN hdb_ext_data_code data, "
            "hdb_site_datatype NATURAL JOIN hdb_site sdi "
-           "WHERE lower(site_name) = lower(:site) and primary_data_code = :sheet AND "
-           "hdb_datatype_id = datatype_id AND "
+           "WHERE lower(site_name) = lower(:site) and primary_data_code = :code AND "
+           "hdb_datatype_id = datatype_id AND "\
            "ext_data_code_sys_name = :datacodesys")
         with self.conn.cursor() as cursor:
             try:
-                cursor.execute(q, {'sheet': sheet, 'site': site,'datacodesys': datacodesys})
+                cursor.execute(q, {'code': code, 'site': site,'datacodesys': datacodesys})
+
+            except Exception as ex:
+                self.conn.rollback()
+                print(ex)
+                self.hdbdie("Errors occurred during selection of SDI from datacode!")
+
+            return cursor.fetchone()[0]
+
+    def get_SDI(self, site, datatype):
+        q=("select site_datatype_id from hdb_site_datatype where site_id = :site and datatype_id = :datatype ")
+
+        with self.conn.cursor() as cursor:
+            try:
+                cursor.execute(q, {'site': site, 'code': datatype})
 
             except Exception as ex:
                 self.conn.rollback()
                 print(ex)
                 self.hdbdie("Errors occurred during selection of SDI!")
 
-            return cursor.fetchone()[0]
+        #should check here if there are any rows. if not, no SDI exists for this combo.
+        return cursor.fetchone()[0]
 
     def get_siteDataMap(self,datasource,interval):
         q = ("select m.*,ds.collection_system_id,s.site_name,d.datatype_name from ref_ext_site_data_map m "
