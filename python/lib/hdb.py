@@ -44,7 +44,7 @@ class Hdb(object):
                 print(f'{authfile} has incorrect permissions! Should not be readable by group or others')
                 exit(1)
 
-            auth = {'port': 1521} # default Oracle DB port
+            auth = {'port': 1521} # default Orac<<<<<<< HEADle DB port
             for line in file:
                 k, v = line.split(' ')
                 if (k == "username" or k == "password" or k == "database"
@@ -76,7 +76,7 @@ class Hdb(object):
                     service_name=auth['database'] #need to handle tns aliases and SID instead of service name
                 )
             )
-            
+
         except Exception as ex:
             print(ex)
             exit(1)
@@ -204,7 +204,7 @@ class Hdb(object):
             except Exception as ex:
                 self.conn.rollback()
                 print(ex)
-                self.hdbdie("Errors occurred during selection of SDI!")
+                self.hdbdie("Errors occurred during selection of SDI from datacode!")
 
             return cursor.fetchone()[0]
 
