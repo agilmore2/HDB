@@ -12,12 +12,14 @@ Created February 2022
 Has only been used for the CUL project, could use better error handling
 @author: Andrew Gilmore, Brett Boyer
 '''
-
+import io
 from datetime import datetime
 import sys
 import argparse
 import os
 import pandas as pd
+import requests
+
 from lib.hdb import Hdb
 import csv
 
@@ -30,8 +32,7 @@ def generate_url():
 
 
 def get_file(url):
-    pass
-
+    return url
 
 def main(args):
     parser = argparse.ArgumentParser()
@@ -45,13 +46,20 @@ def main(args):
     debug(args,args.verbose)
 
     if not args.file:
-        url = generate_url(ids)
-        csvfile = get_file(url)
+        #url = generate_url(ids)
+        url = 'https://weather.nmsu.edu/ziamet/station/sfwx/dly/sfnamb/'
+        client=requests.session()
+        client.get(url)
+#        csrftoken=client.cookies['csrftoken']
+#        payload= {'csrftoken':csrftoken}
+        csvfile = io.StringIO(client.post(url,#cookies=payload,
+                                          headers={'referer':'https://weather.nmsu.edu/ziamet/station/data/sfnamb/'}).content.decode('utf-8'))
     else:
-        csvfile = open(args.file, newline='')
+        csvfile = args.file
 
-    df = pd.read_csv(args.file, skiprows=0)
-    #print(df)
+    print(csvfile.read())
+    df = pd.read_csv(csvfile, skiprows=4)
+    print(df)
 
     #delete unit row
     df = df.drop(0).reset_index(drop=True)
@@ -61,6 +69,7 @@ def main(args):
 
     #delete extra columns and any NaN rows
     df=df.loc[:,df.columns.str.contains('(?:Date_Time)|(?:Air Temperature)|(?:Rain)')].dropna()
+    print(df)
 
     exit()
 
