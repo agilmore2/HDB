@@ -17,7 +17,7 @@ from datetime import datetime
 import sys
 import argparse
 import os
-import pandas
+import pandas as pd
 from lib.hdb import Hdb
 import csv
 
@@ -50,10 +50,17 @@ def main(args):
     else:
         csvfile = open(args.file, newline='')
 
-    df = pandas.read_csv(args.file, skiprows=0, parse_dates=[[0,1]])
+    df = pd.read_csv(args.file, skiprows=0)
+    #print(df)
+
     #delete unit row
-    cleandf=df.drop(0).dropna().reset_index(drop=True)
-    print(cleandf.to_string())
+    df = df.drop(0).reset_index(drop=True)
+
+    #make date time without deprecation warnings
+    df['Date_Time'] = pd.to_datetime(df['Date'] + ' ' + df['Time'], format='%Y-%m-%d %H:%M')
+
+    #delete extra columns and any NaN rows
+    df=df.loc[:,df.columns.str.contains('(?:Date_Time)|(?:Air Temperature)|(?:Rain)')].dropna()
 
     exit()
 
@@ -64,22 +71,6 @@ def main(args):
     db.connect_from_file(args.authFile)
 
     ids = db.get_app_ids()
-
-    if not args.file:
-        url = generate_url(ids)
-        csvfile = get_file(url)
-    else:
-        csvfile = open(args.file, newline='')
-
-    dialect = csv.Sniffer().sniff(csvfile.read(1024))
-    reader = csv.DictReader(csvfile, dialect)
-
-    for row in reader:
-        print(', '.join(row))
-
-
-
-
 
 
 
