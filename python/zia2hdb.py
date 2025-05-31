@@ -50,25 +50,37 @@ def main(args):
         url = 'https://weather.nmsu.edu/ziamet/station/sfwx/dly/sfnamb/'
         client=requests.session()
         client.get(url)
-#        csrftoken=client.cookies['csrftoken']
-#        payload= {'csrftoken':csrftoken}
-        csvfile = io.StringIO(client.post(url,#cookies=payload,
-                                          headers={'referer':'https://weather.nmsu.edu/ziamet/station/data/sfnamb/'}).content.decode('utf-8'))
+        response = client.post(url, headers = {
+            'Referer': 'https://weather.nmsu.edu/ziamet/station/data/sfnamb/',
+            },
+                               data = {
+                                   'csrfmiddlewaretoken': client.cookies['csrftoken'],
+                                   'dtype': 'sfwx',
+                                   'sid': 'sfnamb',
+                                   'sdate': '2025-04-30',
+                                   'edate': '2025-05-31',
+                                   'output': 'csv',
+                                   'units': 'iu',
+                               }
+                               )
+
+        csvfile = io.StringIO(response.content.decode('utf-8'))
     else:
         csvfile = args.file
 
-    print(csvfile.read())
-    df = pd.read_csv(csvfile, skiprows=4)
-    print(df)
+#    print(csvfile.read())
+    df = pd.read_csv(csvfile, skiprows=0)
+    #print(df)
+
 
     #delete unit row
     df = df.drop(0).reset_index(drop=True)
 
     #make date time without deprecation warnings
-    df['Date_Time'] = pd.to_datetime(df['Date'] + ' ' + df['Time'], format='%Y-%m-%d %H:%M')
+    #df['Date_Time'] = pd.to_datetime(df['Date'] + ' ' + df['Time'], format='%Y-%m-%d %H:%M')
 
     #delete extra columns and any NaN rows
-    df=df.loc[:,df.columns.str.contains('(?:Date_Time)|(?:Air Temperature)|(?:Rain)')].dropna()
+    df=df.loc[:,df.columns.str.contains('(?:Date)|(?:Air Temperature)|(?:Rain)')].dropna()
     print(df)
 
     exit()
