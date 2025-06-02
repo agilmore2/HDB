@@ -127,18 +127,21 @@ class Hdb(object):
         date_type = self.conn.gettype("DATEARRAY")
         val_type = self.conn.gettype("NUMBER_ARRAY")
 
+
         dates = date_type.newobject(dates)
         values = val_type.newobject(values)
 
         with self.conn.cursor() as cursor:
             try:
                 #cursor.execute(proc_one, app_key|meta_key|{'dates':dates,'edate':None,'values':values})
-                cursor.execute(proc, app_key | {'dates': dates, 'values': values, 'data_flags' : dataflag})
+                cursor.execute(proc, app_key | {'dates': dates, 'values': values, 'data_flags': dataflag})
             except Exception as ex:
                 self.conn.rollback()
                 print(ex)
                 print(proc)
                 print(app_key | {'dates': len(dates), 'values': len(values)})
+
+        #self.conn.rollback()
 
     REPS = 12
 
