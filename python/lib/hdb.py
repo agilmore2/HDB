@@ -153,7 +153,6 @@ class Hdb(object):
                 print(app_key | {'dates': len(dates), 'values': len(values), 'data_flags' : dataflag})
                 print("If procedure name not found, may need to create public synonym or grant execute permission to user")
 
-        #self.conn.rollback()
 
     REPS = 12
 
