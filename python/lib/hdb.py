@@ -135,6 +135,7 @@ class Hdb(object):
         date_type = self.conn.gettype("DATEARRAY")
         val_type = self.conn.gettype("NUMBER_ARRAY")
 
+
         date_array = date_type.newobject(dates)
         num_array = val_type.newobject(values)
         # filter args
@@ -151,6 +152,8 @@ class Hdb(object):
                 print(proc)
                 print(app_key | {'dates': len(dates), 'values': len(values), 'data_flags' : dataflag})
                 print("If procedure name not found, may need to create public synonym or grant execute permission to user")
+
+        #self.conn.rollback()
 
     REPS = 12
 
