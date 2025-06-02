@@ -122,6 +122,8 @@ def main(args):
     # delete unit row
     df = df.drop(0).reset_index(drop=True)
 
+    #TODO: retrieve URL? and column names/SDIs/etc. from ref_site_data_map etc.
+
     #delete extra columns and any NaN rows
     df = df.loc[:, df.columns.str.contains('(?:Date)|(?:M.. Air Temperature)|(?:Rain)')].dropna()
     df['Date'] = pd.to_datetime(df['Date'])
