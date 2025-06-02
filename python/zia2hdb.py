@@ -52,7 +52,7 @@ def parse_dates(args):
             exit(1)
         elif args.begindate:
             args.begindate = datetime.fromisoformat(args.begindate)
-            args.enddate = args.begindate + datetime.timedelta(args.numdays)
+            args.enddate = args.begindate + timedelta(args.numdays)
         elif args.enddate:
             args.enddate = datetime.fromisoformat(args.enddate)
         else:
@@ -165,6 +165,8 @@ def main(args):
     db.write_xfer(ids | {'sdi': minSDI, 'inter': interval,
                                       'overwrite_flag': oFlag, 'val': 'Z'},
                   dtList, minTList)
+
+    db.commit()
 
     print("Wrote %d values." % (len(rainList) + len(maxTList) + len(minTList)))
 

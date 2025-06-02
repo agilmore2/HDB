@@ -141,7 +141,6 @@ class Hdb(object):
                 print(proc)
                 print(app_key | {'dates': len(dates), 'values': len(values)})
 
-        #self.conn.rollback()
 
     REPS = 12
 
