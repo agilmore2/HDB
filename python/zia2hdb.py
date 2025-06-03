@@ -100,8 +100,8 @@ def main(args):
         #url = generate_url(ids)
         url = 'https://weather.nmsu.edu/ziamet/station/sfwx/dly/sfnamb/'
         client=requests.session()
-        client.get(url) #get CSRF cookie
-        response = client.post(url,
+        client.get(url,verify=False) #get CSRF cookie
+        response = client.post(url, verify=False,
                                headers={'Referer': 'https://weather.nmsu.edu/ziamet/station/data/sfnamb/', },
                                data={'csrfmiddlewaretoken': client.cookies['csrftoken'],
                                                    'dtype': 'sfwx',
