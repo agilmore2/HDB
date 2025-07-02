@@ -960,6 +960,12 @@ sub insert_json {
         }
       }
 
+      if ($value) { # get rid of ',' in display
+        $value =~ s/,//g;
+      }
+
+      print (" ".join($value_date,$timezone,$value));
+
       #need all three of these here. Also checking on value next
       if (!defined($value_date)
         or !defined($valid_code)
@@ -1008,7 +1014,7 @@ sub insert_json {
       $modsth->bind_param(7, $usgs_site->{$code}->{meth_id});
       $modsth->bind_param(8, $usgs_site->{$code}->{comp_id});
       $modsth->bind_param(9, $timezone);
-      $modsth->execute;
+      #$modsth->execute;
 
       if (!defined($first_date)) { # mark that data has changed
         $first_date = $value_date;
@@ -1026,7 +1032,7 @@ sub insert_json {
 "Errors occurred during insert/update/deletion of data. Rolled back any database manipulation.\n"
     );
   } elsif ($first_date) {    # commit the data
-    $hdb->dbh->commit or $hdb->hdbdie( $hdb->dbh->errstr );
+    $hdb->dbh->rollback or $hdb->hdbdie( $hdb->dbh->errstr );
   }
   return $first_date, $updated_date, $numrows;
 }
@@ -1396,7 +1402,7 @@ sub write_json {
 
     my $values = $_->{"values"}->[0]->{"value"};
     $numrows = @$values;
-    # put data into database, unless testflag is set
+
     my @cur_values;
     foreach (@$values) { # I felt bad about doing it this way, until I saw how the USGS json process makes dataframes
       if ($_->{value} == $noDataValue) {
