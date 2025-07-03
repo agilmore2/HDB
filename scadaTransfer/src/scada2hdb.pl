@@ -160,19 +160,20 @@ READ: while ($line = <INFILE>)
   }
   #plant validation field column
   my $csvval = 8;
+  my ($sitecode, $value);
 
   if (@fields == 9) {
-    my $sitecode=$fields[5].",".$fields[6]; # eg. "GLEN,penstock_avm_release"
-    my $value=$fields[7];
+    $sitecode=$fields[5].",".$fields[6]; # eg. "GLEN,penstock_avm_release"
+    $value=$fields[7];
   }
 
   elsif (@fields == 10) { # handle individual unit data, includes unit field with site and data codes
-    my $sitecode=$fields[5].",".$fields[6].",".$fields[7]; # eg. "GLEN,GC1,penstock_avm_release"
-    my $value=$fields[8];
+    $sitecode=$fields[5].",".$fields[6].",".$fields[7]; # eg. "GLEN,GC1,penstock_avm_release"
+    $value=$fields[8];
 
     #unit validation field column
     $csvval = 9;
-  } else {last READ;} #unrecognized line
+  } else { $hdb->hdbdie("Unrecognized number of fields in csv file!\n");}
 
 # check apparent validation field.
 # zero seems to be ok validation, 8 and 128 seem also ok. 32 may be bad?
@@ -182,10 +183,9 @@ READ: while ($line = <INFILE>)
 # define this flag on command line to test reading, but not inserting.
   next READ unless defined($insertflag);
 
-
 #use the string "sitecode,datacode" as the lookup key for the sdi etc.
 #pretty lame, but don't want to take time to make 2D hash
-  if (defined($scada_map->{$sitecode}->{sdi}))  { #do we have an sdi
+  if (defined($scada_map->{$sitecode}) and defined($scada_map->{$sitecode}->{sdi}))  { #do we have an sdi
     insert_values($scada_map->{$sitecode},
                   \@value_date, $value);
   }
