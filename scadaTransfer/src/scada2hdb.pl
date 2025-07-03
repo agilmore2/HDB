@@ -292,7 +292,7 @@ b.is_active_y_n ='Y' and
 b.extra_keys_y_n = 'N' and
 a.site_id = c.site_id and
 c.db_site_code = 'UC' and
-c.ext_data_source_id = d.ext_data_source_id and
+b.ext_data_source_id = d.ext_data_source_id and
 d.ext_data_source_name = '$datasource'
 order by scada_code";
 
