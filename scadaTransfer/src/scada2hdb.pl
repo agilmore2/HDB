@@ -173,7 +173,11 @@ READ: while ($line = <INFILE>)
 
     #unit validation field column
     $csvval = 9;
-  } else { $hdb->hdbdie("Unrecognized number of fields in csv file!\n");}
+  }
+  else {
+    if (debug) warn "unrecognized number of fields in csv line: $line\n";
+    next READ;
+  }
 
 # check apparent validation field.
 # zero seems to be ok validation, 8 and 128 seem also ok. 32 may be bad?
