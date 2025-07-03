@@ -158,20 +158,19 @@ READ: while ($line = <INFILE>)
   if ($@) {
     die "Invalid Date detected in input file, exiting!\n$line\n";
   }
+  #plant validation field column
+  my $csvval = 8;
 
   if (@fields == 9) {
     my $sitecode=$fields[5].",".$fields[6]; # eg. "GLEN,penstock_avm_release"
     my $value=$fields[7];
-
-    #plant validation field
-    $csvval = 8;
   }
 
   elsif (@fields == 10) { # handle individual unit data, includes unit field with site and data codes
     my $sitecode=$fields[5].",".$fields[6].",".$fields[7]; # eg. "GLEN,GC1,penstock_avm_release"
     my $value=$fields[8];
 
-    #unit validation field
+    #unit validation field column
     $csvval = 9;
   } else {last READ;} #unrecognized line
 
