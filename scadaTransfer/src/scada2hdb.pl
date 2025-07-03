@@ -175,7 +175,7 @@ READ: while ($line = <INFILE>)
     $csvval = 9;
   }
   else {
-    if (debug) warn "unrecognized number of fields in csv line: $line\n";
+    warn "unrecognized number of fields in csv line: $line\n" if $debug;
     next READ;
   }
 
