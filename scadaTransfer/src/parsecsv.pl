@@ -115,14 +115,15 @@ READ: while ($line = <INFILE>)
 #pare down the data a bit
   unless ($fields[6] =~ /elev/ or
           $fields[6] =~ /table/ or
-	      $fields[6] =~ /equation/ or
+	        $fields[6] =~ /equation/ or
           $fields[6] =~ /power/ or
           $fields[6] =~ /turbine/ or
           $fields[6] =~ /spillway/ or
           $fields[6] =~ /penstock/ or
           $fields[6] =~ /hollow_jet/ or
           $fields[6] =~ /temperature/ or
-          $fields[6] =~ /GC/) {
+          $fields[6] =~ /GC/ or
+          $fields[6] =~ /HJ/) {
     next READ;
   }
 
