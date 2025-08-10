@@ -13,3 +13,4 @@ ratings/usgs/src/data
 *.rdb
 obj64
 *.png
+python/venv

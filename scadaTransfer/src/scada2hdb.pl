@@ -181,14 +181,15 @@ READ: while ($line = <INFILE>)
 
 # check apparent validation field.
 # zero seems to be ok validation, 8 and 128 seem also ok. 32 may be bad?
-  next READ if not ($fields[$csvval]==0 or $fields[$csvval]==8 or
-                    $fields[$csvval]==128 or $fields[$csvval]==32);
+# 8650880 is code for "scan inhibit" and "manual set"
+  next READ if not ($fields[$csvval]==0 or $fields[$csvval]==8 or $fields[$csvval]==1 or
+                    $fields[$csvval]==128 or $fields[$csvval]==32 or $fields[$csvval]==8650880);
 
 # define this flag on command line to test reading, but not inserting.
   next READ unless defined($insertflag);
 
 #use the string "sitecode,datacode" as the lookup key for the sdi etc.
-#pretty lame, but don't want to take time to make 2D hash
+#pretty lame, but don't want to take time to make 2D hash. Sitecode may be something like "GLEN,GC1"
   if (defined($scada_map->{$sitecode}) and defined($scada_map->{$sitecode}->{sdi}))  { #do we have an sdi
     insert_values($scada_map->{$sitecode},
                   \@value_date, $value);
