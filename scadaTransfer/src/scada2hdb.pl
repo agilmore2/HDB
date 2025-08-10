@@ -117,11 +117,15 @@ open (INFILE, "$readfile") || die "Error: couldn't open input file $ARGV[0]";
 
 =FORMAT
 
-The data is expected in the following format, one value per line, ~864 lines:
+The data is expected in the following format, one value per line, ~3816 lines:
 
-YYYY,MM,DD,HH,MI,SITE,datatatype_name,value,somevalidationcode
+YYYY,MM,DD,HH,MI,SITE,datatype_name,value,somevalidationcode
 
 which is 9 fields.
+
+Other unit specific data is in the following format:
+YYYY,MM,DD,HH,MI,SITE,UNIT1,datatype_name,value,somevalidationcode
+
 
 Other processes in this pipeline cut this file down from the original
 6000 lines per day.
@@ -181,7 +185,7 @@ READ: while ($line = <INFILE>)
 
 # check apparent validation field.
 # zero seems to be ok validation, 8 and 128 seem also ok. 32 may be bad?
-# 8650880 is code for "scan inhibit" and "manual set"
+# 8650880 is code for "scan inhibit" and "out of scan" which apparently means manually set
   next READ if not ($fields[$csvval]==0 or $fields[$csvval]==8 or $fields[$csvval]==1 or
                     $fields[$csvval]==128 or $fields[$csvval]==32 or $fields[$csvval]==8650880);
 
