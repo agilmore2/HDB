@@ -122,7 +122,8 @@ READ: while ($line = <INFILE>)
           $fields[6] =~ /penstock/ or
           $fields[6] =~ /hollow_jet/ or
           $fields[6] =~ /temperature/ or
-          $fields[6] =~ /GC/ or
+          $fields[6] =~ /GC/ or # all GC unit data, temp, gen, etc.
+          ($fields[6] =~ /^\w\w\d$/ and $fields[7] =~ /net_generation/) or #net gen for unit designations like "GC8" , "FG1", etc.
           $fields[6] =~ /HJ/) {
     next READ;
   }
