@@ -309,7 +309,7 @@ if ($format eq "rdb") {
   $hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI'")
     or $hdb->hdbdie("Unable to set NLS_DATE_FORMAT to ISO standard\n");
 } else {
-  $hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SSXFF3'")
+  $hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS'") #DATEs don't store microseconds, so will need to truncate
     or $hdb->hdbdie("Unable to set NLS_DATE_FORMAT to JSON standard\n");
 }
 get_app_ids();
@@ -429,7 +429,7 @@ hdb_loading_application where loading_application_name = '$load_app_name'";
     $sth->bind_col( 3, \$validation );
     $sth->bind_col( 4, \$website );
     my $stuff = $sth->fetch;
-    Dumper($stuff);
+    Dumper($stuff) if defined($debug);
     unless ($stuff) {
       $hdb->hdbdie(
 "Data source definition not found, $agen_id, $collect_id, $validation, $website!\n"
@@ -873,6 +873,7 @@ sub insert_json {
 
       $numrows++;
       @row = split /\t/, $line;
+      print @row if defined($debug);
 
       if (!defined($usgs_site->{$code}->{interval})
         or !defined($usgs_site->{$code}->{meth_id})
@@ -883,12 +884,13 @@ sub insert_json {
       }
 
       #value date is already in required format
-      $value_date = $row[2];
+      $value_date = $row[1];
       $value_date =~ s/T/ /; #remove T date/time separator
-      $timezone = substr($value_date,-5,5); #grab timezone data
-      $value_date = substr($value_date,0,-5); #remove timezone data
+      $timezone = substr($value_date,-6,6); #grab timezone data
+      $value_date = substr($value_date,0,-6); #remove timezone data
+      $value_date = substr($value_date,0,-4); #remove milliseconds
 
-      $value = $row[3];
+      $value = $row[2];
 
       if ($value) { # get rid of ',' in display
         $value =~ s/,//g;
@@ -903,7 +905,7 @@ sub insert_json {
       # quality code is passed on as the validation.
 
       if ($flowtype eq 'd') {
-        $qual_code = $row[4];
+        $qual_code = $row[3];
         if (defined($qual_code) and $qual_code eq 'A') {
           $valid_code = $qual_code;
           $coll_id = $official_collect_id; #from USGS official in collect table
@@ -1328,7 +1330,7 @@ sub write_json {
   my $usgs_no = 0;
   my $usgs_code = '';
   foreach (@{$top->{"value"}->{"timeSeries"}}) {
-    print(Data::Dumper::Dumper($_));
+    #print(Data::Dumper::Dumper($_));
     $usgs_no = $_->{"sourceInfo"}->{"siteCode"}->[0]->{"value"};
     $usgs_code = $_->{"variable"}->{"variableCode"}->[0]->{"value"};
     print($usgs_code);
@@ -1439,6 +1441,13 @@ sub process_json {
 
   my $usgs_site = $usgs_sites->{$usgs_no};
  
+    if (!defined($usgs_site->{$usgs_code}->{sdi})
+      or !defined($usgs_site->{$usgs_code}->{site_id})) {
+      print "No data processed for $usgs_no, parameter $usgs_code!\n" .
+        "site or sdi not defined!\n";
+      return;
+    }
+
   #pass in possibly huge array of data for specific usgs id
   #function returns date of first value and last value updated
   ( $first_date, $updated_date, $rows_processed ) =
