@@ -68,7 +68,7 @@ class Hdb(object):
         try:
             self.conn = cx_Oracle.connect(user=auth['username'], password=auth['password'],
                                           dsn=cx_Oracle.makedsn(host=auth['hostname'],
-                                                                port=1521,
+                                                                port=auth['port'],
                                                                 sid=auth['database']))
         except Exception as ex:
             print(ex)
