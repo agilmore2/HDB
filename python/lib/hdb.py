@@ -66,10 +66,16 @@ class Hdb(object):
     def connect_to_db(self, auth):
         """Get a connection to the Oracle database."""
         try:
-            self.conn = cx_Oracle.connect(user=auth['username'], password=auth['password'],
-                                          dsn=cx_Oracle.makedsn(host=auth['hostname'],
-                                                                port=auth['port'],
-                                                                sid=auth['database']))
+            self.conn = cx_Oracle.connect(
+                user=auth['username'],
+                password=auth['password'],
+                dsn=cx_Oracle.makedsn(
+                    host=auth['hostname'],
+                    port=auth['port'],
+                    service_name=auth['database']
+                )
+            )
+            
         except Exception as ex:
             print(ex)
             exit(1)

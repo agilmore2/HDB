@@ -68,10 +68,9 @@ def main(args):
         # usgs_sites: dict of {site_num: {data_code: ...}}
         # flowtype: 'd' or 'u'
         # hdb: Hdb instance
-        site_num_list = build_site_num_list(usgs_sites)
-        if not site_num_list:
+        if not usgs_sites:
             raise ValueError("No sites specified for usgs codes!")
-        commalist = ",".join(site_num_list)
+        commalist = ",".join(usgs_sites)
         id_limit_clause = f"b.primary_site_code in ({commalist})" if commalist else ""
         # Query for data codes for these sites and flowtype
         # This assumes Hdb has a method to run SQL and return results as list of dicts
@@ -81,16 +80,19 @@ def main(args):
             where {id_limit_clause}
               and a.ext_data_source_id = b.ext_data_source_id
               and a.ext_data_source_name = %s
+              and b.is_active_y_n = 'Y'
+              and b.hdb_interval_name = {'day' if flowtype == 'd' else 'instant'}
         """
-        params = site_num_list + [
+        params = sql % [
             'USGS Daily Values (Provisional/Official)' if flowtype == 'd' else 'USGS Unit Values (Realtime)']
-        rows = hdb.query(sql, params)  # This should return a list of dicts with 'data_id' keys
+        #rows = hdb.query(sql, params)  # This should return a list of dicts with 'data_id' keys
         # Remove any _... suffixes as in Perl
-        codes = set()
-        for row in rows:
-            code = row['data_id'].split('_')[0]
-            codes.add(code)
-        return ','.join(sorted(codes))
+        #codes = set()
+        #for row in rows:
+        #    code = row['data_id'].split('_')[0]
+        #    codes.add(code)
+        #return ','.join(sorted(codes))
+        debug(f"SQL to get USGS codes: {sql} with params: {params}", args.verbose)
 
     # If neither begin nor end is given, use numdays to set end=today and begin=end-numdays+1
     # If only begin is given, end=begin
@@ -137,9 +139,13 @@ def main(args):
 
     oFlag = 'O' if args.overwrite else None
 
-#    db = Hdb()
-#    db.connect_from_file(args.authFile)
-#    db.app = os.path.basename(sys.argv[0])
+
+    db = Hdb()
+    db.connect_from_file(args.authFile)
+    db.app = os.path.basename(sys.argv[0])
+    debug(f"Connected to database with app: {db.app}", args.verbose)
+
+    get_usgs_codes(args.site, args.flowType, db)
 
 
 
