@@ -873,7 +873,7 @@ sub insert_json {
 
       $numrows++;
       @row = split /\t/, $line;
-      print @row if defined($debug);
+      #print @row if defined($debug);
 
       if (!defined($usgs_site->{$code}->{interval})
         or !defined($usgs_site->{$code}->{meth_id})
@@ -952,8 +952,8 @@ sub insert_json {
 
       # update or insert
       if (defined($debug)) {
-        print
-          "modifying for $usgs_site->{$code}->{sdi}, date $value_date, value $value, update status unknown\n";
+        #print
+        #  "modifying for $usgs_site->{$code}->{sdi}, date $value_date, value $value, update status unknown\n";
       }
       $modsth->bind_param(1, $usgs_site->{$code}->{sdi});
       $modsth->bind_param(2, $usgs_site->{$code}->{interval});
@@ -1455,13 +1455,17 @@ sub process_json {
 
 #report results of insertion, and report error codes to STDERR
   my $site_name = [%$usgs_site]->[1]{site_name}; #dereference the first row's site_name
-  if ( !defined($first_date) ) {
-    print
-      "No data processed for $site_name: $usgs_no\n";
+  if (defined($site_name)) {
+    if ( !defined($first_date)) {
+      print
+        "No data processed for $site_name: $usgs_no\n";
+    } else {
+      print
+  "Data processed from $first_date to $updated_date for $site_name, $usgs_no\n";
+      print "Number of rows from $agen_abbrev processed: $rows_processed\n";
+    }
   } else {
-    print
-"Data processed from $first_date to $updated_date for $site_name, $usgs_no\n";
-    print "Number of rows from $agen_abbrev processed: $rows_processed\n";
+    print "No site name defined for $usgs_no, parameter $usgs_code!\n";
   }
   return;
 }
