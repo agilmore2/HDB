@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Hydrologic Database (HDB)",
+    "organization": "U.S. Bureau of Reclamation",
+    "description": "Hydrologic Database project repository", 
+    "version": "main",
+    "status": "Active",
+
+    "permissions": {
+      "usageType": "openSource",
+      "licenses": [
+        {
+          "name": "Apache 2.0",
+          "URL": "https://raw.githubusercontent.com/DOI-BOR/BORWMIS-HDB/refs/heads/master/LICENSE"
+        }
+      ]
+    },
+
+    "homepageURL": "https://raw.githubusercontent.com/DOI-BOR/BORWMIS-HDB/",
+    "downloadURL": "https://github.com/DOI-BOR/BORWMIS-HDB/archive/refs/heads/master.zip",
+    "disclaimerURL": "https://raw.githubusercontent.com/DOI-BOR/BORWMIS-HDB/refs/heads/master/LICENSE",
+    "repositoryURL": "https://raw.githubusercontent.com/DOI-BOR/BORWMIS-HDB",
+    "vcs": "git",
+
+    "laborHours": "10000+",
+
+    "tags": [
+      "Data science",
+      "Python",
+      "Perl",
+      "database",
+      "hydrology"
+    ],
+
+    "languages": [
+      "Python",
+      "Perl",
+      "bash",
+      "C",
+      "SQL"
+    ],
+
+    "contact": {
+      "name": "Andrew Gilmore",
+      "email": "agilmore@usbr.gov"
+    },
+
+    "date": {
+      "metadataLastUpdated": "2025-08-18"
+    }
+  }
+]
