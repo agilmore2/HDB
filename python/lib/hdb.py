@@ -10,6 +10,7 @@ import stat
 
 
 class Hdb(object):
+
     def __init__(self):
         self.conn = None
         self.dbname = None
@@ -72,7 +73,7 @@ class Hdb(object):
                 dsn=cx_Oracle.makedsn(
                     host=auth['hostname'],
                     port=auth['port'],
-                    service_name=auth['database']
+                    service_name=auth['database'] #need to handle tns and SID better
                 )
             )
             
@@ -239,7 +240,24 @@ class Hdb(object):
 
             return cursor.fetchone()[0]
         
-
+    def query(self, sql, params=None):
+        """
+        Execute a SQL query with optional parameters and return a list of dicts (column:value).
+        Handles errors and rolls back/prints as in get_siteDataMap.
+        """
+        with self.conn.cursor() as cursor:
+            try:
+                if params is not None:
+                    cursor.execute(sql, params)
+                else:
+                    cursor.execute(sql)
+                rows = cursor.fetchall()
+                headers = [c[0].lower() for c in cursor.description]
+                return [dict(zip(headers, row)) for row in rows]
+            except Exception as ex:
+                self.conn.rollback()
+                print(ex, "query:", sql, "with params:", params)
+                self.hdbdie("Errors occurred during query execution!")
 
 def main():
     '''Just for testing.'''

@@ -11,13 +11,15 @@ import dataretrieval.nwis as nwis
 
 ''' HDB writing from USGS NWIS data
 Follows the same processing as usgs2hdb.pl, but uses Python and the cx_Oracle library.
-
 '''
+
 
 def debug(msg,v):
     if v: print(msg)
 
+
 def main(args):
+
     parser = argparse.ArgumentParser()
     class ValidateDate(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
@@ -51,8 +53,6 @@ def main(args):
 
     debug(args,args.verbose)
 
-
-
     # Python equivalent of Perl build_site_num_list
     def build_site_num_list(usgs_sites):
         """
@@ -60,18 +60,58 @@ def main(args):
         """
         return list(usgs_sites.keys())
 
+    # Python equivalent of Perl get_usgs_sites
+    def get_usgs_sites(hdb, flowtype, site_num_list=None):
+        """
+        Query HDB for USGS sites and return a nested dict keyed by site_num and data_code.
+        If site_num_list is provided, limit to those sites.
+        """
+        # Build id_limit_clause
+        id_limit_clause = f"b.primary_site_code in ({site_num_list}) and " if site_num_list else ""
+        title = 'USGS Daily Values (Provisional/Official)' if flowtype == 'd' else 'USGS Unit Values (Realtime)'
+        params = {'title': title}
+        # Set title based on flowtype
+        sql = f"""
+            select b.primary_site_code as usgs_id, b.primary_data_code as data_code,
+                b.hdb_interval_name as interval, b.hdb_method_id as meth_id,
+                b.hdb_computation_id as comp_id, b.hdb_site_datatype_id as sdi,
+                d.site_id, d.site_name
+            from hdb_site_datatype a, ref_ext_site_data_map b,
+                hdb_site d, hdb_ext_data_source e
+            where a.site_datatype_id = b.hdb_site_datatype_id and {id_limit_clause}
+                b.is_active_y_n = 'Y' and
+                a.site_id = d.site_id and
+                b.ext_data_source_id = e.ext_data_source_id and
+                e.ext_data_source_name = :title
+            order by usgs_id
+        """
+        rows = hdb.query(sql, params)
+        # Build nested dict: {usgs_id: {data_code: row_dict}}
+        usgs_sites = {}
+        for row in rows:
+            usgs_id = row['usgs_id']
+            data_code = row['data_code']
+            if usgs_id not in usgs_sites:
+                usgs_sites[usgs_id] = {}
+            usgs_sites[usgs_id][data_code] = row
+        return usgs_sites
+
+
     # Python equivalent of Perl get_usgs_codes
-    def get_usgs_codes(usgs_sites, flowtype, hdb):
+    def get_usgs_codes(hdb, flowtype, usgs_sites):
         """
         Given a dict of usgs_sites, flowtype, and a db handle, return a comma-separated string of unique data codes for those sites.
         """
         # usgs_sites: dict of {site_num: {data_code: ...}}
         # flowtype: 'd' or 'u'
         # hdb: Hdb instance
-        if not usgs_sites:
-            raise ValueError("No sites specified for usgs codes!")
-        commalist = ",".join(usgs_sites)
-        id_limit_clause = f"b.primary_site_code in ({commalist})" if commalist else ""
+        id_limit_clause = ""
+        if usgs_sites:
+            keys = ','.join(f"'{k}'" for k in usgs_sites.keys())
+            id_limit_clause = f"b.primary_site_code in ({keys})"
+        title = 'USGS Daily Values (Provisional/Official)' if flowtype == 'd' else 'USGS Unit Values (Realtime)'
+        params = {'title': title}
+
         # Query for data codes for these sites and flowtype
         # This assumes Hdb has a method to run SQL and return results as list of dicts
         sql = f"""
@@ -79,20 +119,20 @@ def main(args):
             from hdb_ext_data_source a, ref_ext_site_data_map b 
             where {id_limit_clause}
               and a.ext_data_source_id = b.ext_data_source_id
-              and a.ext_data_source_name = %s
+              and a.ext_data_source_name = :title
               and b.is_active_y_n = 'Y'
-              and b.hdb_interval_name = {'day' if flowtype == 'd' else 'instant'}
+              and b.hdb_interval_name = '{'day' if flowtype == 'd' else 'instant'}'
         """
-        params = sql % [
-            'USGS Daily Values (Provisional/Official)' if flowtype == 'd' else 'USGS Unit Values (Realtime)']
-        #rows = hdb.query(sql, params)  # This should return a list of dicts with 'data_id' keys
-        # Remove any _... suffixes as in Perl
-        #codes = set()
-        #for row in rows:
-        #    code = row['data_id'].split('_')[0]
-        #    codes.add(code)
-        #return ','.join(sorted(codes))
-        debug(f"SQL to get USGS codes: {sql} with params: {params}", args.verbose)
+
+        debug(f"SQL to get USGS codes: {sql} params: {params}", args.verbose)
+        rows = hdb.query(sql, params)  # This should return a list of dicts with 'data_id' keys
+        # Remove any _... suffixes to retrieve base datatype
+        codes = set()
+        for row in rows:
+            code = row['data_id'].split('_')[0]
+            codes.add(code)
+        return ','.join(sorted(codes))
+
 
     # If neither begin nor end is given, use numdays to set end=today and begin=end-numdays+1
     # If only begin is given, end=begin
@@ -145,8 +185,13 @@ def main(args):
     db.app = os.path.basename(sys.argv[0])
     debug(f"Connected to database with app: {db.app}", args.verbose)
 
-    get_usgs_codes(args.site, args.flowType, db)
+    sites=get_usgs_sites(db, args.flowType,
+                   args.site if args.site else None)
 
+
+
+    codes=get_usgs_codes(db, args.flowType, sites)
+    debug(f"USGS Codes to retrieve: {codes}", args.verbose)
 
 
 if __name__ == '__main__':
