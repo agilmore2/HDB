@@ -35,11 +35,12 @@ def main(args):
     parser.add_argument('-a', '--authFile', help='app_login containing database credentials', required=True)
     parser.add_argument('-l', '--flowType', help='Daily(d) or instantaneous(i) data?', required=True)
     parser.add_argument('--overwrite', action='store_true', help='Write an O to the overwrite_flag field')
-    parser.add_argument('-i', '--site', action='append', help='USGS site number', required=False)
+    parser.add_argument('-i', '--site', action='append', help='ibwc site number', required=False)
     parser.add_argument('-n', '--numdays', help='How many days to load', required=False)
     parser.add_argument('-b', '--begin', action='validate_date', help='Begin date (YYYY-MM-DD)', required=False)
     parser.add_argument('-e', '--end', action='validate_date', help='End date (YYYY-MM-DD)', required=False)
     parser.add_argument('-d', '--verbose', action='store_true', help='Show more detail about process')
+    parser.add_argument('-t', '--test', action='store_true', help='Test, do not write to database')
 
     args = parser.parse_args()
     # Handle multiple site arguments
@@ -55,35 +56,36 @@ def main(args):
     debug(args,args.verbose)
 
     # Python equivalent of Perl build_site_num_list
-    def build_site_num_list(usgs_sites):
+    def build_site_num_list(ibwc_sites):
         """
-        Given a dict of usgs_sites (from DB or config), return a list of site numbers (keys).
+        Given a dict of ibwc_sites (from DB or config), return a list of site numbers (keys).
         """
-        return list(usgs_sites.keys())
+        return list(ibwc_sites.keys())
     
-    def build_site_code_list(usgs_sites):
+    def build_site_code_list(ibwc_sites):
         """
-        Given a dict of usgs_sites (from DB or config), return a list of site codes.
+        Given a dict of ibwc_sites (from DB or config), return a list of site codes.
         """
         # Flatten all codes from all sites and deduplicate
-        return list({code.split("_")[0] for site in usgs_sites.values() for code in site})
+        return list({code.split("_")[0] for site in ibwc_sites.values() for code in site})
 
-    # Python equivalent of Perl get_usgs_sites
-    def get_aq_sites(hdb, flowtype, site_num_list=None):
+    # Python equivalent of Perl get_ibwc_sites
+    def get_ibwc_sites(hdb, flowtype, site_num_list=None):
         """
-        Query HDB for USGS sites and return a nested dict keyed by site_num and data_code.
+        Query HDB for ibwc sites and return a nested dict keyed by site_num and data_code.
         If site_num_list is provided, limit to those sites.
         """
         # Build id_limit_clause
         id_limit_clause = f"b.primary_site_code in ({site_num_list}) and " if site_num_list else ""
-        title = 'IBWC Daily Loader'
+        title = 'IBWC Daily Loader' if flowtype == 'd' else 'IBWC Unit Values (Realtime)'
         params = {'title': title}
         # Set title based on flowtype
         sql = f"""
-            select b.primary_site_code as usgs_id, b.primary_data_code as data_code,
-                b.hdb_interval_name as interval, b.hdb_method_id as meth_id,
+            select b.primary_site_code as ibwc_id, b.primary_data_code as data_code,
+                b.hdb_interval_name as inter, b.hdb_method_id as method_id,
                 b.hdb_computation_id as comp_id, b.hdb_site_datatype_id as sdi,
-                d.site_id, d.site_name
+                d.site_id, d.site_name, e.collection_system_id as collect_id,
+                e.agen_id
             from hdb_site_datatype a, ref_ext_site_data_map b,
                 hdb_site d, hdb_ext_data_source e
             where a.site_datatype_id = b.hdb_site_datatype_id and {id_limit_clause}
@@ -91,18 +93,18 @@ def main(args):
                 a.site_id = d.site_id and
                 b.ext_data_source_id = e.ext_data_source_id and
                 e.ext_data_source_name = :title
-            order by usgs_id
+            order by ibwc_id
         """
         rows = hdb.query(sql, params)
-        # Build nested dict: {usgs_id: {data_code: row_dict}}
-        usgs_sites = {}
+        # Build nested dict: {ibwc_id: {data_code: row_dict}}
+        ibwc_sites = {}
         for row in rows:
-            usgs_id = row['usgs_id']
+            ibwc_id = row['ibwc_id']
             data_code = row['data_code']
-            if usgs_id not in usgs_sites:
-                usgs_sites[usgs_id] = {}
-            usgs_sites[usgs_id][data_code] = row
-        return usgs_sites
+            if ibwc_id not in ibwc_sites:
+                ibwc_sites[ibwc_id] = {}
+            ibwc_sites[ibwc_id][data_code] = row
+        return ibwc_sites
 
     # If neither begin nor end is given, use numdays to set end=today and begin=end-numdays+1
     # If only begin is given, end=begin
@@ -148,14 +150,19 @@ def main(args):
     debug(f"Begin date: {begin}, End date: {end}", args.verbose)
 
     oFlag = 'O' if args.overwrite else None
-
+    
     db = Hdb()
     db.connect_from_file(args.authFile)
     db.app = os.path.basename(sys.argv[0])
     debug(f"Connected to database with app: {db.app}", args.verbose)
 
-    sites=get_aq_sites(db, args.flowType,
+    db.app = os.path.basename(sys.argv[0])
+    db.app_id= db.get_loadingAppID(db.app)
+    debug(f"Using loading application {db.app} with id {db.app_id}", args.verbose)
+
+    sites=get_ibwc_sites(db, args.flowType,
                    args.site if args.site else None)
+    debug(sites, args.verbose)
     debug(f"IBWC Sites to retrieve: {build_site_num_list(sites)}", args.verbose)
     debug(f"IBWC Codes to retrieve: {build_site_code_list(sites)}", args.verbose)
 
@@ -166,9 +173,35 @@ def main(args):
     #debug(ibwc.fetch_locations())
     #debug((sites=build_site_num_list(sites),parameterCd=build_site_code_list(sites),
     #                      start=begin,end=end,service='dv'), args.verbose)
-    debug(ibwc.fetch_dataset(dset_name="Discharge.Best Available@08364000",date_range="7Day"), args.verbose)
-                        
+    for site in sites:
+        for data_code in sites[site]:
+            row = sites[site][data_code]
+            debug(f"Writing data for site {site}", args.verbose)
+            ibwc_id = row['ibwc_id']
+            data_code = row['data_code']
+            try:
+                df = ibwc.fetch_dataset(dset_name=data_code+"@"+ibwc_id, start=begin, finish=end)
+            except Exception as e:
+                print(f"Error fetching data for {data_code}@{ibwc_id}: {e}: Entry ignored, data loads continue", file=sys.stderr)
+                continue
 
+            debug(df, args.verbose)
+
+            dt_list = df.dropna().index.tolist()
+            val_list = df.dropna().iloc[:, 0].tolist()
+            debug(dt_list, args.verbose)
+            debug(val_list, args.verbose)
+
+            db.write_xfer(sites[ibwc_id][data_code] | {
+                        'overwrite_flag': oFlag, 'val': None, 'app_id': db.app_id},
+                        dt_list, val_list)
+        
+    if args.test:
+        db.rollback()
+        debug("Database rollback executed.", args.verbose)
+    else:
+        db.commit()
+        debug("Database commit executed.", args.verbose)
 
 if __name__ == '__main__':
     main(sys.argv[:])
