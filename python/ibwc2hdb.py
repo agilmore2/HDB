@@ -35,7 +35,7 @@ def main(args):
     parser.add_argument('-a', '--authFile', help='app_login containing database credentials', required=True)
     parser.add_argument('-l', '--flowType', help='Daily(d) or instantaneous(i) data?', required=True)
     parser.add_argument('--overwrite', action='store_true', help='Write an O to the overwrite_flag field')
-    parser.add_argument('-i', '--site', action='append', help='ibwc site number', required=False)
+    parser.add_argument('-i', '--site', action='append', help='IBWC site number', required=False)
     parser.add_argument('-n', '--numdays', help='How many days to load', required=False)
     parser.add_argument('-b', '--begin', action='validate_date', help='Begin date (YYYY-MM-DD)', required=False)
     parser.add_argument('-e', '--end', action='validate_date', help='End date (YYYY-MM-DD)', required=False)
@@ -175,14 +175,11 @@ def main(args):
     #                      start=begin,end=end,service='dv'), args.verbose)
     for site in sites:
         for data_code in sites[site]:
-            row = sites[site][data_code]
             debug(f"Writing data for site {site}", args.verbose)
-            ibwc_id = row['ibwc_id']
-            data_code = row['data_code']
             try:
-                df = ibwc.fetch_dataset(dset_name=data_code+"@"+ibwc_id, start=begin, finish=end)
+                df = ibwc.fetch_dataset(dset_name=data_code+"@"+site, start=begin, finish=end)
             except Exception as e:
-                print(f"Error fetching data for {data_code}@{ibwc_id}: {e}: Entry ignored, data loads continue", file=sys.stderr)
+                print(f"Error fetching data for {data_code}@{site}: {e}: Entry ignored, data loads continue", file=sys.stderr)
                 continue
 
             debug(df, args.verbose)
@@ -192,7 +189,7 @@ def main(args):
             debug(dt_list, args.verbose)
             debug(val_list, args.verbose)
 
-            db.write_xfer(sites[ibwc_id][data_code] | {
+            db.write_xfer(sites[site][data_code] | {
                         'overwrite_flag': oFlag, 'val': None, 'app_id': db.app_id},
                         dt_list, val_list)
         
