@@ -14,3 +14,13 @@ ratings/usgs/src/data
 obj64
 *.png
 python/venv
+*.xlsx
+.idea
+.gradle
+opendcs_user
+usgs2hdb/decodes/*.xml
+plots/
+gradle/
+gradlew
+gradlew.bat
+
