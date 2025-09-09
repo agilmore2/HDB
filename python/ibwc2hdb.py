@@ -179,7 +179,7 @@ def main(args):
             try:
                 df = ibwc.fetch_dataset(dset_name=data_code+"@"+site, start=begin, finish=end)
             except Exception as e:
-                print(f"Error fetching data for {data_code}@{site}: {e}: Entry ignored, data loads continue", file=sys.stderr)
+                print(f"Error fetching data for {data_code}@{site}: {e}: Entry ignored, next data code begun", file=sys.stderr)
                 continue
 
             debug(df, args.verbose)
@@ -195,11 +195,11 @@ def main(args):
         
     if args.test:
         db.rollback()
-        debug("Database rollback executed.", args.verbose)
+        debug("Test mode active, database rollback executed.", args.verbose)
     else:
         db.commit()
-        debug("Database commit executed.", args.verbose)
+        debug("Data written to database.", args.verbose)
 
-if __name__ == '__main__':
+if __name__ == '__main__': 
     main(sys.argv[:])
 

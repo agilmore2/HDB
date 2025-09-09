@@ -73,7 +73,7 @@ class Hdb(object):
                 dsn=cx_Oracle.makedsn(
                     host=auth['hostname'],
                     port=auth['port'],
-                    service_name=auth['database'] #need to handle tns and SID better
+                    service_name=auth['database'] #need to handle tns aliases and SID instead of service name
                 )
             )
             
@@ -123,14 +123,15 @@ class Hdb(object):
 
         """
 
+        #if this fails, may need public synonym for ts_xfer or permissions granted to user, has been hinky
         proc = ("begin ts_xfer.write_real_data(:sdi,:inter,:dates,:values,:agen_id,:overwrite_flag,"
                 ":val,:collect_id,:app_id,:method_id,:comp_id,'Y',:data_flags); end;")
 
     #    example call with single date/value procedure
-    #    proc_one = ("begin cuhdba.modify_r_base(:sdi,:inter,:dates,:edate,:values,:agen  Returns number of values written._id,:overwrite_flag  ,"
+    #    proc_one = ("begin cuhdba.modify_r_base(:sdi,:inter,:dates,:edate,:values,:agen_id,:overwrite_flag  ,"
     #    ":val,:collect_id,:app_id,:method_id,:comp_id,'Y'); end;")
 
-        #these are CASE sensitive!
+        #these are CASE sensitive! Custom HDB types
         date_type = self.conn.gettype("DATEARRAY")
         val_type = self.conn.gettype("NUMBER_ARRAY")
 
@@ -148,6 +149,7 @@ class Hdb(object):
                 print(ex)
                 print(proc)
                 print(app_key | {'dates': len(dates), 'values': len(values), 'data_flags' : dataflag})
+                print("If procedure name not found, may need to create public synonym or grant execute permission to user")
 
     REPS = 12
 
@@ -187,22 +189,37 @@ class Hdb(object):
 
         return {k: vars(self)[k] for k in ('agen_id', 'collect_id', 'app_id', 'method_id', 'comp_id')}
 
-    def lookup_sdi_ext_data_code(self, site, sheet, datacodesys):
+    def lookup_sdi_ext_data_code(self, site, code, datacodesys):
         q=("select site_datatype_id FROM "
            "hdb_ext_data_code_sys NATURAL JOIN hdb_ext_data_code data, "
            "hdb_site_datatype NATURAL JOIN hdb_site sdi "
-           "WHERE lower(site_name) = lower(:site) and primary_data_code = :sheet AND "
+           "WHERE lower(site_name) = lower(:site) and primary_data_code = :code AND "
            "hdb_datatype_id = datatype_id AND "
            "ext_data_code_sys_name = :datacodesys")
         with self.conn.cursor() as cursor:
             try:
-                cursor.execute(q, {'sheet': sheet, 'site': site,'datacodesys': datacodesys})
+                cursor.execute(q, {'code': code, 'site': site,'datacodesys': datacodesys})
 
             except Exception as ex:
                 self.conn.rollback()
                 print(ex)
                 self.hdbdie("Errors occurred during selection of SDI!")
 
+            return cursor.fetchone()[0]
+
+    def get_SDI(self, site, datatype):
+        q=("select site_datatype_id from hdb_site_datatype where site_id = :site and datatype_id = :datatype ")
+
+        with self.conn.cursor() as cursor:
+            try:
+                cursor.execute(q, {'site': site, 'datatype': datatype})
+
+            except Exception as ex:
+                self.conn.rollback()
+                print(ex)
+                self.hdbdie("Errors occurred during selection of SDI!")
+
+            #could check if zero rows so no SDI exists, exception handles it for now
             return cursor.fetchone()[0]
 
     def get_siteDataMap(self,datasource,interval):
