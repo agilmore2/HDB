@@ -27,6 +27,8 @@ $verstring =~ s/ \$//;
 my $progname = basename($0);
 chomp $progname;
 
+my $datasource = 'XA21 CRSP SCADA'; # name of data source in HDB_EXT_DATA_SOURCE
+
 my $insertflag = 1;
 my $overwrite = 'null';
 
@@ -115,11 +117,15 @@ open (INFILE, "$readfile") || die "Error: couldn't open input file $ARGV[0]";
 
 =FORMAT
 
-The data is expected in the following format, one value per line, ~864 lines:
+The data is expected in the following format, one value per line, ~3816 lines:
 
-YYYY,MM,DD,HH,MI,SITE,datatatype_name,value,somevalidationcode
+YYYY,MM,DD,HH,MI,SITE,datatype_name,value,somevalidationcode
 
 which is 9 fields.
+
+Other unit specific data is in the following format:
+YYYY,MM,DD,HH,MI,SITE,UNIT1,datatype_name,value,somevalidationcode
+
 
 Other processes in this pipeline cut this file down from the original
 6000 lines per day.
@@ -147,11 +153,6 @@ READ: while ($line = <INFILE>)
   chomp($line);
   @fields=split(/,/,$line);
 
-  if (@fields >9) { # do not read individual unit data
-     last READ;
-  }
-
-
 #value_date is a Date::Calc date array, year, month,day,hour, minute, second
   @value_date=@fields[0..4]; #get first 5 fields from line and
   $value_date[5]=0; #zero seconds field
@@ -161,20 +162,39 @@ READ: while ($line = <INFILE>)
   if ($@) {
     die "Invalid Date detected in input file, exiting!\n$line\n";
   }
+  #plant validation field column
+  my $csvval = 8;
+  my ($sitecode, $value);
 
-  my $sitecode=$fields[5].",".$fields[6];
-  my $value=$fields[7];
+  if (@fields == 9) {
+    $sitecode=$fields[5].",".$fields[6]; # eg. "GLEN,penstock_avm_release"
+    $value=$fields[7];
+  }
+
+  elsif (@fields == 10) { # handle individual unit data, includes unit field with site and data codes
+    $sitecode=$fields[5].",".$fields[6].",".$fields[7]; # eg. "GLEN,GC1,penstock_avm_release"
+    $value=$fields[8];
+
+    #unit validation field column
+    $csvval = 9;
+  }
+  else {
+    warn "unrecognized number of fields in csv line: $line\n" if $debug;
+    next READ;
+  }
+
+# check apparent validation field.
+# zero seems to be ok validation, 8 and 128 seem also ok. 32 may be bad?
+# 8650880 is code for "scan inhibit" and "out of scan" which apparently means manually set
+  next READ if not ($fields[$csvval]==0 or $fields[$csvval]==8 or $fields[$csvval]==1 or
+                    $fields[$csvval]==128 or $fields[$csvval]==32 or $fields[$csvval]==8650880);
 
 # define this flag on command line to test reading, but not inserting.
   next READ unless defined($insertflag);
 
-# check apparent validation field.
- # zero seems to be ok validation, 8 and 128 seem also ok. 32 may be bad.
-  next READ if not ($fields[8]==0 or $fields[8]==8 or $fields[8]==128 or $fields[8]==32);
-
 #use the string "sitecode,datacode" as the lookup key for the sdi etc.
-#pretty lame, but don't want to take time to make 2D hash
-  if (defined($scada_map->{$sitecode}->{sdi}))  { #do we have an sdi
+#pretty lame, but don't want to take time to make 2D hash. Sitecode may be something like "GLEN,GC1"
+  if (defined($scada_map->{$sitecode}) and defined($scada_map->{$sitecode}->{sdi}))  { #do we have an sdi
     insert_values($scada_map->{$sitecode},
                   \@value_date, $value);
   }
@@ -201,34 +221,7 @@ READ: while ($line = <INFILE>)
                       \@value_date, $head);
       }
     }
-# expect the fields turbine, spillway, and hollow_jet releases in that order,
-# warn if not
   }
-#   elsif ($fields[6] eq "turbine_release") {
-#    @prevdate=@value_date;
-#    $rel=$value;
-#
-#  } elsif ($fields[6] eq "spillway_release") {
-#    if (@value_date != @prevdate or $seenspill==1) {
-#      warn "data not in expected order, release not calculated!\n";
-#    } else {
-#      $rel+=$value;
-#      $seenspill=1;
-#    }
-#
-#  } elsif ($fields[6] eq "hollow_jet_release") {
-#    if (@value_date != @prevdate or $seenspill==0) {
-#      die "data not in expected order, release not calculated! Exiting!\n";
-#    } else {
-#      $rel+=$value;
-#      $seenspill=0;
-#      $rel=sprintf("%.2f",$rel);
-#      if (defined($scada_map->{$fields[5].",total_release"}->{sdi})) {
-#        insert_values($scada_map->{$fields[5].",total_release"},
-#                      \@value_date, $rel);
-#      }
-#    }
-#  }
 }
 
 
@@ -301,12 +294,15 @@ sub get_scada_map
  b.hdb_interval_name interval, b.hdb_method_id meth_id,
  b.hdb_computation_id comp_id, b.hdb_site_datatype_id sdi,
  c.site_id, c.site_name
-from hdb_site_datatype a, ref_ext_site_data_map b, hdb_site c
+from hdb_site_datatype a, ref_ext_site_data_map b, hdb_site c,
+hdb_ext_data_source d
 where a.site_datatype_id = b.hdb_site_datatype_id and
 b.is_active_y_n ='Y' and
 b.extra_keys_y_n = 'N' and
 a.site_id = c.site_id and
-c.db_site_code = 'UC'
+c.db_site_code = 'UC' and
+b.ext_data_source_id = d.ext_data_source_id and
+d.ext_data_source_name = '$datasource'
 order by scada_code";
 
   $hdb->dbh->{FetchHashKeyName} = 'NAME_lc';
