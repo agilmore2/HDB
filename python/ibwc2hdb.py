@@ -9,6 +9,12 @@ import pandas as pd
 
 import requests
 import aquarius_webportal as aq
+#import logging
+#from http.client import HTTPConnection
+
+#logging.basicConfig(level=logging.DEBUG)
+#logging.getLogger("urllib3").setLevel(logging.DEBUG)
+#HTTPConnection.debuglevel = 1
 
 ''' HDB writing from IBWC data
 Follows the same processing as ibwc2hdb.pl, but uses Python and the Hdb library.
@@ -183,7 +189,7 @@ def main(args):
                 continue
 
             debug(df, args.verbose)
-
+            print(f'Size of data retrieved for {data_code}@{site} is {len(df)}')
             dt_list = df.dropna().index.tolist()
             val_list = df.dropna().iloc[:, 0].tolist()
             debug(dt_list, args.verbose)
@@ -193,12 +199,12 @@ def main(args):
                         'overwrite_flag': oFlag, 'val': None, 'app_id': db.app_id},
                         dt_list, val_list)
         
-    if args.test:
-        db.rollback()
-        debug("Test mode active, database rollback executed.", args.verbose)
-    else:
-        db.commit()
-        debug("Data written to database.", args.verbose)
+            if args.test:
+                db.rollback()
+                debug("Test mode active, database rollback executed.", args.verbose)
+            else:
+                db.commit()
+                debug("Data written to database.", args.verbose)
 
 if __name__ == '__main__': 
     main(sys.argv[:])
