@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+
+from datetime import datetime
+import sys
+import argparse
+import os
+from lib.hdb import Hdb
+import pandas
+
+import requests
+#import logging
+#from http.client import HTTPConnection
+
+#logging.basicConfig(level=logging.DEBUG)
+#logging.getLogger("urllib3").setLevel(logging.DEBUG)
+#HTTPConnection.debuglevel = 1
+
+
+''' HDB writing from ABCWUA data
+    Only one site, two SDIS, diversion and return flow volumes
+    "We can ignore column B and D (units in KG). I just want to pull in columns C and E. C would go to SDI 31132, E would go to SDI 20071
+'''
+
+
+def debug(msg,v):
+    if v: print(msg)
+
+
+def main(args):
+
+    parser = argparse.ArgumentParser()
+    class ValidateDate(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            try:
+                setattr(namespace, self.dest, datetime.strptime(values, "%Y-%m-%d").date())
+            except ValueError as e:
+                print(f"Exception: {e}")
+                parser.error(f"Invalid date value or format for {option_string}: '{values}'. Expected YYYY-MM-DD.")
+                
+    parser.register('action', 'validate_date', ValidateDate)
+
+    parser.add_argument('-a', '--authFile', help='app_login containing database credentials', required=True)
+    parser.add_argument('--overwrite', action='store_true', help='Write an O to the overwrite_flag field')
+    parser.add_argument('-n', '--numdays', help='How many days to load', required=False)
+    parser.add_argument('-b', '--begin', action='validate_date', help='Begin date (YYYY-MM-DD)', required=False)
+    parser.add_argument('-e', '--end', action='validate_date', help='End date (YYYY-MM-DD)', required=False)
+    parser.add_argument('-d', '--verbose', action='store_true', help='Show more detail about process')
+    parser.add_argument('-t', '--test', action='store_true', help='Test, do not write to database')
+
+    args = parser.parse_args()
+
+    debug(args,args.verbose)
+
+    # Python equivalent of Perl build_site_num_list
+    def build_site_num_list(abcwua_sites):
+        """
+        Given a dict of abcwua_sites (from DB or config), return a list of site numbers (keys).
+        """
+        return list(abcwua_sites.keys())
+    
+    # Python equivalent of Perl get_abcwua_sites
+    def get_abcwua_sites(hdb):
+        """
+        Query HDB for abcwua sites and return a nested dict keyed by site_num and data_code.
+        There is only one site from this source.
+        """
+        # Build id_limit_clause
+        title = 'ABCWUA Daily Loader'
+        params = {'title': title}
+        sql = f"""
+            select b.primary_site_code as abcwua_id, b.primary_data_code as data_code,
+                b.hdb_interval_name as inter, b.hdb_method_id as method_id,
+                b.hdb_computation_id as comp_id, b.hdb_site_datatype_id as sdi,
+                d.site_id, d.site_name, e.collection_system_id as collect_id,
+                e.agen_id , e.description as url
+            from hdb_site_datatype a, ref_ext_site_data_map b,
+                hdb_site d, hdb_ext_data_source e
+            where a.site_datatype_id = b.hdb_site_datatype_id and
+                b.is_active_y_n = 'Y' and
+                a.site_id = d.site_id and
+                b.ext_data_source_id = e.ext_data_source_id and
+                e.ext_data_source_name = :title
+            order by abcwua_id
+        """
+        rows = hdb.query(sql, params)
+        # Build nested dict: {abcwua_id: {data_code: row_dict}}
+        abcwua_sites = {}
+        for row in rows:
+            abcwua_id = row['abcwua_id']
+            data_code = row['data_code']
+            if abcwua_id not in abcwua_sites:
+                abcwua_sites[abcwua_id] = {}
+            abcwua_sites[abcwua_id][data_code] = row
+        return abcwua_sites
+
+    # If neither begin nor end is given, use numdays to set end=today and begin=end-numdays+1
+    # If only begin is given, end=begin
+    # If only end is given, begin=end
+    # If both are given, use as is
+    # All dates are datetime.date
+    def determine_date_range(args):
+        lastDay = datetime.today().date()
+        lastDay = lastDay - pandas.Timedelta(days=1)
+
+        begin = args.begin
+        end = args.end
+        numdays = int(args.numdays) if args.numdays else None
+
+        if not begin and not end:
+            end = lastDay
+            if numdays:
+                begin = end - pandas.Timedelta(days=numdays-1)
+            else:
+                print("Error: You must specify at least one of -b, -e, or -n to define a date range.", file=sys.stderr)
+                sys.exit(1)
+        elif begin and not end:
+            if numdays:
+                end = begin + pandas.Timedelta(days=numdays-1)
+            else:
+                end = lastDay
+        elif end and not begin:
+            if numdays:
+                begin = end - pandas.Timedelta(days=numdays-1)
+            else:
+                print("Error, only end date specified, use -n or -b to define when to start!", file=sys.stderr)
+                sys.exit(1)
+                begin = end
+        else: 
+            if numdays:
+                print("Error, overspecified dates, all of -b, -e, -n specified!", file=sys.stderr)
+                sys.exit(1)
+
+        return begin, end
+
+    begin, end = determine_date_range(args)
+    debug(f"Begin date: {begin}, End date: {end}", args.verbose)
+
+    oFlag = 'O' if args.overwrite else None
+    
+    db = Hdb()
+    db.connect_from_file(args.authFile)
+    db.app = os.path.basename(sys.argv[0])
+    debug(f"Connected to database with app: {db.app}", args.verbose)
+
+    db.app = os.path.basename(sys.argv[0])
+    db.app_id= db.get_loadingAppID(db.app)
+    debug(f"Using loading application {db.app} with id {db.app_id}", args.verbose)
+
+    sites=get_abcwua_sites(db)
+    debug(sites, args.verbose)
+    debug(f"abcwua Sites to retrieve: {build_site_num_list(sites)}", args.verbose)
+
+    #debug(abcwua.fetch_locations())
+    #debug((sites=build_site_num_list(sites),parameterCd=build_site_code_list(sites),
+    #                      start=begin,end=end,service='dv'), args.verbose)
+    query = {
+            "startTime": begin,
+            "endTime": end,
+        }
+    site = list(sites.keys())[0]
+    firstcode = list(sites[site].keys())[0]
+    url = sites[site][firstcode]["url"]
+    debug(f"URL to fetch data from is {url}", args.verbose)
+    try:
+        response = requests.get(url, params=query)
+        df = pandas.read_excel(response.content, index_col=0, parse_dates=True, usecols=[0,2,4])
+    except Exception as e:
+        print(f"Error fetching data for {url}: {e}: ", file=sys.stderr)
+        db.rollback()
+        sys.exit(1)
+
+    debug(f"Writing data for site {site}", args.verbose)
+
+    debug(df, args.verbose)
+    print(f'Size of data retrieved for {site} is {len(df)}')
+    dt_list = df.dropna().iloc[:].index.tolist()
+    div_list = df.dropna().iloc[:, 0].tolist()
+    ret_list = df.dropna().iloc[:, 1].tolist()
+    debug(dt_list, args.verbose)
+    debug(div_list, args.verbose)
+    debug(ret_list, args.verbose)
+
+    db.write_xfer(sites[site]["Total Diverted (AF)"] | {
+                'overwrite_flag': oFlag, 'val': None, 'app_id': db.app_id},
+                dt_list, div_list)
+    db.write_xfer(sites[site]["Total Return (AF)"] | {
+                'overwrite_flag': oFlag, 'val': None, 'app_id': db.app_id},
+                dt_list, ret_list)
+    
+    if args.test:
+        db.rollback()
+        debug("Test mode active, database rollback executed.", args.verbose)
+    else:
+        db.commit()
+        debug("Data written to database.", args.verbose)
+
+if __name__ == '__main__': 
+    main(sys.argv[:])
+
