@@ -180,10 +180,16 @@ def main(args):
     debug(div_list, args.verbose)
     debug(ret_list, args.verbose)
 
-    db.write_xfer(sites[site]["Total Diverted (AF)"] | {
+# try to handle cleanly when sites is either one or two sites
+    for site in sites:
+        code = list(sites[site].keys())[0]
+        if (code == "Total Diverted (AF)"): 
+           db.write_xfer(sites[site][code] | {
                 'overwrite_flag': oFlag, 'val': None, 'app_id': db.app_id},
                 dt_list, div_list)
-    db.write_xfer(sites[site]["Total Return (AF)"] | {
+        code = list(sites[site].keys())[-1]
+        if (code == "Total Return (AF)"):
+            db.write_xfer(sites[site][code] | {
                 'overwrite_flag': oFlag, 'val': None, 'app_id': db.app_id},
                 dt_list, ret_list)
     
