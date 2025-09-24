@@ -21,6 +21,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false,
+            "args": " -l d -a ~/.app_user_login_service -n 5 -t",
         }
     ]
 }
