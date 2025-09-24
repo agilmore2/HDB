@@ -10,6 +10,7 @@ import pandas as pd
 import dataretrieval.nwis as nwis
 import dataretrieval.codes as codes
 import dataretrieval.utils as utils
+import dataretrieval.waterdata as waterdata
 
 ''' HDB writing from USGS NWIS data
 Follows the same processing as usgs2hdb.pl, but uses Python and the cx_Oracle library.
@@ -43,6 +44,7 @@ def main(args):
     parser.add_argument('-b', '--begin', action='validate_date', help='Begin date (YYYY-MM-DD)', required=False)
     parser.add_argument('-e', '--end', action='validate_date', help='End date (YYYY-MM-DD)', required=False)
     parser.add_argument('-d', '--verbose', action='store_true', help='Show more detail about process')
+    parser.add_argument('-t', '--test', action='store_true', help='Test, do not write to database')
 
     args = parser.parse_args()
     # Handle multiple site arguments
@@ -69,7 +71,9 @@ def main(args):
         Given a dict of usgs_sites (from DB or config), return a list of site codes.
         """
         # Flatten all codes from all sites and deduplicate
-        return list({code.split("_")[0] for site in usgs_sites.values() for code in site})
+        # for all sites
+        #return list({code.split("_")[0] for site in usgs_sites.values() for code in site})
+        return list({code.split("_")[0] for code in usgs_sites})
 
     # Python equivalent of Perl get_usgs_sites
     def get_usgs_sites(hdb, flowtype, site_num_list=None):
@@ -83,10 +87,11 @@ def main(args):
         params = {'title': title}
         # Set title based on flowtype
         sql = f"""
-            select b.primary_site_code as usgs_id, b.primary_data_code as data_code,
-                b.hdb_interval_name as interval, b.hdb_method_id as meth_id,
+            select 'USGS-'||b.primary_site_code as usgs_id, b.primary_data_code as data_code,
+                b.hdb_interval_name as inter, b.hdb_method_id as method_id,
                 b.hdb_computation_id as comp_id, b.hdb_site_datatype_id as sdi,
-                d.site_id, d.site_name
+                d.site_id, d.site_name, e.collection_system_id as collect_id,
+                e.agen_id
             from hdb_site_datatype a, ref_ext_site_data_map b,
                 hdb_site d, hdb_ext_data_source e
             where a.site_datatype_id = b.hdb_site_datatype_id and {id_limit_clause}
@@ -155,17 +160,53 @@ def main(args):
     db = Hdb()
     db.connect_from_file(args.authFile)
     db.app = os.path.basename(sys.argv[0])
-    debug(f"Connected to database with app: {db.app}", args.verbose)
+    db.app_id= db.get_loadingAppID(db.app)
+    debug(f"Using loading application {db.app} with id {db.app_id}", args.verbose)
 
     sites=get_usgs_sites(db, args.flowType,
                    args.site if args.site else None)
     debug(f"USGS Sites to retrieve: {build_site_num_list(sites)}", args.verbose)
     debug(f"USGS Codes to retrieve: {build_site_code_list(sites)}", args.verbose)
 
-    debug(nwis.get_record(sites=build_site_num_list(sites),parameterCd=build_site_code_list(sites),
-                          start=begin,end=end,service='dv'), args.verbose)
-    debug(nwis.get_dv(sites=build_site_num_list(sites),parameterCd=build_site_code_list(sites),
-                          start=begin,end=end), args.verbose)
+    for site in sites:
+        for code in sites[site]:
+            debug(f"Retrieving site {site} with code {code}", args.verbose)
+            df = waterdata.get_daily(monitoring_location_id=site,
+                                parameter_code=code.split("_")[0],
+                                time=[begin.strftime("%Y-%m-%d %H:%M:%S"), end.strftime("%Y-%m-%d %H:%M:%S")])
+            if df.empty:
+                debug(f"No data returned for site {site}", args.verbose)
+                continue
+            df.set_index('time', inplace=True)
+            df.index = pd.to_datetime(df.index)
+            df.sort_index(inplace=True)
+            df.dropna(subset=['value'], inplace=True)
+            
+            dt_list = df.index.tolist()
+            debug(dt_list, args.verbose)
+            val_series = pd.to_numeric(df["value"], errors='coerce')
+            val_list = val_series.tolist()
+            debug(val_list, args.verbose)
+
+            db.write_xfer(sites[site][code] | {
+                        'overwrite_flag': oFlag, 'val': None, 'app_id': db.app_id},
+                        dt_list, val_list)
+            
+            if args.test:
+                db.rollback()
+                debug("Test mode active, database rollback executed.", args.verbose)
+            else:
+                db.commit()
+                debug("Data written to database.", args.verbose)
+
+
+
+
+
+    #debug(nwis.get_record(sites=build_site_num_list(sites),parameterCd=build_site_code_list(sites),
+    #                      start=begin,end=end,service='dv'), args.verbose)
+    #debug(nwis.get_dv(sites=build_site_num_list(sites),parameterCd=build_site_code_list(sites),
+    #                      start=begin,end=end), args.verbose)
                         
 
 
