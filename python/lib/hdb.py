@@ -137,6 +137,7 @@ class Hdb(object):
 
         date_array = date_type.newobject(dates)
         num_array = val_type.newobject(values)
+        # filter args
         valid_keys = ['sdi', 'inter', 'agen_id', 'overwrite_flag', 'val', 'collect_id', 'app_id', 'method_id', 'comp_id']
         app_key = {k: app_key[k] for k in valid_keys if k in app_key}
         
@@ -244,20 +245,22 @@ class Hdb(object):
             headers = [c[0] for c in cursor.description]
             return pd.DataFrame(map,columns=headers)
 
-    def get_loadingAppID(self,appName):
+    def get_loadingAppID(self,appName):        date_array = date_type.newobject(dates)
+
         q = ("select loading_application_id from hdb_loading_application "
             "where loading_application_name = :appName")
 
         with self.conn.cursor() as cursor:
             try:
                 cursor.execute(q, {'appName' : appName})
+                id = cursor.fetchone()[0]
 
             except Exception as ex:
                 self.conn.rollback()
                 print(ex)
                 self.hdbdie("Errors occurred during selection of loading application ID")
 
-            return cursor.fetchone()[0]
+            return id
         
     def query(self, sql, params=None):
         """
