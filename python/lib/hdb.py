@@ -245,8 +245,7 @@ class Hdb(object):
             headers = [c[0] for c in cursor.description]
             return pd.DataFrame(map,columns=headers)
 
-    def get_loadingAppID(self,appName):        date_array = date_type.newobject(dates)
-
+    def get_loadingAppID(self,appName):
         q = ("select loading_application_id from hdb_loading_application "
             "where loading_application_name = :appName")
 
