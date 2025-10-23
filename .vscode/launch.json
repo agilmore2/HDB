@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "Python Debugger: Current File with Arguments",
             "type": "debugpy",
@@ -23,6 +24,17 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": " -l d -a ~/.app_user_login_service -n 5 -t",
-        }
+        },
+
+        {
+            "type": "perl",
+            "request": "launch",
+            "name": "Perl-Debug Current File",
+            "program": "${file}",
+            "stopOnEntry": true,
+            "reloadModules": true,
+            "args": "-a ~/.app_user_login_service -l u -n 1 -e 30-APR-2019 -dwt",
+        },
+        
     ]
 }
