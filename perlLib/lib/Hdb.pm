@@ -130,7 +130,7 @@ sub set_approle {
     die "Environment variable APP_ROLE not set...\n";
   }
 
-  $self->{dbh}->do("set role $approle,CONNECT")
+  $self->{dbh}->do("set role $approle") #,CONNECT 
                  or $self->hdbdie($DBI::errstr);
 
   return $self->{dbh};
