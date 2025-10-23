@@ -898,15 +898,16 @@ sub insert_json {
 
       $value = $row[2];
 
-      if ($timezone == '-04:00') { # EDT
+# handle numerical timezones when database doesn't handle them (Oracle 19 breaks, Oracle 23 was fine with -06:00 as timezone)
+      if ($timezone eq '-04:00') { # EDT
         $timezone = 'EDT';
-      } elsif ($timezone == '-05:00') { # CDT
+      } elsif ($timezone eq '-05:00') { # CDT
         $timezone = 'CDT';
-      } elsif ($timezone == '-06:00') { # MDT
+      } elsif ($timezone eq '-06:00') { # MDT
         $timezone = 'MDT';
-      } elsif ($timezone == '-07:00') { # MST
+      } elsif ($timezone eq '-07:00') { # MST
         $timezone = 'MST';
-      } elsif ($timezone == '-08:00') { # PST
+      } elsif ($timezone eq '-08:00') { # PST
         $timezone = 'PST';
       } else {
         $timezone = 'UTC'; #default
