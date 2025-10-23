@@ -898,6 +898,20 @@ sub insert_json {
 
       $value = $row[2];
 
+      if ($timezone == '-04:00') { # EDT
+        $timezone = 'EDT';
+      } elsif ($timezone == '-05:00') { # CDT
+        $timezone = 'CDT';
+      } elsif ($timezone == '-06:00') { # MDT
+        $timezone = 'MDT';
+      } elsif ($timezone == '-07:00') { # MST
+        $timezone = 'MST';
+      } elsif ($timezone == '-08:00') { # PST
+        $timezone = 'PST';
+      } else {
+        $timezone = 'UTC'; #default
+      }
+
       if ($value) { # get rid of ',' in display
         $value =~ s/,//g;
       }
