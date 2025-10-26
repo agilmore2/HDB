@@ -397,7 +397,7 @@ foreach my $usgs_no ( keys %$usgs_sites ) {
       push @data_errors,
         "No data found for site: $usgs_site->{site_name}, $usgs_no, parameter: $data_code\n";
     }
-    elsif (defined($usgs_site->{error_code})) {
+    elsif (defined($usgs_site->{site_name}) and defined($usgs_site->{error_code})) {
       push @data_errors,
         "Bad data seen for site: $usgs_site->{site_name}, $usgs_no, parameter: $data_code error: $usgs_site->{error_code}\n";
     }
