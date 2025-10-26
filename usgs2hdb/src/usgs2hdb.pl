@@ -214,8 +214,34 @@ looks like:
                   "P"
                 ],
                 "dateTime": "2025-04-10T00:30:00.000-06:00"
-              },
-              etc.
+              }
+            ],
+            "qualifier": [
+              {
+                "qualifierCode": "A",
+                "qualifierDescription": "Approved for publication -- Processing and review completed.",
+                "qualifierID": 0,
+                "network": "NWIS",
+                "vocabulary": "uv_rmk_cd"
+              }
+            ],
+            "qualityControlLevel": [],
+            "method": [
+              {
+                "methodDescription": "",
+                "methodID": 144055
+              }
+            ],
+            "source": [],
+            "offset": [],
+            "sample": [],
+            "censorCode": []
+          }
+        ],
+        "name": "USGS:09261000:00060:00000"
+      },
+      <next timeseries>
+      etc.
 
 
 =cut
@@ -375,6 +401,7 @@ foreach my $usgs_no ( keys %$usgs_sites ) {
       push @data_errors,
         "Bad data seen for site: $usgs_site->{site_name}, $usgs_no, parameter: $data_code error: $usgs_site->{error_code}\n";
     }
+    print "$usgs_site->{site_name} timeseries ID: $usgs_site->{tsid}\n" if defined($debug);
   }
 }
 
@@ -563,11 +590,7 @@ sub get_usgs_sites {
   # limited by any site number list passed in
   # remove trailing statistic code from data code in mapping table
   my $get_usgs_no_statement =
-    "select b.primary_site_code usgs_id,
-    case instr(b.primary_data_code,'_',-1) 
-      when 0 then b.primary_data_code
-      else substr(b.primary_data_code, 1, instr(b.primary_data_code,'_')-1)
-      end as data_code, 
+    "select b.primary_site_code usgs_id, b.primary_data_code data_code, 
  b.hdb_interval_name interval, b.hdb_method_id meth_id,
  b.hdb_computation_id comp_id, b.hdb_site_datatype_id sdi,
  d.site_id, d.site_name
@@ -1348,20 +1371,43 @@ sub write_json {
   my $numrows = 0;
   my $usgs_no = 0;
   my $usgs_code = '';
+  my $stat_code = '';
+  my $timeseries_id = 0;
+  my $noDataValue = -999999; #who thought this was a good idea?!?
   foreach (@{$top->{"value"}->{"timeSeries"}}) {
     #print(Data::Dumper::Dumper($_));
     $usgs_no = $_->{"sourceInfo"}->{"siteCode"}->[0]->{"value"};
-    $usgs_code = $_->{"variable"}->{"variableCode"}->[0]->{"value"};
     next if $usgs_no == 0; #failed to find a USGS site number, next station!
+    $usgs_code = $_->{"variable"}->{"variableCode"}->[0]->{"value"};
+    $stat_code = $_->{"variable"}->{"options"}->{"option"}->[0]->{"optionCode"};
+    $timeseries_id = $_->{"values"}->[0]->{"method"}->[0]->{"methodID"}; #may need this to differentiate duplicate parameter codes at the same site!
+    $noDataValue = $_->{"variable"}->{"noDataValue"};
+    if ($flowtype eq 'd') {
+      $usgs_code .= '_' . $stat_code;
+      if ( ! exists $usgs_sites->{$usgs_no}->{$usgs_code}) {
+        print STDERR "Skipping parameter/stat code $usgs_code for $usgs_no, no mapping?\n";# if defined($debug);
+        next;
+      }
+    } elsif ($flowtype eq 'u') {
+      if ($stat_code ne '00000') {
+        print STDERR "Questionable parameter/stat code $usgs_code for $usgs_no, statistic applied to instantaneous data?\n";
+      }
+    }
+
     my $values = $_->{"values"}->[0]->{"value"};
     $numrows = @$values;
     # put data into database, unless testflag is set
     my @cur_values;
     foreach (@$values) { # I felt bad about doing it this way, until I saw how the USGS json process makes dataframes
+      if ($_->{value} == $noDataValue) {
+        $usgs_sites->{$usgs_no}->{$usgs_code}->{error_code} = join(" ",@{$_->{qualifiers}});
+        next; #skip nodata values, do numerical comparison, save last error code
+      };
       push(@cur_values, "$usgs_no\t$_->{dateTime}\t$_->{value}\t$_->{qualifiers}[0]")
     }
     # mark data as found in USGS ID
-    $usgs_sites->{$usgs_no}->{$usgs_code}->{found_data} = 1;
+    $usgs_sites->{$usgs_no}->{$usgs_code}->{found_data} = $numrows;
+    $usgs_sites->{$usgs_no}->{$usgs_code}->{tsid} = $timeseries_id;
 
     # put data into database, unless testflag is set
     if ( defined($insertflag) ) {
@@ -1369,6 +1415,7 @@ sub write_json {
     }
     #print(Data::Dumper::Dumper(@cur_values));
     $numrows = 0;
+    $usgs_no = 0;
   };  
 }
 
