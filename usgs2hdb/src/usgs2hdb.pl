@@ -214,8 +214,34 @@ looks like:
                   "P"
                 ],
                 "dateTime": "2025-04-10T00:30:00.000-06:00"
-              },
-              etc.
+              }
+            ],
+            "qualifier": [
+              {
+                "qualifierCode": "A",
+                "qualifierDescription": "Approved for publication -- Processing and review completed.",
+                "qualifierID": 0,
+                "network": "NWIS",
+                "vocabulary": "uv_rmk_cd"
+              }
+            ],
+            "qualityControlLevel": [],
+            "method": [
+              {
+                "methodDescription": "",
+                "methodID": 144055
+              }
+            ],
+            "source": [],
+            "offset": [],
+            "sample": [],
+            "censorCode": []
+          }
+        ],
+        "name": "USGS:09261000:00060:00000"
+      },
+      <next timeseries>
+      etc.
 
 
 =cut
@@ -302,7 +328,8 @@ if ( defined($accountfile) ) {
 }
 
 #set write ability on connection (app_role)
-$hdb->set_approle();
+# comment out for users with default app_role
+#$hdb->set_approle();
 
 #Set date format to ISO, USGS data also in this format
 if ($format eq "rdb") {
@@ -335,7 +362,7 @@ if ( defined($readfile) ) {
   }
 } else {    # attempt to get data from USGS web page
   my $sites_per_cycle = int($MAX_DAYS_TO_RETRIEVE/$numdays);
-  my @all_sites = keys %$usgs_sites;
+    my @all_sites = keys %$usgs_sites;
   $sites_per_cycle = min($sites_per_cycle, scalar(@all_sites), 50); # limit based on data size, total sites, or url length
   if ($sites_per_cycle < 1) {
     $sites_per_cycle = 1
@@ -370,10 +397,11 @@ foreach my $usgs_no ( keys %$usgs_sites ) {
       push @data_errors,
         "No data found for site: $usgs_site->{site_name}, $usgs_no, parameter: $data_code\n";
     }
-    elsif (defined($usgs_site->{error_code})) {
+    elsif (defined($usgs_site->{site_name}) and defined($usgs_site->{error_code})) {
       push @data_errors,
         "Bad data seen for site: $usgs_site->{site_name}, $usgs_no, parameter: $data_code error: $usgs_site->{error_code}\n";
     }
+    print "$usgs_site->{site_name} timeseries ID: $usgs_site->{tsid}\n" if defined($debug);
   }
 }
 
@@ -395,7 +423,7 @@ sub get_app_ids {
   my $sth;
 
   my $get_load_app_statement = "select loading_application_id from
-hdb_loading_application where loading_application_name = '$load_app_name'";
+    hdb_loading_application where loading_application_name = '$load_app_name'";
 
   eval {
     $sth = $hdb->dbh->prepare($get_load_app_statement);
@@ -560,8 +588,9 @@ sub get_usgs_sites {
   # the mapping list has already been loaded with just the site that
   # are appropriate for this installation
   # limited by any site number list passed in
+  # remove trailing statistic code from data code in mapping table
   my $get_usgs_no_statement =
-    "select b.primary_site_code usgs_id, b.primary_data_code data_code,
+    "select b.primary_site_code usgs_id, b.primary_data_code data_code, 
  b.hdb_interval_name interval, b.hdb_method_id meth_id,
  b.hdb_computation_id comp_id, b.hdb_site_datatype_id sdi,
  d.site_id, d.site_name
@@ -616,7 +645,8 @@ sub get_usgs_codes {
 from hdb_ext_data_source a, ref_ext_site_data_map b 
 where $id_limit_clause
 a.ext_data_source_id = b.ext_data_source_id and
-a.ext_data_source_name = '$title{$flowtype}'";
+a.ext_data_source_name = '$title{$flowtype}' and
+b.is_active_y_n = 'Y'";
 
   my $data_code_list;
 
@@ -640,7 +670,6 @@ a.ext_data_source_name = '$title{$flowtype}'";
     $data_code_list = $value;
 
     # now build list if there is more than one data code returned
-    # if more than one data code per site, will fail
     while ( $sth->fetch ) {
       $value =~ s/_.*//;
       $data_code_list .= ',' . $value;
@@ -682,7 +711,7 @@ sub insert_values {
        or !defined($load_app_id) )
   {
     my $name = $usgs_site->{(keys %$usgs_site)[0]}->{site_name};
-    $hdb->hdbdie("Undefined date, valid code or collection id in insert_values()!\n");
+    $hdb->hdbdie("Undefined agency, overwrite flag, or loading application id in insert_values()!\n");
   }
 
 
@@ -833,6 +862,7 @@ sub insert_json {
   my $valid_code = $validation;
   my $coll_id    = $collect_id;
   my $timezone = undef;
+  my $name = $usgs_site->{(keys %$usgs_site)[0]}->{site_name};
 
   # SQL statements
 
@@ -845,8 +875,7 @@ sub insert_json {
        or !defined($overwrite)
        or !defined($load_app_id) )
   {
-    my $name = $usgs_site->{(keys %$usgs_site)[0]}->{site_name};
-    $hdb->hdbdie("Undefined date, valid code or collection id in insert_values()!\n");
+    $hdb->hdbdie("Undefined agency, overwrite flag, or loading application id in insert_json()!\n");
   }
 
 
@@ -879,7 +908,7 @@ sub insert_json {
         or !defined($usgs_site->{$code}->{meth_id})
         or !defined($usgs_site->{$code}->{comp_id})) {
         $hdb->hdbdie(
-          "Unable to write data to database for $usgs_site->{$code}->{site_name} $code\nRequired information missing in insert_values()!\n"
+          "Unable to write data to database for $name:$code\nRequired information missing in insert_values()!\n"
         );
       }
 
@@ -891,6 +920,21 @@ sub insert_json {
       $value_date = substr($value_date,0,-4); #remove milliseconds
 
       $value = $row[2];
+
+# handle numerical timezones when database doesn't handle them (Oracle 19 breaks, Oracle 23 was fine with -06:00 as timezone)
+      if ($timezone eq '-04:00') { # EDT
+        $timezone = 'EDT';
+      } elsif ($timezone eq '-05:00') { # CDT
+        $timezone = 'CDT';
+      } elsif ($timezone eq '-06:00') { # MDT
+        $timezone = 'MDT';
+      } elsif ($timezone eq '-07:00') { # MST
+        $timezone = 'MST';
+      } elsif ($timezone eq '-08:00') { # PST
+        $timezone = 'PST';
+      } else {
+        $timezone = 'UTC'; #default
+      }
 
       if ($value) { # get rid of ',' in display
         $value =~ s/,//g;
@@ -1113,7 +1157,7 @@ sub process_args {
   }
 
   #handle format, RDB or JSON
-  #check if formet is defined, if not, we assume RDB
+  #check if format is defined, if not, we assume RDB
   if ( !defined($format) ) {
     $format = 'rdb';
   }
@@ -1266,7 +1310,6 @@ sub read_header {
     return 0; #no data, next station please!
   }
 
-  # now we have data, mark data as found in USGS ID
   # assume that the format holds, and the id is in second column
   my (@firstrow) = split /\t/, $data->[0];
   my $usgs_no = $firstrow[1];
@@ -1299,6 +1342,7 @@ sub read_header {
         return 0; #no data, next station please!
       }
     }
+  # now we have data, mark data as found in USGS ID
     $usgs_sites->{$usgs_no}->{$code}->{found_data} = 1;
 
     #variable defining which column to read values from
@@ -1320,38 +1364,59 @@ sub read_header {
     return ($usgs_no);
 }
 
-#this next section runs through the global @data destructively,
-# shortening the @data array after a insert
-# the insert is passed a slice of @data
+# the process is passed a slice of @data basically converted into rdb
 sub write_json {
   my $content = shift;
   my $top = decode_json($content);
   my $numrows = 0;
   my $usgs_no = 0;
   my $usgs_code = '';
+  my $stat_code = '';
+  my $timeseries_id = 0;
+  my $noDataValue = -999999; #who thought this was a good idea?!?
   foreach (@{$top->{"value"}->{"timeSeries"}}) {
     #print(Data::Dumper::Dumper($_));
     $usgs_no = $_->{"sourceInfo"}->{"siteCode"}->[0]->{"value"};
-    $usgs_code = $_->{"variable"}->{"variableCode"}->[0]->{"value"};
-    print($usgs_code);
     next if $usgs_no == 0; #failed to find a USGS site number, next station!
+    $usgs_code = $_->{"variable"}->{"variableCode"}->[0]->{"value"};
+    $stat_code = $_->{"variable"}->{"options"}->{"option"}->[0]->{"optionCode"};
+    $timeseries_id = $_->{"values"}->[0]->{"method"}->[0]->{"methodID"}; #may need this to differentiate duplicate parameter codes at the same site!
+    $noDataValue = $_->{"variable"}->{"noDataValue"};
+    if ($flowtype eq 'd') {
+      $usgs_code .= '_' . $stat_code;
+      if ( ! exists $usgs_sites->{$usgs_no}->{$usgs_code}) {
+        print STDERR "Skipping parameter/stat code $usgs_code for $usgs_no, no mapping?\n";# if defined($debug);
+        next;
+      }
+    } elsif ($flowtype eq 'u') {
+      if ($stat_code ne '00000') {
+        print STDERR "Questionable parameter/stat code $usgs_code for $usgs_no, statistic applied to instantaneous data?\n";
+      }
+    }
+
     my $values = $_->{"values"}->[0]->{"value"};
     $numrows = @$values;
     # put data into database, unless testflag is set
     my @cur_values;
-    foreach (@$values) {
+    foreach (@$values) { # I felt bad about doing it this way, until I saw how the USGS json process makes dataframes
+      if ($_->{value} == $noDataValue) {
+        $usgs_sites->{$usgs_no}->{$usgs_code}->{error_code} = join(" ",@{$_->{qualifiers}});
+        next; #skip nodata values, do numerical comparison, save last error code
+      };
       push(@cur_values, "$usgs_no\t$_->{dateTime}\t$_->{value}\t$_->{qualifiers}[0]")
     }
+    # mark data as found in USGS ID
+    $usgs_sites->{$usgs_no}->{$usgs_code}->{found_data} = $numrows;
+    $usgs_sites->{$usgs_no}->{$usgs_code}->{tsid} = $timeseries_id;
 
+    # put data into database, unless testflag is set
     if ( defined($insertflag) ) {
       process_json( $usgs_no, $usgs_code, \@cur_values);
     }
     #print(Data::Dumper::Dumper(@cur_values));
     $numrows = 0;
-  };
-
-  exit (1);
-  
+    $usgs_no = 0;
+  };  
 }
 
 #this next section runs through the global @data destructively,
@@ -1436,25 +1501,24 @@ sub process_json {
 
   my ($rows_processed,$updated_date,$first_date);
 
-  #tell user something, so they know it is working
-  print "Working on $agen_abbrev gage number: $usgs_no parameter: $usgs_code\n";
-
   my $usgs_site = $usgs_sites->{$usgs_no};
  
     if (!defined($usgs_site->{$usgs_code}->{sdi})
       or !defined($usgs_site->{$usgs_code}->{site_id})) {
-      print "No data processed for $usgs_no, parameter $usgs_code!\n" .
-        "site or sdi not defined!\n";
+      print STDERR "No data processed for $usgs_no, parameter $usgs_code, site or sdi not defined, may be an incidental pull.\n" if defined($debug);
       return;
     }
 
+  #tell user something, so they know it is working
+  print "Working on $agen_abbrev gage number: $usgs_no parameter: $usgs_code\n";
+  
   #pass in possibly huge array of data for specific usgs id
   #function returns date of first value and last value updated
   ( $first_date, $updated_date, $rows_processed ) =
     insert_json( \@$cur_values, $usgs_site, $usgs_code );
 
 #report results of insertion, and report error codes to STDERR
-  my $site_name = [%$usgs_site]->[1]{site_name}; #dereference the first row's site_name
+  my $site_name = $usgs_site->{$usgs_code}->{site_name};
   if (defined($site_name)) {
     if ( !defined($first_date)) {
       print
