@@ -711,7 +711,7 @@ sub insert_values {
        or !defined($load_app_id) )
   {
     my $name = $usgs_site->{(keys %$usgs_site)[0]}->{site_name};
-    $hdb->hdbdie("Undefined agency, overwrite flag, or loading application id in insert_values()!\n");
+    $hdb->hdbdie("Undefined date, valid code or collection id in insert_values()!\n");
   }
 
 
@@ -862,7 +862,6 @@ sub insert_json {
   my $valid_code = $validation;
   my $coll_id    = $collect_id;
   my $timezone = undef;
-  my $name = $usgs_site->{(keys %$usgs_site)[0]}->{site_name};
 
   # SQL statements
 
@@ -875,7 +874,8 @@ sub insert_json {
        or !defined($overwrite)
        or !defined($load_app_id) )
   {
-    $hdb->hdbdie("Undefined agency, overwrite flag, or loading application id in insert_json()!\n");
+    my $name = $usgs_site->{(keys %$usgs_site)[0]}->{site_name};
+    $hdb->hdbdie("Undefined date, valid code or collection id in insert_values()!\n");
   }
 
 
@@ -908,18 +908,41 @@ sub insert_json {
         or !defined($usgs_site->{$code}->{meth_id})
         or !defined($usgs_site->{$code}->{comp_id})) {
         $hdb->hdbdie(
-          "Unable to write data to database for $name:$code\nRequired information missing in insert_values()!\n"
+          "Unable to write data to database for $usgs_site->{$code}->{site_name} $code\nRequired information missing in insert_values()!\n"
         );
       }
 
       #value date is already in required format
-      $value_date = $row[1];
+      $value_date = $row[2];
       $value_date =~ s/T/ /; #remove T date/time separator
       $timezone = substr($value_date,-6,6); #grab timezone data
       $value_date = substr($value_date,0,-6); #remove timezone data
       $value_date = substr($value_date,0,-4); #remove milliseconds
 
-      $value = $row[2];
+      $value = $row[3];
+
+      if ($value) { # get rid of ',' in display
+        $value =~ s/,//g;
+      }
+
+# handle numerical timezones when database doesn't handle them (Oracle 19 breaks, Oracle 23 was fine with -06:00 as timezone)
+      if ($timezone eq '-04:00') { # EDT
+        $timezone = 'EDT';
+      } elsif ($timezone eq '-05:00') { # CDT
+        $timezone = 'CDT';
+      } elsif ($timezone eq '-06:00') { # MDT
+        $timezone = 'MDT';
+      } elsif ($timezone eq '-07:00') { # MST
+        $timezone = 'MST';
+      } elsif ($timezone eq '-08:00') { # PST
+        $timezone = 'PST';
+      } else {
+        $timezone = 'UTC'; #default
+      }
+
+      if ($value) { # get rid of ',' in display
+        $value =~ s/,//g;
+      }
 
 # handle numerical timezones when database doesn't handle them (Oracle 19 breaks, Oracle 23 was fine with -06:00 as timezone)
       if ($timezone eq '-04:00') { # EDT
@@ -949,7 +972,7 @@ sub insert_json {
       # quality code is passed on as the validation.
 
       if ($flowtype eq 'd') {
-        $qual_code = $row[3];
+        $qual_code = $row[4];
         if (defined($qual_code) and $qual_code eq 'A') {
           $valid_code = $qual_code;
           $coll_id = $official_collect_id; #from USGS official in collect table
@@ -959,12 +982,6 @@ sub insert_json {
           $coll_id = $collect_id;    #from data source table
         }
       }
-
-      if ($value) { # get rid of ',' in display
-        $value =~ s/,//g;
-      }
-
-      print (" ".join($value_date,$timezone,$value));
 
       #need all three of these here. Also checking on value next
       if (!defined($value_date)
@@ -1014,7 +1031,7 @@ sub insert_json {
       $modsth->bind_param(7, $usgs_site->{$code}->{meth_id});
       $modsth->bind_param(8, $usgs_site->{$code}->{comp_id});
       $modsth->bind_param(9, $timezone);
-      #$modsth->execute;
+      $modsth->execute;
 
       if (!defined($first_date)) { # mark that data has changed
         $first_date = $value_date;
@@ -1032,7 +1049,7 @@ sub insert_json {
 "Errors occurred during insert/update/deletion of data. Rolled back any database manipulation.\n"
     );
   } elsif ($first_date) {    # commit the data
-    $hdb->dbh->rollback or $hdb->hdbdie( $hdb->dbh->errstr );
+    $hdb->dbh->commit or $hdb->hdbdie( $hdb->dbh->errstr );
   }
   return $first_date, $updated_date, $numrows;
 }
@@ -1370,7 +1387,9 @@ sub read_header {
     return ($usgs_no);
 }
 
-# the process is passed a slice of @data basically converted into rdb
+#this next section runs through the global @data destructively,
+# shortening the @data array after a insert
+# the insert is passed a slice of @data
 sub write_json {
   my $content = shift;
   my $top = decode_json($content);
@@ -1402,7 +1421,7 @@ sub write_json {
 
     my $values = $_->{"values"}->[0]->{"value"};
     $numrows = @$values;
-
+    # put data into database, unless testflag is set
     my @cur_values;
     foreach (@$values) { # I felt bad about doing it this way, until I saw how the USGS json process makes dataframes
       if ($_->{value} == $noDataValue) {
@@ -1415,7 +1434,6 @@ sub write_json {
     $usgs_sites->{$usgs_no}->{$usgs_code}->{found_data} = $numrows;
     $usgs_sites->{$usgs_no}->{$usgs_code}->{tsid} = $timeseries_id;
 
-    # put data into database, unless testflag is set
     if ( defined($insertflag) ) {
       process_json( $usgs_no, $usgs_code, \@cur_values);
     }
