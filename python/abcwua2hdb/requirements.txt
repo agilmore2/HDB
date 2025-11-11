@@ -1,0 +1,5 @@
+cx-Oracle
+numpy
+openpyxl
+pandas
+requests
