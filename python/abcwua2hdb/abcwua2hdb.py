@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
 from datetime import datetime
+import io
 import sys
 import argparse
 import os
+import warnings
 from lib.hdb import Hdb
 import pandas
 import requests
@@ -119,7 +121,9 @@ def fetch_dataframe(url, begin, end, flowtype):
     query = {"startTime": begin, "endTime": end}
     resp = requests.get(url, params=query)
     resp.raise_for_status()
-    df = pandas.read_excel(resp.content, index_col=0, parse_dates=True)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Workbook contains no default style") # website doesn't set a default style
+        df = pandas.read_excel(io.BytesIO(resp.content), index_col=0, parse_dates=True, engine='openpyxl')
     return df
 
 
