@@ -123,7 +123,9 @@ def fetch_dataframe(url, begin, end, flowtype):
     resp.raise_for_status()
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="Workbook contains no default style") # website doesn't set a default style
-        df = pandas.read_excel(io.BytesIO(resp.content), index_col=0, parse_dates=True, engine='openpyxl')
+        # parse datetimes like "2025-09-15" for daily data or "2025-09-15 12:00 am" for hourly
+        date_format = '%Y-%m-%d' if flowtype == 'd' else '%Y-%m-%d %I:%M %p'
+        df = pandas.read_excel(io.BytesIO(resp.content), index_col=0, parse_dates=True, engine='openpyxl', date_format=date_format)
     return df
 
 
