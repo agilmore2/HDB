@@ -188,6 +188,10 @@ def main(argv=None):
     sites = get_abcwua_sites(db, args.flowType)
     debug(sites, args.verbose)
 
+    if not sites:
+        db.hdbdie("No ABCWUA sites found in the database for the configured flow type; exiting.")
+        return
+
     site = list(sites.keys())[0]
     firstcode = list(sites[site].keys())[0]
     url = sites[site][firstcode].get('url')
