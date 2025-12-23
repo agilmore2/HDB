@@ -144,7 +144,6 @@ def main(args):
             else:
                 print("Error, only end date specified, use -n or -b to define when to start!", file=sys.stderr)
                 sys.exit(1)
-                begin = end
         else: 
             if numdays:
                 print("Error, overspecified dates, all of -b, -e, -n specified!", file=sys.stderr)
