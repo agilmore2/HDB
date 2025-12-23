@@ -44,7 +44,7 @@ class Hdb(object):
                 print(f'{authfile} has incorrect permissions! Should not be readable by group or others')
                 exit(1)
 
-            auth = {'port': 1521} # default Orac<<<<<<< HEADle DB port
+            auth = {'port': 1521} # default Oracle DB port
             for line in file:
                 k, v = line.split(' ')
                 if (k == "username" or k == "password" or k == "database"
