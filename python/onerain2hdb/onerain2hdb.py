@@ -29,11 +29,29 @@ def parse_args():
 
     parser.register('action', 'validate_date', ValidateDate)
 
+    class ValidateSites(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            if values is None or values.strip() == "":
+                setattr(namespace, self.dest, None)
+                return
+            items = [s.strip() for s in values.split(',')]
+            if not items:
+                parser.error(f"Invalid sites value for {option_string}: '{values}'. Expected comma-separated numeric site ids.")
+            validated = []
+            for s in items:
+                if not s.isdigit():
+                    parser.error(f"Invalid site id for {option_string}: '{s}'. Site ids must be numeric and comma-separated.")
+                validated.append(s)
+            setattr(namespace, self.dest, ",".join(f"'{s}'" for s in validated))
+
+    parser.register('action', 'validate_sites', ValidateSites)
+
     parser.add_argument('-a', '--authFile', help='app_login containing database credentials', required=True)
     parser.add_argument('-A', '--agency', action='store', help='Agency Abbreviation (EBID, MRGCD) code', required=True)
     parser.add_argument('-n', '--numdays', help='How many days to load', required=False)
     parser.add_argument('-b', '--begin', action='validate_date', help='Begin date (YYYY-MM-DD)', required=False)
     parser.add_argument('-e', '--end', action='validate_date', help='End date (YYYY-MM-DD)', required=False)
+    parser.add_argument('-i', '--sites', action='validate_sites', help='Sites to load (comma-separated numeric ids)', required=False)
     parser.add_argument('-l', '--flowType', action='store', help='Flow type (d/i)', required=False, default='i')
     parser.add_argument('-d', '--verbose', action='store_true', help='Show more detail about process')
     parser.add_argument('-t', '--test', action='store_true', help='Test, do not write to database')
@@ -77,6 +95,8 @@ def determine_date_range(args):
 def get_onerain_sites(hdb, args):
     """Query HDB for OneRain using agency site mappings. Returns dict[a_id][dev_code] = row dict."""
     interval = 'Daily' if args.flowType == 'd' else 'Instant'
+    # Build id_limit_clause
+    id_limit_clause = f"b.primary_site_code in ({args.sites}) and " if args.sites else ""
     title = f"{args.agency} OneRain Website CSV Loader - {interval}"  # match the datasource naming convention
     params = {'title': title}
     sql = f"""
@@ -89,7 +109,7 @@ def get_onerain_sites(hdb, args):
             hdb_site d, hdb_ext_data_source e
         where a.site_datatype_id = b.hdb_site_datatype_id and
             b.is_active_y_n = 'Y' and
-            a.site_id = d.site_id and
+            a.site_id = d.site_id and {id_limit_clause}
             b.ext_data_source_id = e.ext_data_source_id and
             lower(e.ext_data_source_name) = lower(:title)
         order by a_id
@@ -129,6 +149,10 @@ def fetch_json_dataframe(url, params, verbose=False):
         print('Fetching', resp.url)
     resp.raise_for_status()
     j = resp.json()
+   
+    if isinstance(j, dict) and 'count' in j and j['count'] == 0:
+        raise ValueError('No data returned from OneRain for site/device')
+
     # JSON may be either { 'response': [ ... ] } or directly a list
     records = None
     if isinstance(j, dict) and 'response' in j:
