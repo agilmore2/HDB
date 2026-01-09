@@ -191,6 +191,10 @@ def fetch_json_dataframe(url, params, verbose=False):
 
     # convert time column to datetime
     df[time_col] = pd.to_datetime(df[time_col])
+    
+    # Round to nearest 15 minutes: add 7.5 minutes then floor to 15-minute intervals
+    # (matching behavior of round_15() in Perl script)
+    df[time_col] = (df[time_col] + pd.Timedelta(minutes=7.5)).dt.floor('15min')
 
     df.sort_values('data_time', inplace=True)
     df.reset_index(drop=True, inplace=True)
