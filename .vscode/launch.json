@@ -11,11 +11,11 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            //"args": "-a ~/.app_user_login_service -n 2 -e 2025-09-15 -l d -d",
+            "args": "-a ~/.app_user_login_service -A EBID -n 2 -e 2025-09-15 -l i -d -i 1647",
             "envFile": "/home/agilmore/workspace/HDB/bashrc_hdb_app_local",
             "justMyCode": false,
             "env": {"PYTHONPATH": "..:python"},
-            "args": "${command:pickArgs}"
+            //"args": "${command:pickArgs}"
         },
         {
             "name": "Python Debugger: Current File",
