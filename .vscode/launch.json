@@ -11,7 +11,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": "-a ~/.app_user_login_service -n 30 -e 2019-04-30",
+            "args": "-a ~/.app_user_login_service -A EBID -n 2 -e 2025-09-15 -l i -d -i 1647",
+            "envFile": "/home/agilmore/workspace/HDB/bashrc_hdb_app_local",
             "justMyCode": false,
             "env": {"PYTHONPATH": "..:python"},
             //"args": "${command:pickArgs}"
@@ -22,6 +23,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+            "envFile": "/home/agilmore/workspace/HDB/bashrc_hdb_app_local",
             "justMyCode": false,
             "args": " -l d -a ~/.app_user_login_service -n 5 -t",
         },
@@ -33,7 +35,10 @@
             "program": "${file}",
             "stopOnEntry": true,
             "reloadModules": true,
-            "args": "-a ~/.app_user_login_service -l u -n 1 -e 30-APR-2019 -dwt",
+            "env": {
+                "HDB_ENV": "${env:HDB_ENV}",
+            },
+            "args": "-a ~/.app_user_login_service -l u -n 1 -e 30-APR-2019 -dwt"
         },
         
     ]
