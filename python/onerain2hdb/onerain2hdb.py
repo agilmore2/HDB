@@ -203,6 +203,74 @@ def fetch_json_dataframe(url, params, verbose=False):
     df.reset_index(drop=True, inplace=True)
     return df, time_col, val_col
 
+
+def setup_database(args):
+    db = Hdb()
+    db.connect_from_file(args.authFile)
+    db.app = os.path.basename(sys.argv[0])
+    db.app_id = db.get_loadingAppID(db.app)
+    return db
+
+
+def fetch_site_data(base_url, a_id, dev_code, begin, end, verbose=False):
+    """Fetch OneRain data in 31-day increments for a site/device combination.
+    
+    Args:
+        base_url: OneRain base URL from database
+        a_id: Site code
+        dev_code: Device code
+        begin: Start date
+        end: End date
+        verbose: Enable verbose output
+        
+    Returns:
+        tuple: (dt_list, val_list, error_dict)
+            - dt_list: List of datetime values
+            - val_list: List of data values
+            - error_dict: Dict with error info if any occurred
+    """
+    start_date = begin
+    dt_list = []
+    val_list = []
+    error_dict = {}
+
+    while start_date < end:
+        # Calculate end_date for this iteration, capped at the original end date
+        period_end_date = min(start_date + pd.Timedelta(days=31), end)
+        
+        # Fetch data for the current period
+        url, params = build_url(base_url, a_id, dev_code, start_date, period_end_date)
+        try:
+            df_new, time_col, val_col = fetch_json_dataframe(url, params, verbose=verbose)
+            # Extend the lists with new data
+            dt_list.extend(df_new[time_col].tolist())
+            val_list.extend(pd.to_numeric(df_new[val_col], errors='coerce').tolist())
+        except Exception as e:
+            error_dict['error'] = str(e)
+            # Continue to next period even if this one fails
+            debug(f'Error fetching data for {a_id}/{dev_code}: {e}', verbose)
+        
+        # Move to the next 31-day period
+        start_date = period_end_date
+
+    return dt_list, val_list, error_dict
+
+
+def write_site_data(db, app_key, dt_list, val_list, verbose=False, test=False):
+    if not dt_list:
+        debug(f'No data to write for site {app_key["site_name"]}', verbose)
+        return
+    
+    db.write_xfer(app_key, dt_list, val_list)
+
+    if test:
+        db.rollback()
+        debug('Test mode active, database rolled back.', verbose)
+    else:
+        db.commit()
+        debug('Data written to database.', verbose)
+
+
 def main(argv=None):
     args = parse_args()
     begin, end = determine_date_range(args)
@@ -210,15 +278,15 @@ def main(argv=None):
 
     oFlag = 'O' if args.overwrite else None
 
-    db = Hdb()
-    db.connect_from_file(args.authFile)
-    db.app = os.path.basename(sys.argv[0])
-    db.app_id = db.get_loadingAppID(db.app)
+    # Setup database connection
+    db = setup_database(args)
     debug(f'Using loading application {db.app} with id {db.app_id}', args.verbose)
 
+    # Retrieve site mappings from database
     sites = get_onerain_sites(db, args)
     debug(sites, args.verbose)
 
+    # Process each site/device combination
     for a_id in sites:
         for dev_code in sites[a_id]:
             row = sites[a_id][dev_code]
@@ -226,29 +294,30 @@ def main(argv=None):
             if not base_url:
                 debug(f'No URL for site {a_id} dev {dev_code}, skipping', args.verbose)
                 continue
-            url, params = build_url(base_url, a_id, dev_code, begin, end)
-            try:
-                df, time_col, val_col = fetch_json_dataframe(url, params, verbose=args.verbose)
-            except Exception as e:
-                print(f'Error fetching data for site: {row["site_name"]} site code: {a_id} device: {dev_code}: {e}', file=sys.stderr)
-                # mark error on mapping
-                row['error'] = str(e)
+            if not base_url.startswith(('http://', 'https://')):
+                print(f'Invalid URL for site {a_id}: {base_url}. URL must start with http:// or https://', file=sys.stderr)
                 continue
 
-            dt_list = df[time_col].tolist()
-            val_list = pd.to_numeric(df[val_col], errors='coerce').tolist()
+            dt_list, val_list, error_dict = fetch_site_data(
+                base_url, a_id, dev_code, begin, end, verbose=args.verbose
+            )
 
+            # Mark error on mapping if one occurred
+            if error_dict:
+                row['error'] = error_dict['error']
+                print(f'Error fetching data for site: {row["site_name"]} site code: {a_id} device: {dev_code}: {error_dict["error"]}', file=sys.stderr)
+
+            # Build app_key with metadata
             app_key = row.copy()
-            app_key.update(sites[a_id][dev_code] | {'overwrite_flag': oFlag, 'val': None, 'app_id': db.app_id})
+            app_key.update({
+                'overwrite_flag': oFlag,
+                'val': None,
+                'app_id': db.app_id
+            })
 
-            db.write_xfer(app_key, dt_list, val_list)
-
-            if args.test:
-                db.rollback()
-                debug('Test mode active, database rolled back.', args.verbose)
-            else:
-                db.commit()
-                debug('Data written to database.', args.verbose)
+            # Write data to database
+            write_site_data(db, app_key, dt_list, val_list,
+                          verbose=args.verbose, test=args.test)
 
 
 if __name__ == '__main__':
