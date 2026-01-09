@@ -150,8 +150,8 @@ def fetch_json_dataframe(url, params, verbose=False):
     resp.raise_for_status()
     j = resp.json()
 
-    if verbose:
-        print('JSON response:', j)
+    #if verbose:
+    #    print('JSON response:', j)
    
     if isinstance(j, dict) and 'count' in j and j['count'] == 0:
         raise ValueError('No data returned from OneRain for site/device')
@@ -230,7 +230,7 @@ def main(argv=None):
             try:
                 df, time_col, val_col = fetch_json_dataframe(url, params, verbose=args.verbose)
             except Exception as e:
-                print(f'Error fetching data for {row["site_name"]} device {dev_code}: {e}', file=sys.stderr)
+                print(f'Error fetching data for site: {row["site_name"]} site code: {a_id} device: {dev_code}: {e}', file=sys.stderr)
                 # mark error on mapping
                 row['error'] = str(e)
                 continue
