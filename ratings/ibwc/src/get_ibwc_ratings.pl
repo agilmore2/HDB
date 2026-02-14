@@ -23,7 +23,7 @@ $verstring =~ s/ \$//;
 my $progname = basename($0);    
 chomp $progname;
 
-my ( $accountfile, $hdbuser, $hdbpass, $debug, $sitearg, $readfile );
+my ( $accountfile, $hdbuser, $hdbpass, $debug, $sitearg, $readfile, $addzero );
 
 #store decodes dir of HDB environment for use
 my $decdir = "$ENV{HDB_ENV}/ratings/ibwc/src";
@@ -31,7 +31,8 @@ my $decdir = "$ENV{HDB_ENV}/ratings/ibwc/src";
 #the ugly globals...
 my $agen_abbrev      = 'IBWC';
 my $data_source      = 'IBWC Unit Values (Realtime)';
-my $usgs_rating_type = 'Shift Adjusted Stage Flow';
+my $usgs_rating_type = 'Stage Flow Linear'; # from LC
+#my $usgs_rating_type = 'Shift Adjusted Stage Flow'; 
 
 main();  #at end of file to allow all subroutines to be prototyped.
 
@@ -108,14 +109,19 @@ sub retrieve_rating_table ($$$) {
   my $file = $site . ".rdb";
 #  my $url  = "ftp://guest8:guest8\@66.85.17.138/PUBLICWAD/rdb_files/$file";
 #  my $url  = "ftp://WAD_User:US!bwcW@d\@63.96.218.88/PUBLICWAD/rdb_files/$file";
-  my $userPass  = 'BoR_User:wr!\?THIu';
+#  my $userPass  = 'BoR_User:wr!\?THIu';
 #  my $url  =  "ftp://" . $userPass . "\@63.96.218.8/IBWC/rdb/$file";
-  my $url  =  "ftp://63.96.218.8/IBWC/rdb/$file";
+#  my $url  =  "ftp://63.96.218.8/IBWC/rdb/$file";
+#  my $url  =  "https://www.ibwc.gov/wad/ratings/$file";
+#  # As of June 2023:
+   my $url  = "https://ibwcsftpstg.blob.core.windows.net/wad/RDB/Customary/$file";
 
 print "URL: $url \n";
 
   $request->uri($url);
-  $request->authorization_basic( 'BoR_User','wr!?THIu' );
+  #$request->uri("https://www.ibwc.gov/wad/ratings/");
+  #$request->authorization_basic( 'BoR_User','wr!?THIu' );
+  
   # this next function actually gets the data
   my $response = $ua->simple_request($request);
 
@@ -126,15 +132,17 @@ print "URL: $url \n";
   } else {    # ($response->is_error)
     printf STDERR $response->error_as_HTML;
   }
+
   return $response;
+
 }
 
 # setup the request.
 sub build_web_request () {
   my $ua = LWP::UserAgent->new;
   $ua->agent('IBWC Rating Table Retrieval for US Bureau of Reclamation HDB: '); #will append lwp version to this with space
-  $ua->from('agilmore@uc.usbr.gov');
-  $ua->timeout(600);
+  #$ua->from('cmarra@usbr.gov');
+  $ua->timeout(1200);
   my $request = HTTP::Request->new();
   $request->method('GET');
   return ( $ua, $request );
@@ -213,14 +221,26 @@ sub update_rating ($$$) {
   my @rating_info;
   my %seen = ();
 
+  # Added by C. Marra June 2019 so NIB gage heights can be touched for recompute
+  my ($shift_date, $started_data);
+
   foreach (@$rat) {
     chomp;
-#   print STDERR "$_\n";
+# print STDERR "$_\n";
 # since this is a windows file there are carraige returns in it
 # add sed command to remove carraige return  by M. Bogner 04222010
     s/\r//;
 
     if (/^#/) {
+      # Get shift effective date so touch_for_recompute can be automated
+      if (/RATING SHIFTED="/) {
+          $shift_date = $';
+          $shift_date =~ s/"//; #remove trailing "
+          $shift_date =~ s/\s+$//; #remove trailing white space
+          open DT, ">$decdir/data/shift_date.txt";
+          print DT "$shift_date\n";
+          close DT;
+      }
       next unless /DATABASE|STATION|RATING|SHIFT/;    #ignore all other rows in header
       next unless
         /NAME|NUMBER|ID|REMARKS|COMMENT|PREV BEGIN|PREV STAGE/;    #only pick these rows out of header
@@ -237,11 +257,17 @@ sub update_rating ($$$) {
     } elsif (/[^\d\s*.-]/) {
       $hdb->hdbdie("malformed rdb file! $_\n");
     } else {    #now handle actual rating
+      if ( defined($addzero) && !defined($started_data)) {
+        $started_data = 1;
+        modify_rating_point( $hdb, $rating, [0,0] ); #add zero point
+      }
       modify_rating_point( $hdb, $rating, split );
       # this line changed by M Bogner 7-March-2011 because the file seemed to change the whitespace
       #modify_rating_point( $hdb, $rating, split /\t/ );
     }
   }
+  undef ($started_data);
+  touch_for_recompute( $hdb, $shift_date, @rating_info);
 }
 
 # attempt to find rating id for site
@@ -326,6 +352,33 @@ sub update_rating_info ($$$) {
   }
 }
 
+# touch source data if this is NIB
+sub touch_for_recompute ($$$) {
+  my $hdb    = shift;
+  my $shift_date = shift;
+  my $desc = shift;
+
+  # Check for NIB
+  if ($desc =~ /09521900/) {
+    eval {
+      # ugly hardcoded SDI and interval 
+      my $sth = $hdb->dbh->prepare(
+      "begin
+         hdb_utilities.touch_for_recompute (2041,'instant',to_date('$shift_date','yyyymmddhh24miss'),sysdate);
+       end;");
+    $sth->execute;
+    };    # semicolon here because of use of eval
+
+    if (@$)    #error occurred
+    {
+      $hdb->dbh->rollback;
+      $hdb->hdbdie("Touch of source data failed \n");
+    } else {
+      $hdb->dbh->commit or $hdb->hdbdie( $hdb->dbh->errstr );
+    }
+  } # end if NIB
+}
+  
 # make a new site rating record
 sub create_site_rating ($$) {
   my $hdb  = shift;
@@ -426,11 +479,11 @@ sub compare_rating ($$$) {    #returns 1 if arrays are equal, 0 if not
   return 0 unless @newrat == @$dbrat;    # same len?
   while (@newrat) {
     my ($db_indep, $db_dep) = @{pop(@$dbrat)}[1,2]; # hoorah for perl ref and array syntax!
- #  print STDERR "DBDEP: $db_indep DB_DEPEND: $db_dep \n";
+#  print STDERR "DBDEP: $db_indep DB_DEPEND: $db_dep \n";
     #my ($web_indep, $web_dep) = (split '\t', pop(@newrat))[0,2]; # same!
 # changed by M bogner 03-07/2011 because the format changed from tab to spaces
     my ($web_indep, $web_dep) = (split ' ', pop(@newrat))[0,2]; # same!
- #  print STDERR "INDEP: $web_indep DEPEND: $web_dep \n";
+#  print STDERR "INDEP: $web_indep DEPEND: $web_dep \n";
     return 0 if $web_indep != $db_indep or $web_dep != $db_dep; #possible floating point issues
   }
   return 1;
@@ -471,6 +524,8 @@ sub process_args (@) {
       $hdbuser = shift;
     } elsif ( $arg =~ /-p/ ) {    # get hdb passwd
       $hdbpass = shift;
+    } elsif ( $arg =~ /-z/ ) {    # get debug flag
+      $addzero = 1;
     } elsif ( $arg =~ /-.*/ ) {    # Unrecognized flag, print help.
       print STDERR "Unrecognized flag: $arg\n";
       &usage;
