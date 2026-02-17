@@ -106,7 +106,10 @@ sub retrieve_rating_table ($$$) {
   my $ua      = shift;
   my $request = shift;
 
-  my $file = $site . ".rdb";
+  #my $file = $site . ".rdb";
+  #different file name with new website -- September 2020
+  my $file = $site . ".rdb.txt";
+
 #  my $url  = "ftp://guest8:guest8\@66.85.17.138/PUBLICWAD/rdb_files/$file";
 #  my $url  = "ftp://WAD_User:US!bwcW@d\@63.96.218.88/PUBLICWAD/rdb_files/$file";
 #  my $userPass  = 'BoR_User:wr!\?THIu';
@@ -259,7 +262,7 @@ sub update_rating ($$$) {
     } else {    #now handle actual rating
       if ( defined($addzero) && !defined($started_data)) {
         $started_data = 1;
-        modify_rating_point( $hdb, $rating, [0,0] ); #add zero point
+        modify_rating_point( $hdb, $rating, (0,0,0) ); #add zero point
       }
       modify_rating_point( $hdb, $rating, split );
       # this line changed by M Bogner 7-March-2011 because the file seemed to change the whitespace
@@ -474,7 +477,7 @@ sub compare_rating ($$$) {    #returns 1 if arrays are equal, 0 if not
     $hdb->hdbdie("Failed to select rating table $rating from db! $!\n")  
   
   }
-  
+  unshift(@newrat, "0 0 0") if defined($addzero); #add zero point to beginning of retrieved rating if requested.
   # after perldoc -f splice
   return 0 unless @newrat == @$dbrat;    # same len?
   while (@newrat) {
@@ -524,7 +527,7 @@ sub process_args (@) {
       $hdbuser = shift;
     } elsif ( $arg =~ /-p/ ) {    # get hdb passwd
       $hdbpass = shift;
-    } elsif ( $arg =~ /-z/ ) {    # get debug flag
+    } elsif ( $arg =~ /-z/ ) {    # get addzero flag
       $addzero = 1;
     } elsif ( $arg =~ /-.*/ ) {    # Unrecognized flag, print help.
       print STDERR "Unrecognized flag: $arg\n";
