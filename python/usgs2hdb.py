@@ -169,8 +169,9 @@ def main(args):
     debug(f"USGS Codes to retrieve: {build_site_code_list(sites)}", args.verbose)
 
     func = waterdata.get_daily if args.flowType == 'd' else waterdata.get_continuous
-    rows_per_record = 1 if args.flowType == 'd' else 288
-    max_rows_per_call = 10000
+    rows_per_day = 1 if args.flowType == 'd' else 288
+    # round numbers, actual limit is 1100 days for continuous, and 50K is the apparent limit for daily? 50k at 288/day is only 173ish, but we'll take it to be safe
+    max_rows_per_call = 50000 
     max_sites_per_call = 50
     
     # Build list of (site, code) tuples for processing
@@ -241,20 +242,32 @@ def main(args):
         batch_size = min(max_sites_per_call, len(remaining_pairs))
         
         # Check if this batch would exceed row limit for the full date range
-        estimated_rows = batch_size * rows_per_record * (end - begin).days
+        estimated_rows = batch_size * rows_per_day * (end - begin).days
+        
+        # If estimated rows exceed limit, reduce batch size to fit within limit
         if estimated_rows > max_rows_per_call:
-            # Calculate how many days we can safely process
-            max_days = calculate_max_days_per_batch(batch_size, rows_per_record)
+            # Calculate maximum pairs that fit within row limit
+            max_pairs_for_rows = max(1, max_rows_per_call // (rows_per_day * (end - begin).days))
+            batch_size = min(batch_size, max_pairs_for_rows)
+            estimated_rows = batch_size * rows_per_day * (end - begin).days
             
-            # Process this batch in chunks of days
-            current_date = begin
-            while current_date < end:
-                chunk_end = min(current_date + pd.Timedelta(days=max_days), end)
+            # If still over limit, process in day chunks
+            if estimated_rows > max_rows_per_call:
+                max_days = calculate_max_days_per_batch(batch_size, rows_per_day)
+                
+                # Process this batch in chunks of days
+                current_date = begin
+                while current_date < end:
+                    chunk_end = min(current_date + pd.Timedelta(days=max_days), end)
+                    batch_pairs = remaining_pairs[:batch_size]
+                    
+                    fetch_and_write_batch(batch_pairs, current_date, chunk_end)
+                    
+                    current_date = chunk_end
+            else:
+                # Batch fits within row limit for full date range
                 batch_pairs = remaining_pairs[:batch_size]
-                
-                fetch_and_write_batch(batch_pairs, current_date, chunk_end)
-                
-                current_date = chunk_end
+                fetch_and_write_batch(batch_pairs, begin, end)
         else:
             # Batch fits within row limit for full date range
             batch_pairs = remaining_pairs[:batch_size]
