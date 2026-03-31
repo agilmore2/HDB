@@ -168,87 +168,100 @@ def main(args):
     debug(f"USGS Sites to retrieve: {build_site_num_list(sites)}", args.verbose)
     debug(f"USGS Codes to retrieve: {build_site_code_list(sites)}", args.verbose)
 
-    func=waterdata.get_daily if args.flowType == 'd' else waterdata.get_continuous
-    rows_per_record = 1 if args.flowType == 'd' else 96
-    max_rows_per_call = 3000 #give headroom if instantaneous data is 5 minute
+    func = waterdata.get_daily if args.flowType == 'd' else waterdata.get_continuous
+    rows_per_record = 1 if args.flowType == 'd' else 288
+    max_rows_per_call = 10000
     max_sites_per_call = 50
     
     # Build list of (site, code) tuples for processing
     site_code_pairs = [(site, code) for site in sites for code in sites[site]]
     
-    # Batch API calls with dynamic adjustment for row limits
-    current_index = 0
-    days = (end - begin).days
-    while current_index < len(site_code_pairs):
-        # Start with max possible batch size
-        batch_size = min(max_sites_per_call, len(site_code_pairs) - current_index)
-        
-        # Calculate estimated rows
-        estimated_rows = batch_size * rows_per_record * days
-        # If over row limit, reduce batch size proportionally
-        if estimated_rows > max_rows_per_call:
-            # Compute max pairs to stay under row limit
-            row_factor = rows_per_record * days
-            if row_factor > 0:
-                max_pairs_for_rows = max_rows_per_call // row_factor
-                batch_size = min(batch_size, max_pairs_for_rows)
-            else:
-                batch_size = 1  # Fallback if no rows expected (edge case)
-
-        batch_pairs = site_code_pairs[current_index : current_index + batch_size]
-        
-        # Ensure at least one pair is processed
-        if not batch_pairs:
-            break
-        
+    def calculate_max_days_per_batch(num_pairs, rows_per_day):
+        """Calculate maximum days that can fit in a batch without exceeding row limit."""
+        if rows_per_day == 0:
+            return (end - begin).days
+        return max(1, max_rows_per_call // (num_pairs * rows_per_day))
+    
+    def fetch_and_write_batch(batch_pairs, batch_begin, batch_end):
+        """Fetch data for a batch of site/code pairs and write to database."""
         batch_sites = list(set(pair[0] for pair in batch_pairs))
         batch_codes = list(set(pair[1].split("_")[0] for pair in batch_pairs))
         
-        debug(f"Retrieving batch: sites={batch_sites}, codes={batch_codes}", args.verbose)
+        debug(f"Retrieving batch: sites={batch_sites}, codes={batch_codes}, "
+              f"period={batch_begin} to {batch_end}", args.verbose)
         
         df,md = func(monitoring_location_id=batch_sites,
                   parameter_code=batch_codes,
-                  time=[begin.strftime("%Y-%m-%d %H:%M:%S"), end.strftime("%Y-%m-%d %H:%M:%S")])
+                  time=[batch_begin.strftime("%Y-%m-%d %H:%M:%S"), 
+                        batch_end.strftime("%Y-%m-%d %H:%M:%S")])
         
         if df.empty:
-            debug("No data returned for batch", args.verbose)
-        else:
-            # Process results by individual site/code combination
-            for site, code in batch_pairs:
-                site_code_df = df[(df['monitoring_location_id'] == site) & 
-                                  (df['parameter_code'] == code.split("_")[0])].copy()
-                
-                if site_code_df.empty:
-                    debug(f"No data for site {site} code {code}", args.verbose)
-                    continue
-                
-                site_code_df.set_index('time', inplace=True)
-                site_code_df.index = pd.to_datetime(site_code_df.index)
-                site_code_df.sort_index(inplace=True)
-                site_code_df.dropna(subset=['value'], inplace=True)
-                
-                dt_list = site_code_df.index.tolist()
-#                debug(dt_list, args.verbose)
-               
-                val_series = pd.to_numeric(site_code_df["value"], errors='coerce')
-                val_list = val_series.tolist()
-                debug(val_list, args.verbose)
-               
-                debug(f"Writing {len(val_list)} rows for site {site} code {code}", args.verbose)
-                
-                db.write_xfer(sites[site][code] | {
-                            'overwrite_flag': oFlag, 'val': None, 'app_id': db.app_id},
-                            dt_list, val_list)
-                
-                if args.test:
-                    db.rollback()
-                    debug("Test mode active, database rollback executed.", args.verbose)
-                else:
-                    db.commit()
-                    debug("Data written to database.", args.verbose)
+            debug(f"No data returned for batch", args.verbose)
+            return
         
-        # Advance index by actual batch size processed
-        current_index += len(batch_pairs)
+        # Process results by individual site/code combination
+        for site, code in batch_pairs:
+            site_code_df = df[(df['monitoring_location_id'] == site) & 
+                              (df['parameter_code'] == code.split("_")[0])].copy()
+            
+            if site_code_df.empty:
+                debug(f"No data for site {site} code {code}", args.verbose)
+                continue
+            
+            site_code_df.set_index('time', inplace=True)
+            site_code_df.index = pd.to_datetime(site_code_df.index)
+            site_code_df.sort_index(inplace=True)
+            site_code_df.dropna(subset=['value'], inplace=True)
+            
+            if site_code_df.empty:
+                continue
+            
+            dt_list = site_code_df.index.tolist()
+            val_series = pd.to_numeric(site_code_df["value"], errors='coerce')
+            val_list = val_series.tolist()
+            
+            debug(f"Writing {len(val_list)} rows for site {site} code {code}", args.verbose)
+            
+            db.write_xfer(sites[site][code] | {
+                        'overwrite_flag': oFlag, 'val': None, 'app_id': db.app_id},
+                        dt_list, val_list)
+            
+            if args.test:
+                db.rollback()
+                debug("Test mode active, database rollback executed.", args.verbose)
+            else:
+                db.commit()
+                debug("Data written to database.", args.verbose)
+    
+    # Batch API calls with site limit and row limit
+    pair_index = 0
+    while pair_index < len(site_code_pairs):
+        # Determine how many site/code pairs can fit in this batch
+        remaining_pairs = site_code_pairs[pair_index:]
+        batch_size = min(max_sites_per_call, len(remaining_pairs))
+        
+        # Check if this batch would exceed row limit for the full date range
+        estimated_rows = batch_size * rows_per_record * (end - begin).days
+        if estimated_rows > max_rows_per_call:
+            # Calculate how many days we can safely process
+            max_days = calculate_max_days_per_batch(batch_size, rows_per_record)
+            
+            # Process this batch in chunks of days
+            current_date = begin
+            while current_date < end:
+                chunk_end = min(current_date + pd.Timedelta(days=max_days), end)
+                batch_pairs = remaining_pairs[:batch_size]
+                
+                fetch_and_write_batch(batch_pairs, current_date, chunk_end)
+                
+                current_date = chunk_end
+        else:
+            # Batch fits within row limit for full date range
+            batch_pairs = remaining_pairs[:batch_size]
+            fetch_and_write_batch(batch_pairs, begin, end)
+        
+        # Advance to next batch of site/code pairs
+        pair_index += batch_size
 
     #debug(nwis.get_record(sites=build_site_num_list(sites),parameterCd=build_site_code_list(sites),
     #                      start=begin,end=end,service='dv'), args.verbose)
