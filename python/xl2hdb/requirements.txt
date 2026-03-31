@@ -1,0 +1,10 @@
+et_xmlfile
+openpyxl
+pytz
+setuptools
+wheel
+six
+python_dateutil
+cx_Oracle
+numpy
+pandas
