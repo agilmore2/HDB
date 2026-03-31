@@ -16,7 +16,9 @@ import dataretrieval.waterdata as waterdata
 Follows the same processing as usgs2hdb.pl, but uses Python and the cx_Oracle library.
 '''
 
-apikey = os.getenv('USGS_API_KEY','ubTfXAxJDuQsQpXN4wgrnFxW0awRtfsUiQKH2J2m')
+# key needs to be set in the environment or the default limit of 50 calls will be applied.
+# see https://api.waterdata.usgs.gov/signup/ for your own
+apikey = os.getenv('API_USGS_PAT','ubTfXAxJDuQsQpXN4wgrnFxW0awRtfsUiQKH2J2m')
 
 
 def debug(msg,v):
@@ -72,8 +74,7 @@ def main(args):
         """
         # Flatten all codes from all sites and deduplicate
         # for all sites
-        #return list({code.split("_")[0] for site in usgs_sites.values() for code in site})
-        return list({code.split("_")[0] for code in usgs_sites})
+        return list({code.split("_")[0] for site in usgs_sites.values() for code in site})
 
     # Python equivalent of Perl get_usgs_sites
     def get_usgs_sites(hdb, flowtype, site_num_list=None):
@@ -167,40 +168,87 @@ def main(args):
     debug(f"USGS Sites to retrieve: {build_site_num_list(sites)}", args.verbose)
     debug(f"USGS Codes to retrieve: {build_site_code_list(sites)}", args.verbose)
 
-    for site in sites:
-        for code in sites[site]:
-            debug(f"Retrieving site {site} with code {code}", args.verbose)
-            df = waterdata.get_daily(monitoring_location_id=site,
-                                parameter_code=code.split("_")[0],
-                                time=[begin.strftime("%Y-%m-%d %H:%M:%S"), end.strftime("%Y-%m-%d %H:%M:%S")])
-            if df.empty:
-                debug(f"No data returned for site {site}", args.verbose)
-                continue
-            df.set_index('time', inplace=True)
-            df.index = pd.to_datetime(df.index)
-            df.sort_index(inplace=True)
-            df.dropna(subset=['value'], inplace=True)
-            
-            dt_list = df.index.tolist()
-            debug(dt_list, args.verbose)
-            val_series = pd.to_numeric(df["value"], errors='coerce')
-            val_list = val_series.tolist()
-            debug(val_list, args.verbose)
-
-            db.write_xfer(sites[site][code] | {
-                        'overwrite_flag': oFlag, 'val': None, 'app_id': db.app_id},
-                        dt_list, val_list)
-            
-            if args.test:
-                db.rollback()
-                debug("Test mode active, database rollback executed.", args.verbose)
+    func=waterdata.get_daily if args.flowType == 'd' else waterdata.get_continuous
+    rows_per_record = 1 if args.flowType == 'd' else 96
+    max_rows_per_call = 3000 #give headroom if instantaneous data is 5 minute
+    max_sites_per_call = 50
+    
+    # Build list of (site, code) tuples for processing
+    site_code_pairs = [(site, code) for site in sites for code in sites[site]]
+    
+    # Batch API calls with dynamic adjustment for row limits
+    current_index = 0
+    days = (end - begin).days
+    while current_index < len(site_code_pairs):
+        # Start with max possible batch size
+        batch_size = min(max_sites_per_call, len(site_code_pairs) - current_index)
+        
+        # Calculate estimated rows
+        estimated_rows = batch_size * rows_per_record * days
+        # If over row limit, reduce batch size proportionally
+        if estimated_rows > max_rows_per_call:
+            # Compute max pairs to stay under row limit
+            row_factor = rows_per_record * days
+            if row_factor > 0:
+                max_pairs_for_rows = max_rows_per_call // row_factor
+                batch_size = min(batch_size, max_pairs_for_rows)
             else:
-                db.commit()
-                debug("Data written to database.", args.verbose)
+                batch_size = 1  # Fallback if no rows expected (edge case)
 
-
-
-
+        batch_pairs = site_code_pairs[current_index : current_index + batch_size]
+        
+        # Ensure at least one pair is processed
+        if not batch_pairs:
+            break
+        
+        batch_sites = list(set(pair[0] for pair in batch_pairs))
+        batch_codes = list(set(pair[1].split("_")[0] for pair in batch_pairs))
+        
+        debug(f"Retrieving batch: sites={batch_sites}, codes={batch_codes}", args.verbose)
+        
+        df,md = func(monitoring_location_id=batch_sites,
+                  parameter_code=batch_codes,
+                  time=[begin.strftime("%Y-%m-%d %H:%M:%S"), end.strftime("%Y-%m-%d %H:%M:%S")])
+        
+        if df.empty:
+            debug("No data returned for batch", args.verbose)
+        else:
+            # Process results by individual site/code combination
+            for site, code in batch_pairs:
+                site_code_df = df[(df['monitoring_location_id'] == site) & 
+                                  (df['parameter_code'] == code.split("_")[0])].copy()
+                
+                if site_code_df.empty:
+                    debug(f"No data for site {site} code {code}", args.verbose)
+                    continue
+                
+                site_code_df.set_index('time', inplace=True)
+                site_code_df.index = pd.to_datetime(site_code_df.index)
+                site_code_df.sort_index(inplace=True)
+                site_code_df.dropna(subset=['value'], inplace=True)
+                
+                dt_list = site_code_df.index.tolist()
+#                debug(dt_list, args.verbose)
+               
+                val_series = pd.to_numeric(site_code_df["value"], errors='coerce')
+                val_list = val_series.tolist()
+                debug(val_list, args.verbose)
+               
+                debug(f"Writing {len(val_list)} rows for site {site} code {code}", args.verbose)
+                
+                db.write_xfer(sites[site][code] | {
+                            'overwrite_flag': oFlag, 'val': None, 'app_id': db.app_id},
+                            dt_list, val_list)
+                
+                if args.test:
+                    db.rollback()
+                    debug("Test mode active, database rollback executed.", args.verbose)
+                else:
+                    db.commit()
+                    debug("Data written to database.", args.verbose)
+        
+        # Advance index by actual batch size processed
+        current_index += len(batch_pairs)
 
     #debug(nwis.get_record(sites=build_site_num_list(sites),parameterCd=build_site_code_list(sites),
     #                      start=begin,end=end,service='dv'), args.verbose)
