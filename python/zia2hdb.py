@@ -7,11 +7,11 @@ Created May/June 2025
 @author: Andrew Gilmore
 after xl2hdb by Andrew Gilmore and Brett Boyer
 """
-import io
 from datetime import datetime, timedelta
 import sys
 import argparse
 import os
+import io
 import pandas as pd
 import requests
 
@@ -19,159 +19,258 @@ from lib.hdb import Hdb
 
 
 def debug(msg, v):
-    if v: print(msg)
+    if v:
+        print(msg)
 
 
-def generate_url():
-    pass
+def parse_args():
+    parser = argparse.ArgumentParser(description='Ziamet -> HDB loader')
 
+    class ValidateDate(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            try:
+                setattr(namespace, self.dest, datetime.strptime(values, "%Y-%m-%d").date())
+            except ValueError:
+                parser.error(f"Invalid date value or format for {option_string}: '{values}'. Expected YYYY-MM-DD.")
 
-def get_file(url):
-    return url
+    parser.register('action', 'validate_date', ValidateDate)
 
-def parse_dates(args):
-    # handle dates:
-    # Truth table and results for numdays, begindate and enddate
-    # errors are all defined, only enddate defined, nothing defined
-    # everything else gets fixed up.
-    # Num Days | Beg Date | End Date | Result
-    # nothing defined                   error
-    #  def                              end date = now, beg date = enddate-numdays
-    #  def        def                   end date = beg date + numdays
-    #             def                   end date = now, check max num days?
-    #             def         def       ok
-    #                         def       error, what is beg date?
-    #  def                    def       beg date = end date - numdays
-    #  def        def         def       error, not checking to see if consistent
-    args.numdays = int(args.numdays)
-
-    if args.numdays:
-        # let exceptions handle if arguments are nonsense
-        if args.begindate and args.enddate:
-            print ("Error, overspecified dates, all of -n, -b, -e specified!")
-            exit(1)
-        elif args.begindate:
-            args.begindate = datetime.fromisoformat(args.begindate)
-            args.enddate = args.begindate + timedelta(args.numdays)
-        elif args.enddate:
-            args.enddate = datetime.fromisoformat(args.enddate)
-        else:
-            args.enddate = datetime.now().date()
-        # also handles if enddate is specified
-        args.begindate = args.enddate + timedelta(days=-args.numdays)
-
-    else:
-        if args.begindate and args.enddate:
-            args.begindate = datetime.fromisoformat(args.begindate)
-            args.enddate = datetime.fromisoformat(args.enddate)
-        elif args.begindate:
-            args.begindate = datetime.fromisoformat(args.begindate)
-            args.enddate = datetime.now()
-        elif args.enddate:
-            print("Error, cannot specify only end date!")
-            exit(1)
-        else:
-            print("Error, dates are unspecified!")
-            exit(1)
-        args.numdays = args.enddate - args.begindate
-
-    if not args.begindate or not args.enddate:
-        print("Error, dates not specifed or error parsing dates!")
-        exit(1)
-
-    return args
-
-
-def main(args):
-    parser = argparse.ArgumentParser()
     parser.add_argument('-a', '--authFile', help='app_login containing database credentials', required=True)
-    parser.add_argument('-f', '--file', help='File to load from', required=False)
     parser.add_argument('-n', '--numdays', help='Number of days to load', required=False)
-    parser.add_argument('-b', '--begindate', help='Beginning date to load from, YYYY-MM-DD', required=False)
-    parser.add_argument('-e', '--enddate', help='Ending date to load to, YYYY-MM-DD', required=False)
-    parser.add_argument('--verbose', action='store_true', help='Show more detail about process')
+    parser.add_argument('-b', '--begin', action='validate_date', help='Begin date (YYYY-MM-DD)', required=False)
+    parser.add_argument('-e', '--end', action='validate_date', help='End date (YYYY-MM-DD)', required=False)
+    parser.add_argument('-f', '--file', help='File to load from', required=False)
+    parser.add_argument('-d', '--verbose', action='store_true', help='Show more detail about process')
+    parser.add_argument('-t', '--test', action='store_true', help='Test, do not write to database')
     parser.add_argument('--overwrite', action='store_true', help='Write an O to the overwrite_flag field')
 
-    args = parse_dates(parser.parse_args())
+    return parser.parse_args()
 
-    debug(args, args.verbose)
 
-    if not args.file:
-        #url = generate_url(ids)
-        url = 'https://weather.nmsu.edu/ziamet/station/sfwx/dly/sfnamb/'
-        client=requests.session()
-        client.get(url,verify=False) #get CSRF cookie
-        response = client.post(url, verify=False,
-                               headers={'Referer': 'https://weather.nmsu.edu/ziamet/station/data/sfnamb/', },
-                               data={'csrfmiddlewaretoken': client.cookies['csrftoken'],
-                                                   'dtype': 'sfwx',
-                                                     'sid': 'sfnamb',
-                                                   'sdate': args.begindate,
-                                                   'edate': args.enddate,
-                                                  'output': 'csv',
-                                                   'units': 'iu',
-                                    }
-                               )
+def determine_date_range(args):
+    """Determine begin and end dates based on arguments.
+    
+    Truth table:
+    - If neither begin nor end: use numdays from end=today, or error
+    - If only begin: end = begin + numdays or end = today
+    - If only end: begin = end - numdays or error
+    - If both: use as-is, ignore numdays if provided
+    """
+    lastDay = datetime.today().date()
+    
+    begin = args.begin
+    end = args.end
+    numdays = int(args.numdays) if args.numdays else None
 
-        csvfile = io.StringIO(response.content.decode('utf-8'))
+    if not begin and not end:
+        end = lastDay
+        if numdays:
+            begin = end - timedelta(days=numdays - 1)
+        else:
+            raise SystemExit("You must specify at least one of -b, -e, or -n to define a date range.")
+    elif begin and not end:
+        if numdays:
+            end = begin + timedelta(days=numdays - 1)
+        else:
+            end = lastDay
+    elif end and not begin:
+        if numdays:
+            begin = end - timedelta(days=numdays - 1)
+        else:
+            raise SystemExit("Only end date specified: use -n or -b to define when to start")
     else:
-        csvfile = args.file
+        if numdays:
+            raise SystemExit("Overspecified dates: all of -b, -e, -n specified")
 
-    df = pd.read_csv(csvfile, skiprows=0)
+    return begin, end
 
-    # delete unit row
-    df = df.drop(0).reset_index(drop=True)
 
-    #TODO: retrieve URL? and column names/SDIs/etc. from ref_site_data_map etc.
+def get_ziamet_sites(hdb):
+    """Query HDB for Ziamet sites and return a nested dict keyed by site_id and datatype.
+    
+    Returns dict[site_id][datatype_name] = row dict with metadata
+    """
+    title = 'NMSU Ziamet CSV Loader'
+    params = {'title': title}
+    sql = f"""
+        select b.primary_site_code as site_id, b.primary_data_code as datatype_name,
+            b.hdb_interval_name as inter, b.hdb_method_id as method_id,
+            b.hdb_computation_id as comp_id, b.hdb_site_datatype_id as sdi,
+            d.site_id, d.site_name, e.collection_system_id as collect_id,
+            e.agen_id, e.description as url
+        from hdb_site_datatype a, ref_ext_site_data_map b,
+            hdb_site d, hdb_ext_data_source e
+        where a.site_datatype_id = b.hdb_site_datatype_id and
+            b.is_active_y_n = 'Y' and
+            a.site_id = d.site_id and
+            b.ext_data_source_id = e.ext_data_source_id and
+            lower(e.ext_data_source_name) = lower(:title)
+        order by site_id, datatype_name
+    """
+    rows = hdb.query(sql, params)
+    sites = {}
+    for row in rows:
+        site_id = row.get('site_id')
+        datatype_name = row.get('datatype_name')
+        sites.setdefault(site_id, {})[datatype_name] = row
+    return sites
 
-    #delete extra columns and any NaN rows
-    df = df.loc[:, df.columns.str.contains('(?:Date)|(?:M.. Air Temperature)|(?:Rain)')].dropna()
-    df['Date'] = pd.to_datetime(df['Date'])
-    df[["Rain", "Max Air Temperature", "Min Air Temperature"]] =\
-        df[["Rain", "Max Air Temperature", "Min Air Temperature"]].apply(pd.to_numeric)
 
-    debug(df, args.verbose)
+def fetch_ziamet_data(base_url, site_code, begin, end, verbose=False):
+    """Fetch Ziamet CSV data from NMSU website.
+    
+    Args:
+        base_url: Base URL for the Ziamet data service (e.g. https://weather.nmsu.edu/ziamet/station)
+        site_code: Code for the site to fetch data from
+        begin: Start date (datetime.date)
+        end: End date (datetime.date)
+        verbose: Enable verbose output
+        
+    Returns:
+        pandas.DataFrame with columns: Date, Rain, Max Air Temperature, Min Air Temperature
+    """
+    url = f'{base_url}/sfwx/dly/{site_code}/'
+    
+    try:
+        client = requests.session()
+        client.get(url, verify=False)  # Get CSRF cookie
+        
+        response = client.post(
+            url,
+            verify=False,
+            headers={'Referer': f'{base_url}/data/{site_code}/'},
+            data={
+                'csrfmiddlewaretoken': client.cookies['csrftoken'],
+                'dtype': 'sfwx',
+                'sid': f'{site_code}',
+                'sdate': begin.strftime('%Y-%m-%d'),
+                'edate': end.strftime('%Y-%m-%d'),
+                'output': 'csv',
+                'units': 'iu',
+            }
+        )
+        response.raise_for_status()
+        
+        if verbose:
+            debug(f'Fetching data from {url} for {begin} to {end}', verbose)
+        
+        csvfile = io.StringIO(response.content.decode('utf-8'))
+        df = pd.read_csv(csvfile, skiprows=0)
+        
+        # Delete unit row
+        df = df.drop(0).reset_index(drop=True)
+        
+        # Filter to relevant columns and remove NaN rows
+        df = df.loc[:, df.columns.str.contains('(?:Date)|(?:M.. Air Temperature)|(?:Rain)', regex=True)].dropna()
+        
+        # Convert date and numeric columns
+        df['Date'] = pd.to_datetime(df['Date'])
+        df[["Rain", "Max Air Temperature", "Min Air Temperature"]] = \
+            df[["Rain", "Max Air Temperature", "Min Air Temperature"]].apply(pd.to_numeric)
+        
+        return df
+        
+    except Exception as e:
+        raise SystemExit(f"Error fetching data from Ziamet: {e}")
 
-    dtList = df["Date"].tolist()
-    rainList = df["Rain"].tolist()
-    maxTList = df["Max Air Temperature"].tolist()
-    minTList = df["Min Air Temperature"].tolist()
 
-    #hardcoded for now
-    rainSDI = 19698
-    maxSDI = 20200
-    minSDI = 20201
-
+def setup_database(args):
+    """Initialize and connect to HDB."""
     db = Hdb()
     db.connect_from_file(args.authFile)
-
-    interval = 'day'
-    db.agen = 'New Mexico State University'
     db.app = os.path.basename(sys.argv[0])
-    db.collect = '(see agency)'
-    db.method = 'N/A'
-    db.comp = 'unknown'
-    # Write either None or 'O' to the overwrite flag field
+    db.app_id = db.get_loadingAppID(db.app)
+    return db
+
+
+def write_site_data(db, app_key, dt_list, val_list, verbose=False, test=False):
+    """Write a single datatype's data to the database.
+    
+    Args:app_key["site_name"]
+        db: Hdb connection object
+        datatype_name: Name of datatype being written (for logging)
+        app_key: Dict with metadata for write_xfer
+        dt_list: List of datetime values
+        val_list: List of data values
+        verbose: Enable verbose output
+        test: If True, rollback instead of commit
+    """
+    if not dt_list:
+        debug(f'No data to write for {app_key["site_name"]}', verbose)
+        return
+    
+    db.write_xfer(app_key, dt_list, val_list)
+    
+    if test:
+        db.rollback()
+        debug(f'Test mode active, database rolled back for {app_key["site_name"]}.', verbose)
+    else:
+        db.commit()
+        debug(f'Data written to database for {app_key["site_name"]}: {len(val_list)} values.', verbose)
+
+
+def main(argv=None):
+    args = parse_args()
+    begin, end = determine_date_range(args)
+    debug(f'Begin date: {begin}, End date: {end}', args.verbose)
+
     oFlag = 'O' if args.overwrite else None
 
-    ids = db.get_app_ids()
+    # Setup database connection
+    db = setup_database(args)
+    debug(f'Using loading application {db.app} with id {db.app_id}', args.verbose)
 
-    db.write_xfer(ids | {'sdi': rainSDI, 'inter': interval,
-                                      'overwrite_flag': oFlag, 'val': 'Z'},
-                  dtList, rainList)
+    # Retrieve site mappings from database
+    sites = get_ziamet_sites(db)
+    debug(f'Sites retrieved from database: {sites}', args.verbose)
 
-    db.write_xfer(ids | {'sdi': maxSDI, 'inter': interval,
-                                      'overwrite_flag': oFlag, 'val': 'Z'},
-                  dtList, maxTList)
+    # Fetch all data at once (no chunking needed for Ziamet)
+    for site_id in sites:
+        for datatype_name in sites[site_id]:
 
-    db.write_xfer(ids | {'sdi': minSDI, 'inter': interval,
-                                      'overwrite_flag': oFlag, 'val': 'Z'},
-                  dtList, minTList)
+            row = sites[site_id][datatype_name]
+            base_url = row.get('url')
+            if not base_url:
+                debug(f'No URL for site {site_id} dev {datatype_name}, skipping', args.verbose)
+                continue
+            if not base_url.startswith(('http://', 'https://')):
+                print(f'Invalid URL for site {site_id}: {base_url}. URL must start with http:// or https://', file=sys.stderr)
+                continue
+            try:
+                df = fetch_ziamet_data(sites[site_id]['url'], datatype_name,
+                                    begin, end, verbose=args.verbose)
+                debug(f'Retrieved {len(df)} rows from Ziamet', args.verbose)
+            except SystemExit as e:
+                print(e, file=sys.stderr)
+                return
 
-    db.commit()
-
-    print("Wrote %d values." % (len(rainList) + len(maxTList) + len(minTList)))
+            # Process each site/datatype combination
+            total_written = 0
+           
+            if datatype_name not in df.columns:
+                debug(f'Column {datatype_name} not found in data, skipping', args.verbose)
+                continue
+            
+            # Build lists for this datatype
+            dt_list = df['Date'].tolist()
+            val_list = pd.to_numeric(df[datatype_name], errors='coerce').tolist()
+            
+            # Build app_key with metadata
+            app_key = row.copy()
+            app_key.update({
+                'overwrite_flag': oFlag,
+                'val': None,
+                'app_id': db.app_id
+            })
+            
+            # Write data to database
+            write_site_data(db, app_key, dt_list, val_list,
+                          verbose=args.verbose, test=args.test)
+            
+            total_written += len(val_list)
+    
+    print(f"Wrote {total_written} total values.")
 
 
 if __name__ == '__main__':
-    main(sys.argv[:])
+    main()
