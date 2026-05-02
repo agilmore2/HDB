@@ -86,17 +86,17 @@ def determine_date_range(args):
 
 
 def get_ziamet_sites(hdb):
-    """Query HDB for Ziamet sites and return a nested dict keyed by site_id and datatype.
+    """Query HDB for Ziamet sites and return a nested dict keyed by site_code and data_code.
     
-    Returns dict[site_id][datatype_name] = row dict with metadata
+    Returns dict[site_code][data_code] = row dict with metadata
     """
-    title = 'NMSU Ziamet CSV Loader'
+    title = 'NMSU ZiaMet/CoCoRaHS loader'
     params = {'title': title}
     sql = f"""
-        select b.primary_site_code as site_id, b.primary_data_code as datatype_name,
+        select b.primary_site_code as site_code, b.primary_data_code as data_code,
             b.hdb_interval_name as inter, b.hdb_method_id as method_id,
             b.hdb_computation_id as comp_id, b.hdb_site_datatype_id as sdi,
-            d.site_id, d.site_name, e.collection_system_id as collect_id,
+            d.site_name, e.collection_system_id as collect_id,
             e.agen_id, e.description as url
         from hdb_site_datatype a, ref_ext_site_data_map b,
             hdb_site d, hdb_ext_data_source e
@@ -105,18 +105,18 @@ def get_ziamet_sites(hdb):
             a.site_id = d.site_id and
             b.ext_data_source_id = e.ext_data_source_id and
             lower(e.ext_data_source_name) = lower(:title)
-        order by site_id, datatype_name
+        order by site_code, data_code
     """
     rows = hdb.query(sql, params)
     sites = {}
     for row in rows:
-        site_id = row.get('site_id')
-        datatype_name = row.get('datatype_name')
-        sites.setdefault(site_id, {})[datatype_name] = row
+        site_code = row.get('site_code')
+        data_code = row.get('data_code')
+        sites.setdefault(site_code, {})[data_code] = row
     return sites
 
 
-def fetch_ziamet_data(base_url, site_code, begin, end, verbose=False):
+def fetch_ziamet_data(base_url, site_code, site, begin, end, verbose=False):
     """Fetch Ziamet CSV data from NMSU website.
     
     Args:
@@ -129,16 +129,16 @@ def fetch_ziamet_data(base_url, site_code, begin, end, verbose=False):
     Returns:
         pandas.DataFrame with columns: Date, Rain, Max Air Temperature, Min Air Temperature
     """
-    url = f'{base_url}/sfwx/dly/{site_code}/'
+    url = f'{base_url}sfwx/dly/{site_code}/'
     
     try:
         client = requests.session()
-        client.get(url, verify=False)  # Get CSRF cookie
-        
+        client.get(url, verify=False)  # Get CSRF cookie, verify false to ignore MitM by DOI
+
         response = client.post(
             url,
             verify=False,
-            headers={'Referer': f'{base_url}/data/{site_code}/'},
+            headers={'Referer': f'{base_url}data/{site_code}/'},
             data={
                 'csrfmiddlewaretoken': client.cookies['csrftoken'],
                 'dtype': 'sfwx',
@@ -159,14 +159,13 @@ def fetch_ziamet_data(base_url, site_code, begin, end, verbose=False):
         
         # Delete unit row
         df = df.drop(0).reset_index(drop=True)
-        
+        data_codes = list(site.keys())
         # Filter to relevant columns and remove NaN rows
-        df = df.loc[:, df.columns.str.contains('(?:Date)|(?:M.. Air Temperature)|(?:Rain)', regex=True)].dropna()
+        df = df.loc[:, ['Date'] + [col for col in df.columns if col in data_codes]].dropna()
         
         # Convert date and numeric columns
         df['Date'] = pd.to_datetime(df['Date'])
-        df[["Rain", "Max Air Temperature", "Min Air Temperature"]] = \
-            df[["Rain", "Max Air Temperature", "Min Air Temperature"]].apply(pd.to_numeric)
+        df[data_codes] = df[data_codes].apply(pd.to_numeric, errors='coerce')
         
         return df
         
@@ -184,11 +183,10 @@ def setup_database(args):
 
 
 def write_site_data(db, app_key, dt_list, val_list, verbose=False, test=False):
-    """Write a single datatype's data to the database.
+    """Write a single site_datatype's data to the database.
     
-    Args:app_key["site_name"]
+    Args:app_key["site_code"]
         db: Hdb connection object
-        datatype_name: Name of datatype being written (for logging)
         app_key: Dict with metadata for write_xfer
         dt_list: List of datetime values
         val_list: List of data values
@@ -203,7 +201,7 @@ def write_site_data(db, app_key, dt_list, val_list, verbose=False, test=False):
     
     if test:
         db.rollback()
-        debug(f'Test mode active, database rolled back for {app_key["site_name"]}.', verbose)
+        debug(f'Test mode active, database rolled back for {app_key["site_name"]}: {len(val_list)} values.', verbose)
     else:
         db.commit()
         debug(f'Data written to database for {app_key["site_name"]}: {len(val_list)} values.', verbose)
@@ -224,39 +222,38 @@ def main(argv=None):
     sites = get_ziamet_sites(db)
     debug(f'Sites retrieved from database: {sites}', args.verbose)
 
-    # Fetch all data at once (no chunking needed for Ziamet)
-    for site_id in sites:
-        for datatype_name in sites[site_id]:
+    total_written = 0
+    for site_code in sites:
+        row = next(iter(sites[site_code].values()))
+        base_url = row.get('url')
+        # Fetch data page for all site data (assumes all data on same page)
 
-            row = sites[site_id][datatype_name]
-            base_url = row.get('url')
-            if not base_url:
-                debug(f'No URL for site {site_id} dev {datatype_name}, skipping', args.verbose)
-                continue
-            if not base_url.startswith(('http://', 'https://')):
-                print(f'Invalid URL for site {site_id}: {base_url}. URL must start with http:// or https://', file=sys.stderr)
-                continue
-            try:
-                df = fetch_ziamet_data(sites[site_id]['url'], datatype_name,
-                                    begin, end, verbose=args.verbose)
-                debug(f'Retrieved {len(df)} rows from Ziamet', args.verbose)
-            except SystemExit as e:
-                print(e, file=sys.stderr)
-                return
+        if not base_url:
+            debug(f'No URL for site {site_code}, skipping', args.verbose)
+            continue
+        if not base_url.startswith(('http://', 'https://')):
+            print(f'Invalid URL for site {site_code}: {base_url}. URL must start with http:// or https://', file=sys.stderr)
+            continue
+        try:
+            df = fetch_ziamet_data(base_url, site_code, sites[site_code],
+                                begin, end, verbose=args.verbose)
+            debug(f'Retrieved {len(df)} rows from Ziamet', args.verbose)
+        except SystemExit as e:
+            print(e, file=sys.stderr)
+            return
 
-            # Process each site/datatype combination
-            total_written = 0
-           
-            if datatype_name not in df.columns:
-                debug(f'Column {datatype_name} not found in data, skipping', args.verbose)
+        for data_code in sites[site_code]:
+
+            if data_code not in df.columns:
+                debug(f'Column {data_code} not found in data, skipping', args.verbose)
                 continue
             
             # Build lists for this datatype
             dt_list = df['Date'].tolist()
-            val_list = pd.to_numeric(df[datatype_name], errors='coerce').tolist()
+            val_list = pd.to_numeric(df[data_code], errors='coerce').tolist()
             
             # Build app_key with metadata
-            app_key = row.copy()
+            app_key = sites[site_code][data_code].copy()
             app_key.update({
                 'overwrite_flag': oFlag,
                 'val': None,
