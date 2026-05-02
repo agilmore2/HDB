@@ -152,9 +152,12 @@ def fetch_site_data(base_url, site_code, columns, begin, end, verbose=False):
     available_cols = ['Date'] + [col for col in columns if col in df.columns]
     df = df.loc[:, available_cols].copy()
     df['Date'] = pd.to_datetime(df['Date'])
+
     for col in available_cols:
         if col != 'Date':
             df[col] = pd.to_numeric(df[col], errors='coerce')
+    df = df.dropna().reset_index(drop=True) # does this annoying thing where right after midnight, the current day values are NaN
+
     return df
 
 
