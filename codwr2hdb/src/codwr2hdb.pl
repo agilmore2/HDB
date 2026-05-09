@@ -9,7 +9,7 @@ use warnings;
 use lib ( defined $ENV{PERL_ENV} ? "$ENV{PERL_ENV}/lib" : "$ENV{HDB_ENV}/perlLib/lib" );
 
 use LWP::UserAgent;
-use Date::Calc qw(Delta_DHMS Decode_Date_EU Today Add_Delta_Days);
+use Date::Calc qw(Delta_DHMS Decode_Date_EU Today Today_and_Now Add_Delta_Days);
 use File::Basename;
 use Data::Dumper;
 
@@ -62,7 +62,7 @@ if ( defined($accountfile) ) {
 }
 
 #set write ability on connection (app_role)
-$hdb->set_approle();
+#$hdb->set_approle();
 
 #Set date format to the format used by their website
 $hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'MM/DD/YYYY HH24:MI'")
@@ -788,7 +788,7 @@ sub process_dates {
     } elsif (@$enddate) {
       @$begindate = Add_Delta_Days( @$enddate, -$numdays );
     } else {
-      @$enddate = Today();
+      @$enddate = Add_Delta_Days(Today(), 1);    # look for today's data too, per Lucas and #1819
       @$begindate = Add_Delta_Days( @$enddate, -$numdays );
     }
   } else {
@@ -796,7 +796,7 @@ sub process_dates {
 
       #do nothing, we're good
     } elsif (@$begindate) {
-      @$enddate = Today();
+      @$enddate = Add_Delta_Days(Today(), 1);    # look for today's data too, per Lucas and #1819
     } elsif (@$enddate) {
       print "Error, cannot specify only end date!\n";
       exit 1;
