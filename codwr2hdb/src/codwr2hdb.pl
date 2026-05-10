@@ -62,7 +62,7 @@ if ( defined($accountfile) ) {
 }
 
 #set write ability on connection (app_role)
-#$hdb->set_approle();
+$hdb->set_approle();
 
 #Set date format to the format used by their website
 $hdb->dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'MM/DD/YYYY HH24:MI'")

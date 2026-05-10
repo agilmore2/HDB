@@ -61,9 +61,9 @@ def parse_args():
 
 
 def determine_date_range(args):
-    lastDay = datetime.today().date()
+    lastDay = datetime.today()
     if args.flowType == 'd':
-        lastDay = lastDay - pd.Timedelta(days=1)
+        lastDay = lastDay.date()
             
     begin = args.begin
     end = args.end
@@ -72,17 +72,17 @@ def determine_date_range(args):
     if not begin and not end:
         end = lastDay
         if numdays:
-            begin = end - pd.Timedelta(days=numdays - 1)
+            begin = end - pd.Timedelta(days=numdays)
         else:
             raise SystemExit("You must specify at least one of -b, -e, or -n to define a date range.")
     elif begin and not end:
         if numdays:
-            end = begin + pd.Timedelta(days=numdays - 1)
+            end = begin + pd.Timedelta(days=numdays)
         else:
             end = lastDay
     elif end and not begin:
         if numdays:
-            begin = end - pd.Timedelta(days=numdays - 1)
+            begin = end - pd.Timedelta(days=numdays)
         else:
             raise SystemExit("Only end date specified: use -n or -b to define when to start")
     else:
@@ -241,6 +241,7 @@ def fetch_site_data(base_url, a_id, dev_code, begin, end, verbose=False):
         # Fetch data for the current period
         url, params = build_url(base_url, a_id, dev_code, start_date, period_end_date)
         try:
+            debug(f"URL: {url} Params: {params}", verbose)
             df_new, time_col, val_col = fetch_json_dataframe(url, params, verbose=verbose)
             # Extend the lists with new data
             dt_list.extend(df_new[time_col].tolist())
