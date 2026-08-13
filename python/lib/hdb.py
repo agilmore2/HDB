@@ -12,7 +12,7 @@ import stat
 class Hdb(object):
 
     def __init__(self):
-        self.conn = None
+        self.conn: cx_Oracle.Connection | None = None
         self.dbname = None
         self.agen = 'Bureau of Reclamation'
         self.collect = 'See loading application'
@@ -263,6 +263,51 @@ class Hdb(object):
 
             return id
         
+    def query_ts(self, sdi, interval, start_dt, end_dt, inst_interval=15):
+        """Read a timeseries via ts_xfer.get_real_data.
+
+        Returns a DataFrame with columns start_date_time (datetime) and value (float/NaN).
+        The procedure gap-fills the range on a regular grid via dates_between/instants_between,
+        so NaN appears where no data exists — no resampling needed in the caller.
+
+        Args:
+            sdi:           site_datatype_id (int)
+            interval:      'instant', 'hour', 'day', 'month', 'year', 'wy', or 'other'
+            start_dt:      range start (datetime or date)
+            end_dt:        range end (datetime or date)
+            inst_interval: minutes between instants; only used for interval='instant'/'other' (default 15)
+        """
+        with self.conn.cursor() as cursor:
+            try:
+                dates_var  = cursor.var(self.conn.gettype("DATEARRAY"))
+                values_var = cursor.var(self.conn.gettype("NUMBER_ARRAY"))
+
+                cursor.execute(
+                    "begin ts_xfer.get_real_data("
+                    "  :sdi, :start_dt, :end_dt, :interval,"
+                    "  :dates, :ts_values, :inst_interval"
+                    "); end;",
+                    {
+                        'sdi':           sdi,
+                        'start_dt':      start_dt,
+                        'end_dt':        end_dt,
+                        'interval':      interval,
+                        'dates':         dates_var,
+                        'ts_values':     values_var,
+                        'inst_interval': inst_interval,
+                    }
+                )
+
+                return pd.DataFrame({
+                    'start_date_time': dates_var.getvalue() or [],
+                    'value':           values_var.getvalue() or [],
+                })
+
+            except Exception as ex:
+                self.conn.rollback()
+                print(ex)
+                self.hdbdie("Errors occurred during timeseries query!")
+
     def query(self, sql, params=None):
         """
         Execute a SQL query with optional parameters and return a list of dicts (column:value).
