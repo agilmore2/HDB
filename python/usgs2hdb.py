@@ -14,6 +14,10 @@ import dataretrieval.waterdata as waterdata
 
 ''' HDB writing from USGS NWIS data
 Follows the same processing as usgs2hdb.pl, but uses Python and the cx_Oracle library.
+
+Must have HDB_LOADING_APPLICATION entry:
+INSERT INTO "HDBA"."HDB_LOADING_APPLICATION" (LOADING_APPLICATION_ID, LOADING_APPLICATION_NAME, CMMNT) VALUES (60, 'usgs2hdb.py', 'Python USGS2HDB loader')
+
 '''
 
 # key needs to be set in the environment or the default limit of 50 calls will be applied.
