@@ -277,6 +277,10 @@ class Hdb(object):
             end_dt:        range end (datetime or date)
             inst_interval: minutes between instants; only used for interval='instant'/'other' (default 15)
         """
+        if interval.lower() not in ('instant', 'hour', 'other'):
+            start_dt = start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_dt   = end_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+
         with self.conn.cursor() as cursor:
             try:
                 dates_var  = cursor.var(self.conn.gettype("DATEARRAY"))
@@ -298,9 +302,11 @@ class Hdb(object):
                     }
                 )
 
+                dates_raw  = dates_var.getvalue()
+                values_raw = values_var.getvalue()
                 return pd.DataFrame({
-                    'start_date_time': dates_var.getvalue() or [],
-                    'value':           values_var.getvalue() or [],
+                    'start_date_time': dates_raw.aslist()  if dates_raw  is not None else [],
+                    'value':           values_raw.aslist() if values_raw is not None else [],
                 })
 
             except Exception as ex:

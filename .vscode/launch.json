@@ -11,7 +11,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": "-a ~/.app_user_login_service -A EBID -n 2 -e 2025-09-15 -l i -d -i 1647",
+            "args": "-a ~/.app_user_login_service -n 2 -d -t -l u -A MRGCD",
             "envFile": "/home/agilmore/workspace/HDB/bashrc_hdb_app_local",
             "justMyCode": false,
             "env": {"PYTHONPATH": "..:python"},
@@ -26,6 +26,30 @@
             "envFile": "/home/agilmore/workspace/HDB/bashrc_hdb_app_local",
             "justMyCode": false,
             "args": " -l d -a ~/.app_user_login_service -n 5 -t",
+        },
+
+        {
+            "name": "hdb2report: CODWR Historical Daily Data",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/python/hdb2report/hdb2report.py",
+            "python": "${workspaceFolder}/python/venv/bin/python",
+            "console": "integratedTerminal",
+            "envFile": "/home/agilmore/workspace/HDB/bashrc_hdb_app_local",
+            "justMyCode": false,
+            "args": ["-a", "~/.app_user_login_service", "-n", "7", "-s", "CODWR Historical Daily Data"]
+        },
+
+        {
+            "name": "hdb2report: Colorado Division of Water Resources (CODWR)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/python/hdb2report/hdb2report.py",
+            "python": "${workspaceFolder}/python/venv/bin/python",
+            "console": "integratedTerminal",
+            "envFile": "/home/agilmore/workspace/HDB/bashrc_hdb_app_local",
+            "justMyCode": false,
+            "args": ["-a", "~/.app_user_login_service", "-f", "csv","-n", "7", "-i", "BTBLESCO,BTABESCO", "-s", "Colorado Division of Water Resources (CODWR)"]
         },
 
         {

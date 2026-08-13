@@ -7,7 +7,8 @@ Each distinct (primary_site_code, hdb_interval_name) pair produces a separate bl
 Timestamps are shown only for sub-daily intervals (instant, hour, other).
 
 Usage:
-  hdb2report.py -a <authfile> -s <datasource> [-d <days>] [-f space|csv|html] [-o <file>]
+  hdb2report.py -a <authfile> -s <datasource> [-n <days>] [-b YYYY-MM-DD] [-e YYYY-MM-DD]
+                [-i <site_code>] [-f space|csv|html] [-o <file>]
 """
 
 import argparse
@@ -31,12 +32,28 @@ def parse_args():
     p = argparse.ArgumentParser(
         description='Report HDB timeseries for a named ext_data_source'
     )
+
+    class ValidateDate(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            try:
+                setattr(namespace, self.dest, datetime.strptime(str(values), '%Y-%m-%d').date())
+            except ValueError:
+                parser.error(f'Invalid date for {option_string}: {values!r}. Expected YYYY-MM-DD.')
+
+    p.register('action', 'validate_date', ValidateDate)
+
     p.add_argument('-a', '--authfile', required=True,
                    help='HDB auth file')
     p.add_argument('-s', '--source', required=True, metavar='DATASOURCE',
                    help='ext_data_source_name to report')
-    p.add_argument('-d', '--days', type=int, default=7, metavar='N',
-                   help='days of history to query (default 7)')
+    p.add_argument('-n', '--numdays', metavar='N',
+                   help='number of days to report')
+    p.add_argument('-b', '--begin', action='validate_date', metavar='YYYY-MM-DD',
+                   help='begin date (inclusive)')
+    p.add_argument('-e', '--end', action='validate_date', metavar='YYYY-MM-DD',
+                   help='end date (inclusive)')
+    p.add_argument('-i', '--site_code', action='append', metavar='SITE_CODE',
+                   help='filter by primary_site_code (repeatable)')
     p.add_argument('-f', '--format', choices=['space', 'csv', 'html'], default='space',
                    help='output format (default: space)')
     p.add_argument('-o', '--output', metavar='FILE',
@@ -44,15 +61,56 @@ def parse_args():
     return p.parse_args()
 
 
-def get_site_intervals(hdb, datasource):
-    return hdb.query("""
+def determine_date_range(args):
+    today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    numdays = int(args.numdays) if args.numdays else None
+
+    def to_dt(d):
+        return datetime(d.year, d.month, d.day)
+
+    begin = to_dt(args.begin) if args.begin else None
+    end   = to_dt(args.end)   if args.end   else None
+
+    if not begin and not end:
+        end = today
+        if numdays:
+            begin = end - timedelta(days=numdays - 1)
+        else:
+            print('Error: specify at least one of -b, -e, or -n.', file=sys.stderr)
+            sys.exit(1)
+    elif begin and not end:
+        end = begin + timedelta(days=numdays - 1) if numdays else today
+    elif end and not begin:
+        if numdays:
+            begin = end - timedelta(days=numdays - 1)
+        else:
+            print('Error: only end date given; use -n or -b to define the start.', file=sys.stderr)
+            sys.exit(1)
+    else:
+        if numdays:
+            print('Error: -b, -e, and -n all specified.', file=sys.stderr)
+            sys.exit(1)
+
+    return begin, end
+
+
+def get_site_intervals(hdb, datasource, site_codes=None):
+    params = {'datasource': datasource}
+    site_filter = ''
+    if site_codes:
+        placeholders = ', '.join(f':s{i}' for i in range(len(site_codes)))
+        site_filter  = f'AND m.primary_site_code IN ({placeholders})'
+        params.update({f's{i}': code for i, code in enumerate(site_codes)})
+
+    return hdb.query(f"""
         SELECT DISTINCT m.primary_site_code, m.hdb_interval_name
         FROM ref_ext_site_data_map m
         JOIN hdb_ext_data_source d ON d.ext_data_source_id = m.ext_data_source_id
         WHERE LOWER(d.ext_data_source_name) = LOWER(:datasource)
         AND m.is_active_y_n = 'Y'
+        {site_filter}
         ORDER BY m.primary_site_code, m.hdb_interval_name
-    """, {'datasource': datasource})
+    """, params)
 
 
 def get_columns(hdb, datasource, site, interval):
@@ -82,11 +140,15 @@ def build_pivot(hdb, columns, interval, start_dt, end_dt):
     for col in columns:
         df = hdb.query_ts(col['hdb_site_datatype_id'], interval, start_dt, end_dt)
         frames[col['primary_data_code']] = df.set_index('start_date_time')['value']
-    return pd.DataFrame(frames).sort_index(ascending=False)
+    return pd.DataFrame(frames).sort_index(ascending=True)
 
 
 def fmt_ts(ts, sub_daily):
     return ts.strftime(DT_FMT if sub_daily else DATE_FMT)
+
+
+def ts_fmt_label(sub_daily):
+    return 'YYYY-MM-DD HH:MI' if sub_daily else 'YYYY-MM-DD'
 
 
 def fmt_val_space(v):
@@ -124,7 +186,7 @@ def write_space(out, site, interval, columns, pivot, sub_daily):
     out.write('\n')
 
     header_line = pad
-    unit_line   = pad
+    unit_line   = ts_fmt_label(sub_daily).ljust(dt_width + 2)
     for col in columns:
         name = col['primary_data_code']
         unit = '(' + col['unit_common_name'].replace('feet', 'ft') + ')'
@@ -150,7 +212,7 @@ def write_csv(out, site, interval, columns, pivot, sub_daily):
     for line in provisional_lines(sub_daily):
         writer.writerow([f'# {line}'])
     writer.writerow([dt_label] + col_names)
-    writer.writerow([''] + [f"({c['unit_common_name']})" for c in columns])
+    writer.writerow([ts_fmt_label(sub_daily)] + [f"({c['unit_common_name']})" for c in columns])
     for ts, row in pivot.iterrows():
         writer.writerow([fmt_ts(ts, sub_daily)] + [fmt_val_text(row[n]) for n in col_names])
     writer.writerow([])
@@ -161,10 +223,11 @@ def write_html(out, site, interval, columns, pivot, sub_daily):
     col_names = [c['primary_data_code'] for c in columns]
 
     out.write(f'<h2>{site} &mdash; {interval}</h2>\n')
-    out.write('<p><em>' + ' '.join(provisional_lines(sub_daily)) + '</em></p>\n')
+    for line in provisional_lines(sub_daily):
+        out.write(f'<p><em>{line}</em></p>\n')
     out.write('<table border="1" cellpadding="4" style="border-collapse:collapse">\n')
     out.write('  <thead><tr>\n')
-    out.write(f'    <th>{dt_label}</th>\n')
+    out.write(f'    <th>{dt_label}<br><em>{ts_fmt_label(sub_daily)}</em></th>\n')
     for col in columns:
         unit = col['unit_common_name'].replace('feet', 'ft')
         out.write(f'    <th>{col["primary_data_code"]}<br>({unit})</th>\n')
@@ -188,10 +251,13 @@ def main():
     hdb = Hdb()
     hdb.connect_from_file(args.authfile)
 
-    end_dt   = datetime.now()
-    start_dt = end_dt - timedelta(days=args.days)
+    start_dt, end_dt = determine_date_range(args)
 
-    site_intervals = get_site_intervals(hdb, args.source)
+    site_codes = None
+    if args.site_code:
+        site_codes = [c for arg in args.site_code for c in arg.split(',')]
+
+    site_intervals = get_site_intervals(hdb, args.source, site_codes)
     if not site_intervals:
         print(f'No active mappings found for data source: {args.source!r}', file=sys.stderr)
         sys.exit(1)

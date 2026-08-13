@@ -37,6 +37,9 @@ my %title;
 $title{u} = 'Colorado Division of Water Resources (CODWR)';
 $title{d} = 'Colorado Division of Water Resources (CODWR) Daily Values';
 
+# This is title in ECAO for
+#$title{d} = 'CODWR Historical Daily Data';
+
 #global variables read from database in get_app_ids
 my ( $load_app_id, $agen_id, $validation, $url, $collect_id );
 my $agen_abbrev = "CODWR";
