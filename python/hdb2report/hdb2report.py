@@ -3,10 +3,9 @@
 hdb2report.py - Export HDB timeseries for a named ext_data_source.
 
 Data source configuration lives in hdb_ext_data_source / ref_ext_site_data_map.
-Writes one file per primary_site_code, named <site_code>.<ext>, into the
-current directory. Each distinct hdb_interval_name for that site produces a
-separate block within the file. Timestamps are shown only for sub-daily
-intervals (instant, hour, other).
+Writes one file per (primary_site_code, hdb_interval_name) pair, named
+<site_code>_<interval>.<ext>, into the current directory. Timestamps are
+shown only for sub-daily intervals (instant, hour, other).
 
 Usage:
   hdb2report.py -a <authfile> -s <datasource> [-n <days>] [-b YYYY-MM-DD] [-e YYYY-MM-DD]
@@ -15,7 +14,6 @@ Usage:
 
 import argparse
 import csv
-import itertools
 import os
 import sys
 from datetime import datetime, timedelta
@@ -268,36 +266,35 @@ def main():
         print(f'No active mappings found for data source: {args.source!r}', file=sys.stderr)
         sys.exit(1)
 
-    for site, rows in itertools.groupby(site_intervals, key=lambda r: r['primary_site_code']):
-        rows = list(rows)
-        out = open(f'{site}.{FORMAT_EXT[args.format]}', 'w')
+    for row in site_intervals:
+        site      = row['primary_site_code']
+        interval  = row['hdb_interval_name']
+        sub_daily = interval.lower() in SUB_DAILY
+
+        columns = get_columns(hdb, args.source, site, interval)
+        if not columns:
+            continue
+        for col in columns:
+            col['unit_common_name'] = fmt_unit(col['unit_common_name'])
+
+        pivot = build_pivot(hdb, columns, interval, start_dt, end_dt)
+
+        out = open(f'{site}_{interval}.{FORMAT_EXT[args.format]}', 'w')
 
         try:
             if args.format == 'html':
                 out.write('<!DOCTYPE html>\n<html>\n<head>\n')
                 out.write('<meta charset="utf-8">\n')
-                out.write(f'<title>{args.source} &mdash; {site}</title>\n')
+                out.write(f'<title>{args.source} &mdash; {site} [{interval}]</title>\n')
                 out.write('</head>\n<body>\n')
-                out.write(f'<h1>{args.source} &mdash; {site}</h1>\n\n')
+                out.write(f'<h1>{args.source} &mdash; {site} [{interval}]</h1>\n\n')
 
-            for row in rows:
-                interval  = row['hdb_interval_name']
-                sub_daily = interval.lower() in SUB_DAILY
-
-                columns = get_columns(hdb, args.source, site, interval)
-                if not columns:
-                    continue
-                for col in columns:
-                    col['unit_common_name'] = fmt_unit(col['unit_common_name'])
-
-                pivot = build_pivot(hdb, columns, interval, start_dt, end_dt)
-
-                if args.format == 'space':
-                    write_space(out, site, interval, columns, pivot, sub_daily)
-                elif args.format == 'csv':
-                    write_csv(out, site, interval, columns, pivot, sub_daily)
-                elif args.format == 'html':
-                    write_html(out, site, interval, columns, pivot, sub_daily)
+            if args.format == 'space':
+                write_space(out, site, interval, columns, pivot, sub_daily)
+            elif args.format == 'csv':
+                write_csv(out, site, interval, columns, pivot, sub_daily)
+            elif args.format == 'html':
+                write_html(out, site, interval, columns, pivot, sub_daily)
 
             if args.format == 'html':
                 out.write('</body>\n</html>\n')
