@@ -3,16 +3,23 @@ Testing ts_xfer package for CUL loading
 '''
 
 from datetime import date
-import cx_Oracle
 import os
 import pandas as pd
 import stat
+
+try:
+    import cx_Oracle as db
+except ImportError:
+    import oracledb as db
+    # HDB requires Oracle Wallet, which python-oracledb only
+    # supports in thick mode (requires Oracle Instant Client).
+    db.init_oracle_client()
 
 
 class Hdb(object):
 
     def __init__(self):
-        self.conn: cx_Oracle.Connection | None = None
+        self.conn: db.Connection | None = None
         self.dbname = None
         self.agen = 'Bureau of Reclamation'
         self.collect = 'See loading application'
@@ -67,10 +74,10 @@ class Hdb(object):
     def connect_to_db(self, auth):
         """Get a connection to the Oracle database."""
         try:
-            self.conn = cx_Oracle.connect(
+            self.conn = db.connect(
                 user=auth['username'],
                 password=auth['password'],
-                dsn=cx_Oracle.makedsn(
+                dsn=db.makedsn(
                     host=auth['hostname'],
                     port=auth['port'],
                     service_name=auth['database'] #need to handle tns aliases and SID instead of service name
