@@ -3,16 +3,19 @@
 hdb2report.py - Export HDB timeseries for a named ext_data_source.
 
 Data source configuration lives in hdb_ext_data_source / ref_ext_site_data_map.
-Each distinct (primary_site_code, hdb_interval_name) pair produces a separate block.
-Timestamps are shown only for sub-daily intervals (instant, hour, other).
+Writes one file per primary_site_code, named <site_code>.<ext>, into the
+current directory. Each distinct hdb_interval_name for that site produces a
+separate block within the file. Timestamps are shown only for sub-daily
+intervals (instant, hour, other).
 
 Usage:
   hdb2report.py -a <authfile> -s <datasource> [-n <days>] [-b YYYY-MM-DD] [-e YYYY-MM-DD]
-                [-i <site_code>] [-f space|csv|html] [-o <file>]
+                [-i <site_code>] [-f space|csv|html]
 """
 
 import argparse
 import csv
+import itertools
 import os
 import sys
 from datetime import datetime, timedelta
@@ -26,6 +29,7 @@ SUB_DAILY = {'instant', 'hour', 'other'}
 COL_WIDTH  = 12
 DT_FMT     = '%Y-%m-%d %H:%M'
 DATE_FMT   = '%Y-%m-%d'
+FORMAT_EXT = {'space': 'txt', 'csv': 'csv', 'html': 'html'}
 
 
 def parse_args():
@@ -56,8 +60,6 @@ def parse_args():
                    help='filter by primary_site_code (repeatable)')
     p.add_argument('-f', '--format', choices=['space', 'csv', 'html'], default='space',
                    help='output format (default: space)')
-    p.add_argument('-o', '--output', metavar='FILE',
-                   help='output file (default: stdout)')
     return p.parse_args()
 
 
@@ -151,6 +153,10 @@ def ts_fmt_label(sub_daily):
     return 'YYYY-MM-DD HH:MI' if sub_daily else 'YYYY-MM-DD'
 
 
+def fmt_unit(unit_common_name):
+    return unit_common_name.replace('feet', 'ft')
+
+
 def fmt_val_space(v):
     """Right-justify a value into COL_WIDTH chars; blank for missing."""
     if pd.isna(v):
@@ -189,7 +195,7 @@ def write_space(out, site, interval, columns, pivot, sub_daily):
     unit_line   = ts_fmt_label(sub_daily).ljust(dt_width + 2)
     for col in columns:
         name = col['primary_data_code']
-        unit = '(' + col['unit_common_name'].replace('feet', 'ft') + ')'
+        unit = '(' + col['unit_common_name'] + ')'
         header_line += f'{name:>{COL_WIDTH}}'
         unit_line   += f'{unit:>{COL_WIDTH}}'
     out.write(header_line.rstrip() + '\n')
@@ -208,9 +214,9 @@ def write_csv(out, site, interval, columns, pivot, sub_daily):
     dt_label  = 'date_time' if sub_daily else 'date'
     col_names = [c['primary_data_code'] for c in columns]
 
-    writer.writerow([f'# {site}  [{interval}]'])
+    out.write(f'# {site}  [{interval}]\n')
     for line in provisional_lines(sub_daily):
-        writer.writerow([f'# {line}'])
+        out.write(f'# {line}\n')
     writer.writerow([dt_label] + col_names)
     writer.writerow([ts_fmt_label(sub_daily)] + [f"({c['unit_common_name']})" for c in columns])
     for ts, row in pivot.iterrows():
@@ -229,7 +235,7 @@ def write_html(out, site, interval, columns, pivot, sub_daily):
     out.write('  <thead><tr>\n')
     out.write(f'    <th>{dt_label}<br><em>{ts_fmt_label(sub_daily)}</em></th>\n')
     for col in columns:
-        unit = col['unit_common_name'].replace('feet', 'ft')
+        unit = col['unit_common_name']
         out.write(f'    <th>{col["primary_data_code"]}<br>({unit})</th>\n')
     out.write('  </tr></thead>\n  <tbody>\n')
 
@@ -262,39 +268,41 @@ def main():
         print(f'No active mappings found for data source: {args.source!r}', file=sys.stderr)
         sys.exit(1)
 
-    out = open(args.output, 'w') if args.output else sys.stdout
+    for site, rows in itertools.groupby(site_intervals, key=lambda r: r['primary_site_code']):
+        rows = list(rows)
+        out = open(f'{site}.{FORMAT_EXT[args.format]}', 'w')
 
-    try:
-        if args.format == 'html':
-            out.write('<!DOCTYPE html>\n<html>\n<head>\n')
-            out.write('<meta charset="utf-8">\n')
-            out.write(f'<title>{args.source}</title>\n')
-            out.write('</head>\n<body>\n')
-            out.write(f'<h1>{args.source}</h1>\n\n')
+        try:
+            if args.format == 'html':
+                out.write('<!DOCTYPE html>\n<html>\n<head>\n')
+                out.write('<meta charset="utf-8">\n')
+                out.write(f'<title>{args.source} &mdash; {site}</title>\n')
+                out.write('</head>\n<body>\n')
+                out.write(f'<h1>{args.source} &mdash; {site}</h1>\n\n')
 
-        for row in site_intervals:
-            site      = row['primary_site_code']
-            interval  = row['hdb_interval_name']
-            sub_daily = interval.lower() in SUB_DAILY
+            for row in rows:
+                interval  = row['hdb_interval_name']
+                sub_daily = interval.lower() in SUB_DAILY
 
-            columns = get_columns(hdb, args.source, site, interval)
-            if not columns:
-                continue
+                columns = get_columns(hdb, args.source, site, interval)
+                if not columns:
+                    continue
+                for col in columns:
+                    col['unit_common_name'] = fmt_unit(col['unit_common_name'])
 
-            pivot = build_pivot(hdb, columns, interval, start_dt, end_dt)
+                pivot = build_pivot(hdb, columns, interval, start_dt, end_dt)
 
-            if args.format == 'space':
-                write_space(out, site, interval, columns, pivot, sub_daily)
-            elif args.format == 'csv':
-                write_csv(out, site, interval, columns, pivot, sub_daily)
-            elif args.format == 'html':
-                write_html(out, site, interval, columns, pivot, sub_daily)
+                if args.format == 'space':
+                    write_space(out, site, interval, columns, pivot, sub_daily)
+                elif args.format == 'csv':
+                    write_csv(out, site, interval, columns, pivot, sub_daily)
+                elif args.format == 'html':
+                    write_html(out, site, interval, columns, pivot, sub_daily)
 
-        if args.format == 'html':
-            out.write('</body>\n</html>\n')
+            if args.format == 'html':
+                out.write('</body>\n</html>\n')
 
-    finally:
-        if args.output:
+        finally:
             out.close()
 
 
