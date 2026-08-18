@@ -3,9 +3,12 @@
 hdb2report.py - Export HDB timeseries for a named ext_data_source.
 
 Data source configuration lives in hdb_ext_data_source / ref_ext_site_data_map.
-Writes one file per (primary_site_code, hdb_interval_name) pair, named
-<site_code>_<interval>.<ext>, into the current directory. Timestamps are
-shown only for sub-daily intervals (instant, hour, other).
+Writes one file per hdb_interval_name present in the data source, named
+<datasource>_<interval>.<ext>, into the current directory. Each file is a
+single pivoted table: one row per timestamp, one column per
+(primary_site_code, primary_data_code) pair across every site in that
+interval. Timestamps are shown only for sub-daily intervals (instant, hour,
+other).
 
 Usage:
   hdb2report.py -a <authfile> -s <datasource> [-n <days>] [-b YYYY-MM-DD] [-e YYYY-MM-DD]
@@ -15,7 +18,9 @@ Usage:
 import argparse
 import csv
 import os
+import re
 import sys
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 import pandas as pd
@@ -134,12 +139,24 @@ def get_columns(hdb, datasource, site, interval):
     """, {'datasource': datasource, 'site': site, 'interval': interval})
 
 
+def get_interval_columns(hdb, datasource, interval, sites):
+    """Column metadata for every site in this interval, tagged with site code and a combined column key."""
+    columns = []
+    for site in sites:
+        for col in get_columns(hdb, datasource, site, interval):
+            col['unit_common_name']  = fmt_unit(col['unit_common_name'])
+            col['primary_site_code'] = site
+            col['col_name']          = f"{site}_{col['primary_data_code']}"
+            columns.append(col)
+    return columns
+
+
 def build_pivot(hdb, columns, interval, start_dt, end_dt):
-    """Fetch each column's SDI via ts_xfer.get_real_data and pivot into a single DataFrame."""
+    """Fetch each column's timeseries via ts_xfer.get_real_data and pivot into a single DataFrame keyed by col_name."""
     frames = {}
     for col in columns:
         df = hdb.query_ts(col['hdb_site_datatype_id'], interval, start_dt, end_dt)
-        frames[col['primary_data_code']] = df.set_index('start_date_time')['value']
+        frames[col['col_name']] = df.set_index('start_date_time')['value']
     return pd.DataFrame(frames).sort_index(ascending=True)
 
 
@@ -155,14 +172,19 @@ def fmt_unit(unit_common_name):
     return unit_common_name.replace('feet', 'ft')
 
 
-def fmt_val_space(v):
-    """Right-justify a value into COL_WIDTH chars; blank for missing."""
+def slugify(name):
+    """Make a data source name safe for use as a filename component."""
+    return re.sub(r'[^A-Za-z0-9]+', '_', name).strip('_')
+
+
+def fmt_val_space(v, width=COL_WIDTH):
+    """Right-justify a value into width chars; blank for missing."""
     if pd.isna(v):
-        return ' ' * COL_WIDTH
+        return ' ' * width
     v = float(v)
     if abs(v) < 10000:
-        return f'{v:>{COL_WIDTH}.2f}'
-    return f'{int(v):>{COL_WIDTH}d}'
+        return f'{v:>{width}.2f}'
+    return f'{int(v):>{width}d}'
 
 
 def fmt_val_text(v):
@@ -180,61 +202,57 @@ def provisional_lines(sub_daily):
     return lines
 
 
-def write_space(out, site, interval, columns, pivot, sub_daily):
+def write_space(out, columns, pivot, sub_daily):
     dt_width = 16 if sub_daily else 10
-    pad = ' ' * (dt_width + 2)
+    dt_label = 'date_time' if sub_daily else 'date'
 
-    out.write(f'\n{site}  [{interval}]\n')
-    for line in provisional_lines(sub_daily):
-        out.write(line + '\n')
-    out.write('\n')
+    widths = {
+        c['col_name']: max(COL_WIDTH, len(c['primary_site_code']), len(c['primary_data_code']), len(c['unit_common_name']) + 2)
+        for c in columns
+    }
 
-    header_line = pad
-    unit_line   = ts_fmt_label(sub_daily).ljust(dt_width + 2)
+    site_line = 'site'.ljust(dt_width + 2)
+    code_line = dt_label.ljust(dt_width + 2)
+    unit_line = ts_fmt_label(sub_daily).ljust(dt_width + 2)
     for col in columns:
-        name = col['primary_data_code']
-        unit = '(' + col['unit_common_name'] + ')'
-        header_line += f'{name:>{COL_WIDTH}}'
-        unit_line   += f'{unit:>{COL_WIDTH}}'
-    out.write(header_line.rstrip() + '\n')
-    out.write(unit_line.rstrip()   + '\n\n')
+        width = widths[col['col_name']]
+        unit  = '(' + col['unit_common_name'] + ')'
+        site_line += f'{col["primary_site_code"]:>{width}}'
+        code_line += f'{col["primary_data_code"]:>{width}}'
+        unit_line += f'{unit:>{width}}'
+    out.write(site_line.rstrip() + '\n')
+    out.write(code_line.rstrip() + '\n')
+    out.write(unit_line.rstrip() + '\n\n')
 
-    col_names = [c['primary_data_code'] for c in columns]
     for ts, row in pivot.iterrows():
         line = fmt_ts(ts, sub_daily).ljust(dt_width + 2)
-        line += ''.join(fmt_val_space(row[n]) for n in col_names)
+        line += ''.join(fmt_val_space(row[c['col_name']], widths[c['col_name']]) for c in columns)
         out.write(line.rstrip() + '\n')
     out.write('\n')
 
 
-def write_csv(out, site, interval, columns, pivot, sub_daily):
+def write_csv(out, columns, pivot, sub_daily):
     writer = csv.writer(out)
     dt_label  = 'date_time' if sub_daily else 'date'
-    col_names = [c['primary_data_code'] for c in columns]
+    col_names = [c['col_name'] for c in columns]
 
-    out.write(f'# {site}  [{interval}]\n')
-    for line in provisional_lines(sub_daily):
-        out.write(f'# {line}\n')
-    writer.writerow([dt_label] + col_names)
+    writer.writerow(['site'] + [c['primary_site_code'] for c in columns])
+    writer.writerow([dt_label] + [c['primary_data_code'] for c in columns])
     writer.writerow([ts_fmt_label(sub_daily)] + [f"({c['unit_common_name']})" for c in columns])
     for ts, row in pivot.iterrows():
         writer.writerow([fmt_ts(ts, sub_daily)] + [fmt_val_text(row[n]) for n in col_names])
     writer.writerow([])
 
 
-def write_html(out, site, interval, columns, pivot, sub_daily):
+def write_html(out, columns, pivot, sub_daily):
     dt_label  = 'Date/Time' if sub_daily else 'Date'
-    col_names = [c['primary_data_code'] for c in columns]
+    col_names = [c['col_name'] for c in columns]
 
-    out.write(f'<h2>{site} &mdash; {interval}</h2>\n')
-    for line in provisional_lines(sub_daily):
-        out.write(f'<p><em>{line}</em></p>\n')
     out.write('<table border="1" cellpadding="4" style="border-collapse:collapse">\n')
     out.write('  <thead><tr>\n')
-    out.write(f'    <th>{dt_label}<br><em>{ts_fmt_label(sub_daily)}</em></th>\n')
+    out.write(f'    <th>Site<br>{dt_label}<br><em>{ts_fmt_label(sub_daily)}</em></th>\n')
     for col in columns:
-        unit = col['unit_common_name']
-        out.write(f'    <th>{col["primary_data_code"]}<br>({unit})</th>\n')
+        out.write(f'    <th>{col["primary_site_code"]}<br>{col["primary_data_code"]}<br>({col["unit_common_name"]})</th>\n')
     out.write('  </tr></thead>\n  <tbody>\n')
 
     for ts, row in pivot.iterrows():
@@ -266,37 +284,44 @@ def main():
         print(f'No active mappings found for data source: {args.source!r}', file=sys.stderr)
         sys.exit(1)
 
+    sites_by_interval = defaultdict(list)
     for row in site_intervals:
-        site      = row['primary_site_code']
-        interval  = row['hdb_interval_name']
+        sites_by_interval[row['hdb_interval_name']].append(row['primary_site_code'])
+
+    source_slug = slugify(args.source)
+
+    for interval, sites in sites_by_interval.items():
         sub_daily = interval.lower() in SUB_DAILY
 
-        columns = get_columns(hdb, args.source, site, interval)
+        columns = get_interval_columns(hdb, args.source, interval, sites)
         if not columns:
             continue
-        for col in columns:
-            col['unit_common_name'] = fmt_unit(col['unit_common_name'])
 
         pivot = build_pivot(hdb, columns, interval, start_dt, end_dt)
 
-        out = open(f'{site}_{interval}.{FORMAT_EXT[args.format]}', 'w')
+        out = open(f'{source_slug}_{interval}.{FORMAT_EXT[args.format]}', 'w')
 
         try:
-            if args.format == 'html':
+            if args.format == 'space':
+                out.write(f'Data from {args.source}\n')
+                for line in provisional_lines(sub_daily):
+                    out.write(line + '\n')
+                out.write('\n')
+                write_space(out, columns, pivot, sub_daily)
+            elif args.format == 'csv':
+                out.write(f'# Data from {args.source}\n')
+                for line in provisional_lines(sub_daily):
+                    out.write(f'# {line}\n')
+                write_csv(out, columns, pivot, sub_daily)
+            elif args.format == 'html':
                 out.write('<!DOCTYPE html>\n<html>\n<head>\n')
                 out.write('<meta charset="utf-8">\n')
-                out.write(f'<title>{args.source} &mdash; {site} [{interval}]</title>\n')
+                out.write(f'<title>{args.source} &mdash; {interval}</title>\n')
                 out.write('</head>\n<body>\n')
-                out.write(f'<h1>{args.source} &mdash; {site} [{interval}]</h1>\n\n')
-
-            if args.format == 'space':
-                write_space(out, site, interval, columns, pivot, sub_daily)
-            elif args.format == 'csv':
-                write_csv(out, site, interval, columns, pivot, sub_daily)
-            elif args.format == 'html':
-                write_html(out, site, interval, columns, pivot, sub_daily)
-
-            if args.format == 'html':
+                out.write(f'<h1>Data from {args.source}</h1>\n')
+                for line in provisional_lines(sub_daily):
+                    out.write(f'<p><em>{line}</em></p>\n')
+                write_html(out, columns, pivot, sub_daily)
                 out.write('</body>\n</html>\n')
 
         finally:
