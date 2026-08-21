@@ -204,7 +204,7 @@ def provisional_lines(sub_daily):
 
 def write_space(out, columns, pivot, sub_daily):
     dt_width = 16 if sub_daily else 10
-    dt_label = 'date_time' if sub_daily else 'date'
+    dt_label = 'data'
 
     widths = {
         c['col_name']: max(COL_WIDTH, len(c['primary_site_code']), len(c['primary_data_code']), len(c['unit_common_name']) + 2)
@@ -233,26 +233,26 @@ def write_space(out, columns, pivot, sub_daily):
 
 def write_csv(out, columns, pivot, sub_daily):
     writer = csv.writer(out)
-    dt_label  = 'date_time' if sub_daily else 'date'
+    dt_label  = 'data'
     col_names = [c['col_name'] for c in columns]
 
     writer.writerow(['site'] + [c['primary_site_code'] for c in columns])
     writer.writerow([dt_label] + [c['primary_data_code'] for c in columns])
-    writer.writerow([ts_fmt_label(sub_daily)] + [f"({c['unit_common_name']})" for c in columns])
+    writer.writerow([ts_fmt_label(sub_daily)] + [c['unit_common_name'] for c in columns])
     for ts, row in pivot.iterrows():
         writer.writerow([fmt_ts(ts, sub_daily)] + [fmt_val_text(row[n]) for n in col_names])
     writer.writerow([])
 
 
 def write_html(out, columns, pivot, sub_daily):
-    dt_label  = 'Date/Time' if sub_daily else 'Date'
+    dt_label  = 'Data'
     col_names = [c['col_name'] for c in columns]
 
     out.write('<table border="1" cellpadding="4" style="border-collapse:collapse">\n')
     out.write('  <thead><tr>\n')
     out.write(f'    <th>Site<br>{dt_label}<br><em>{ts_fmt_label(sub_daily)}</em></th>\n')
     for col in columns:
-        out.write(f'    <th>{col["primary_site_code"]}<br>{col["primary_data_code"]}<br>({col["unit_common_name"]})</th>\n')
+        out.write(f'    <th>{col["primary_site_code"]}<br>{col["primary_data_code"]}<br>{col["unit_common_name"]}</th>\n')
     out.write('  </tr></thead>\n  <tbody>\n')
 
     for ts, row in pivot.iterrows():
