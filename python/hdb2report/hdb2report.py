@@ -30,6 +30,7 @@ from lib.hdb import Hdb
 
 SUB_DAILY = {'instant', 'hour', 'other'}
 COL_WIDTH  = 12
+COL_GAP    = 2
 DT_FMT     = '%Y-%m-%d %H:%M'
 DATE_FMT   = '%Y-%m-%d'
 FORMAT_EXT = {'space': 'txt', 'csv': 'csv', 'html': 'html'}
@@ -207,7 +208,7 @@ def write_space(out, columns, pivot, sub_daily):
     dt_label = 'data'
 
     widths = {
-        c['col_name']: max(COL_WIDTH, len(c['primary_site_code']), len(c['primary_data_code']), len(c['unit_common_name']) + 2)
+        c['col_name']: max(COL_WIDTH, len(c['primary_site_code']), len(c['primary_data_code']), len(c['unit_common_name']) + 2) + COL_GAP
         for c in columns
     }
 
@@ -236,8 +237,8 @@ def write_csv(out, columns, pivot, sub_daily):
     dt_label  = 'data'
     col_names = [c['col_name'] for c in columns]
 
-    writer.writerow(['site'] + [c['primary_site_code'] for c in columns])
-    writer.writerow([dt_label] + [c['primary_data_code'] for c in columns])
+    writer.writerow(['#site'] + [c['primary_site_code'] for c in columns])
+    writer.writerow(['#' + dt_label] + [c['primary_data_code'] for c in columns])
     writer.writerow([ts_fmt_label(sub_daily)] + [c['unit_common_name'] for c in columns])
     for ts, row in pivot.iterrows():
         writer.writerow([fmt_ts(ts, sub_daily)] + [fmt_val_text(row[n]) for n in col_names])
