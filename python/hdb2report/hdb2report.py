@@ -237,8 +237,8 @@ def write_csv(out, columns, pivot, sub_daily):
     dt_label  = 'data'
     col_names = [c['col_name'] for c in columns]
 
-    writer.writerow(['#site'] + [c['primary_site_code'] for c in columns])
-    writer.writerow(['#' + dt_label] + [c['primary_data_code'] for c in columns])
+    writer.writerow(['# site'] + [c['primary_site_code'] for c in columns])
+    writer.writerow(['# ' + dt_label] + [c['primary_data_code'] for c in columns])
     writer.writerow([ts_fmt_label(sub_daily)] + [c['unit_common_name'] for c in columns])
     for ts, row in pivot.iterrows():
         writer.writerow([fmt_ts(ts, sub_daily)] + [fmt_val_text(row[n]) for n in col_names])
