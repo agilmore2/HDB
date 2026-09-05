@@ -22,7 +22,10 @@ INSERT INTO "HDBA"."HDB_LOADING_APPLICATION" (LOADING_APPLICATION_ID, LOADING_AP
 
 # key needs to be set in the environment or the default limit of 50 calls will be applied.
 # see https://api.waterdata.usgs.gov/signup/ for your own
-apikey = os.getenv('API_USGS_PAT','ubTfXAxJDuQsQpXN4wgrnFxW0awRtfsUiQKH2J2m')
+apikey = os.getenv('API_USGS_PAT')
+if apikey is None or apikey == '':
+    apikey = 'ubTfXAxJDuQsQpXN4wgrnFxW0awRtfsUiQKH2J2m'
+    os.environ['API_USGS_PAT'] = apikey
 
 
 def debug(msg,v):
