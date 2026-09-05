@@ -221,16 +221,26 @@ def main(args):
             if site_code_df.empty:
                 continue
             
-            dt_list = site_code_df.index.tolist()
-            val_series = pd.to_numeric(site_code_df["value"], errors='coerce')
-            val_list = val_series.tolist()
-            
-            debug(f"Writing {len(val_list)} rows for site {site} code {code}", args.verbose)
-            
-            db.write_xfer(sites[site][code] | {
-                        'overwrite_flag': oFlag, 'val': None, 'app_id': db.app_id},
-                        dt_list, val_list)
-            
+            status_flags = {
+                'Approved': 'A',
+                'Provisional': 'P',
+            }
+
+            for approval_status, val_flag in status_flags.items():
+                status_df = site_code_df[site_code_df['approval_status'] == approval_status].copy()
+                if status_df.empty:
+                    continue
+
+                dt_list = status_df.index.tolist()
+                val_series = pd.to_numeric(status_df["value"], errors='coerce')
+                val_list = val_series.tolist()
+
+                debug(f"Writing {len(val_list)} {approval_status} rows for site {site} code {code}", args.verbose)
+
+                db.write_xfer(sites[site][code] | {
+                            'overwrite_flag': oFlag, 'val': val_flag, 'app_id': db.app_id},
+                            dt_list, val_list)
+
             if args.test:
                 db.rollback()
                 debug("Test mode active, database rollback executed.", args.verbose)
