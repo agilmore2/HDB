@@ -36,13 +36,12 @@ class Hdb(object):
         """Read authentication file and ensure restrictive permissions
 
         Authfile Format
-        should have three to five lines:
          username <username>
          password <password>
-         database <databasename>
-         and optionally
+         database <TNS alias, service name or SID; also used as hostname if none given>
+        and optionally
          hostname <hostname>
-         port <TCP port for listener>
+         port <TCP port for listener, default 1521>
         Will fail if file contains anything else.
         """
         with open(authfile) as file:  # this will error if user does not have permission
@@ -53,42 +52,68 @@ class Hdb(object):
 
             auth = {'port': 1521} # default Oracle DB port
             for line in file:
-                k, v = line.split(' ')
-                if (k == "username" or k == "password" or k == "database"
-                 or k == 'port' or k == 'hostname'):
-                    auth[k] = v[:-1] # has newlines in it
+                if line.startswith('#') or not line.strip(): #strip comments and blank lines
+                    continue
+                k, v = line.split(' ', 1)
+                if k in ('username', 'password', 'database', 'port', 'hostname'):
+                    auth[k] = v.strip()
                 else:
                     print(f'Unrecognized line in {authfile}: {line}')
                     exit(1)
 
-            if auth['hostname'] is None: #default to database name
-                auth['hostname'] = auth['database']
-
-        if len(auth) != 5:
-            self.hdbdie(f"Missing information in authfile: {authfile}")
+        missing = [k for k in ('username', 'password', 'database') if k not in auth]
+        if missing:
+            self.hdbdie(f"Missing {', '.join(missing)} in authfile: {authfile}")
 
         self.dbname = auth['database']
 
         return auth
 
     def connect_to_db(self, auth):
-        """Get a connection to the Oracle database."""
-        try:
-            self.conn = db.connect(
-                user=auth['username'],
-                password=auth['password'],
-                dsn=db.makedsn(
-                    host=auth['hostname'],
-                    port=auth['port'],
-                    service_name=auth['database'] #need to handle tns aliases and SID instead of service name
+        """Get a connection to the Oracle database.
+
+        Attempts, in order, moving on only when the error says the name
+        was not recognized:
+          1. no hostname only: 'database' as-is, i.e. a TNS alias (resolved via
+             $TNS_ADMIN/tnsnames.ora) or Easy Connect string.
+             If it can't be resolved (ORA-12154), fall back to the legacy
+             behavior of using 'database' as the hostname too.
+          2. hostname + 'database' as service name
+          3. hostname + 'database' as SID, if the service is unknown (ORA-12514)
+        """
+        db_name = auth['database']
+        host = auth.get('hostname') or db_name
+        port = auth['port']
+
+        # (description, dsn, error codes that mean "try the next one")
+        attempts = []
+        if not auth.get('hostname'):
+            attempts.append(('TNS alias/connect string', db_name, {12154}))
+        attempts += [
+            (f'service name on {host}',
+             db.makedsn(host, port, service_name=db_name), {12514}),
+            (f'SID on {host}',
+             db.makedsn(host, port, sid=db_name), set()),
+        ]
+
+        errors = []
+        for kind, dsn, retry_codes in attempts:
+            try:
+                self.conn = db.connect(
+                    user=auth['username'],
+                    password=auth['password'],
+                    dsn=dsn
                 )
-            )
+                return self.conn
+            except Exception as ex:
+                errors.append(f'  as {kind}: {ex}')
+                err = ex.args[0] if ex.args else None
+                if getattr(err, 'code', None) not in retry_codes:
+                    break
 
-        except Exception as ex:
-            print(ex)
-            exit(1)
-
-        return self.conn
+        print(f"Could not connect to {auth['database']}:")
+        print('\n'.join(errors))
+        exit(1)
 
     def connect_from_file(self, authfile):
         """Connect to database as defined in authfile"""
