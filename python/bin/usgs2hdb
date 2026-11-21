@@ -1,0 +1,25 @@
+#!/bin/bash
+#activates specfic virtual env and runs with the specified arguments
+readonly prog=$(basename $0)
+
+readonly sourceFile="$HDB_ENV/python/${prog}/venv/bin/activate"
+
+source ${sourceFile}
+
+readonly projDir="$HDB_ENV/python/${prog}"
+
+cd ${projDir}
+
+readonly pyLoadFile="$HDB_ENV/python/${prog}/${prog}.py"
+
+if [ -n "$PYTHONPATH" ] ; then {
+  export PYTHONPATH="$PYTHONPATH":$HDB_ENV/python:..
+}
+else {
+   export PYTHONPATH=$HDB_ENV/python:..
+}
+fi
+export REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+export API_USGS_PAT=<API_KEY_HERE>
+
+python "${pyLoadFile}" "$@"
