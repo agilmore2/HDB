@@ -93,7 +93,7 @@ sub retrieve_rating_table ($$$) {
 # both the file name and the URL needed to be modified accordingly
 # changed done by M. Bogner on 10/10/2012
   my $file = "USGS." . $site . ".exsa.rdb";
-  my $url  = "https://waterdata.usgs.gov/nwisweb/data/ratings/exsa/$file";
+  my $url  = "https://api.waterdata.usgs.gov/stac-files/ratings/$file";
 
   print $url."\n";
 
